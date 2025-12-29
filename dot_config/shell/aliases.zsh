@@ -12,6 +12,9 @@ fi
 
 # Git muscle-memory shortcuts (shell-level)
 alias g='git'
+alias gb='git branch'
+alias gbd='git branch -d'
+alias gd='git diff'
 alias gst='git status -sb'
 alias gco='git checkout'
 alias gsw='git switch'
