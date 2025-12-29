@@ -1,3 +1,8 @@
+[".config/zsh/plugins/zsh-better-npm-completion"]
+type = "git-repo"
+url = "https://github.com/lukechilds/zsh-better-npm-completion.git"
+refreshPeriod = "168h"
+
 [".config/zsh/plugins/pnpm-shell-completion"]
 type = "git-repo"
 url = "https://github.com/g-plane/pnpm-shell-completion.git"

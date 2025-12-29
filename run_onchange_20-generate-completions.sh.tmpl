@@ -10,4 +10,4 @@ if command -v gh >/dev/null 2>&1; then
 fi
 
 # Rebuild compdump so new completions are picked up
-rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"*
+rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"* 2>/dev/null || true

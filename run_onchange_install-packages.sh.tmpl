@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
 
 os="{{ .chezmoi.os }}"
 
@@ -12,7 +13,11 @@ for c in "${want_cmds[@]}" "${want_cmds_optional[@]}"; do
   command -v "$c" >/dev/null 2>&1 || missing=1
 done
 
-[[ "$missing" -eq 0 ]] && exit 0
+# On macOS, Brewfile can include items that don't provide commands (e.g., zsh-completions),
+# so don't short-circuit before we run `brew bundle check`.
+if [[ "$os" != "darwin" && "$missing" -eq 0 ]]; then
+  exit 0
+fi
 
 if [[ "$os" == "darwin" ]]; then
   if ! command -v brew >/dev/null 2>&1; then
@@ -20,7 +25,11 @@ if [[ "$os" == "darwin" ]]; then
     exit 1
   fi
 
-  brew bundle --file "{{ .chezmoi.sourceDir }}/Brewfile"
+  BREWFILE="{{ .chezmoi.sourceDir }}/Brewfile"
+
+  # Ensure Brewfile state is satisfied (covers formulae that don't add a command, like zsh-completions)
+  brew bundle check --file "$BREWFILE" >/dev/null 2>&1 || brew bundle --file "$BREWFILE"
+
   "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
   exit 0
 fi

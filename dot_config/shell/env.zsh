@@ -40,19 +40,11 @@ ZSH_COMPLETIONS_DIR="$HOME/.config/zsh/completions"
 mkdir -p "$ZSH_COMPLETIONS_DIR" 2>/dev/null || true
 fpath=("$ZSH_COMPLETIONS_DIR" $fpath)
 
-# ---- zsh completion (core) ----
-# Ensure zsh's Completion functions are on fpath (macOS ships them in a subdir)
-if [[ -d "/usr/share/zsh/${ZSH_VERSION}/functions/Completion" ]]; then
-  fpath=(/usr/share/zsh/${ZSH_VERSION}/functions/Completion $fpath)
-elif [[ -d "/usr/share/zsh/functions/Completion" ]]; then
-  fpath=(/usr/share/zsh/functions/Completion $fpath)
-fi
-
 # Homebrew completions (if available)
 if command -v brew >/dev/null 2>&1; then
   fpath=(
-    "$(brew --prefix)/share/zsh/site-functions"
     "$(brew --prefix)/share/zsh-completions"
+    "$(brew --prefix)/share/zsh/site-functions"
     $fpath
   )
 fi
@@ -60,7 +52,7 @@ fi
 autoload -Uz compinit
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null || true
-compinit -C -d "$ZSH_COMPDUMP"
+compinit -i -u -d "$ZSH_COMPDUMP"
 
 #-------------------------------------------------------------------------------
 #---- most settings should come after this line! -------------------------------
