@@ -1,0 +1,38 @@
+# ~/.config/starship.toml
+
+add_newline = false
+command_timeout = 1000
+
+# Simple: dir + git + prompt char
+format = "$directory$git_branch$git_status$character"
+
+[directory]
+style = "bold cyan"
+truncate_to_repo = true
+truncation_length = 3
+
+[git_branch]
+format = " [$branch]($style)"
+style = "purple"
+
+[git_status]
+format = " [$all_status$ahead_behind]($style)"
+style = "red"
+# If you want it quieter, uncomment:
+# disabled = true
+
+[character]
+success_symbol = "[›](bold green) "
+error_symbol = "[›](bold red) "
+
+# Kill the noise modules you’re seeing
+[ruby]
+disabled = true
+
+[cmd_duration]
+disabled = true
+
+[hostname]
+ssh_only = true
+format = "[$hostname]($style) "
+style = "bold dimmed white"

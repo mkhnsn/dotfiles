@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+os="{{ .chezmoi.os }}"
+
+if [[ "$os" == "darwin" ]]; then
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "Homebrew not found. Install it first: https://brew.sh/"
+    exit 1
+  fi
+
+  # Install packages declared in Brewfile
+  brew bundle --file "{{ .chezmoi.sourceDir }}/Brewfile"
+
+  # Optional: set up fzf keybindings/completion (does nothing harmful if repeated)
+  "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
+
+elif [[ "$os" == "linux" ]]; then
+  # Works for Debian/Ubuntu bases (Codespaces/devcontainers commonly are)
+  if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y \
+      git \
+      gh \
+      ripgrep \
+      fzf \
+      bat \
+      zoxide
+    # eza + starship vary by distro; we can add them later cleanly
+  else
+    echo "No apt-get found; skipping Linux package install."
+  fi
+fi

@@ -1,0 +1,10 @@
+tap "homebrew/bundle"
+
+brew "git"
+brew "gh"
+brew "ripgrep"
+brew "fzf"
+brew "bat"
+brew "eza"
+brew "zoxide"
+brew "starship"

@@ -1,0 +1,37 @@
+[user]
+  name = Mike Hansen
+  email = mike@mkhnsn.com
+
+[core]
+  editor = nano
+
+[pull]
+  rebase = true
+
+[gpg]
+  format = ssh
+
+[commit]
+  gpgsign = true
+
+[gpg "ssh"]
+  # Use a portable path so it works on macOS + Linux
+  allowedSignersFile = ~/.config/git/allowed_signers
+
+[credential "https://github.com"]
+  helper =
+  helper = !gh auth git-credential
+
+[credential "https://gist.github.com"]
+  helper =
+  helper = !gh auth git-credential
+
+[alias]
+  st = status -sb
+  gst = status -sb
+  gc = commit
+  gco = checkout
+  gl = log --oneline --decorate --graph --all
+
+[include]
+  path = ~/.gitconfig.local

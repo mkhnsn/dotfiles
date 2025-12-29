@@ -1,0 +1,12 @@
+# ~/.zshrc (managed by chezmoi)
+
+# Keep startup fast and predictable.
+export ZDOTDIR="$HOME"
+
+# Load shared shell config.
+for f in "$HOME/.config/shell"/{env,aliases,functions}.zsh; do
+  [[ -r "$f" ]] && source "$f"
+done
+
+# Prompt (starship) if installed
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
