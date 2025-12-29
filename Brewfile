@@ -1,5 +1,6 @@
 tap "homebrew/bundle"
 
+brew "zsh-completions"
 brew "git"
 brew "gh"
 brew "ripgrep"

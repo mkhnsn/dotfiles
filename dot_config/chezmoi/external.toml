@@ -2,3 +2,8 @@
 type = "git-repo"
 url = "https://github.com/g-plane/pnpm-shell-completion.git"
 refreshPeriod = "168h" # weekly
+
+[".config/zsh/plugins/fzf-tab"]
+type = "git-repo"
+url = "https://github.com/Aloxaf/fzf-tab.git"
+refreshPeriod = "168h"
