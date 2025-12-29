@@ -3,12 +3,12 @@ set -euo pipefail
 
 PNPM_DIR="$HOME/.config/zsh/plugins/pnpm-shell-completion"
 PNPM_BIN="$PNPM_DIR/pnpm-shell-completion"
+BUILD_SCRIPT="$PNPM_DIR/zplug.zsh"
 
-if [[ -d "$PNPM_DIR" ]] && [[ ! -x "$PNPM_BIN" ]]; then
-  # Build helper if we can. If we can’t, don’t fail apply.
+# Only build if repo exists, helper missing, and we can actually build
+if [[ -d "$PNPM_DIR" ]] && [[ ! -x "$PNPM_BIN" ]] && [[ -r "$BUILD_SCRIPT" ]]; then
   if command -v cargo >/dev/null 2>&1; then
-    (cd "$PNPM_DIR" && ./zplug.zsh) || true
-  else
-    echo "pnpm-shell-completion: cargo not found; skipping build (plugin will stay disabled)."
+    # Avoid noisy output / failures breaking apply
+    (cd "$PNPM_DIR" && "$BUILD_SCRIPT") >/dev/null 2>&1 || true
   fi
 fi

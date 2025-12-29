@@ -6,7 +6,7 @@ refreshPeriod = "168h"
 [".config/zsh/plugins/pnpm-shell-completion"]
 type = "git-repo"
 url = "https://github.com/g-plane/pnpm-shell-completion.git"
-refreshPeriod = "168h" # weekly
+refreshPeriod = "168h"
 
 [".config/zsh/plugins/fzf-tab"]
 type = "git-repo"
