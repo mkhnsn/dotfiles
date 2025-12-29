@@ -7,6 +7,7 @@ tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 tap "homebrew/core"
+tap "mongodb/brew"
 
 # ============================================================================
 # Core Utilities
@@ -105,7 +106,6 @@ brew "gcloud"           # Google Cloud CLI
 # ============================================================================
 brew "vim"              # Vi IMproved editor
 brew "neovim"           # Modern vim
-brew "tmux"             # Terminal multiplexer
 brew "httpie"           # HTTP client
 brew "postman"          # API testing tool
 brew "ngrok"            # Secure tunnels to localhost
