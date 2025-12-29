@@ -1,0 +1,166 @@
+# .gitconfig - Git configuration
+
+[user]
+    # Set your name and email
+    name = Your Name
+    email = your.email@example.com
+
+[core]
+    editor = vim
+    pager = less -R
+    excludesfile = ~/.gitignore_global
+    autocrlf = input
+    # Treat spaces before tabs and all kinds of trailing whitespace as an error
+    whitespace = space-before-tab,-indent-with-non-tab,trailing-space
+    # Make `git rebase` safer on macOS
+    trustctime = false
+    # Prevent showing files whose names contain non-ASCII symbols as unversioned
+    precomposeunicode = false
+    # Speed up commands involving untracked files such as `git status`
+    untrackedCache = true
+
+[init]
+    defaultBranch = main
+
+[color]
+    ui = auto
+    branch = auto
+    diff = auto
+    status = auto
+
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = green
+    changed = yellow
+    untracked = red
+
+[alias]
+    # Short status
+    s = status -s
+    st = status
+    
+    # Add
+    a = add
+    aa = add --all
+    ap = add --patch
+    
+    # Commit
+    c = commit -v
+    cm = commit -m
+    ca = commit -a
+    cam = commit -am
+    amend = commit --amend --no-edit
+    amendc = commit --amend
+    
+    # Checkout
+    co = checkout
+    cob = checkout -b
+    
+    # Branch
+    b = branch
+    ba = branch -a
+    bd = branch -d
+    bD = branch -D
+    
+    # Push/Pull
+    p = push
+    pl = pull
+    pf = push --force-with-lease
+    pu = push -u origin HEAD
+    
+    # Diff
+    d = diff
+    ds = diff --staged
+    dt = difftool
+    
+    # Log
+    l = log --oneline --decorate --graph
+    la = log --oneline --decorate --graph --all
+    ls = log --oneline --decorate
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    
+    # Stash
+    st = stash
+    stp = stash pop
+    stl = stash list
+    sts = stash show -p
+    
+    # Remote
+    r = remote -v
+    ra = remote add
+    rr = remote remove
+    
+    # Reset
+    unstage = reset HEAD --
+    undo = reset --soft HEAD^
+    
+    # Show
+    sh = show
+    
+    # Misc
+    aliases = config --get-regexp alias
+    branches = branch -a
+    tags = tag -l
+    remotes = remote -v
+    contributors = shortlog --summary --numbered
+    
+    # Find commits by commit message
+    fm = "!git log --all --grep="
+    
+    # Find commits by source code
+    fc = "!git log --all -S"
+    
+    # Remove branches that have already been merged with main
+    dm = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
+    
+    # List contributors with number of commits
+    rank = shortlog -sn --no-merges
+
+[push]
+    default = current
+    followTags = true
+    autoSetupRemote = true
+
+[pull]
+    rebase = false
+
+[fetch]
+    prune = true
+    pruneTags = true
+
+[merge]
+    tool = vimdiff
+    conflictstyle = diff3
+
+[diff]
+    tool = vimdiff
+    compactionHeuristic = true
+
+[help]
+    autocorrect = 1
+
+[credential]
+    helper = osxkeychain
+
+[filter "lfs"]
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+
+[rerere]
+    enabled = true
+
+# Include local gitconfig (if it exists)
+[include]
+    path = ~/.gitconfig.local
