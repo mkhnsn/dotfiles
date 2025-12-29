@@ -1,0 +1,7 @@
+# Allow 1Password to manage its own SSH config
+Include ~/.ssh/1Password/config
+
+Host *
+  IdentityAgent $SSH_AUTH_SOCK
+  AddKeysToAgent no
+  UseKeychain no

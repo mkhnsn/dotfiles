@@ -7,6 +7,9 @@
 
 [pull]
   rebase = true
+  
+[user]
+  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMDSNoyopg2gar0Lwf2lT+tSQbbDel/oSD5zJwjq69Z1
 
 [gpg]
   format = ssh
@@ -28,3 +31,5 @@
 
 [include]
   path = ~/.gitconfig.local
+
+

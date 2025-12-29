@@ -1,8 +1,0 @@
-[secret]
-command = "op"
-
-[onepassword]
-# If OP_SERVICE_ACCOUNT_TOKEN is set, use service mode (non-interactive).
-# Otherwise use account mode (interactive).
-mode = {{ if env "OP_SERVICE_ACCOUNT_TOKEN" -}}"service"{{- else -}}"account"{{- end }}
-prompt = {{ if env "OP_SERVICE_ACCOUNT_TOKEN" -}}false{{- else -}}true{{- end }}

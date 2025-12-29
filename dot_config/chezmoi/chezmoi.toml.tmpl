@@ -1,0 +1,6 @@
+[secret]
+command = "op"
+
+[onepassword]
+mode = "{{ if env "OP_SERVICE_ACCOUNT_TOKEN" }}service{{ else }}account{{ end }}"
+prompt = {{ if env "OP_SERVICE_ACCOUNT_TOKEN" }}false{{ else }}true{{ end }}
