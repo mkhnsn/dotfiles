@@ -57,7 +57,6 @@ if command -v brew >/dev/null 2>&1; then
   )
 fi
 
-
 autoload -Uz compinit
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null || true
@@ -66,6 +65,30 @@ compinit -C -d "$ZSH_COMPDUMP"
 #-------------------------------------------------------------------------------
 #---- most settings should come after this line! -------------------------------
 #-------------------------------------------------------------------------------
+
+# ---- word/path semantics ----
+# Make "word" jumps behave like path/arg jumps (/, -, ., _ become boundaries)
+WORDCHARS=''
+
+# ---- Option+Arrow / Option+Delete word ops (portable) ----
+for km in emacs viins; do
+  # Move by word
+  bindkey -M $km '^[b'      backward-word   # Meta-b (common)
+  bindkey -M $km '^[f'      forward-word    # Meta-f (common)
+  bindkey -M $km '^[[1;9D'  backward-word   # ⌥← (iTerm2 variant)
+  bindkey -M $km '^[[1;9C'  forward-word    # ⌥→ (iTerm2 variant)
+  bindkey -M $km '^[[1;3D'  backward-word   # ⌥← (alt variant)
+  bindkey -M $km '^[[1;3C'  forward-word    # ⌥→ (alt variant)
+
+  # Delete word backward (⌥⌫)
+  bindkey -M $km '^[^?'     backward-kill-word
+  bindkey -M $km '^[^H'     backward-kill-word
+  bindkey -M $km '^[\b'     backward-kill-word
+
+  # Delete word forward (⌥⌦)
+  bindkey -M $km '^[[3;3~'  kill-word
+  bindkey -M $km '^[[3;9~'  kill-word
+done
 
 # ---- completion UX: don't destroy my buffer ----
 unsetopt MENU_COMPLETE          # don't replace text by cycling matches
