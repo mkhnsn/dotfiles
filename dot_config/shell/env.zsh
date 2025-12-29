@@ -111,7 +111,3 @@ export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/
 if command -v brew >/dev/null 2>&1; then
   export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
 fi
-
-# 1Password CLI shell plugins (load once, if present)
-[[ -r "$HOME/.config/op/plugins.sh" ]] && source "$HOME/.config/op/plugins.sh"
-

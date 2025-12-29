@@ -1,0 +1,3 @@
+[onepassword]
+mode = "account"
+# prompt defaults to true (interactive sign-in if needed)
