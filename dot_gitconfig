@@ -1,6 +1,6 @@
 [user]
   name = Mike Hansen
-  email = mike@mkhnsn.com
+  email = mike@unstablestudios.com
 
 [core]
   editor = nano
@@ -25,13 +25,6 @@
 [credential "https://gist.github.com"]
   helper =
   helper = !gh auth git-credential
-
-[alias]
-  st = status -sb
-  gst = status -sb
-  gc = commit
-  gco = checkout
-  gl = log --oneline --decorate --graph --all
 
 [include]
   path = ~/.gitconfig.local
