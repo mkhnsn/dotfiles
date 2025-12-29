@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PNPM_DIR="$HOME/.config/zsh/plugins/pnpm-shell-completion"
+PNPM_BIN="$PNPM_DIR/pnpm-shell-completion"
+
+if [[ -d "$PNPM_DIR" ]] && [[ ! -x "$PNPM_BIN" ]]; then
+  # Build helper if we can. If we can’t, don’t fail apply.
+  if command -v cargo >/dev/null 2>&1; then
+    (cd "$PNPM_DIR" && ./zplug.zsh) || true
+  else
+    echo "pnpm-shell-completion: cargo not found; skipping build (plugin will stay disabled)."
+  fi
+fi

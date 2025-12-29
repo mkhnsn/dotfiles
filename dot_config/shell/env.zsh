@@ -6,6 +6,27 @@ export EDITOR="code --wait"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/src/scripts:$PATH"
 
+# ---- completions dir ----
+ZSH_COMPLETIONS_DIR="$HOME/.config/zsh/completions"
+mkdir -p "$ZSH_COMPLETIONS_DIR" 2>/dev/null || true
+fpath=("$ZSH_COMPLETIONS_DIR" $fpath)
+
+# ---- zsh completion (core) ----
+# Ensure zsh's Completion functions are on fpath (macOS ships them in a subdir)
+if [[ -d "/usr/share/zsh/${ZSH_VERSION}/functions/Completion" ]]; then
+  fpath=(/usr/share/zsh/${ZSH_VERSION}/functions/Completion $fpath)
+elif [[ -d "/usr/share/zsh/functions/Completion" ]]; then
+  fpath=(/usr/share/zsh/functions/Completion $fpath)
+fi
+
+autoload -Uz compinit
+compinit -C
+
+# ---- zsh plugins (loaders) ----
+for f in "$HOME/.config/zsh/plugins.d/"*.zsh(N); do
+  source "$f"
+done
+
 # 1Password SSH agent socket (macOS; harmless elsewhere if path missing)
 export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 

@@ -25,7 +25,6 @@ style = "red"
 success_symbol = "[›](bold green) "
 error_symbol = "[›](bold red) "
 
-# Kill the noise modules you’re seeing
 [ruby]
 disabled = true
 
