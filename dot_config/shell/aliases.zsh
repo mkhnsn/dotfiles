@@ -9,3 +9,18 @@ else
   alias la='ls -A'
   alias l='ls -CF'
 fi
+
+# Git muscle-memory shortcuts (shell-level)
+alias g='git'
+alias gst='git status -sb'
+alias gco='git checkout'
+alias gsw='git switch'
+alias gl='git log --oneline --decorate --graph --all'
+alias ga='git add'
+alias gaa='git add -A'
+alias gc='git commit'
+alias gcm='git commit -m'
+alias gca='git commit --amend'
+alias gp='git push'
+alias gpf='git push --force-with-lease'
+alias gup='git pull --rebase'
