@@ -129,7 +129,7 @@ if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get update
   $SUDO apt-get install -y git curl ca-certificates fzf bat zoxide ripgrep
 
-  # Optional packages (don’t fail the whole script if missing)
+  # Optional packages (don't fail the whole script if missing)
   $SUDO apt-get install -y gh || true
   $SUDO apt-get install -y eza || true
 

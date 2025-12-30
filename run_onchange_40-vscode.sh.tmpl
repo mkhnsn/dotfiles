@@ -1,59 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Installs VS Code extensions from a list file.
-# - Default: installs the "minimal" list
-# - Personal/full machines: if DOTFILES_FULL is set, installs the "full" list
-# - Override: DOTFILES_VSCODE_EXTENSIONS_FILE can pick a specific file under dot_config/vscode
+log() { printf "vscode: %s\n" "$*"; }
 
-# Need VS Code CLI available. In Codespaces it is usually `code` or `code-server`.
-CODE_BIN=""
-if command -v code >/dev/null 2>&1; then
-  CODE_BIN="code"
-elif command -v code-server >/dev/null 2>&1; then
-  CODE_BIN="code-server"
-else
-  echo "vscode: code/code-server not found; skipping extension install."
+# Only run when the Code CLI is available. In Codespaces dotfiles phase,
+# VS Code Server + `code` frequently isn't ready yet.
+if ! command -v code >/dev/null 2>&1; then
+  log "code CLI not found yet; skipping extension install"
   exit 0
 fi
 
-SOURCE_DIR="{{ .chezmoi.sourceDir }}"
-LIST_DIR="$SOURCE_DIR/dot_config/vscode"
-
-# Allow explicit override (handy for experiments)
-# Example: DOTFILES_VSCODE_EXTENSIONS_FILE="extensions.full.txt"
-if [[ -n "${DOTFILES_VSCODE_EXTENSIONS_FILE:-}" ]]; then
-  LIST_FILE="$LIST_DIR/${DOTFILES_VSCODE_EXTENSIONS_FILE}"
+# Pick extension list
+EXT_LIST=""
+if [[ "${DOTFILES_FULL:-}" == "1" ]] || [[ "${DOTFILES_FULL:-}" == "true" ]]; then
+  EXT_LIST="$HOME/.config/vscode/extensions.full.txt"
 else
-  # Default: minimal list (good for Codespaces and non-personal machines)
-  LIST_FILE="$LIST_DIR/extensions.minimal.txt"
-
-  # Full/personal machines opt-in
-  if [[ -n "${DOTFILES_FULL:-}" ]]; then
-    LIST_FILE="$LIST_DIR/extensions.full.txt"
-  fi
+  EXT_LIST="$HOME/.config/vscode/extensions.minimal.txt"
 fi
 
-if [[ ! -r "$LIST_FILE" ]]; then
-  echo "vscode: extension list not found: $LIST_FILE"
+if [[ ! -r "$EXT_LIST" ]]; then
+  log "extensions list not found: $EXT_LIST (skipping)"
   exit 0
 fi
 
-echo "vscode: installing extensions from $LIST_FILE using $CODE_BIN"
+log "installing extensions from $EXT_LIST using code"
 
-# Read list, ignore blanks/comments, install one by one.
+# Install each extension; never fail the whole run on one bad install
 while IFS= read -r ext; do
-  # trim whitespace
-  ext="${ext#"${ext%%[![:space:]]*}"}"
-  ext="${ext%"${ext##*[![:space:]]}"}"
+  [[ -z "${ext// }" ]] && continue
+  [[ "$ext" =~ ^# ]] && continue
+  if ! code --install-extension "$ext" >/dev/null 2>&1; then
+    log "failed to install $ext (continuing)"
+  fi
+done < "$EXT_LIST"
 
-  [[ -z "$ext" ]] && continue
-  [[ "$ext" == \#* ]] && continue
-
-  # Avoid failing the whole apply if one extension is unavailable.
-  "$CODE_BIN" --install-extension "$ext" --force >/dev/null 2>&1 || {
-    echo "vscode: failed to install $ext (continuing)"
-  }
-done < "$LIST_FILE"
-
-exit 0
+log "done"
