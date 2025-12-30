@@ -72,9 +72,43 @@ ensure_fzf_zsh_integration() {
       git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" || return 0
     fi
 
-    # Generate ~/.fzf.zsh without modifying rc files
-    "$HOME/.fzf/install" --bin --completion --key-bindings --no-update-rc >/dev/null 2>&1 || true
+    # Generate ~/.fzf.zsh without modifying rc files (no binary install here)
+    "$HOME/.fzf/install" --completion --key-bindings --no-update-rc --no-bash --no-fish >/dev/null 2>&1 || true
   fi
+}
+
+install_fzf_upstream_linux() {
+  # Install a newer upstream fzf binary on Linux and prefer it via ~/.local/bin.
+  [[ "$(uname -s)" == "Linux" ]] || return 0
+
+  # Need curl + tar to download/extract
+  command -v curl >/dev/null 2>&1 || return 0
+  command -v tar  >/dev/null 2>&1 || return 0
+
+  local arch fzf_arch tmpdir
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64|amd64)  fzf_arch="linux_amd64" ;;
+    aarch64|arm64) fzf_arch="linux_arm64" ;;
+    *)             fzf_arch="" ;;
+  esac
+
+  [[ -n "$fzf_arch" ]] || return 0
+
+  # Pinned for reproducibility
+  local FZF_VERSION="0.67.0"
+
+  tmpdir="$(mktemp -d)"
+  curl -fsSL \
+    "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-${fzf_arch}.tar.gz" \
+    -o "${tmpdir}/fzf.tgz" || { rm -rf "$tmpdir"; return 0; }
+
+  mkdir -p "$HOME/.local/bin"
+  tar -xzf "${tmpdir}/fzf.tgz" -C "$HOME/.local/bin" || true
+  rm -rf "$tmpdir"
+
+  # Make it effective for the remainder of this script
+  export PATH="$HOME/.local/bin:$PATH"
 }
 
 install_fd_find() {
@@ -120,6 +154,7 @@ else
   exit 0
 fi
 
+install_fzf_upstream_linux
 install_fd_find
 ensure_fzf_zsh_integration
 install_starship_user
