@@ -141,11 +141,23 @@ if command -v brew >/dev/null 2>&1; then
   export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
 fi
 
-# ---- VS Code Server / Codespaces hint ----
-# Prompt to run finish-install if in Codespaces and extensions not yet installed
-if [[ -o interactive ]] && [[ -n "${CODESPACES:-}" ]]; then
-  stamp="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/vscode-extensions.installed"
-  if [[ ! -f "$stamp" ]] && command -v code >/dev/null 2>&1; then
-    echo "Dotfiles setup incomplete: run 'finish-install' to install VS Code extensions."
+# --- Codespaces: finalize VS Code setup when ready (extensions + settings) ---
+if [[ -o interactive ]] && [[ -n "${CODESPACES:-}" ]] && command -v finish-install >/dev/null 2>&1; then
+  state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+  ext_stamp="$state_dir/vscode-extensions.installed"
+  set_stamp="$state_dir/vscode-settings.patched"
+
+  # Run automatically only if something is still pending.
+  if [[ ! -f "$ext_stamp" || ! -f "$set_stamp" ]]; then
+    finish-install >/dev/null 2>&1 || true
+  fi
+
+  # If still pending, show a single, non-annoying hint.
+  if [[ ! -f "$ext_stamp" || ! -f "$set_stamp" ]]; then
+    # Only hint once per shell session.
+    if [[ -z "${DOTFILES_FINISH_INSTALL_HINTED:-}" ]]; then
+      export DOTFILES_FINISH_INSTALL_HINTED=1
+      echo "Dotfiles setup incomplete in Codespaces: run 'finish-install' (VS Code settings/extensions)."
+    fi
   fi
 fi

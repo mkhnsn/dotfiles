@@ -1,15 +1,6 @@
 # ~/.local/share/chezmoi/.chezmoi.toml.tmpl (special filename read by `chezmoi init`)
 
-{{- if env "OP_SERVICE_ACCOUNT_TOKEN" }}
-
-[secret]
-command = "op"
-
-[onepassword]
-mode = "service"
-prompt = false
-
-{{- else if env "DOTFILES_FULL" }}
+{{- if env "DOTFILES_FULL" }}
 
 [secret]
 command = "op"
