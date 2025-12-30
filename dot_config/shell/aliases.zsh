@@ -27,3 +27,6 @@ alias gca='git commit --amend'
 alias gp='git push'
 alias gpf='git push --force-with-lease'
 alias gup='git pull --rebase'
+
+alias tree='tree -C -L 3 --dirsfirst'
+alias treee="tree -C --gitignore -a -I '.git' --dirsfirst"
