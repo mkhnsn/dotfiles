@@ -136,45 +136,10 @@ fi
 
 log "Applying dotfiles"
 
-if [[ -d "${XDG_DATA_HOME:-$HOME/.local/share}/chezmoi" ]]; then
-  log "Updating existing dotfiles"
-  chezmoi apply
-else
-  log "Initializing dotfiles"
-  chezmoi init --apply "$DOTFILES_REPO"
-fi
+chezmoi init --apply "$DOTFILES_REPO"
 
 # ─────────────────────────────────────────────────────────────
-# macOS: Install packages from Brewfile
-# ─────────────────────────────────────────────────────────────
-
-if [[ "$OS" == "darwin" ]]; then
-  BREWFILE="$HOME/.local/share/chezmoi/Brewfile"
-  if [[ -f "$BREWFILE" ]]; then
-    log "Installing packages from Brewfile"
-    brew bundle --file "$BREWFILE"
-  else
-    log "Brewfile not found (ok, may not have packages)"
-  fi
-fi
-
-# ─────────────────────────────────────────────────────────────
-# Set zsh as default shell
-# ─────────────────────────────────────────────────────────────
-
-log "Setting zsh as default shell"
-
-if need_cmd zsh; then
-  ZSHPATH="$(command -v zsh)"
-  if [[ "$SHELL" != "$ZSHPATH" ]]; then
-    chsh -s "$ZSHPATH" "$USER" || true
-  fi
-else
-  log "WARNING: zsh not found"
-fi
-
-# ─────────────────────────────────────────────────────────────
-# Summary
+# Done
 # ─────────────────────────────────────────────────────────────
 
 log "✓ Setup complete!"
@@ -182,11 +147,7 @@ log ""
 log "You now have:"
 log "  • System prerequisites"
 log "  • chezmoi installed"
-log "  • Dotfiles applied"
-if [[ "$OS" == "darwin" ]]; then
-  log "  • Homebrew with all packages"
-fi
-log "  • zsh configured as default shell"
+log "  • Dotfiles applied (all config, tools, and packages)"
 log ""
 log "Start a new shell to apply all changes: exec zsh"
 log ""
