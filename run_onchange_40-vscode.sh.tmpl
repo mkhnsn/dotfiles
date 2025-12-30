@@ -2,8 +2,9 @@
 set -euo pipefail
 
 # Installs VS Code extensions from a list file.
-# - Codespaces/devcontainers: installs the "codespace" list
+# - Default: installs the "minimal" list
 # - Personal/full machines: if DOTFILES_FULL is set, installs the "full" list
+# - Override: DOTFILES_VSCODE_EXTENSIONS_FILE can pick a specific file under dot_config/vscode
 
 # Need VS Code CLI available. In Codespaces it is usually `code` or `code-server`.
 CODE_BIN=""
@@ -19,9 +20,18 @@ fi
 SOURCE_DIR="{{ .chezmoi.sourceDir }}"
 LIST_DIR="$SOURCE_DIR/dot_config/vscode"
 
-LIST_FILE="$LIST_DIR/extensions.codespace.txt"
-if [[ -n "${DOTFILES_FULL:-}" ]]; then
-  LIST_FILE="$LIST_DIR/extensions.full.txt"
+# Allow explicit override (handy for experiments)
+# Example: DOTFILES_VSCODE_EXTENSIONS_FILE="extensions.full.txt"
+if [[ -n "${DOTFILES_VSCODE_EXTENSIONS_FILE:-}" ]]; then
+  LIST_FILE="$LIST_DIR/${DOTFILES_VSCODE_EXTENSIONS_FILE}"
+else
+  # Default: minimal list (good for Codespaces and non-personal machines)
+  LIST_FILE="$LIST_DIR/extensions.minimal.txt"
+
+  # Full/personal machines opt-in
+  if [[ -n "${DOTFILES_FULL:-}" ]]; then
+    LIST_FILE="$LIST_DIR/extensions.full.txt"
+  fi
 fi
 
 if [[ ! -r "$LIST_FILE" ]]; then
