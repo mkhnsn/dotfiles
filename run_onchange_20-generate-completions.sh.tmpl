@@ -4,8 +4,15 @@ set -euo pipefail
 ZSH_COMPLETIONS_DIR="$HOME/.config/zsh/completions"
 mkdir -p "$ZSH_COMPLETIONS_DIR"
 
+# In containers/Codespaces there's often no DBus/keyring; gh can explode even for "completion".
+# Force gh to not use the keyring.
+export GH_NO_KEYRING=1
+
 if command -v gh >/dev/null 2>&1; then
-  gh completion -s zsh > "$ZSH_COMPLETIONS_DIR/_gh"
+  # Don't let gh auth-migration nonsense break chezmoi apply.
+  gh completion -s zsh > "$ZSH_COMPLETIONS_DIR/_gh" 2>/dev/null || {
+    echo "dotfiles: warning: gh completion generation skipped (gh/keyring not available here)"
+  }
 fi
 
 rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"* 2>/dev/null || true
