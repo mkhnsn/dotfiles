@@ -1,99 +1,140 @@
 # Dotfiles Managed with chezmoi
 
-## Description and Goals
+This repository contains my personal dotfiles managed with [chezmoi](https://www.chezmoi.io).  
+The goal is a clean, portable, reproducible setup across macOS, Linux, and GitHub Codespaces.
 
-This repository contains my personal dotfiles managed with [chezmoi](https://chezmoi.io/). The goal is to maintain a clean, portable, and reproducible configuration environment across multiple machines and operating systems, enabling quick setup and consistent behavior.
+The repository is designed to support **three installation modes**:
 
----
-
-## Prerequisite: Install chezmoi
-
-Before initializing your dotfiles on a new machine, you must install chezmoi.
-
-### macOS (using Homebrew)
-
-```zsh
-brew install chezmoi
-```
-
-### Linux (using the official install script)
-
-```sh
-sh -c "$(curl -fsLS get.chezmoi.io)"
-```
+- GitHub Codespaces (automatic)
+- Personal machines (full setup)
+- Temporary or shared machines (lite setup)
 
 ---
 
-## First-time Install
+## Quick Start
 
-Once chezmoi is installed, initialize and apply your dotfiles with:
+### 1. GitHub Codespaces (automatic)
 
-```zsh
-chezmoi init --apply git@github.com:mkhnsn/dotfiles.git
-```
+If this repository is selected as your dotfiles repository in **GitHub Codespaces settings** and  
+**“Automatically install dotfiles”** is enabled, setup runs automatically.
 
-This clones the repository and applies the configuration to your home directory.
+No manual steps are required.
+
+This relies on GitHub’s official dotfiles mechanism and does not require `install.sh` to be invoked manually.
 
 ---
 
-## Update / Refresh Externals (Plugins)
+### 2. Personal machine (full setup)
 
-To update external components such as plugins managed by chezmoi:
+Use this on a personal macOS or Linux machine where you want the full environment:
+shell configuration, tools, 1Password integration, SSH agent wiring, and VS Code setup.
 
-```zsh
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"
+```
+
+Notes:
+
+- macOS requires Homebrew to already be installed
+- You’ll be prompted to sign into 1Password (once)
+- This is the recommended path for long‑lived personal machines
+
+---
+
+### 3. Temporary or shared machine (lite setup)
+
+Use this on machines you don’t own long‑term (servers, borrowed laptops, CI runners).
+
+```bash
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply mkhnsn/dotfiles.git
+```
+
+This installs chezmoi and applies dotfiles without interactive secret setup.
+
+---
+
+## Updating
+
+Once installed, update configuration at any time with:
+
+```bash
+chezmoi apply
+```
+
+To force-refresh external dependencies (plugins, git repos):
+
+```bash
 chezmoi apply -R
 ```
-
-This forces a refresh of all external dependencies.
 
 ---
 
 ## Repository Structure (High-Level)
 
-- `dot_` files and directories: canonical configuration templates that chezmoi manages.
-- `dot_vscode/`: VS Code configuration templates.
-- OS-specific wrappers: separate files or directories that apply OS-dependent overrides or additions.
-- `private_` files: sensitive data encrypted and managed securely by chezmoi.
+- `dot_*/` — canonical configuration templates managed by chezmoi
+- `.chezmoiexternal.toml` — external git‑based dependencies (zsh plugins, etc.)
+- `install.sh` — full bootstrap for personal machines
+- `bootstrap/` — helper scripts for containers or special environments
+- `private_*.tmpl` — secret-backed or machine-specific templates
 
-This structure allows clear separation between generic and platform-specific configurations.
-
----
-
-## VS Code Configuration Model
-
-VS Code settings are managed using canonical templates under `dot_vscode/`. OS-specific customizations are handled via wrapper files or directories that overlay the base configuration. This approach keeps the main configuration consistent while allowing machine or OS-specific tweaks.
+This structure keeps base configuration portable while allowing platform-specific behavior.
 
 ---
 
-## Zsh & Completions Notes
+## VS Code Configuration
 
-Zsh completions occasionally become stale or corrupted. To recover:
+VS Code configuration is generated from canonical templates and applied to the correct OS-specific paths.
 
-```zsh
+- Base templates live under `.chezmoitemplates/vscode/`
+- macOS and Linux wrappers map these templates to the appropriate VS Code directories
+
+This allows a single source of truth while remaining OS‑correct.
+
+---
+
+## Zsh & Completion Recovery
+
+If zsh completions become stale or corrupted:
+
+```bash
 rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"* 2>/dev/null || true
 exec zsh
 ```
 
-This clears the completion dump cache and restarts the shell to regenerate completions.
+This clears the completion cache and forces regeneration.
 
 ---
 
-## Git & SSH Signing Notes
+## Git, SSH, and Signing
 
-Git and SSH keys are configured to use signing for commits and authentication where applicable. Ensure your GPG and SSH agents are running and correctly configured to enable seamless signing.
+- SSH authentication uses the 1Password SSH agent on supported platforms
+- Git commit signing is configured using SSH keys
+- Allowed signers are managed explicitly to avoid key overload
 
----
-
-## 1Password Usage Notes
-
-Some secrets and credentials are managed via 1Password and integrated into the dotfiles workflow. Make sure 1Password CLI is installed and authenticated to allow secure retrieval of sensitive data during setup.
+No private keys are stored in this repository.
 
 ---
 
-## Devcontainer / Codespaces Notes
+## 1Password Integration
 
-Development containers and GitHub Codespaces are configured to use the dotfiles repository to bootstrap environments automatically, ensuring consistent tooling and settings inside containerized or cloud-based development setups.
+1Password is used for:
+
+- Secure secret retrieval via `op://` references
+- SSH agent integration on interactive machines
+
+For non‑interactive environments (e.g. CI or Codespaces), secrets are optional and not required for a successful apply.
 
 ---
 
-For any questions or issues, consult the chezmoi documentation or open an issue in this repository.
+## Devcontainers & Codespaces
+
+Devcontainers and GitHub Codespaces rely on:
+
+- GitHub’s native dotfiles integration
+- Automatic invocation of supported bootstrap files (`install.sh`, `bootstrap.sh`, etc.)
+
+No duplicate initialization logic is required.
+
+---
+
+For detailed behavior, consult the chezmoi documentation or inspect `install.sh`.

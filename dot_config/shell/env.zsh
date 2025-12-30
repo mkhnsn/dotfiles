@@ -6,6 +6,10 @@ export EDITOR="code --wait"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/src/scripts:$PATH"
 
+# ---- 1Password CLI / chezmoi integration ----
+# Pin the default 1Password account so chezmoi/op never prompt
+export OP_ACCOUNT="unstablestudios.1password.com"
+
 # ---- fzf defaults ----
 export FZF_DEFAULT_OPTS="
   --height=40%

@@ -1,6 +1,10 @@
 [secret]
-command = "op"
+# Pin account with OP_ACCOUNT to avoid "pick an account" prompts when multiple accounts exist.
+# Example:
+#   export OP_ACCOUNT="my.1password.com"
+command = "{{ if env "OP_ACCOUNT" }}op --account {{ env "OP_ACCOUNT" }}{{ else }}op{{ end }}"
 
 [onepassword]
+# If OP_SERVICE_ACCOUNT_TOKEN is set, use service mode (non-interactive).
 mode = "{{ if env "OP_SERVICE_ACCOUNT_TOKEN" }}service{{ else }}account{{ end }}"
 prompt = {{ if env "OP_SERVICE_ACCOUNT_TOKEN" }}false{{ else }}true{{ end }}
