@@ -1,0 +1,120 @@
+{
+  // ----------------------------------------------------------------------------
+  // Workbench / UI
+  // ----------------------------------------------------------------------------
+  "workbench.colorTheme": "Copilot Theme",
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+
+  // ----------------------------------------------------------------------------
+  // Security / Trust
+  // ----------------------------------------------------------------------------
+  "security.workspace.trust.untrustedFiles": "open",
+
+  // ----------------------------------------------------------------------------
+  // Editor basics
+  // ----------------------------------------------------------------------------
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.fontFamily": "JetBrains Mono, Menlo, Monaco, 'Courier New', monospace",
+
+  // ----------------------------------------------------------------------------
+  // Language / formatter defaults
+  // ----------------------------------------------------------------------------
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[github-actions-workflow]": { "editor.defaultFormatter": "redhat.vscode-yaml" },
+  "[dockercompose]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.quickSuggestions": { "other": true, "comments": false, "strings": true },
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
+  "[svg]": { "editor.defaultFormatter": "jock.svg" },
+
+  // ----------------------------------------------------------------------------
+  // File associations / previews
+  // ----------------------------------------------------------------------------
+  "files.associations": {
+    "*.g": "gcode",
+    ".actrc": "plaintext"
+  },
+  "svg.preview.mode": "svg",
+
+  // ----------------------------------------------------------------------------
+  // Git / GitHub
+  // ----------------------------------------------------------------------------
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.blame.editorDecoration.enabled": true,
+  "githubPullRequests.createOnPublishBranch": "never",
+  "githubPullRequests.pullBranch": "never",
+
+  // ----------------------------------------------------------------------------
+  // JS/TS ergonomics
+  // ----------------------------------------------------------------------------
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // ----------------------------------------------------------------------------
+  // Copilot / Chat
+  // ----------------------------------------------------------------------------
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "inlineChat.lineNaturalLanguageHint": false,
+  "chat.viewSessions.orientation": "stacked",
+  "chat.instructionsFilesLocations": { ".github/instructions": true },
+
+  // Terminal tool approvals (global)
+  "chat.tools.terminal.autoApprove": {
+    "npm run test:run": true,
+    "npm test": true,
+    "npm run test": true,
+    "pnpm test": { "approve": true, "matchCommandLine": true },
+    "/^pnpm run lint$/": { "approve": true, "matchCommandLine": true }
+  },
+  "chat.tools.urls.autoApprove": {
+    "https://registry.npmjs.org": true,
+    "https://registry.npmjs.org/@commitlint/prompt/latest": true,
+    "https://registry.npmjs.org/@commitlint/prompt": true,
+    "https://registry.npmjs.org/@commitlint": true
+  },
+
+  // ----------------------------------------------------------------------------
+  // Terminal suggestions (off)
+  // ----------------------------------------------------------------------------
+  "terminal.integrated.suggest.enabled": false,
+  "terminal.integrated.suggest.providers": {
+    "vscode.terminal-suggest": false,
+    "lsp": false
+  },
+  "terminal.integrated.suggest.suggestOnTriggerCharacters": false,
+  "terminal.integrated.suggest.upArrowNavigatesHistory": false,
+  "terminal.integrated.suggest.showStatusBar": false,
+
+  // ----------------------------------------------------------------------------
+  // Vite (if you still want these globally)
+  // ----------------------------------------------------------------------------
+  "vite.port": 5173,
+  "vite.devCommand": "npm run dev",
+  "vite.browserType": "system",
+  "vite.autoStart": false,
+
+  // ----------------------------------------------------------------------------
+  // Build tools
+  // ----------------------------------------------------------------------------
+  "cmake.configureOnOpen": true,
+  "cmake.showOptionsMovedNotification": false,
+  "makefile.configureOnOpen": true,
+
+  // ----------------------------------------------------------------------------
+  // Autoclose: OFF (no tags, no brackets, no quotes)
+  // ----------------------------------------------------------------------------
+  "editor.autoClosingBrackets": "never",
+  "editor.autoClosingQuotes": "never",
+  "editor.autoClosingDelete": "never",
+  "editor.autoClosingOvertype": "never",
+  "editor.autoSurround": "never",
+}
