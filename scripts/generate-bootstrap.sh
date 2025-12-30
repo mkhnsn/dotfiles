@@ -12,14 +12,38 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
-BOOTSTRAP_DIR="$DOTFILES_DIR/../bootstrap"
 
 log() { printf "[generate] %s\n" "$*"; }
 err() { printf "[generate] ERROR: %s\n" "$*" >&2; }
 
 # ─────────────────────────────────────────────────────────────
-# Validate paths
+# Find bootstrap directory
 # ─────────────────────────────────────────────────────────────
+
+# Try common locations for bootstrap repo
+BOOTSTRAP_DIR="${BOOTSTRAP_DIR:-}"
+
+if [[ -z "$BOOTSTRAP_DIR" ]]; then
+  # Try sibling directory first
+  if [[ -d "$DOTFILES_DIR/../bootstrap" ]]; then
+    BOOTSTRAP_DIR="$DOTFILES_DIR/../bootstrap"
+  # Try user's src directory
+  elif [[ -d "$HOME/src/bootstrap" ]]; then
+    BOOTSTRAP_DIR="$HOME/src/bootstrap"
+  # Try as env variable
+  elif [[ -n "${BOOTSTRAP_REPO:-}" ]]; then
+    BOOTSTRAP_DIR="$BOOTSTRAP_REPO"
+  else
+    err "Bootstrap repo not found"
+    log "Tried:"
+    log "  • $DOTFILES_DIR/../bootstrap"
+    log "  • $HOME/src/bootstrap"
+    log ""
+    log "Set BOOTSTRAP_DIR environment variable:"
+    log "  BOOTSTRAP_DIR=/path/to/bootstrap ./scripts/generate-bootstrap.sh"
+    exit 1
+  fi
+fi
 
 if [[ ! -d "$SCRIPT_DIR/templates" ]]; then
   err "Templates directory not found: $SCRIPT_DIR/templates"
@@ -28,7 +52,6 @@ fi
 
 if [[ ! -d "$BOOTSTRAP_DIR" ]]; then
   err "Bootstrap repo not found at: $BOOTSTRAP_DIR"
-  log "Expected bootstrap to be a sibling directory of dotfiles"
   exit 1
 fi
 
