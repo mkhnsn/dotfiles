@@ -1,6 +1,0 @@
-github.com:
-  user: mkhnsn
-{{- if and (env "DOTFILES_FULL") (lookPath "op") }}
-  oauth_token: {{ onepasswordRead "op://Infrastructure/hinqfehrj4azx6rhekpbgd3xtq/token" }}
-{{- end }}
-  git_protocol: ssh
