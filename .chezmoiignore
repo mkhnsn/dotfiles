@@ -1,0 +1,16 @@
+# Repo-only documentation
+README.md
+LICENSE
+
+# Bootstrap helpers that should never land in $HOME
+bootstrap/
+install.sh
+
+# Repo metadata
+.gitignore
+.chezmoitemplates/
+.chezmoiexternal.toml
+
+# Automations
+scripts/
+Makefile
