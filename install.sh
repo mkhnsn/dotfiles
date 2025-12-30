@@ -20,14 +20,16 @@ log() { printf '[dotfiles] %s\n' "$*"; }
 
 # ---- Minimal prereqs (Linux only; skip if we can't elevate) ----
 if command -v apt-get >/dev/null 2>&1; then
+  export DEBIAN_FRONTEND=noninteractive
+
   if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
     log "apt-get: installing minimal prereqs (git/curl/ca-certificates)"
     apt-get update -y
     apt-get install -y git curl ca-certificates
   elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
     log "apt-get: installing minimal prereqs with sudo (git/curl/ca-certificates)"
-    sudo apt-get update -y
-    sudo apt-get install -y git curl ca-certificates
+    sudo -n apt-get update -y
+    sudo -n apt-get install -y git curl ca-certificates
   else
     log "apt-get present but no passwordless sudo/root; skipping prereqs"
   fi
@@ -41,6 +43,7 @@ if ! command -v "$CHEZMOI_BIN" >/dev/null 2>&1; then
   fi
 
   log "installing chezmoi (single-binary) into ~/.local/bin"
+  # get.chezmoi.io install is non-interactive; keep output quiet-ish but fail hard on curl errors
   mkdir -p "$HOME/.local/bin"
   sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
   export PATH="$HOME/.local/bin:$PATH"
@@ -49,13 +52,15 @@ fi
 
 # ---- Apply dotfiles ----
 # If this script is running from a cloned dotfiles repo (Codespaces dotfiles flow),
-# prefer the local directory for the one-shot apply.
-# Otherwise, fall back to initializing from the repo reference (curl one-liner flow).
+# apply directly from the local source directory. Do NOT use --one-shot here,
+# because Codespaces already cloned the repo and we want deterministic behavior.
+#
+# If we are curl-running (no local repo), do a one-shot init from the repo.
 
 if [[ -f "$SCRIPT_DIR/dot_zshrc" || -f "$SCRIPT_DIR/.chezmoiexternal.toml" || -d "$SCRIPT_DIR/dot_config" ]]; then
   log "repo detected locally at: $SCRIPT_DIR"
-  log "applying via chezmoi one-shot (local source dir)"
-  "$CHEZMOI_BIN" init --one-shot --apply "$SCRIPT_DIR"
+  log "applying via chezmoi from local source dir"
+  "$CHEZMOI_BIN" apply --source "$SCRIPT_DIR"
 else
   log "no local repo detected (likely curl-run); applying from repo: $DOTFILES_REPO"
   log "applying via chezmoi one-shot (remote repo)"
@@ -63,3 +68,4 @@ else
 fi
 
 log "done"
+log "When VS Code is fully ready, run: finish-install"

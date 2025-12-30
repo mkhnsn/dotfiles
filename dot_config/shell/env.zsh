@@ -140,3 +140,12 @@ fi
 if command -v brew >/dev/null 2>&1; then
   export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
 fi
+
+# ---- VS Code Server / Codespaces hint ----
+# Prompt to run finish-install if in Codespaces and extensions not yet installed
+if [[ -o interactive ]] && [[ -n "${CODESPACES:-}" ]]; then
+  stamp="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/vscode-extensions.installed"
+  if [[ ! -f "$stamp" ]] && command -v code >/dev/null 2>&1; then
+    echo "Dotfiles setup incomplete: run 'finish-install' to install VS Code extensions."
+  fi
+fi
