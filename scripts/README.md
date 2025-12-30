@@ -4,7 +4,7 @@ This directory contains the generation tooling for the bootstrap scripts that li
 
 ## Structure
 
-```
+```text
 scripts/
 ├── generate-bootstrap.sh        ← Main generator script
 ├── templates/
@@ -26,12 +26,14 @@ The bootstrap scripts (`minimal.sh` and `full.sh`) live in a **separate public r
 ### Editing Templates
 
 1. Edit the template you want to change:
+
    ```bash
    vim scripts/templates/minimal.sh.template
    vim scripts/templates/full.sh.template
    ```
 
 2. Generate the bootstrap scripts:
+
    ```bash
    make bootstrap-scripts
    # or manually:
@@ -39,17 +41,19 @@ The bootstrap scripts (`minimal.sh` and `full.sh`) live in a **separate public r
    ```
 
 3. Review the generated files:
+
    ```bash
    cd ../bootstrap
    git diff minimal.sh full.sh
    ```
 
 4. Commit in both repos:
+
    ```bash
    # In bootstrap/
    git add minimal.sh full.sh
    git commit -m "scripts: regenerated from dotfiles"
-   
+
    # In dotfiles/
    git add scripts/templates
    git commit -m "bootstrap: update templates"
@@ -64,6 +68,7 @@ The bootstrap scripts (`minimal.sh` and `full.sh`) live in a **separate public r
 ## Script Purposes
 
 ### minimal.sh
+
 - **Purpose:** Standalone bootstrap to a working shell
 - **Deps:** None (self-contained)
 - **Requires:** Public access (no authentication needed)
@@ -71,6 +76,7 @@ The bootstrap scripts (`minimal.sh` and `full.sh`) live in a **separate public r
 - **Use case:** Fresh machine, unknown environment, CI runners
 
 ### full.sh
+
 - **Purpose:** Complete machine setup with dotfiles
 - **Deps:** Access to private dotfiles repo
 - **Requires:** GitHub authentication (for private repo)
