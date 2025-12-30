@@ -16,23 +16,69 @@
   // ----------------------------------------------------------------------------
   "editor.tabSize": 2,
   "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.fixAll.eslint": true,
+    "source.fixAll.ruff": true
+  },
   "editor.fontFamily": "JetBrains Mono, Menlo, Monaco, 'Courier New', monospace",
 
   // ----------------------------------------------------------------------------
   // Language / formatter defaults
   // ----------------------------------------------------------------------------
   "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "[github-actions-workflow]": { "editor.defaultFormatter": "redhat.vscode-yaml" },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
   "[dockercompose]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
     "editor.autoIndent": "advanced",
-    "editor.quickSuggestions": { "other": true, "comments": false, "strings": true },
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },
-  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform"
+  },
   "[svg]": { "editor.defaultFormatter": "jock.svg" },
 
   // ----------------------------------------------------------------------------
@@ -40,7 +86,15 @@
   // ----------------------------------------------------------------------------
   "files.associations": {
     "*.g": "gcode",
-    ".actrc": "plaintext"
+    ".actrc": "plaintext",
+    "*.json.tmpl": "json",
+    "*.sh.tmpl": "shellscript",
+    "*.toml.tmpl": "toml",
+    ".chezmoiignore": "gitignore",
+    ".dockerignore": "gitignore",
+    "Dockerfile.*": "dockerfile",
+    "docker-compose.*": "dockercompose",
+    "*.tfvars": "terraform"
   },
   "svg.preview.mode": "svg",
 
@@ -66,21 +120,6 @@
   "inlineChat.lineNaturalLanguageHint": false,
   "chat.viewSessions.orientation": "stacked",
   "chat.instructionsFilesLocations": { ".github/instructions": true },
-
-  // Terminal tool approvals (global)
-  "chat.tools.terminal.autoApprove": {
-    "npm run test:run": true,
-    "npm test": true,
-    "npm run test": true,
-    "pnpm test": { "approve": true, "matchCommandLine": true },
-    "/^pnpm run lint$/": { "approve": true, "matchCommandLine": true }
-  },
-  "chat.tools.urls.autoApprove": {
-    "https://registry.npmjs.org": true,
-    "https://registry.npmjs.org/@commitlint/prompt/latest": true,
-    "https://registry.npmjs.org/@commitlint/prompt": true,
-    "https://registry.npmjs.org/@commitlint": true
-  },
 
   // ----------------------------------------------------------------------------
   // Terminal suggestions (off)
