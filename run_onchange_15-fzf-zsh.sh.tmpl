@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Only do this on Linux (Codespaces/devcontainers)
+if [[ "{{ .chezmoi.os }}" != "linux" ]]; then
+  exit 0
+fi
+
+# Need git + fzf available
+command -v git >/dev/null 2>&1 || exit 0
+command -v fzf >/dev/null 2>&1 || exit 0
+
+# Install upstream fzf integration into ~/.fzf (idempotent)
+if [[ ! -d "$HOME/.fzf" ]]; then
+  git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+fi
+
+# Ensure ~/.fzf.zsh exists (don’t touch .zshrc; you manage sourcing via env.zsh)
+if [[ ! -r "$HOME/.fzf.zsh" ]]; then
+  "$HOME/.fzf/install" --bin --completion --key-bindings --no-update-rc >/dev/null 2>&1 || true
+fi

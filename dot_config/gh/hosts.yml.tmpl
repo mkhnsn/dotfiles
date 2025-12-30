@@ -1,6 +1,6 @@
 github.com:
   user: mkhnsn
-{{- if or (env "OP_SERVICE_ACCOUNT_TOKEN") (env "DOTFILES_FULL") }}
+{{- if and (env "DOTFILES_FULL") (lookPath "op") }}
   oauth_token: {{ onepasswordRead "op://Infrastructure/hinqfehrj4azx6rhekpbgd3xtq/token" }}
 {{- end }}
   git_protocol: ssh

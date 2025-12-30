@@ -60,6 +60,37 @@ install_starship_user() {
   fi
 }
 
+ensure_fzf_zsh_integration() {
+  # On many Linux distros (including some Codespaces images), the `fzf` package
+  # may not ship the zsh key-bindings/completion files we expect.
+  # We standardize on the upstream fzf install which generates ~/.fzf.zsh.
+  command -v git >/dev/null 2>&1 || return 0
+  command -v fzf >/dev/null 2>&1 || return 0
+
+  if [[ ! -r "$HOME/.fzf.zsh" ]]; then
+    if [[ ! -d "$HOME/.fzf" ]]; then
+      git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" || return 0
+    fi
+
+    # Generate ~/.fzf.zsh without modifying rc files
+    "$HOME/.fzf/install" --bin --completion --key-bindings --no-update-rc >/dev/null 2>&1 || true
+  fi
+}
+
+install_fd_find() {
+  # Optional but recommended: makes fzf much faster and respects ignores.
+  # Package names differ across distros, so try common ones.
+  if command -v apt-get >/dev/null 2>&1; then
+    $SUDO apt-get install -y fd-find || true
+  elif command -v dnf >/dev/null 2>&1; then
+    $SUDO dnf install -y fd-find || $SUDO dnf install -y fd || true
+  elif command -v yum >/dev/null 2>&1; then
+    $SUDO yum install -y fd-find || $SUDO yum install -y fd || true
+  elif command -v pacman >/dev/null 2>&1; then
+    $SUDO pacman -Sy --noconfirm fd || true
+  fi
+}
+
 if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get update
   $SUDO apt-get install -y git curl ca-certificates fzf bat zoxide ripgrep
@@ -89,4 +120,6 @@ else
   exit 0
 fi
 
+install_fd_find
+ensure_fzf_zsh_integration
 install_starship_user
