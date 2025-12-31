@@ -140,16 +140,3 @@ fi
 if command -v brew >/dev/null 2>&1; then
   export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
 fi
-
-# --- Codespaces: hint to run finish-install for VS Code extensions ---
-# We do NOT auto-run this: Codespaces dotfiles run in a non-interactive context and the VS Code CLI
-# often isn't ready yet. We'll just nudge you once per shell session.
-if [[ -o interactive ]] && [[ -n "${CODESPACES:-}" ]] && command -v finish-install >/dev/null 2>&1; then
-  state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
-  ext_stamp="$state_dir/vscode-extensions.installed"
-
-  if [[ ! -f "$ext_stamp" ]] && [[ -z "${DOTFILES_FINISH_INSTALL_HINTED:-}" ]]; then
-    export DOTFILES_FINISH_INSTALL_HINTED=1
-    echo "Dotfiles setup incomplete in Codespaces: run 'finish-install' to install VS Code extensions."
-  fi
-fi
