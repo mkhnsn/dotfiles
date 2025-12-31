@@ -42,7 +42,14 @@ fi
 info "PNPM_HOME:   ${PNPM_HOME:-<unset>}"
 if have pnpm; then
   # Where pnpm thinks global binaries should go
-  info "pnpm global-bin-dir: $(pnpm config get global-bin-dir 2>/dev/null || echo <unknown>)"
+  info "pnpm global-bin-dir: $(pnpm config get global-bin-dir 2>/dev/null || echo unknown)"
+fi
+
+if [[ -n "${PNPM_HOME:-}" ]]; then
+  case ":$PATH:" in
+    *":$PNPM_HOME:"*) ok "PNPM_HOME is on PATH" ;;
+    *) warn "PNPM_HOME is NOT on PATH" ;;
+  esac
 fi
 
 hr "Useful paths"
