@@ -52,8 +52,7 @@ fi
 
 # ---- Apply dotfiles ----
 # If this script is running from a cloned dotfiles repo (Codespaces dotfiles flow),
-# apply directly from the local source directory. Do NOT use --one-shot here,
-# because Codespaces already cloned the repo and we want deterministic behavior.
+# apply directly from the local source directory.
 #
 # If we are curl-running (no local repo), do a one-shot init from the repo.
 
@@ -63,9 +62,23 @@ if [[ -f "$SCRIPT_DIR/dot_zshrc" || -f "$SCRIPT_DIR/.chezmoiexternal.toml" || -d
   "$CHEZMOI_BIN" apply --source "$SCRIPT_DIR"
 else
   log "no local repo detected (likely curl-run); applying from repo: $DOTFILES_REPO"
-  log "applying via chezmoi one-shot (remote repo)"
+  log "initializing via chezmoi (one-shot) from repo"
   "$CHEZMOI_BIN" init --one-shot --apply "$DOTFILES_REPO"
 fi
 
+# ---- Post-apply fixups ----
+# Some environments strip executable bits during dotfiles import.
+# Ensure finish-install is runnable if it was deployed by chezmoi.
+FINISH_INSTALL="$HOME/.local/bin/finish-install"
+if [[ -f "$FINISH_INSTALL" ]]; then
+  chmod +x "$FINISH_INSTALL" 2>/dev/null || true
+
+  # NOTE: We intentionally do NOT auto-run this here.
+  # In Codespaces, VS Code / the Remote extension host (and the `code` CLI) may not be ready yet.
+  # Run it manually once you have a VS Code window open.
+  log "Next step (optional): run 'finish-install' to finalize editor setup"
+  log "  - Path: $FINISH_INSTALL"
+  log "  - This installs VS Code extensions and applies minimal Codespaces settings (when supported)"
+fi
+
 log "done"
-log "When VS Code is fully ready, run: finish-install"

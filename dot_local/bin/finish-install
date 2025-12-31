@@ -1,141 +1,106 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# finish-install
+# Non-interactive helper that can be run *after* a Codespace/Remote session is fully up.
+#
+# Responsibilities:
+# - Install VS Code extensions from a list (minimal or full)
+#
+# Safe defaults:
+# - Never prompts
+# - Bails cleanly if VS Code CLI is not ready yet
+# - Uses stamp files so it can be re-run safely
+
 log() { printf '[finish-install] %s\n' "$*"; }
+warn() { printf '[finish-install] WARN: %s\n' "$*"; }
+
+usage() {
+  cat <<'USAGE'
+finish-install [--force] [--force-extensions] [--dry-run]
+
+Defaults:
+  - Install VS Code extensions from:
+      ~/.config/vscode/extensions.minimal.txt
+      ~/.config/vscode/extensions.full.txt (when DOTFILES_FULL is set)
+
+Flags:
+  --force            Same as --force-extensions
+  --force-extensions Force extension install
+  --dry-run          Print what would happen without changing anything
+USAGE
+}
+
+FORCE_EXT=0
+DRY_RUN=0
+
+for arg in "${@:-}"; do
+  case "$arg" in
+    --force) FORCE_EXT=1 ;;
+    --force-extensions) FORCE_EXT=1 ;;
+    --dry-run) DRY_RUN=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) warn "Unknown arg: $arg"; usage; exit 2 ;;
+  esac
+done
 
 LIST="$HOME/.config/vscode/extensions.minimal.txt"
 [[ -n "${DOTFILES_FULL:-}" ]] && LIST="$HOME/.config/vscode/extensions.full.txt"
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
 EXT_STAMP="$STATE_DIR/vscode-extensions.installed"
-SET_STAMP="$STATE_DIR/vscode-settings.patched"
-OVERLAY_HASH_STAMP="$STATE_DIR/vscode-settings.overlay.sha256"
 mkdir -p "$STATE_DIR"
 
-# --- helper: find VS Code remote settings path ---
-find_machine_settings() {
-  local base=""
-  for base in "$HOME/.vscode-server" "$HOME/.vscode-remote"; do
-    [[ -d "$base/data/Machine" ]] || continue
-    echo "$base/data/Machine/settings.json"
+# --- install extensions (safe to re-run; but stamped) ---
+install_extensions() {
+  if [[ -f "$EXT_STAMP" && "$FORCE_EXT" -eq 0 ]]; then
+    log "VS Code extensions already installed (remove $EXT_STAMP or use --force-extensions to re-run)"
     return 0
-  done
-  return 1
-}
-
-# --- helper: file sha256 (portable-ish) ---
-sha256_file() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "$1" | awk '{print $1}'
-  elif command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 "$1" | awk '{print $1}'
-  else
-    return 1
   fi
-}
 
-# --- helper: deep merge JSON (overlay wins) ---
-json_merge() {
-  # args: base overlay out
-  if ! command -v python3 >/dev/null 2>&1; then
-    log "python3 not found; cannot merge JSON."
-    return 1
+  if [[ ! -f "$LIST" ]]; then
+    warn "Extension list not found: $LIST (skipping)"
+    return 0
   fi
-  python3 - "$1" "$2" "$3" <<'PY'
-import json, sys
-base_path, overlay_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
-def deep_merge(a, b):
-    # Merge b into a (dicts deep-merged; other types replaced)
-    if isinstance(a, dict) and isinstance(b, dict):
-        out = dict(a)
-        for k, v in b.items():
-            out[k] = deep_merge(out.get(k), v)
-        return out
-    return b
+  if ! command -v code >/dev/null 2>&1; then
+    log "VS Code CLI ('code') not found in PATH yet."
+    log "Open VS Code once (Remote) and try again."
+    return 0
+  fi
 
-try:
-    with open(base_path, "r", encoding="utf-8") as f:
-        base = json.load(f)
-except FileNotFoundError:
-    base = {}
-except json.JSONDecodeError:
-    base = {}
+  log "Installing VS Code extensions from: $LIST"
 
-with open(overlay_path, "r", encoding="utf-8") as f:
-    overlay = json.load(f)
+  local ok=0
+  while IFS= read -r ext; do
+    [[ -z "$ext" || "$ext" =~ ^# ]] && continue
+    log "  - $ext"
 
-merged = deep_merge(base, overlay)
-
-with open(out_path, "w", encoding="utf-8") as f:
-    json.dump(merged, f, indent=2, sort_keys=True)
-    f.write("\n")
-PY
-}
-
-# --- 1) patch remote settings (safe to re-run; re-run when overlay changes) ---
-OVERLAY="$HOME/.config/vscode/settings.codespaces.json"
-
-if [[ -f "$OVERLAY" ]]; then
-  if ! command -v python3 >/dev/null 2>&1; then
-    log "python3 not found; cannot merge VS Code settings overlay (skipping)."
-  elif SETTINGS_PATH="$(find_machine_settings)"; then
-    mkdir -p "$(dirname "$SETTINGS_PATH")"
-
-    if [[ -f "$SETTINGS_PATH" && ! -w "$SETTINGS_PATH" ]]; then
-      log "VS Code settings file exists but is not writable: $SETTINGS_PATH (skipping)"
-    else
-      overlay_hash="$(sha256_file "$OVERLAY" 2>/dev/null || true)"
-      prev_hash="$(cat "$OVERLAY_HASH_STAMP" 2>/dev/null || true)"
-
-      if [[ -n "$overlay_hash" && "$overlay_hash" == "$prev_hash" && -f "$SET_STAMP" ]]; then
-        log "VS Code settings already patched (overlay unchanged)."
-      else
-        log "Patching VS Code remote Machine settings: $SETTINGS_PATH"
-        tmp="$(mktemp)"
-        json_merge "$SETTINGS_PATH" "$OVERLAY" "$tmp"
-        mv "$tmp" "$SETTINGS_PATH"
-        touch "$SET_STAMP"
-        [[ -n "$overlay_hash" ]] && echo "$overlay_hash" > "$OVERLAY_HASH_STAMP"
-        log "VS Code settings patched."
-        log "NOTE: you may need to reload the VS Code window for changes to fully apply."
-      fi
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      continue
     fi
-  else
-    log "VS Code remote data dir not found yet (~/.vscode-server or ~/.vscode-remote)."
-    log "Open a Remote window once, then re-run: finish-install"
+
+    if code --install-extension "$ext" >/dev/null 2>&1; then
+      ok=1
+    else
+      warn "failed to install: $ext (continuing)"
+    fi
+  done < "$LIST"
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    log "(dry-run) not stamping"
+    return 0
   fi
-else
-  log "No overlay settings found at $OVERLAY (skipping settings patch)"
-fi
 
-# --- 2) install extensions (safe to re-run; but stamped) ---
-if [[ -f "$EXT_STAMP" ]]; then
-  log "VS Code extensions already installed (remove $EXT_STAMP to re-run)"
-  exit 0
-fi
-
-if ! command -v code >/dev/null 2>&1; then
-  log "VS Code CLI ('code') not found in PATH yet."
-  log "Open VS Code once (Remote) and try again."
-  exit 0
-fi
-
-ok=0
-log "Installing VS Code extensions from: $LIST"
-while IFS= read -r ext; do
-  [[ -z "$ext" || "$ext" =~ ^# ]] && continue
-  log "  - $ext"
-  if code --install-extension "$ext" >/dev/null 2>&1; then
-    ok=1
+  if [[ "$ok" -eq 1 ]]; then
+    touch "$EXT_STAMP"
+    log "Extensions installed (stamped: $EXT_STAMP)"
   else
-    log "    (failed; continuing)"
+    warn "No extensions installed successfully; not stamping. Re-run later."
   fi
-done < "$LIST"
+}
 
-if [[ "$ok" -eq 1 ]]; then
-  touch "$EXT_STAMP"
-  log "finish-install complete."
-else
-  log "No extensions installed successfully; not stamping. Re-run later."
-fi
+# --- run ---
+install_extensions
+
+log "finish-install complete."

@@ -33,12 +33,3 @@ Library/Application Support/Code/**
 .config/iterm2/
 .config/iterm2/**
 {{- end -}}
-
-{{- if not (env "CODESPACES") -}}
-# VS Code Server (remote) config
-.config/vscode-server/
-.config/vscode-server/**
-# VS Code Remote (Codespaces, WSL) config
-.config/vscode-remote/
-.config/vscode-remote/**
-{{- end -}}
