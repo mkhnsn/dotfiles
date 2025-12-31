@@ -66,19 +66,4 @@ else
   "$CHEZMOI_BIN" init --one-shot --apply "$DOTFILES_REPO"
 fi
 
-# ---- Post-apply fixups ----
-# Some environments strip executable bits during dotfiles import.
-# Ensure finish-install is runnable if it was deployed by chezmoi.
-FINISH_INSTALL="$HOME/.local/bin/finish-install"
-if [[ -f "$FINISH_INSTALL" ]]; then
-  chmod +x "$FINISH_INSTALL" 2>/dev/null || true
-
-  # NOTE: We intentionally do NOT auto-run this here.
-  # In Codespaces, VS Code / the Remote extension host (and the `code` CLI) may not be ready yet.
-  # Run it manually once you have a VS Code window open.
-  log "Next step (optional): run 'finish-install' to finalize editor setup"
-  log "  - Path: $FINISH_INSTALL"
-  log "  - This installs VS Code extensions and applies minimal Codespaces settings (when supported)"
-fi
-
 log "done"
