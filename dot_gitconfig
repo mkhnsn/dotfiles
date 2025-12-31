@@ -8,6 +8,7 @@
 [pull]
   rebase = true
   
+{{- if not (env "CODESPACES") }}
 [user]
   signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMDSNoyopg2gar0Lwf2lT+tSQbbDel/oSD5zJwjq69Z1
 
@@ -20,6 +21,10 @@
 [gpg "ssh"]
   # Use a portable path so it works on macOS + Linux
   allowedSignersFile = ~/.config/git/allowed_signers
+{{- else }}
+[commit]
+  gpgsign = false
+{{- end }}
 
 [credential "https://github.com"]
   helper =
