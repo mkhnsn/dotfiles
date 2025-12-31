@@ -140,3 +140,10 @@ fi
 if command -v brew >/dev/null 2>&1; then
   export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
 fi
+
+# pnpm (global bins)
+export PNPM_HOME="$HOME/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[node-tools] Ensuring pnpm globals + corepack"
+
+# Skip if node isn't installed (your Brewfile/packages script should handle node)
+if ! command -v node >/dev/null 2>&1; then
+  echo "[node-tools] node not found; skipping"
+  exit 0
+fi
+
+export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
+mkdir -p "$PNPM_HOME"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+# Ensure pnpm exists (prefer corepack if present, fallback to npm)
+if ! command -v pnpm >/dev/null 2>&1; then
+  if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+    corepack prepare pnpm@latest --activate >/dev/null 2>&1 || true
+  else
+    npm i -g pnpm
+  fi
+fi
+
+# Avoid `pnpm setup` (it mutates shell rc files). Set bin dir explicitly instead.
+pnpm config set global-bin-dir "$PNPM_HOME" >/dev/null 2>&1 || true
+
+# Ensure corepack exists (some Node installs don't expose it)
+if ! command -v corepack >/dev/null 2>&1; then
+  pnpm i -g corepack
+fi
+
+corepack enable >/dev/null 2>&1 || true
+
+# Install any other node-style globals you want here (idempotent enough)
+# pnpm i -g npm-check-updates release-please commitizen
+
+echo "[node-tools] ✓ node=$(node -v) pnpm=$(pnpm -v) corepack=$(corepack --version)"

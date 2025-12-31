@@ -19,6 +19,32 @@ if have git; then ok "git:    $(git --version)"; else warn "git:    MISSING"; fi
 if have gh; then ok "gh:     $(gh --version | head -n 1)"; else warn "gh:     MISSING"; fi
 if have op; then ok "op:     $(op --version 2>/dev/null || true)"; else info "op:     not installed (fine unless you use op:// secrets)"; fi
 
+hr "Node toolchain"
+if have node; then
+  ok "node:   $(node -v)"
+else
+  warn "node:   MISSING"
+fi
+
+if have pnpm; then
+  ok "pnpm:   $(pnpm -v)"
+else
+  warn "pnpm:   MISSING"
+fi
+
+if have corepack; then
+  ok "corepack: $(corepack --version)"
+else
+  warn "corepack: MISSING"
+fi
+
+# pnpm globals sanity (this is what bit you)
+info "PNPM_HOME:   ${PNPM_HOME:-<unset>}"
+if have pnpm; then
+  # Where pnpm thinks global binaries should go
+  info "pnpm global-bin-dir: $(pnpm config get global-bin-dir 2>/dev/null || echo <unknown>)"
+fi
+
 hr "Useful paths"
 info "HOME:        ${HOME}"
 info "XDG_CACHE:   ${XDG_CACHE_HOME:-$HOME/.cache}"

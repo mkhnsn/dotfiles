@@ -28,6 +28,7 @@
   // ----------------------------------------------------------------------------
   // Language / formatter defaults
   // ----------------------------------------------------------------------------
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
@@ -80,6 +81,7 @@
     "editor.defaultFormatter": "hashicorp.terraform"
   },
   "[svg]": { "editor.defaultFormatter": "jock.svg" },
+  "[jinja]": { "editor.defaultFormatter": "samuelcolvin.jinjahtml" },
 
   // ----------------------------------------------------------------------------
   // File associations / previews
@@ -88,6 +90,11 @@
     "*.json": "jsonc",
     "*.jsonc": "jsonc",
     "*.tmpl": "jinja",
+    "*.json.tmpl": "jinja-json",
+    "*.sh.tmpl": "jinja-shell",
+    "*.toml.tmpl": "jinja-toml",
+    "*.yaml.tmpl": "jinja-yaml",
+    "*.yml.tmpl": "jinja-yaml",
     "*.g": "gcode",
     ".actrc": "plaintext",
     ".chezmoiignore": "gitignore",
