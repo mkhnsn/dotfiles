@@ -1,14 +1,9 @@
-[".config/zsh/plugins/zsh-better-npm-completion"]
-type = "git-repo"
-url = "https://github.com/lukechilds/zsh-better-npm-completion.git"
-refreshPeriod = "168h"
-
-[".config/zsh/plugins/pnpm-shell-completion"]
-type = "git-repo"
-url = "https://github.com/g-plane/pnpm-shell-completion.git"
-refreshPeriod = "168h"
-
 [".config/zsh/plugins/fzf-tab"]
 type = "git-repo"
 url = "https://github.com/Aloxaf/fzf-tab.git"
+refreshPeriod = "168h"
+
+[".config/zsh/plugins/fzf-tab-source"]
+type = "git-repo"
+url = "https://github.com/Freed-Wu/fzf-tab-source.git"
 refreshPeriod = "168h"

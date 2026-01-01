@@ -24,20 +24,6 @@ elif command -v fd-find >/dev/null 2>&1; then
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 fi
 
-
-
-# Fuzzy git branch checkout
-gcof() {
-  local b
-  b="$(
-    git branch --all --format='%(refname:short)' 2>/dev/null \
-      | sed '/^HEAD$/d' \
-      | sed '/->/d' \
-      | fzf
-  )" || return
-  git checkout "$b"
-}
-
 # ---- completions dir ----
 ZSH_COMPLETIONS_DIR="$HOME/.config/zsh/completions"
 mkdir -p "$ZSH_COMPLETIONS_DIR" 2>/dev/null || true
@@ -92,6 +78,10 @@ compinit -i -d "$ZSH_COMPDUMP"
 autoload -Uz _npm 2>/dev/null || true
 (( $+functions[_npm] )) && compdef _npm npm 2>/dev/null || true
 
+# Ensure git completion is wired (prevents fallback to plain file completion)
+autoload -Uz _git 2>/dev/null || true
+(( $+functions[_git] )) && compdef _git git 2>/dev/null || true
+
 #-------------------------------------------------------------------------------
 #---- most settings should come after this line! -------------------------------
 #-------------------------------------------------------------------------------
@@ -133,14 +123,11 @@ for km in emacs viins; do
 done
 
 # ---- completion UX: don't destroy my buffer ----
-unsetopt MENU_COMPLETE          # don't replace text by cycling matches
-setopt AUTO_MENU               # show menu when there are multiple matches
 setopt COMPLETE_IN_WORD        # complete from cursor, not just end
 setopt ALWAYS_TO_END           # move cursor to end after completion
 setopt NO_BEEP                 # stop yelling at me
 
 # Make selection explicit when there are many matches
-zstyle ':completion:*' menu select
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*:descriptions' format '%d'
 zstyle ':completion:*:messages' format '%d'
@@ -150,6 +137,41 @@ zstyle ':completion:*:warnings' format '%d'
 for f in "$HOME/.config/zsh/plugins.d/"*.zsh(N); do
   source "$f"
 done
+
+if command -v brew >/dev/null 2>&1; then
+  # zsh-syntax-highlighting
+  [[ -r "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
+    source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+  # zsh-autosuggestions
+  [[ -r "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
+    source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
+ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd completion)
+
+typeset -A ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_STYLES[default]=none
+ZSH_HIGHLIGHT_STYLES[unknown-token]=fg=red,bold
+ZSH_HIGHLIGHT_STYLES[reserved-word]=fg=green
+ZSH_HIGHLIGHT_STYLES[alias]=none
+ZSH_HIGHLIGHT_STYLES[builtin]=none
+ZSH_HIGHLIGHT_STYLES[function]=none
+ZSH_HIGHLIGHT_STYLES[command]=none
+ZSH_HIGHLIGHT_STYLES[precommand]=none
+ZSH_HIGHLIGHT_STYLES[commandseparator]=none
+ZSH_HIGHLIGHT_STYLES[hashed-command]=none
+ZSH_HIGHLIGHT_STYLES[path]=none
+ZSH_HIGHLIGHT_STYLES[globbing]=none
+ZSH_HIGHLIGHT_STYLES[history-expansion]=fg=blue
+ZSH_HIGHLIGHT_STYLES[single-hyphen-option]=none
+ZSH_HIGHLIGHT_STYLES[double-hyphen-option]=none
+ZSH_HIGHLIGHT_STYLES[back-quoted-argument]=none
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]=fg=yellow
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]=fg=yellow
+ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]=fg=cyan
+ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]=fg=cyan
+ZSH_HIGHLIGHT_STYLES[assign]=none
 
 # 1Password SSH agent socket (macOS only; don't stomp whatever agent a Linux box already uses)
 if [[ "${OSTYPE:-}" == darwin* ]]; then
@@ -165,3 +187,20 @@ if command -v brew >/dev/null 2>&1; then
   export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
 fi
 
+# System pager defaults
+export PAGER='less'
+export LESS='-R -F -X --mouse'
+
+# Better cat (interactive only)
+if command -v bat >/dev/null 2>&1; then
+  alias cat='bat --paging=auto'
+fi
+
+# Prefer bat for previewing files
+export BAT_PAGER='less -RFX --mouse'
+export BAT_THEME='GitHub'   # or Nord, Dracula, GitHub, etc.
+
+# Make `man` use less with the same behavior (and keep colors)
+export MANPAGER='less -R --mouse'
+export LESS_TERMCAP_md=$'\e[1m'   # bold
+export LESS_TERMCAP_me=$'\e[0m'   # reset

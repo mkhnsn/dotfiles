@@ -4,6 +4,7 @@
 
 [core]
   editor = nano
+  pager = delta
 
 [pull]
   rebase = true
@@ -37,4 +38,19 @@
 [include]
   path = ~/.gitconfig.local
 
+[interactive]
+  diffFilter = delta --color-only
 
+[include]
+    path = ~/.config/git/delta/themes.gitconfig
+
+[delta]
+  features = arctic-fox
+  navigate = true  # use n and N to move between diff sections
+  side-by-side = true
+  hyperlinks = true
+  hyperlinks-file-link-format = "vscode://file/{path}:{line}"
+  pager = less -FRX --mouse
+
+[merge]
+  conflictStyle = zdiff3
