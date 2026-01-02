@@ -3,8 +3,12 @@
 add_newline = false
 command_timeout = 1000
 
-# Simple: dir + git + prompt char
-format = "$directory$git_branch$git_status$character"
+format = """
+$custom\
+$directory\
+$git_branch\
+$git_status\
+$character"""
 
 [directory]
 style = "bold cyan"
@@ -12,14 +16,26 @@ truncate_to_repo = true
 truncation_length = 3
 
 [git_branch]
-format = " [$branch]($style)"
-style = "purple"
+format = "[$branch]($style) "
+style = "red"
 
 [git_status]
-format = " [$all_status$ahead_behind]($style)"
+format = "[$all_status$ahead_behind]($style) "
 style = "red"
-# If you want it quieter, uncomment:
-# disabled = true
+
+# Shows repo-local email (preferred)
+[custom.git_email_local]
+when = "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config --local --get user.email >/dev/null 2>&1"
+command = "git config --local user.email"
+format = "[$output]($style) "
+style = "dimmed green"
+
+# Shows global email only when no repo-local email is set
+[custom.git_email_global]
+when = "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && ! git config --local --get user.email >/dev/null 2>&1 && git config --global --get user.email >/dev/null 2>&1"
+command = "echo 'No local user.email'"
+format = "[$output]($style) "
+style = "yellow"
 
 [character]
 success_symbol = "[›](bold green) "
@@ -33,5 +49,5 @@ disabled = true
 
 [hostname]
 ssh_only = true
-format = "[$hostname]($style) "
+format = "[$hostname]($style)"
 style = "bold dimmed white"
