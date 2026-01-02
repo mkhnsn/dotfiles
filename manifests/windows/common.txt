@@ -1,0 +1,21 @@
+# Common packages for Windows (installed via winget)
+# Comments and blank lines are ignored
+
+# Version control
+Git.Git
+
+# Terminal & Shell
+Microsoft.PowerShell
+sharkdp.bat
+BurntSushi.ripgrep.MSVC
+
+# Editor
+Microsoft.VisualStudioCode
+
+# Dev tools
+GitHub.cli
+GitHub.GitLFS
+
+# Utilities
+junegunn.fzf
+ajeetdsouza.zoxide

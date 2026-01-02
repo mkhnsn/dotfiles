@@ -1,0 +1,8 @@
+# Windows-specific packages (installed via winget)
+# These are tools that only make sense on Windows
+
+# Windows Terminal
+Microsoft.WindowsTerminal
+
+# Windows Package Manager
+Microsoft.PowerToys

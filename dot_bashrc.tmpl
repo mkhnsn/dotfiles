@@ -1,0 +1,15 @@
+{{- if eq .chezmoi.os "windows" -}}
+# ~/.bashrc (managed by chezmoi) - Git Bash on Windows
+# Auto-launch zsh if available and running interactively
+
+# If not running interactively, don't do anything
+if [ -t 1 ] && command -v zsh >/dev/null 2>&1; then
+  # Check if we're not already in zsh (prevent loops)
+  if [ -z "$ZSH_VERSION" ]; then
+    exec zsh
+  fi
+fi
+{{- else -}}
+# ~/.bashrc (managed by chezmoi)
+# This file is only used on Windows. On macOS/Linux, use your system's default .bashrc
+{{- end -}}

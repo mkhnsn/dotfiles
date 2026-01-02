@@ -1,0 +1,74 @@
+{{- if eq .chezmoi.os "windows" -}}
+# run_onchange_install-windows.ps1
+# Install Windows packages via winget
+# Hash of manifests: {{ include "manifests/windows/common.txt" | sha256sum }}{{ include "manifests/windows/windows-only.txt" | sha256sum }}{{ if stat (joinPath .chezmoi.sourceDir "manifests" "windows" (printf "%s.txt" .chezmoi.hostname)) }}{{ include (joinPath "manifests/windows" (printf "%s.txt" .chezmoi.hostname)) | sha256sum }}{{ end }}
+
+$ErrorActionPreference = "Continue"
+
+function Get-PackageList {
+    param([string]$FilePath)
+    
+    if (-not (Test-Path $FilePath)) {
+        return @()
+    }
+    
+    $packages = @()
+    Get-Content $FilePath | ForEach-Object {
+        $line = $_.Trim()
+        # Skip comments and empty lines
+        if ($line -and -not $line.StartsWith("#")) {
+            $packages += $line
+        }
+    }
+    return $packages
+}
+
+function Install-WingetPackage {
+    param([string]$PackageId)
+    
+    Write-Host "Installing $PackageId..."
+    
+    # Check if already installed (winget list is slow, so we just try to install)
+    $result = winget install --id $PackageId --exact --silent --accept-package-agreements --accept-source-agreements 2>&1
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  ✓ $PackageId installed successfully"
+    } elseif ($result -match "already installed" -or $result -match "No available upgrade") {
+        Write-Host "  ✓ $PackageId already installed"
+    } else {
+        Write-Host "  ⚠ $PackageId installation failed or skipped: $result"
+    }
+}
+
+# Collect all package IDs from manifest files
+$manifestDir = "{{ .chezmoi.sourceDir }}\manifests\windows"
+$allPackages = @()
+
+# Read common.txt
+$commonFile = Join-Path $manifestDir "common.txt"
+$allPackages += Get-PackageList $commonFile
+
+# Read windows-only.txt
+$windowsOnlyFile = Join-Path $manifestDir "windows-only.txt"
+$allPackages += Get-PackageList $windowsOnlyFile
+
+# Read hostname-specific file if it exists
+$hostnameFile = Join-Path $manifestDir "{{ .chezmoi.hostname }}.txt"
+$allPackages += Get-PackageList $hostnameFile
+
+# Remove duplicates
+$allPackages = $allPackages | Select-Object -Unique
+
+if ($allPackages.Count -eq 0) {
+    Write-Host "No packages to install"
+    exit 0
+}
+
+Write-Host "Installing $($allPackages.Count) packages..."
+
+foreach ($package in $allPackages) {
+    Install-WingetPackage $package
+}
+
+Write-Host "Windows package installation complete!"
+{{- end -}}

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# run_onchange_10-setup-gitbash-zsh.sh
+# Install and configure zsh in Git Bash (Windows/MSYS only)
+{{- if eq .chezmoi.os "windows" }}
+
+set -euo pipefail
+
+# Check if we're in Git Bash / MSYS environment
+if [[ ! "$OSTYPE" =~ msys|cygwin|mingw ]]; then
+  exit 0
+fi
+
+echo "Setting up zsh for Git Bash..."
+
+# Install zsh using pacman (Git Bash's package manager)
+if ! command -v zsh >/dev/null 2>&1; then
+  echo "Installing zsh via pacman..."
+  pacman -S --noconfirm zsh || {
+    echo "Failed to install zsh. Make sure Git Bash is properly installed."
+    exit 1
+  }
+else
+  echo "zsh is already installed"
+fi
+
+# Verify zsh is available
+if command -v zsh >/dev/null 2>&1; then
+  echo "✓ zsh installed at: $(which zsh)"
+  zsh --version
+else
+  echo "✗ zsh installation failed"
+  exit 1
+fi
+
+echo "Git Bash zsh setup complete!"
+{{- end }}

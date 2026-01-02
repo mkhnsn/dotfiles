@@ -1,5 +1,11 @@
 # Environment / PATH (managed by chezmoi)
 
+# ---- Windows/MSYS specific setup ----
+# Load Windows-specific environment if running on Windows/Git Bash
+if [[ "$OSTYPE" =~ msys|cygwin|mingw ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS ]]; then
+  [[ -r "$HOME/.config/shell/env.windows.zsh" ]] && source "$HOME/.config/shell/env.windows.zsh"
+fi
+
 export EDITOR="code --wait"
 
 # PATH basics
