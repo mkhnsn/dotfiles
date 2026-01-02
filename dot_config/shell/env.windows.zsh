@@ -33,13 +33,6 @@ esac
 # ---- Git Bash specific fixes ----
 # Git Bash has some quirks with certain tools
 
-# Fix for fzf in Git Bash - ensure proper integration
-if command -v fzf >/dev/null 2>&1; then
-  # Git Bash might not have the same fzf integration paths
-  # The main env.zsh will try to source ~/.fzf.zsh which should work
-  :
-fi
-
 # ---- Optional: Windows-specific aliases ----
 # Add any Windows-specific aliases here if needed
 # alias open='start'  # Use 'start' to open files in default apps

@@ -2,7 +2,10 @@
 
 # ---- Windows/MSYS specific setup ----
 # Load Windows-specific environment if running on Windows/Git Bash
-if [[ "$OSTYPE" =~ msys|cygwin|mingw ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS ]]; then
+# Check OSTYPE first (no subprocess), fallback to uname only if OSTYPE is unclear
+if [[ "$OSTYPE" =~ ^(msys|cygwin|mingw) ]]; then
+  [[ -r "$HOME/.config/shell/env.windows.zsh" ]] && source "$HOME/.config/shell/env.windows.zsh"
+elif [[ -z "$OSTYPE" && "$(uname -s 2>/dev/null)" =~ ^(MINGW|MSYS) ]]; then
   [[ -r "$HOME/.config/shell/env.windows.zsh" ]] && source "$HOME/.config/shell/env.windows.zsh"
 fi
 
