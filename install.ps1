@@ -30,6 +30,16 @@ function Write-Error {
     Write-Host "[dotfiles] ERROR: $Message" -ForegroundColor Red
 }
 
+function Add-ToPath {
+    param([string]$Path)
+    
+    if (Test-Path $Path) {
+        $env:Path = "$Path;$env:Path"
+        return $true
+    }
+    return $false
+}
+
 function Test-Administrator {
     $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     return $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -50,7 +60,8 @@ function Install-Winget {
     try {
         Write-Log "Installing App Installer (includes winget)..."
         # This requires Windows 10 1809+ or Windows 11
-        Start-Process "ms-windows-store://pdp/?ProductId=9NBLGGH4NNS1" -Wait
+        # Note: Start-Process returns immediately with URI schemes
+        Start-Process "ms-windows-store://pdp/?ProductId=9NBLGGH4NNS1"
         Write-Log "Please complete the App Installer installation from the Microsoft Store, then re-run this script."
         return $false
     } catch {
@@ -74,10 +85,18 @@ function Install-GitForWindows {
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Git for Windows installed successfully"
             
-            # Add Git to PATH for current session
-            $gitPath = "C:\Program Files\Git\cmd"
-            if (Test-Path $gitPath) {
-                $env:Path = "$gitPath;$env:Path"
+            # Try common Git installation paths
+            $gitPaths = @(
+                "C:\Program Files\Git\cmd",
+                "C:\Program Files (x86)\Git\cmd",
+                "$env:ProgramFiles\Git\cmd",
+                "${env:ProgramFiles(x86)}\Git\cmd"
+            )
+            
+            foreach ($path in $gitPaths) {
+                if (Add-ToPath $path) {
+                    break
+                }
             }
             
             Write-Log "Git Bash is now available. You may need to restart your terminal for it to appear in your Start Menu."
@@ -107,16 +126,27 @@ function Install-Chezmoi {
         if ($LASTEXITCODE -eq 0) {
             Write-Success "chezmoi installed successfully"
             
-            # Add to PATH for current session
-            $chezmoiPath = "$env:LOCALAPPDATA\Programs\chezmoi"
-            if (Test-Path $chezmoiPath) {
-                $env:Path = "$chezmoiPath;$env:Path"
-            }
+            # Try common chezmoi installation paths
+            $chezmoiPaths = @(
+                "$env:LOCALAPPDATA\Programs\chezmoi",
+                "$env:ProgramFiles\chezmoi",
+                "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\twpayne.chezmoi_Microsoft.Winget.Source_*"
+            )
             
-            # Also check common install location
-            $chezmoiPath2 = "$env:ProgramFiles\chezmoi"
-            if (Test-Path $chezmoiPath2) {
-                $env:Path = "$chezmoiPath2;$env:Path"
+            foreach ($path in $chezmoiPaths) {
+                if ($path -like "*`**") {
+                    # Handle wildcard paths
+                    $resolvedPaths = Get-Item $path -ErrorAction SilentlyContinue
+                    foreach ($resolved in $resolvedPaths) {
+                        if (Add-ToPath $resolved.FullName) {
+                            break
+                        }
+                    }
+                } else {
+                    if (Add-ToPath $path) {
+                        break
+                    }
+                }
             }
             
             return $true
@@ -140,7 +170,7 @@ function Install-Chezmoi {
             Remove-Item $tempZip
             
             if (Test-Path $chezmoiExe) {
-                $env:Path = "$chezmoiDir;$env:Path"
+                Add-ToPath $chezmoiDir
                 Write-Success "chezmoi installed manually to $chezmoiDir"
                 return $true
             } else {
