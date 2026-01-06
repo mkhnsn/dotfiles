@@ -1,12 +1,12 @@
 # Dotfiles Managed with chezmoi
 
 This repository contains my personal dotfiles managed with [chezmoi](https://www.chezmoi.io).  
-The goal is a clean, portable, reproducible setup across macOS, Linux, and GitHub Codespaces.
+The goal is a clean, portable, reproducible setup across macOS, Linux, Windows, and GitHub Codespaces.
 
-The repository is designed to support **three installation modes**:
+The repository is designed to support **four installation modes**:
 
 - GitHub Codespaces (automatic)
-- Personal machines (full setup)
+- Personal machines (full setup) - macOS, Linux, Windows
 - Temporary or shared machines (lite setup)
 
 ---
@@ -26,6 +26,9 @@ This relies on GitHub’s official dotfiles mechanism and does not require `inst
 
 ### 2. Personal machine (full setup)
 
+#### macOS / Linux
+
+
 Use this on a personal macOS or Linux machine where you want the full environment:
 shell configuration, tools, 1Password integration, SSH agent wiring, and VS Code setup.
 
@@ -38,6 +41,30 @@ Notes:
 - macOS requires Homebrew to already be installed
 - You’ll be prompted to sign into 1Password (once)
 - This is the recommended path for long‑lived personal machines
+
+#### Windows
+
+Use this on Windows machines where you want Git Bash with zsh, VS Code, and development tools.
+
+**PowerShell (as regular user):**
+```powershell
+iwr -useb https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.ps1 | iex
+```
+
+Or download and run:
+```powershell
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.ps1 -OutFile install.ps1
+.\install.ps1
+```
+
+This will:
+- Install winget (if needed)
+- Install Git for Windows (includes Git Bash)
+- Install chezmoi
+- Apply dotfiles configuration
+- Set up Git Bash to auto-launch zsh
+
+After installation, open **Git Bash** from your Start Menu and it will automatically launch zsh with your dotfiles configuration.
 
 ---
 
@@ -73,7 +100,9 @@ chezmoi apply -R
 
 - `dot_*/` — canonical configuration templates managed by chezmoi
 - `.chezmoiexternal.toml` — external git‑based dependencies (zsh plugins, etc.)
-- `install.sh` — full bootstrap for personal machines
+- `install.sh` — full bootstrap for personal machines (macOS/Linux)
+- `install.ps1` — full bootstrap for Windows machines
+- `manifests/windows/` — winget package manifests for Windows
 - `bootstrap/` — helper scripts for containers or special environments
 - `private_*.tmpl` — secret-backed or machine-specific templates
 
