@@ -18,6 +18,9 @@ $package\
 $hostname\
 ${custom.git_email_warning}"""
 
+[package]
+format='[$symbol$version]($style) '
+
 [directory]
 style = "bold cyan"
 truncate_to_repo = true
