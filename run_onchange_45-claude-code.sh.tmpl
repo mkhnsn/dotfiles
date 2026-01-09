@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+{{- if not (env "DOTFILES_FULL") }}
+# Lite install — skip heavy dev tools
+exit 0
+{{- end }}
+
+echo "[claude-code] Ensuring Claude Code CLI"
+
+# Already installed?
+if command -v claude >/dev/null 2>&1; then
+  echo "[claude-code] ✓ claude already installed"
+  exit 0
+fi
+
+# macOS: Homebrew should have it from Brewfile
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if command -v brew >/dev/null 2>&1; then
+    # Brewfile handles this, but just in case
+    brew list claude-code >/dev/null 2>&1 || brew install claude-code
+  fi
+  exit 0
+fi
+
+# Linux: use official installer
+echo "[claude-code] Installing via curl..."
+curl -fsSL https://claude.ai/install.sh | sh
+
+echo "[claude-code] ✓ installed"
