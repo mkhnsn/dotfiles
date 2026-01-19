@@ -33,3 +33,7 @@
 [[ssh-keys]]
 vault = "Infrastructure"
 item  = "bvrlbhwmpxmatfpj6nmqa2pfdq" # "Github (mkhnsn)"
+
+[[ssh-keys]]
+vault = "Infrastructure"
+item  = "lkseqnk64n7nux4auao6xi2wsa" # "Echo-Net Admin SSH Key"

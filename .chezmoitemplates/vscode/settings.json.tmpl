@@ -89,6 +89,7 @@
   "files.associations": {
     "*.json": "jsonc",
     "*.jsonc": "jsonc",
+    "*.hujson": "jsonc",
     "*.tmpl": "jinja",
     "*.json.tmpl": "jinja-json",
     "*.sh.tmpl": "jinja-shell",
@@ -103,6 +104,12 @@
     "docker-compose.*": "dockercompose",
     "*.tfvars": "terraform"
   },
+  "json.schemas": [{
+    "fileMatch": ["*.hujson"],
+    "schema": {
+        "allowTrailingCommas": true
+    }
+  }],
   "svg.preview.mode": "svg",
 
   // ----------------------------------------------------------------------------
@@ -169,5 +176,15 @@
   "editor.autoClosingQuotes": "never",
   "editor.autoClosingDelete": "never",
   "editor.autoClosingOvertype": "never",
-  "editor.autoSurround": "never"
+  "editor.autoSurround": "never",
+  "claudeCode.preferredLocation": "panel",
+  "sqlite.databaseExtensions": [
+    "db",
+    "db3",
+    "sdb",
+    "s3db",
+    "sqlite",
+    "sqlite3",
+    "vtdb"
+  ]
 }
