@@ -21,7 +21,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
     "source.fixAll.eslint": "explicit",
-    "source.fixAll.ruff": "explicit"
+    "source.fixAll.ruff": "explicit",
   },
   "editor.fontFamily": "JetBrains Mono, Menlo, Monaco, 'Courier New', monospace",
 
@@ -33,23 +33,23 @@
   "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "eslint.validate": [
     "javascript",
     "javascriptreact",
     "typescript",
-    "typescriptreact"
+    "typescriptreact",
   ],
   "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff"
+    "editor.defaultFormatter": "charliermarsh.ruff",
   },
   "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
   "[yaml]": {
@@ -59,12 +59,12 @@
     "editor.quickSuggestions": {
       "other": true,
       "comments": false,
-      "strings": true
+      "strings": true,
     },
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "redhat.vscode-yaml",
   },
   "[github-actions-workflow]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "redhat.vscode-yaml",
   },
   "[dockercompose]": {
     "editor.insertSpaces": true,
@@ -73,12 +73,12 @@
     "editor.quickSuggestions": {
       "other": true,
       "comments": false,
-      "strings": true
+      "strings": true,
     },
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "redhat.vscode-yaml",
   },
   "[terraform]": {
-    "editor.defaultFormatter": "hashicorp.terraform"
+    "editor.defaultFormatter": "hashicorp.terraform",
   },
   "[svg]": { "editor.defaultFormatter": "jock.svg" },
   "[jinja]": { "editor.defaultFormatter": "samuelcolvin.jinjahtml" },
@@ -89,6 +89,7 @@
   "files.associations": {
     "*.json": "jsonc",
     "*.jsonc": "jsonc",
+    "*.hujson": "jsonc",
     "*.tmpl": "jinja",
     "*.json.tmpl": "jinja-json",
     "*.sh.tmpl": "jinja-shell",
@@ -101,8 +102,16 @@
     ".dockerignore": "gitignore",
     "Dockerfile.*": "dockerfile",
     "docker-compose.*": "dockercompose",
-    "*.tfvars": "terraform"
+    "*.tfvars": "terraform",
   },
+  "json.schemas": [
+    {
+      "fileMatch": ["*.hujson"],
+      "schema": {
+        "allowTrailingCommas": true,
+      },
+    },
+  ],
   "svg.preview.mode": "svg",
 
   // ----------------------------------------------------------------------------
@@ -134,7 +143,7 @@
   "terminal.integrated.suggest.enabled": false,
   "terminal.integrated.suggest.providers": {
     "vscode.terminal-suggest": false,
-    "lsp": false
+    "lsp": false,
   },
   "terminal.integrated.shellIntegration.enabled": false,
   "terminal.integrated.suggest.suggestOnTriggerCharacters": false,
@@ -142,10 +151,11 @@
   "terminal.integrated.suggest.showStatusBar": false,
   "terminal.integrated.defaultProfile.linux": "zsh",
   "terminal.integrated.profiles.linux": {
-    "zsh": { "path": "/usr/bin/zsh" }
+    "zsh": { "path": "/usr/bin/zsh" },
   },
   "terminal.integrated.defaultProfile.osx": "zsh",
   "terminal.integrated.defaultProfile.windows": "zsh",
+  "terminal.integrated.defaultLocation": "editor",
 
   // ----------------------------------------------------------------------------
   // Vite (if you still want these globally)
@@ -169,5 +179,22 @@
   "editor.autoClosingQuotes": "never",
   "editor.autoClosingDelete": "never",
   "editor.autoClosingOvertype": "never",
-  "editor.autoSurround": "never"
+  "editor.autoSurround": "never",
+  "claudeCode.initialPermissionMode": "acceptEdits",
+  "claudeCode.hideOnboarding": true,
+  "claudeCode.useCtrlEnterToSend": true,
+  "claudeCode.useTerminal": true,
+  "workbench.settings.applyToAllProfiles": ["claudeCode.useTerminal"],
+  "workbench.settings.alwaysShowAdvancedSettings": true,
+  "workbench.startupEditor": "none",
+  "chat.agent.thinking.collapsedTools": "withThinking",
+  "sqlite.databaseExtensions": [
+    "db",
+    "db3",
+    "sdb",
+    "s3db",
+    "sqlite",
+    "sqlite3",
+    "vtdb",
+  ],
 }

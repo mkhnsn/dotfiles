@@ -30,3 +30,6 @@ alias gup='git pull --rebase'
 
 alias tree='tree -C -L 3 --dirsfirst'
 alias treee="tree -C --gitignore -a -I '.git' --dirsfirst"
+
+alias c='cproj'
+alias co='corg'
