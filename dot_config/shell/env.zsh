@@ -5,6 +5,17 @@ export EDITOR="code --wait"
 # PATH basics
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/src/scripts:$PATH"
+export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# ghq root
+if command -v ghq >/dev/null 2>&1; then
+  export GHQ_ROOT="$HOME/src"
+  mkdir -p "$GHQ_ROOT" 2>/dev/null || true
+fi
+
 
 # ---- 1Password CLI / chezmoi integration ----
 # Pin the default 1Password account so chezmoi/op never prompt.
