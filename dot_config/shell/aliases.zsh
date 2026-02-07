@@ -31,5 +31,13 @@ alias gup='git pull --rebase'
 alias tree='tree -C -L 3 --dirsfirst'
 alias treee="tree -C --gitignore -a -I '.git' --dirsfirst"
 
+# VS Code Insiders
+alias codi='code-insiders'
+
+# Markdown viewer (markless, installed via: cargo install markless)
+if command -v markless >/dev/null 2>&1; then
+  alias -s md=markless
+fi
+
 alias c='cproj'
 alias co='corg'
