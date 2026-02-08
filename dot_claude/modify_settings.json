@@ -1,0 +1,18 @@
+#!/bin/bash
+# Merge Claude Code hooks into settings.json without overwriting
+# other keys (permissions, plugins, statusLine) that Claude Code manages interactively.
+
+set -euo pipefail
+
+existing=$(cat)
+
+# If file doesn't exist yet or is empty, start with empty object
+if [ -z "$existing" ]; then
+  existing='{}'
+fi
+
+# Define the hooks we want to ensure are present
+hooks='{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"bash ~/.claude/scripts/guard-main-branch.sh","timeout":5}]}]}'
+
+# Merge hooks into existing settings (preserves all other keys)
+echo "$existing" | jq --argjson hooks "$hooks" '.hooks = $hooks'
