@@ -1,0 +1,8 @@
+{
+    "colorscheme": "dracula-tc",
+    "keymenu": true,
+    "softwrap": true,
+    "tabsize": 2,
+    "scrollbar": true,
+    "filemanager-openonstart": true
+}

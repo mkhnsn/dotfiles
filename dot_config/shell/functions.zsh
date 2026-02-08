@@ -78,9 +78,7 @@ cproj() {
   command -v ghq >/dev/null 2>&1 || { print -u2 "ghq not installed"; return 1; }
   command -v fzf >/dev/null 2>&1 || { print -u2 "fzf not installed"; return 1; }
 
-  local repo
-  repo="$(ghq list | fzf)" || return
-  cd "$(ghq root)/$repo"
+  cd "$(ghq list --full-path | fzf)" || return
 }
 
 corg() {
