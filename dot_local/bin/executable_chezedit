@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Required parameters:
+# @raycast.schemaVersion 1
+# @raycast.title Edit Dotfiles (chezmoi)
+# @raycast.mode silent
+# @raycast.author Unstable Studios
+# Optional parameters:
+# @raycast.packageName Dotfiles
+# @raycast.icon 🧬
+# @raycast.description Open chezmoi source dir in VS Code Insiders (CLI-first) with robust fallbacks
+
+set -euo pipefail
+
+# Raycast's PATH can be tiny. Add common install locations.
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+CHEZMOI="$HOME/.local/bin/chezmoi"
+if [[ ! -x "$CHEZMOI" ]]; then
+  CHEZMOI="$(command -v chezmoi || true)"
+fi
+
+if [[ -z "${CHEZMOI:-}" ]]; then
+  echo "chezedit: chezmoi not found." >&2
+  exit 1
+fi
+
+SRC="$("$CHEZMOI" source-path)"
+
+# Prefer CLI (fast, deterministic)
+if command -v code-insiders >/dev/null 2>&1; then
+  exec code-insiders "$SRC"
+fi
+
+if command -v code >/dev/null 2>&1; then
+  exec code "$SRC"
+fi
+
+# Fallback to app bundles (last resort)
+if osascript -e 'id of app "Visual Studio Code - Insiders"' >/dev/null 2>&1; then
+  exec open -a "Visual Studio Code - Insiders" "$SRC"
+fi
+
+if osascript -e 'id of app "Visual Studio Code"' >/dev/null 2>&1; then
+  exec open -a "Visual Studio Code" "$SRC"
+fi
+
+echo "chezedit: VS Code not found (install VS Code / Insiders or the CLI commands)" >&2
+exit 1
