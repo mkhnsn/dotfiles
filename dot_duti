@@ -1,0 +1,26 @@
+# VS Code Insiders default for dev files
+com.microsoft.VSCodeInsiders  json    all
+com.microsoft.VSCodeInsiders  jsonc   all
+com.microsoft.VSCodeInsiders  js      all
+com.microsoft.VSCodeInsiders  mjs     all
+com.microsoft.VSCodeInsiders  cjs     all
+com.microsoft.VSCodeInsiders  ts      all
+com.microsoft.VSCodeInsiders  tsx     all
+com.microsoft.VSCodeInsiders  jsx     all
+com.microsoft.VSCodeInsiders  yml     all
+com.microsoft.VSCodeInsiders  yaml    all
+com.microsoft.VSCodeInsiders  toml    all
+com.microsoft.VSCodeInsiders  md      all
+com.microsoft.VSCodeInsiders  sh      all
+com.microsoft.VSCodeInsiders  bash    all
+com.microsoft.VSCodeInsiders  zsh     all
+com.microsoft.VSCodeInsiders  tf      all
+com.microsoft.VSCodeInsiders  tfvars  all
+com.microsoft.VSCodeInsiders  hcl     all
+com.microsoft.VSCodeInsiders  html    editor
+com.microsoft.VSCodeInsiders  css     all
+com.microsoft.VSCodeInsiders  scss    all
+com.microsoft.VSCodeInsiders  dockerfile all
+com.microsoft.VSCodeInsiders  env     all
+com.microsoft.VSCodeInsiders  conf    all
+com.microsoft.VSCodeInsiders  ini     all

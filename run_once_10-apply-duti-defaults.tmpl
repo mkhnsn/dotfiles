@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Only on macOS
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  exit 0
+fi
+
+# Must have VS Code installed (bundle id must exist)
+if ! osascript -e 'id of app "Visual Studio Code"' >/dev/null 2>&1; then
+  echo "duti: VS Code not found; skipping default-app associations."
+  exit 0
+fi
+
+# Install duti if needed (Homebrew assumed)
+if ! command -v duti >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    brew install duti
+  else
+    echo "duti: Homebrew not found; install duti manually, then rerun."
+    exit 0
+  fi
+fi
+
+DUTI_FILE="$HOME/.duti"
+
+if [[ ! -f "$DUTI_FILE" ]]; then
+  echo "duti: $DUTI_FILE not found; skipping."
+  exit 0
+fi
+
+echo "duti: applying default handlers from $DUTI_FILE"
+duti "$DUTI_FILE"
+
+echo "duti: done"
