@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
+# cargo-packages: markless
 
 os="{{ .chezmoi.os }}"
+
+# ---- Cargo packages (cross-platform) ----
+CARGO_PACKAGES=(markless)
+
+install_cargo_packages() {
+  command -v cargo >/dev/null 2>&1 || return 0
+  for pkg in "${CARGO_PACKAGES[@]}"; do
+    command -v "$pkg" >/dev/null 2>&1 || cargo install "$pkg" || true
+  done
+}
 
 want_cmds=(git fzf bat zoxide)
 # nice-to-haves: rg, gh, starship, eza
@@ -31,6 +42,7 @@ if [[ "$os" == "darwin" ]]; then
   brew bundle check --file "$BREWFILE" >/dev/null 2>&1 || brew bundle --file "$BREWFILE"
 
   "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
+  install_cargo_packages
   exit 0
 fi
 
@@ -163,3 +175,4 @@ install_fzf_upstream_linux
 install_fd_find
 ensure_fzf_zsh_integration
 install_starship_user
+install_cargo_packages

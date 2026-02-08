@@ -4,7 +4,7 @@ export EDITOR="code --wait"
 
 # PATH basics
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/src/scripts:$PATH"
+export PATH="$HOME/src/github.com/mkhnsn/scripts.git/:$PATH"
 export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
 
 # opencode
@@ -54,8 +54,9 @@ fpath_prepend "$ZSH_COMPLETIONS_DIR"
 
 # Homebrew completions (if available)
 if command -v brew >/dev/null 2>&1; then
-  fpath_prepend "$(brew --prefix)/share/zsh-completions"
-  fpath_prepend "$(brew --prefix)/share/zsh/site-functions"
+  _brew_prefix="$(brew --prefix)"
+  fpath_prepend "$_brew_prefix/share/zsh-completions"
+  fpath_prepend "$_brew_prefix/share/zsh/site-functions"
 fi
 
 # System zsh completions (npm often lives here)
@@ -96,6 +97,14 @@ autoload -Uz _npm 2>/dev/null || true
 # Ensure git completion is wired (prevents fallback to plain file completion)
 autoload -Uz _git 2>/dev/null || true
 (( $+functions[_git] )) && compdef _git git 2>/dev/null || true
+
+# OpenClaw Completion (cached — regenerate: rm ~/.cache/zsh/openclaw-completion.zsh)
+_openclaw_comp="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/openclaw-completion.zsh"
+if [[ ! -f "$_openclaw_comp" ]] && command -v openclaw >/dev/null 2>&1; then
+  mkdir -p "${_openclaw_comp:h}" 2>/dev/null || true
+  openclaw completion --shell zsh > "$_openclaw_comp" 2>/dev/null
+fi
+[[ -r "$_openclaw_comp" ]] && source "$_openclaw_comp"
 
 #-------------------------------------------------------------------------------
 #---- most settings should come after this line! -------------------------------
@@ -154,13 +163,15 @@ for f in "$HOME/.config/zsh/plugins.d/"*.zsh(N); do
 done
 
 if command -v brew >/dev/null 2>&1; then
+  _brew_prefix="${_brew_prefix:-$(brew --prefix)}"
+
   # zsh-syntax-highlighting
-  [[ -r "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
-    source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+  [[ -r "$_brew_prefix/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
+    source "$_brew_prefix/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
   # zsh-autosuggestions
-  [[ -r "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
-    source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  [[ -r "$_brew_prefix/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
+    source "$_brew_prefix/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 fi
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
 ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd completion)
@@ -199,7 +210,8 @@ fi
 
 # Homebrew OpenSSL hint (only if brew exists)
 if command -v brew >/dev/null 2>&1; then
-  export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3 2>/dev/null)"
+  _brew_prefix="${_brew_prefix:-$(brew --prefix)}"
+  export OPENSSL_ROOT_DIR="$_brew_prefix/opt/openssl@3"
 fi
 
 # System pager defaults

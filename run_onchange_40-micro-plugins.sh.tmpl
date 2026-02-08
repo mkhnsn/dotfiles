@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# micro plugins: filemanager
+# {{ include "dot_config/micro/settings.json" | sha256sum }}
+
+command -v micro >/dev/null 2>&1 || exit 0
+
+PLUGINS=(filemanager)
+
+for plugin in "${PLUGINS[@]}"; do
+  if [[ ! -d "${HOME}/.config/micro/plug/${plugin}" ]]; then
+    micro -plugin install "$plugin" || true
+  fi
+done
