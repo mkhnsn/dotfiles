@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Lightweight cache warming — runs on every chezmoi apply.
+# Uses staleness checks to avoid unnecessary network calls.
+# cache-version: 1
+
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/chezmoi-caches"
+mkdir -p "$CACHE_DIR"
+
+# Check if a stamp file is older than N days (default 7)
+is_stale() {
+  local stamp="$CACHE_DIR/$1"
+  local days="${2:-7}"
+  [[ ! -f "$stamp" ]] && return 0
+  # Find returns 0 (true) if the file is older than $days days
+  [[ -n "$(find "$stamp" -mtime +"$days" 2>/dev/null)" ]]
+}
+
+touch_stamp() {
+  touch "$CACHE_DIR/$1"
+}
+
+# ---- tealdeer: fetch/refresh pages database (weekly) ----
+if command -v tldr >/dev/null 2>&1; then
+  if is_stale "tldr-update" 7; then
+    echo "Refreshing tldr pages cache..."
+    tldr --update && touch_stamp "tldr-update" || true
+  fi
+fi
+
+# ---- navi: add community cheatsheets if not present (one-time) ----
+if command -v navi >/dev/null 2>&1; then
+  cheats_dir="$(navi info cheats-path 2>/dev/null)"
+  if [[ -n "$cheats_dir" && ! -d "$cheats_dir/denisidoro__cheats" ]]; then
+    echo "Adding navi community cheatsheets..."
+    navi repo add denisidoro/cheats && touch_stamp "navi-cheats" || true
+  fi
+fi
+
+# ---- bat: rebuild syntax/theme cache ----
+if command -v bat >/dev/null 2>&1; then
+  if is_stale "bat-cache" 7; then
+    bat cache --build >/dev/null 2>&1 && touch_stamp "bat-cache" || true
+  fi
+fi
