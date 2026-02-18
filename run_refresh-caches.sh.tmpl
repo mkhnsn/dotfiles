@@ -28,12 +28,14 @@ if command -v tldr >/dev/null 2>&1; then
   fi
 fi
 
-# ---- navi: add community cheatsheets if not present (one-time) ----
+# ---- navi: clone community cheatsheets if not present (one-time) ----
+# Clone directly instead of `navi repo add` which launches an interactive fzf picker.
 if command -v navi >/dev/null 2>&1; then
   cheats_dir="$(navi info cheats-path 2>/dev/null)"
-  if [[ -n "$cheats_dir" && ! -d "$cheats_dir/denisidoro__cheats" ]]; then
-    echo "Adding navi community cheatsheets..."
-    navi repo add denisidoro/cheats && touch_stamp "navi-cheats" || true
+  navi_dest="$cheats_dir/denisidoro__cheats"
+  if [[ -n "$cheats_dir" && ! -d "$navi_dest" ]]; then
+    echo "Cloning navi community cheatsheets..."
+    git clone --depth 1 https://github.com/denisidoro/cheats.git "$navi_dest" 2>/dev/null || true
   fi
 fi
 

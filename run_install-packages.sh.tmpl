@@ -18,7 +18,7 @@ install_cargo_packages() {
 
 install_uv_tools() {
   command -v uv >/dev/null 2>&1 || return 0
-  uv tool install specify-cli || true
+  command -v specify >/dev/null 2>&1 || uv tool install specify-cli || true
 }
 
 want_cmds=(git fzf bat zoxide)
@@ -47,7 +47,8 @@ if [[ "$os" == "darwin" ]]; then
   # Ensure Brewfile state is satisfied (covers formulae that don't add a command, like zsh-completions)
   brew bundle check --file "$BREWFILE" >/dev/null 2>&1 || brew bundle --file "$BREWFILE"
 
-  "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
+  # Only run fzf install if key-bindings aren't set up yet (it prompts interactively)
+  [[ -r "$HOME/.fzf.zsh" ]] || "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
   install_cargo_packages
   install_uv_tools
   exit 0
