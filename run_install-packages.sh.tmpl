@@ -2,6 +2,7 @@
 set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # cargo-packages: markless
+# uv-tools: specify-cli
 
 os="{{ .chezmoi.os }}"
 
@@ -15,9 +16,14 @@ install_cargo_packages() {
   done
 }
 
+install_uv_tools() {
+  command -v uv >/dev/null 2>&1 || return 0
+  uv tool install specify-cli || true
+}
+
 want_cmds=(git fzf bat zoxide)
 # nice-to-haves: rg, gh, starship, eza
-want_cmds_optional=(rg gh starship eza)
+want_cmds_optional=(rg gh starship eza specify)
 
 missing=0
 for c in "${want_cmds[@]}" "${want_cmds_optional[@]}"; do
@@ -43,6 +49,7 @@ if [[ "$os" == "darwin" ]]; then
 
   "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
   install_cargo_packages
+  install_uv_tools
   exit 0
 fi
 
@@ -176,3 +183,4 @@ install_fd_find
 ensure_fzf_zsh_integration
 install_starship_user
 install_cargo_packages
+install_uv_tools

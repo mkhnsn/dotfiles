@@ -20,6 +20,14 @@ hooks='{
       "command": "bash ~/.claude/scripts/guard-destructive.sh",
       "timeout": 5
     }]
+  },
+  {
+    "matcher": "Edit|Write",
+    "hooks": [{
+      "type": "command",
+      "command": "bash ~/.claude/scripts/nudge-speckit.sh",
+      "timeout": 3
+    }]
   }],
   "PostToolUse": [{
     "matcher": "Edit|Write",

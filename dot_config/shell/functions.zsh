@@ -281,6 +281,13 @@ SH
   esac
 }
 
+# ---- help viewer (bat-powered) ----
+
+# Pretty-print --help output through bat
+help() {
+  "$@" --help 2>&1 | bat --language=help --style=plain
+}
+
 # ---- claude pipe-mode helpers ----
 
 # Generate a commit message from staged changes

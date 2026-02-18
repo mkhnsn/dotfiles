@@ -20,5 +20,8 @@ brew "zoxide"
 brew "starship"
 brew "mosh"
 brew "micro"
+brew "navi"
+brew "tealdeer"
+brew "uv"
 
 cask "visual-studio-code@insiders"

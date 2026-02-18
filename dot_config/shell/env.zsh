@@ -224,7 +224,11 @@ fi
 export BAT_PAGER='less -RFX --mouse'
 export BAT_THEME='GitHub'   # or Nord, Dracula, GitHub, etc.
 
-# Make `man` use less with the same behavior (and keep colors)
-export MANPAGER='less -R --mouse'
+# Man pages through bat (colorized, searchable)
+if command -v bat >/dev/null 2>&1; then
+  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+else
+  export MANPAGER='less -R --mouse'
+fi
 export LESS_TERMCAP_md=$'\e[1m'   # bold
 export LESS_TERMCAP_me=$'\e[0m'   # reset
