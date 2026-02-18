@@ -280,3 +280,56 @@ SH
       ;;
   esac
 }
+
+# ---- claude pipe-mode helpers ----
+
+# Generate a commit message from staged changes
+ai-commit() {
+  emulate -L zsh
+  if ! command -v claude >/dev/null 2>&1; then print -u2 "claude not installed"; return 1; fi
+  local diff
+  diff=$(git diff --cached)
+  [[ -n "$diff" ]] || { print -u2 "Nothing staged. Use git add first."; return 1; }
+  local msg
+  msg=$(echo "$diff" | claude -p "Write a concise conventional commit message for these staged changes. Output ONLY the commit message, nothing else. Use the format: type(scope): description. Keep it under 72 chars.")
+  print "$msg"
+  print -n "\nCommit with this message? [y/N]: "
+  local confirm
+  read -r confirm
+  if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+    git commit -m "$msg"
+  fi
+}
+
+# Review uncommitted changes
+ai-review() {
+  emulate -L zsh
+  if ! command -v claude >/dev/null 2>&1; then print -u2 "claude not installed"; return 1; fi
+  local diff
+  diff=$(git diff)
+  [[ -n "$diff" ]] || diff=$(git diff --cached)
+  [[ -n "$diff" ]] || { print -u2 "No changes to review."; return 1; }
+  echo "$diff" | claude -p "Review these code changes. Focus on bugs, security issues, and logic errors. Be concise. Skip style nitpicks."
+}
+
+# Explain a file or piped input
+ai-explain() {
+  emulate -L zsh
+  if ! command -v claude >/dev/null 2>&1; then print -u2 "claude not installed"; return 1; fi
+  if [[ -n "${1:-}" ]]; then
+    claude -p "Explain what this code does. Be concise." < "$1"
+  elif [[ ! -t 0 ]]; then
+    claude -p "Explain what this code does. Be concise."
+  else
+    print -u2 "Usage: ai-explain <file> or pipe input"
+    return 1
+  fi
+}
+
+# Quick question from the terminal
+ai() {
+  emulate -L zsh
+  if ! command -v claude >/dev/null 2>&1; then print -u2 "claude not installed"; return 1; fi
+  [[ -n "${1:-}" ]] || { print -u2 "Usage: ai \"your question\""; return 1; }
+  claude -p "$*"
+}
