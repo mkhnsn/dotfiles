@@ -6,8 +6,12 @@ fi
 
 # --- fzf-tab settings ---
 
-# set list-colors to enable filename colorizing
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+# Colorize completion entries using LS_COLORS (if set) or a sensible default
+if [[ -n "${LS_COLORS:-}" ]]; then
+  zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+else
+  zstyle ':completion:*' list-colors "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43"
+fi
 
 # Let you switch completion groups with < and > (shift+, and shift+.)
 zstyle ':fzf-tab:*' switch-group '<' '>'

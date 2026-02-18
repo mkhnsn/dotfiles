@@ -59,13 +59,11 @@ if command -v brew >/dev/null 2>&1; then
   fpath_prepend "$_brew_prefix/share/zsh/site-functions"
 fi
 
-# System zsh completions (npm often lives here)
+# System zsh completions
 for d in \
   "/usr/share/zsh/site-functions" \
   "/usr/local/share/zsh/site-functions" \
   "/usr/share/zsh/${ZSH_VERSION}/functions" \
-  "/usr/share/zsh/functions" \
-  "/usr/share/zsh" \
 ; do
   [[ -d "$d" ]] && fpath_prepend "$d"
 done
@@ -85,18 +83,9 @@ autoload -Uz compinit
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null || true
 
-# -C: use cached .zcompdump when possible (fast)
 # -i: ignore insecure directories (prevents noisy prompts on fresh boxes)
 # Do NOT use -u (unsafe) globally.
 compinit -i -d "$ZSH_COMPDUMP"
-
-# special case for npm completion
-autoload -Uz _npm 2>/dev/null || true
-(( $+functions[_npm] )) && compdef _npm npm 2>/dev/null || true
-
-# Ensure git completion is wired (prevents fallback to plain file completion)
-autoload -Uz _git 2>/dev/null || true
-(( $+functions[_git] )) && compdef _git git 2>/dev/null || true
 
 # OpenClaw Completion (cached — regenerate: rm ~/.cache/zsh/openclaw-completion.zsh)
 _openclaw_comp="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/openclaw-completion.zsh"
@@ -110,16 +99,24 @@ fi
 #---- most settings should come after this line! -------------------------------
 #-------------------------------------------------------------------------------
 
-# ---- fzf keybindings/completion  ----
-# Prefer the user's ~/.fzf.zsh (installed by brew or the upstream fzf installer).
+# ---- fzf keybindings ----
+# Source fzf for Ctrl-T, Ctrl-R, Alt-C keybindings.
+# fzf also binds ^I (TAB) to its own fzf-completion widget, but fzf-tab
+# (loaded later) already provides fzf-powered completion for everything.
+# Reset ^I after sourcing so fzf-tab wraps expand-or-complete directly,
+# avoiding a redundant context-switch layer that breaks some completions.
 if [[ -r "$HOME/.fzf.zsh" ]]; then
   source "$HOME/.fzf.zsh"
+  bindkey '^I' expand-or-complete
 else
   # Fallback: some distros place these in /usr/share (paths vary). Try common locations.
-  [[ -r "/usr/share/fzf/key-bindings.zsh" ]] && source "/usr/share/fzf/key-bindings.zsh"
-  [[ -r "/usr/share/fzf/completion.zsh" ]] && source "/usr/share/fzf/completion.zsh"
-  [[ -r "/usr/share/doc/fzf/examples/key-bindings.zsh" ]] && source "/usr/share/doc/fzf/examples/key-bindings.zsh"
-  [[ -r "/usr/share/doc/fzf/examples/completion.zsh" ]] && source "/usr/share/doc/fzf/examples/completion.zsh"
+  for _fzf_f in \
+    "/usr/share/fzf/key-bindings.zsh" \
+    "/usr/share/doc/fzf/examples/key-bindings.zsh" \
+  ; do
+    [[ -r "$_fzf_f" ]] && { source "$_fzf_f"; break; }
+  done
+  unset _fzf_f
 fi
 
 # ---- word/path semantics ----

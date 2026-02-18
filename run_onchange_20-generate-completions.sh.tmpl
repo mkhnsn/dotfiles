@@ -8,8 +8,9 @@ mkdir -p "$ZSH_COMPLETIONS_DIR"
 # Force gh to not use the keyring.
 export GH_NO_KEYRING=1
 
-if command -v gh >/dev/null 2>&1; then
-  # Don't let gh auth-migration nonsense break chezmoi apply.
+# Generate gh completion only when brew doesn't provide one (Linux/Codespaces).
+# On macOS, brew installs _gh to site-functions which is earlier in fpath.
+if command -v gh >/dev/null 2>&1 && ! command -v brew >/dev/null 2>&1; then
   gh completion -s zsh > "$ZSH_COMPLETIONS_DIR/_gh" 2>/dev/null || {
     echo "dotfiles: warning: gh completion generation skipped (gh/keyring not available here)"
   }
