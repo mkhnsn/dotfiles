@@ -5,10 +5,12 @@ input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command // ""')
 
 warn() {
-  # Exit 0 + permissionDecision "ask" = prompt user for approval (overridable).
+  # Exit 0 + hookSpecificOutput with permissionDecision "ask" = prompt user for approval.
+  # hookEventName is required for Claude Code to apply the permission decision.
+  # permissionDecisionReason is shown to the user in the approval prompt.
   # Exit 2 would hard-block with no override, which is NOT what we want.
   cat <<ENDJSON
-{"hookSpecificOutput":{"permissionDecision":"ask"},"systemMessage":"$1"}
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"$1"}}
 ENDJSON
   exit 0
 }
