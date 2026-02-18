@@ -37,3 +37,7 @@ item  = "bvrlbhwmpxmatfpj6nmqa2pfdq" # "Github (mkhnsn)"
 [[ssh-keys]]
 vault = "Infrastructure"
 item  = "lkseqnk64n7nux4auao6xi2wsa" # "Echo-Net Admin SSH Key"
+
+[[ssh-keys]]
+vault = "Infrastructure"
+item  = "geunqyi3noqjc4kdzmzhn3mp3i" # "DigitalOcean SSH Key"
