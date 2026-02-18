@@ -1,6 +1,6 @@
 #!/bin/bash
-# Merge Claude Code hooks into settings.json without overwriting
-# other keys (permissions, plugins, statusLine) that Claude Code manages interactively.
+# Merge chezmoi-managed settings into Claude Code settings.json.
+# Preserves interactively-set keys (enabledPlugins, project-specific permissions, etc.)
 
 set -euo pipefail
 
@@ -11,8 +11,56 @@ if [ -z "$existing" ]; then
   existing='{}'
 fi
 
-# Define the hooks we want to ensure are present
-hooks='{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"bash ~/.claude/scripts/guard-main-branch.sh","timeout":5}]}]}'
+# ---- hooks ----
+hooks='{
+  "PreToolUse": [{
+    "matcher": "Bash",
+    "hooks": [{
+      "type": "command",
+      "command": "bash ~/.claude/scripts/guard-destructive.sh",
+      "timeout": 5
+    }]
+  }]
+}'
 
-# Merge hooks into existing settings (preserves all other keys)
-echo "$existing" | jq --argjson hooks "$hooks" '.hooks = $hooks'
+# ---- status line ----
+statusline='{
+  "type": "command",
+  "command": "bash ~/.claude/scripts/statusline.sh"
+}'
+
+# ---- base permissions (merged into existing allow list) ----
+base_permissions='[
+  "Bash(git fetch)",
+  "Bash(git fetch *)",
+  "Bash(git pull)",
+  "Bash(git pull *)",
+  "Bash(git status)",
+  "Bash(git status *)",
+  "Bash(git log)",
+  "Bash(git log *)",
+  "Bash(git diff)",
+  "Bash(git diff *)",
+  "Bash(git branch)",
+  "Bash(git branch *)",
+  "Bash(git stash)",
+  "Bash(git stash *)",
+  "Bash(git remote *)",
+  "WebFetch",
+  "WebSearch",
+  "Read(~/src/**)",
+  "Edit(~/src/**)",
+  "Write(~/src/**)"
+]'
+
+# Merge everything: hooks and statusLine are replaced; permissions.allow is merged + deduped
+echo "$existing" | jq \
+  --argjson hooks "$hooks" \
+  --argjson statusline "$statusline" \
+  --argjson base "$base_permissions" \
+  '
+    .hooks = $hooks |
+    .statusLine = $statusline |
+    .permissions.allow = ((.permissions.allow // []) + $base | unique) |
+    .permissions.defaultMode = (.permissions.defaultMode // "acceptEdits")
+  '
