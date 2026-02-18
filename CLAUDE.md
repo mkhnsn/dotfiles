@@ -81,7 +81,6 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | `PreToolUse` | `scripts/guard-destructive.sh` | Warns on destructive commands (commit/push to main, force push, reset --hard, rm -rf, etc.). User-overridable via approval prompt. |
 | `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write in spec-kit projects (.specify/ exists) with no specs yet, nudges user to write specs first. Advisory only, silent in non-spec-kit projects. |
 | `PostToolUse` | `scripts/post-edit-lint.sh` | Auto-lints after Edit/Write: eslint (JS/TS), ruff (Python), rustfmt (Rust), gofmt (Go), shfmt (shell). Async, advisory only. |
-| `Stop` | inline osascript | macOS notification when Claude finishes a response. |
 
 ### Skills (slash commands)
 
