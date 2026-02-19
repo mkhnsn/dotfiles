@@ -19,11 +19,22 @@
 {{-   $isServer = promptBool "Is this a server/dev box? (y/N, default: No)" -}}
 {{- end }}
 
+{{- /* Full setup: enables 1Password, secrets. Env var seeds on first init, then persists. */ -}}
+{{- $fullSetup := false -}}
+{{- if hasKey . "full_setup" -}}
+{{-   $fullSetup = .full_setup -}}
+{{- else if env "DOTFILES_FULL" -}}
+{{-   $fullSetup = true -}}
+{{- else -}}
+{{-   $fullSetup = promptBool "Full setup? (1Password, secrets) (y/N, default: No)" -}}
+{{- end }}
+
 [data]
   hostname = {{ $hostname | quote }}
   is_server = {{ $isServer }}
+  full_setup = {{ $fullSetup }}
 
-{{- if env "DOTFILES_FULL" }}
+{{- if $fullSetup }}
 
 [secret]
 command = "op"
