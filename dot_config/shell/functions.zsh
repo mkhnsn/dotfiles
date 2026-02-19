@@ -82,9 +82,7 @@ cproj() {
 }
 
 corg() {
-  emulate -L zsh
-  setopt pipefail
-  setopt extendedglob
+  setopt local_options pipefail extendedglob
 
   command -v ghq >/dev/null 2>&1 || { print -u2 "ghq not installed"; return 1; }
   command -v fzf >/dev/null 2>&1 || { print -u2 "fzf not installed"; return 1; }
@@ -96,147 +94,65 @@ corg() {
   root="$(ghq root)"
 
   # ----- build LOCAL list -----
-  local -a local_items
-  local_items=("${(@f)$(ghq list 2>/dev/null | grep -E "^${prefix}" 2>/dev/null)}")
+  local -a items
+  items=("${(@f)$(ghq list 2>/dev/null | grep -E "^${prefix}" 2>/dev/null)}")
 
-  # ----- build REMOTE list (GitHub only) -----
-  local -a remote_items
-  remote_items=()
-  if [[ "$host" == "github.com" ]] && command -v gh >/dev/null 2>&1; then
-    remote_items=("${(@f)$(gh repo list "$org" --limit 500 --json nameWithOwner --jq '.[].nameWithOwner' 2>/dev/null)}")
-  fi
+  (( ${#items[@]} > 0 )) || { print -u2 "No local repos found for $org on $host"; return 1; }
 
-  # ----- merge + dedupe (prefer LOCAL) -----
-  local -A seen
-  local -a combined
-  combined=()
-
-  local item key
-  for item in "${local_items[@]}"; do
-    seen["$item"]=1
-    combined+=("LOCAL  $item")
-  done
-
-  for item in "${remote_items[@]}"; do
-    key="github.com/$item"
-    [[ -z "${seen[$key]:-}" ]] && combined+=("REMOTE $item")
-  done
-
-  (( ${#combined[@]} > 0 )) || { print -u2 "No repos found for $org on $host"; return 1; }
-
-  # ----- create a robust preview script (no quote soup) -----
+  # ----- create preview script -----
   local preview_script
   preview_script="$(mktemp -t corg-preview.XXXXXX)" || return 1
 
   cat > "$preview_script" <<'SH'
 #!/bin/sh
-# fzf passes the selected line as $1
-line="$1"
-
-label=$(printf "%s" "$line" | awk '{print $1}')
-repo=$(printf "%s" "$line" | awk '{print $2}')
-
+repo="$1"
 root=$(ghq root 2>/dev/null)
+path="$root/$repo"
 
-[ -n "$repo" ] || { echo "No selection"; exit 0; }
+[ -d "$path" ] || { echo "Not found: $path"; exit 0; }
 
-if [ "$label" = "LOCAL" ]; then
-  path="$root/$repo"
-
-  for f in README.md readme.md Readme.md README.MD README.markdown readme.markdown README.txt readme.txt; do
-    if [ -f "$path/$f" ]; then
-      if command -v glow >/dev/null 2>&1; then
-        # Render markdown nicely in the preview pane.
-        # Normalize CRLF to LF; glow is more reliable when fed via stdin.
-        sed 's/\r$//' "$path/$f" | glow -s dark -w 80 -
-
-        # Optional: show a quick preview of the first local image referenced in the markdown.
-        # iTerm2 supports inline images via `imgcat`. VS Code's integrated terminal generally does not.
-        img=$(grep -m1 -E '!\\[[^]]*\\]\\([^)]+\\)' "$path/$f" 2>/dev/null | \
-          sed -E 's/.*!\\[[^]]*\\]\\(([^)]+)\\).*/\\1/' | \
-          sed -E 's/["'"'"']//g')
-        case "$img" in
-          http*|"" ) : ;;
-          * )
-            imgpath="$path/$img"
-            if [ -f "$imgpath" ]; then
-              echo ""
-              echo "[image preview: $img]"
-
-              # Prefer iTerm2 inline images if available
-              if command -v imgcat >/dev/null 2>&1; then
-                imgcat "$imgpath" 2>/dev/null
-              # Fallback: ANSI/ASCII preview that works anywhere
-              elif command -v chafa >/dev/null 2>&1; then
-                chafa -s 80x20 "$imgpath" 2>/dev/null
-              else
-                echo "(Install chafa for terminal previews)"
-              fi
-            fi
-            ;;
-        esac
-
-      elif command -v bat >/dev/null 2>&1; then
-        # Syntax-highlighted fallback
-        bat --paging=never "$path/$f"
-      else
-        sed -n "1,200p" "$path/$f"
-      fi
-      exit 0
+for f in README.md readme.md Readme.md README.MD README.markdown readme.markdown README.txt readme.txt; do
+  if [ -f "$path/$f" ]; then
+    if command -v glow >/dev/null 2>&1; then
+      sed 's/\r$//' "$path/$f" | glow -s dark -w 80 -
+    elif command -v bat >/dev/null 2>&1; then
+      bat --paging=never "$path/$f"
+    else
+      sed -n "1,200p" "$path/$f"
     fi
-  done
-
-  echo "No README found in:"
-  echo "$path"
-  echo ""
-  ls -la "$path" 2>/dev/null | sed -n "1,120p"
-
-else
-  echo "Remote repo: $repo"
-  echo ""
-  if command -v gh >/dev/null 2>&1; then
-    gh repo view "$repo" --json description,stargazerCount,forkCount \
-      --jq "\"⭐ Stars: \(.stargazerCount)\n🍴 Forks: \(.forkCount)\n\n\(.description)\"" 2>/dev/null
-  else
-    echo "(Install gh for remote details)"
+    exit 0
   fi
-fi
+done
+
+echo "No README found in:"
+echo "$path"
+echo ""
+ls -la "$path" 2>/dev/null | sed -n "1,120p"
 SH
 
   chmod +x "$preview_script"
 
-  # ----- run fzf with key capture -----
-  local -a out
-  out=("${(@f)$(
-    printf "%s\n" "${combined[@]}" | fzf \
-      --prompt="corg $org> " \
-      --height=75% \
-      --layout=reverse \
-      --preview-window=right:60%:wrap \
-      --expect=ctrl-o,ctrl-g,ctrl-d,ctrl-y \
-      --header=$'ENTER: open   CTRL-O: browser   CTRL-G: clone   CTRL-D: delete   CTRL-Y: copy URL' \
-      --preview="$preview_script {}"
-  )}")
+  # ----- run fzf -----
+  local selection
+  selection="$(printf "%s\n" "${items[@]}" | fzf \
+    --prompt="corg $org> " \
+    --height=75% \
+    --layout=reverse \
+    --preview-window=right:60%:wrap \
+    --header=$'ENTER: open   CTRL-O: browser   CTRL-D: delete   CTRL-Y: copy URL' \
+    --expect=ctrl-o,ctrl-d,ctrl-y \
+    --preview="$preview_script {}"
+  )"
 
-  # cleanup preview script
   rm -f "$preview_script"
 
-  local keypress="${out[1]:-}"
-  local selection="${out[2]:-}"
-  [[ -n "$selection" ]] || return 0
+  # Parse keypress (first line) and selection (second line)
+  local keypress="${${(@f)selection}[1]}"
+  local repo="${${(@f)selection}[2]}"
+  [[ -n "$repo" ]] || return 0
 
-  local label repo
-  label="${selection%% *}"
-  repo="${selection#* }"
-
-  local path url
-  if [[ "$label" == "LOCAL" ]]; then
-    path="$root/$repo"
-    url="https://$repo"
-  else
-    path="$root/github.com/$repo"
-    url="https://github.com/$repo"
-  fi
+  local path="$root/$repo"
+  local url="https://$repo"
 
   case "$keypress" in
     ctrl-o)
@@ -247,7 +163,6 @@ SH
       print "Copied: $url"
       ;;
     ctrl-d)
-      [[ "$label" == "LOCAL" ]] || { print -u2 "Not cloned"; return 1; }
       print -n "Delete $repo ? [y/N]: "
       local confirm
       read -r confirm
@@ -258,25 +173,8 @@ SH
         print "Canceled"
       fi
       ;;
-    ctrl-g)
-      [[ "$label" == "REMOTE" ]] || { print -u2 "Already cloned"; return 1; }
-      if command -v gget >/dev/null 2>&1; then
-        gget "$repo"
-      else
-        ghq get "$repo" && cd "$path"
-      fi
-      ;;
     *)
-      # ENTER default
-      if [[ "$label" == "LOCAL" ]]; then
-        cd "$path"
-      else
-        if command -v gget >/dev/null 2>&1; then
-          gget "$repo"
-        else
-          ghq get "$repo" && cd "$path"
-        fi
-      fi
+      cd "$path"
       ;;
   esac
 }
