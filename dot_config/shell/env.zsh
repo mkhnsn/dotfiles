@@ -5,7 +5,11 @@ export EDITOR="code --wait"
 # PATH basics
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/src/github.com/mkhnsn/scripts.git/:$PATH"
-export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+
+# macOS-only paths
+if [[ "${OSTYPE:-}" == darwin* ]]; then
+  export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+fi
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
@@ -169,6 +173,23 @@ if command -v brew >/dev/null 2>&1; then
   # zsh-autosuggestions
   [[ -r "$_brew_prefix/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
     source "$_brew_prefix/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
+else
+  # Linux: try common package locations
+  for _zsh_plugin in \
+    "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+    "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  ; do
+    [[ -r "$_zsh_plugin" ]] && { source "$_zsh_plugin"; break; }
+  done
+
+  for _zsh_plugin in \
+    "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+    "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  ; do
+    [[ -r "$_zsh_plugin" ]] && { source "$_zsh_plugin"; break; }
+  done
+  unset _zsh_plugin
 fi
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
 ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd completion)

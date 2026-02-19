@@ -24,10 +24,11 @@ This relies on GitHub’s official dotfiles mechanism and does not require `inst
 
 ---
 
-### 2. Personal machine (full setup)
+### 2. Personal machine (full setup) — recommended
 
-Use this on a personal macOS or Linux machine where you want the full environment:
-shell configuration, tools, 1Password integration, SSH agent wiring, and VS Code setup.
+Use this on any personal macOS or Linux machine. This is the **recommended** way to install,
+even for quick setups, because it puts chezmoi in `~/.local/bin` (which is on PATH) and
+handles all dependencies automatically.
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"
@@ -36,20 +37,24 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/ins
 Notes:
 
 - macOS requires Homebrew to already be installed
-- You’ll be prompted to sign into 1Password (once)
-- This is the recommended path for long‑lived personal machines
+- You'll be prompted to sign into 1Password (once)
+- Works on Linux too — installs chezmoi and applies dotfiles in one step
 
 ---
 
 ### 3. Temporary or shared machine (lite setup)
 
-Use this on machines you don’t own long‑term (servers, borrowed laptops, CI runners).
+Use this on machines you don't own long-term (servers, borrowed laptops, CI runners).
+
+> **Important:** The default chezmoi installer puts the binary in `~/bin`, which is
+> not on PATH in this setup. Always use `-b ~/.local/bin` to match the managed PATH.
 
 ```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply mkhnsn/dotfiles.git
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin init --apply mkhnsn/dotfiles
 ```
 
-This installs chezmoi and applies dotfiles without interactive secret setup.
+This installs chezmoi to `~/.local/bin` and applies dotfiles without interactive secret setup.
+For the full experience (Homebrew packages, 1Password, etc.), use option 2 instead.
 
 ---
 

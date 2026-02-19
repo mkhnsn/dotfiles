@@ -152,12 +152,14 @@ if command -v apt-get >/dev/null 2>&1; then
   # Optional packages (don't fail the whole script if missing)
   $SUDO apt-get install -y gh || true
   $SUDO apt-get install -y eza || true
+  $SUDO apt-get install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf makecache -y || true
   $SUDO dnf install -y git curl ca-certificates fzf bat zoxide ripgrep || true
   $SUDO dnf install -y gh || true
   $SUDO dnf install -y eza || true
+  $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 elif command -v yum >/dev/null 2>&1; then
   $SUDO yum makecache -y || true
@@ -168,6 +170,7 @@ elif command -v yum >/dev/null 2>&1; then
 elif command -v pacman >/dev/null 2>&1; then
   $SUDO pacman -Sy --noconfirm git curl ca-certificates fzf bat zoxide ripgrep
   $SUDO pacman -Sy --noconfirm github-cli eza || true
+  $SUDO pacman -Sy --noconfirm zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 else
   echo "No supported package manager found (apt/dnf/yum/pacman). Skipping."

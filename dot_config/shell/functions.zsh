@@ -1,3 +1,15 @@
+# ---- portable clipboard / opener ----
+if [[ "${OSTYPE:-}" == darwin* ]]; then
+  alias clip='pbcopy'
+  # open is native on macOS
+elif command -v wl-copy >/dev/null 2>&1; then
+  alias clip='wl-copy'
+  alias open='xdg-open'
+elif command -v xclip >/dev/null 2>&1; then
+  alias clip='xclip -selection clipboard'
+  alias open='xdg-open'
+fi
+
 # ---- ghq helpers (zsh-native) ----
 
 # Clone into ghq root, optionally auto-link unstable-studios, then cd into repo.
@@ -159,7 +171,7 @@ SH
       open "$url"
       ;;
     ctrl-y)
-      echo -n "$url" | pbcopy
+      echo -n "$url" | clip
       print "Copied: $url"
       ;;
     ctrl-d)
