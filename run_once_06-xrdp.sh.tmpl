@@ -3,9 +3,16 @@ set -euo pipefail
 
 {{ if and (eq .chezmoi.os "linux") .full_setup -}}
 
-# Skip if no desktop environment is installed
-if ! command -v Xorg >/dev/null 2>&1 && ! command -v wayland-info >/dev/null 2>&1; then
-  echo "xrdp: no desktop environment detected, skipping"
+# Skip if no display manager is enabled (no GUI login configured)
+has_dm=false
+for dm in gdm gdm3 sddm lightdm; do
+  if systemctl is-enabled "$dm" >/dev/null 2>&1; then
+    has_dm=true
+    break
+  fi
+done
+if [[ "$has_dm" != "true" ]]; then
+  echo "xrdp: no display manager detected, skipping"
   exit 0
 fi
 
