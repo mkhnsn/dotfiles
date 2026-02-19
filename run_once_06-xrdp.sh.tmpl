@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") .full_setup -}}
+
+# Skip if no desktop environment is installed
+if ! command -v Xorg >/dev/null 2>&1 && ! command -v wayland-info >/dev/null 2>&1; then
+  echo "xrdp: no desktop environment detected, skipping"
+  exit 0
+fi
+
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  SUDO="sudo"
+fi
+
+if command -v xrdp >/dev/null 2>&1; then
+  echo "xrdp: already installed"
+else
+  echo "xrdp: installing..."
+  if command -v apt-get >/dev/null 2>&1; then
+    $SUDO apt-get install -y xrdp
+  elif command -v dnf >/dev/null 2>&1; then
+    $SUDO dnf install -y xrdp
+  elif command -v pacman >/dev/null 2>&1; then
+    $SUDO pacman -S --noconfirm xrdp
+  else
+    echo "xrdp: unsupported package manager, skipping"
+    exit 0
+  fi
+fi
+
+$SUDO systemctl enable --now xrdp
+
+# Allow the xrdp user to access the certificate (needed on Ubuntu/Debian)
+if getent group ssl-cert >/dev/null 2>&1; then
+  $SUDO usermod -aG ssl-cert xrdp 2>/dev/null || true
+fi
+
+echo ""
+echo "xrdp: installed and running on port 3389"
+echo "Connect from macOS: open 'vnc://$(hostname):3389' or use Microsoft Remote Desktop"
+echo "Over Tailscale:     open 'vnc://$(tailscale ip -4 2>/dev/null || echo '<tailscale-ip>'):3389'"
+
+{{ end -}}
