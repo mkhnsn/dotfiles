@@ -41,3 +41,7 @@ fi
 
 alias c='cproj'
 alias co='corg'
+
+# Git worktrees
+alias gwa='gwt'
+alias gwb='gwt -b'

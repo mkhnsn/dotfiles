@@ -281,6 +281,93 @@ SH
   esac
 }
 
+# ---- git worktree helpers ----
+
+# Create a worktree as a sibling directory: repo@branch
+# usage:
+#   gwt feature-branch          — checkout existing branch in a new worktree
+#   gwt -b new-branch           — create new branch + worktree
+#   gwt -b new-branch origin/main — create new branch from base + worktree
+gwt() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  if [[ -z "${1:-}" ]]; then
+    print -u2 "usage: gwt [-b] <branch> [<base>]"
+    return 1
+  fi
+
+  local repo_root
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+    print -u2 "Not in a git repository"
+    return 1
+  }
+
+  local repo_name="${repo_root:t}"
+  local parent="${repo_root:h}"
+
+  if [[ "$1" == "-b" ]]; then
+    local branch="${2:?branch name required}"
+    local base="${3:-}"
+    local wt_dir="$parent/${repo_name}@${branch}"
+    if [[ -n "$base" ]]; then
+      git worktree add -b "$branch" "$wt_dir" "$base"
+    else
+      git worktree add -b "$branch" "$wt_dir"
+    fi
+  else
+    local branch="$1"
+    local wt_dir="$parent/${repo_name}@${branch}"
+    git worktree add "$wt_dir" "$branch"
+  fi
+
+  cd "$wt_dir"
+}
+
+# List worktrees with short paths
+gwl() {
+  emulate -L zsh
+  git worktree list
+}
+
+# Remove a worktree by branch name (from within any worktree of the same repo)
+gwr() {
+  emulate -L zsh
+  setopt errexit nounset pipefail
+
+  if [[ -z "${1:-}" ]]; then
+    print -u2 "usage: gwr <branch>"
+    return 1
+  fi
+
+  local repo_root
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+    print -u2 "Not in a git repository"
+    return 1
+  }
+
+  # If we're in a worktree, find the main repo root
+  local main_root
+  main_root="$(git -C "$repo_root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  main_root="${main_root%/.git}"
+
+  local repo_name="${main_root:t}"
+  local parent="${main_root:h}"
+  local wt_dir="$parent/${repo_name}@${1}"
+
+  if [[ ! -d "$wt_dir" ]]; then
+    print -u2 "Worktree not found: $wt_dir"
+    return 1
+  fi
+
+  # If we're inside the worktree being removed, cd out first
+  if [[ "$(pwd)" == "$wt_dir"* ]]; then
+    cd "$main_root"
+  fi
+
+  git worktree remove "$wt_dir"
+}
+
 # ---- help viewer (bat-powered) ----
 
 # Pretty-print --help output through bat
