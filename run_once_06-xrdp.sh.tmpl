@@ -12,10 +12,26 @@ for dm in gdm gdm3 sddm lightdm; do
   fi
 done
 if [[ "$has_dm" != "true" ]]; then
-  echo "xrdp: no display manager detected, skipping"
+  echo "remote-desktop: no display manager detected, skipping"
   exit 0
 fi
 
+# GNOME Remote Desktop (built-in RDP, GNOME 42+)
+if command -v grdctl >/dev/null 2>&1; then
+  if grdctl status 2>/dev/null | grep -q "RDP.*enabled"; then
+    echo "remote-desktop: GNOME RDP already enabled"
+  else
+    echo "remote-desktop: enabling GNOME Remote Desktop (RDP)..."
+    grdctl rdp enable
+    echo ""
+    echo "GNOME Remote Desktop enabled on port 3389."
+    echo "Set credentials with:  grdctl rdp set-credentials <user> <password>"
+    echo "Or enable in:          Settings > Sharing > Remote Desktop"
+  fi
+  exit 0
+fi
+
+# Fallback: install xrdp for non-GNOME desktops
 SUDO=""
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   SUDO="sudo"
@@ -24,7 +40,7 @@ fi
 if command -v xrdp >/dev/null 2>&1; then
   echo "xrdp: already installed"
 else
-  echo "xrdp: installing..."
+  echo "xrdp: installing (non-GNOME fallback)..."
   if command -v apt-get >/dev/null 2>&1; then
     $SUDO apt-get install -y xrdp
   elif command -v dnf >/dev/null 2>&1; then
@@ -39,14 +55,11 @@ fi
 
 $SUDO systemctl enable --now xrdp
 
-# Allow the xrdp user to access the certificate (needed on Ubuntu/Debian)
 if getent group ssl-cert >/dev/null 2>&1; then
   $SUDO usermod -aG ssl-cert xrdp 2>/dev/null || true
 fi
 
 echo ""
 echo "xrdp: installed and running on port 3389"
-echo "Connect from macOS: open 'vnc://$(hostname):3389' or use Microsoft Remote Desktop"
-echo "Over Tailscale:     open 'vnc://$(tailscale ip -4 2>/dev/null || echo '<tailscale-ip>'):3389'"
 
 {{ end -}}
