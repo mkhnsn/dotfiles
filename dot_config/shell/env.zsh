@@ -156,7 +156,7 @@ setopt NO_BEEP                 # stop yelling at me
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*:descriptions' format '%d'
 zstyle ':completion:*:messages' format '%d'
-zstyle ':completion:*:warnings' format '%d'
+zstyle ':completion:*:warnings' format 'No matches for: %d'
 
 # ---- zsh plugins (loaders) ----
 for f in "$HOME/.config/zsh/plugins.d/"*.zsh(N); do
