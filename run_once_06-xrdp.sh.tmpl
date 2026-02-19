@@ -20,14 +20,38 @@ fi
 if command -v grdctl >/dev/null 2>&1; then
   if grdctl status 2>/dev/null | grep -q "RDP.*enabled"; then
     echo "remote-desktop: GNOME RDP already enabled"
-  else
-    echo "remote-desktop: enabling GNOME Remote Desktop (RDP)..."
-    grdctl rdp enable
-    echo ""
-    echo "GNOME Remote Desktop enabled on port 3389."
-    echo "Set credentials with:  grdctl rdp set-credentials <user> <password>"
-    echo "Or enable in:          Settings > Sharing > Remote Desktop"
+    exit 0
   fi
+
+  SUDO=""
+  if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+    SUDO="sudo"
+  fi
+
+  # Generate TLS cert if missing or invalid
+  cert_dir="/var/lib/gnome-remote-desktop"
+  if [[ ! -f "$cert_dir/rdp-tls.crt" ]] || ! openssl x509 -in "$cert_dir/rdp-tls.crt" -noout 2>/dev/null; then
+    echo "remote-desktop: generating TLS certificate..."
+    $SUDO openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
+      -sha256 -nodes -days 3650 -subj "/CN=$(hostname)" \
+      -keyout "$cert_dir/rdp-tls.key" -out "$cert_dir/rdp-tls.crt"
+    $SUDO chown gnome-remote-desktop:gnome-remote-desktop "$cert_dir/rdp-tls.key" "$cert_dir/rdp-tls.crt"
+  fi
+
+  # Ensure grdctl can read the cert directory and files
+  $SUDO chmod 755 "$cert_dir"
+  $SUDO chmod 644 "$cert_dir/rdp-tls.crt"
+  $SUDO chmod 640 "$cert_dir/rdp-tls.key"
+  $SUDO chgrp "$(id -gn)" "$cert_dir/rdp-tls.key"
+
+  echo "remote-desktop: enabling GNOME Remote Desktop (RDP)..."
+  grdctl rdp set-tls-key "$cert_dir/rdp-tls.key"
+  grdctl rdp set-tls-cert "$cert_dir/rdp-tls.crt"
+  grdctl rdp enable
+  echo ""
+  echo "GNOME Remote Desktop enabled on port 3389."
+  echo "Set credentials with:  grdctl rdp set-credentials <user> <password>"
+  echo "Or enable in:          Settings > Sharing > Remote Desktop"
   exit 0
 fi
 
