@@ -4,7 +4,11 @@
 
 [core]
   editor = nano
+{{- if lookPath "delta" }}
   pager = delta
+{{- else }}
+  pager = less -FRX --mouse
+{{- end }}
 
 [push]
   autoSetupRemote = true
@@ -41,6 +45,7 @@
 [include]
   path = ~/.gitconfig.local
 
+{{- if lookPath "delta" }}
 [interactive]
   diffFilter = delta --color-only
 
@@ -54,6 +59,7 @@
   hyperlinks = true
   hyperlinks-file-link-format = "vscode://file/{path}:{line}"
   pager = less -FRX --mouse
+{{- end }}
 
 [merge]
   conflictStyle = zdiff3

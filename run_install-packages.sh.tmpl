@@ -3,6 +3,7 @@ set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # cargo-packages: markless
 # uv-tools: specify-cli
+# linux-pkg-v3
 
 os="{{ .chezmoi.os }}"
 
@@ -22,8 +23,7 @@ install_uv_tools() {
 }
 
 want_cmds=(git fzf bat zoxide)
-# nice-to-haves: rg, gh, starship, eza
-want_cmds_optional=(rg gh starship eza specify)
+want_cmds_optional=(rg gh starship eza delta ghq glow navi tldr micro mosh specify)
 
 missing=0
 for c in "${want_cmds[@]}" "${want_cmds_optional[@]}"; do
@@ -71,19 +71,106 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   fi
 fi
 
+get_arch() {
+  case "$(uname -m)" in
+    x86_64|amd64)  echo "amd64" ;;
+    aarch64|arm64) echo "arm64" ;;
+    *)             echo "" ;;
+  esac
+}
+
 install_starship_user() {
-  if ! command -v starship >/dev/null 2>&1; then
-    mkdir -p "$HOME/.local/bin"
-    curl -fsSL https://starship.rs/install.sh | sh -s -- -y --bin-dir "$HOME/.local/bin" || true
-    # Ensure it's usable immediately even if PATH hasn't been reloaded yet
-    export PATH="$HOME/.local/bin:$PATH"
-  fi
+  command -v starship >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  mkdir -p "$HOME/.local/bin"
+  curl -fsSL https://starship.rs/install.sh | sh -s -- -y --bin-dir "$HOME/.local/bin" || true
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+install_uv_user() {
+  command -v uv >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  curl -fsSL https://astral.sh/uv/install.sh | sh || true
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+install_ghq_user() {
+  command -v ghq >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
+
+  local GHQ_VERSION="1.7.1"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local url="https://github.com/x-motemen/ghq/releases/download/v${GHQ_VERSION}/ghq_linux_${arch}.zip"
+
+  curl -fsSL "$url" -o "${tmpdir}/ghq.zip" || { rm -rf "$tmpdir"; return 0; }
+  mkdir -p "$HOME/.local/bin"
+  unzip -o -j "${tmpdir}/ghq.zip" "ghq_linux_${arch}/ghq" -d "$HOME/.local/bin" 2>/dev/null || true
+  chmod +x "$HOME/.local/bin/ghq" 2>/dev/null || true
+  rm -rf "$tmpdir"
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+install_navi_user() {
+  command -v navi >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
+
+  # navi uses x86_64/aarch64 in its release names
+  local navi_arch
+  case "$arch" in
+    amd64) navi_arch="x86_64" ;;
+    arm64) navi_arch="aarch64" ;;
+    *)     return 0 ;;
+  esac
+
+  local NAVI_VERSION="2.24.0"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local url="https://github.com/denisidoro/navi/releases/download/v${NAVI_VERSION}/navi-v${NAVI_VERSION}-${navi_arch}-unknown-linux-musl.tar.gz"
+
+  curl -fsSL "$url" -o "${tmpdir}/navi.tgz" || { rm -rf "$tmpdir"; return 0; }
+  mkdir -p "$HOME/.local/bin"
+  tar -xzf "${tmpdir}/navi.tgz" -C "$HOME/.local/bin" || true
+  rm -rf "$tmpdir"
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+install_delta_user() {
+  # Install delta from GitHub releases (for distros where it's not in repos)
+  command -v delta >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
+
+  local DELTA_VERSION="0.18.2"
+  local delta_arch
+  case "$arch" in
+    amd64) delta_arch="x86_64" ;;
+    arm64) delta_arch="aarch64" ;;
+    *)     return 0 ;;
+  esac
+
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local url="https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${delta_arch}-unknown-linux-musl.tar.gz"
+
+  curl -fsSL "$url" -o "${tmpdir}/delta.tgz" || { rm -rf "$tmpdir"; return 0; }
+  tar -xzf "${tmpdir}/delta.tgz" -C "$tmpdir" || { rm -rf "$tmpdir"; return 0; }
+  mkdir -p "$HOME/.local/bin"
+  cp "${tmpdir}/delta-${DELTA_VERSION}-${delta_arch}-unknown-linux-musl/delta" "$HOME/.local/bin/delta" || true
+  chmod +x "$HOME/.local/bin/delta" 2>/dev/null || true
+  rm -rf "$tmpdir"
+  export PATH="$HOME/.local/bin:$PATH"
 }
 
 ensure_fzf_zsh_integration() {
-  # On many Linux distros (including some Codespaces images), the `fzf` package
-  # may not ship the zsh key-bindings/completion files we expect.
-  # We standardize on the upstream fzf install which generates ~/.fzf.zsh.
   command -v git >/dev/null 2>&1 || return 0
   command -v fzf >/dev/null 2>&1 || return 0
 
@@ -91,33 +178,24 @@ ensure_fzf_zsh_integration() {
     if [[ ! -d "$HOME/.fzf" ]]; then
       git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" || return 0
     fi
-
-    # Generate ~/.fzf.zsh without modifying rc files (no binary install here)
     "$HOME/.fzf/install" --completion --key-bindings --no-update-rc --no-bash --no-fish >/dev/null 2>&1 || true
   fi
 }
 
 install_fzf_upstream_linux() {
-  # Install a newer upstream fzf binary on Linux and prefer it via ~/.local/bin.
   [[ "$(uname -s)" == "Linux" ]] || return 0
-
-  # Need curl + tar to download/extract
   command -v curl >/dev/null 2>&1 || return 0
   command -v tar  >/dev/null 2>&1 || return 0
 
-  local arch fzf_arch tmpdir
-  arch="$(uname -m)"
-  case "$arch" in
-    x86_64|amd64)  fzf_arch="linux_amd64" ;;
-    aarch64|arm64) fzf_arch="linux_arm64" ;;
-    *)             fzf_arch="" ;;
-  esac
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
 
-  [[ -n "$fzf_arch" ]] || return 0
-
-  # Pinned for reproducibility
+  # fzf uses linux_amd64/linux_arm64
+  local fzf_arch="linux_${arch}"
   local FZF_VERSION="0.67.0"
 
+  local tmpdir
   tmpdir="$(mktemp -d)"
   curl -fsSL \
     "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-${fzf_arch}.tar.gz" \
@@ -126,25 +204,24 @@ install_fzf_upstream_linux() {
   mkdir -p "$HOME/.local/bin"
   tar -xzf "${tmpdir}/fzf.tgz" -C "$HOME/.local/bin" || true
   rm -rf "$tmpdir"
-
-  # Make it effective for the remainder of this script
   export PATH="$HOME/.local/bin:$PATH"
 }
 
 install_fd_find() {
-  # Optional but recommended: makes fzf much faster and respects ignores.
-  # Package names differ across distros, so try common ones.
+  command -v fd >/dev/null 2>&1 && return 0
+  command -v fdfind >/dev/null 2>&1 && return 0
   if command -v apt-get >/dev/null 2>&1; then
     $SUDO apt-get install -y fd-find || true
   elif command -v dnf >/dev/null 2>&1; then
-    $SUDO dnf install -y fd-find || $SUDO dnf install -y fd || true
+    $SUDO dnf install -y fd-find 2>/dev/null || $SUDO dnf install -y fd 2>/dev/null || true
   elif command -v yum >/dev/null 2>&1; then
-    $SUDO yum install -y fd-find || $SUDO yum install -y fd || true
+    $SUDO yum install -y fd-find 2>/dev/null || $SUDO yum install -y fd 2>/dev/null || true
   elif command -v pacman >/dev/null 2>&1; then
     $SUDO pacman -Sy --noconfirm fd || true
   fi
 }
 
+# ---- Distro package installs ----
 if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get update
   $SUDO apt-get install -y git curl ca-certificates fzf bat zoxide ripgrep
@@ -152,25 +229,28 @@ if command -v apt-get >/dev/null 2>&1; then
   # Optional packages (don't fail the whole script if missing)
   $SUDO apt-get install -y gh || true
   $SUDO apt-get install -y eza 2>/dev/null || true
+  $SUDO apt-get install -y chafa mosh micro tealdeer 2>/dev/null || true
+  # git-delta and glow not in Ubuntu stable repos — installed via helpers below
+  $SUDO apt-get install -y git-delta 2>/dev/null || true
+  $SUDO apt-get install -y glow 2>/dev/null || true
   $SUDO apt-get install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf makecache -y || true
   $SUDO dnf install -y git curl ca-certificates fzf bat zoxide ripgrep || true
-  $SUDO dnf install -y gh || true
-  # eza: not in all Fedora/RHEL repos; suppress "No match" noise
+  $SUDO dnf install -y gh git-delta glow chafa mosh micro tealdeer 2>/dev/null || true
   $SUDO dnf install -y eza 2>/dev/null || true
-  $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
+  $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard 2>/dev/null || true
 
 elif command -v yum >/dev/null 2>&1; then
   $SUDO yum makecache -y || true
   $SUDO yum install -y git curl ca-certificates fzf bat zoxide ripgrep || true
-  $SUDO yum install -y gh || true
+  $SUDO yum install -y gh chafa mosh micro 2>/dev/null || true
   $SUDO yum install -y eza 2>/dev/null || true
 
 elif command -v pacman >/dev/null 2>&1; then
   $SUDO pacman -Sy --noconfirm git curl ca-certificates fzf bat zoxide ripgrep
-  $SUDO pacman -Sy --noconfirm github-cli eza || true
+  $SUDO pacman -Sy --noconfirm github-cli eza git-delta glow chafa mosh micro tealdeer || true
   $SUDO pacman -Sy --noconfirm zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 else
@@ -178,9 +258,14 @@ else
   exit 0
 fi
 
+# ---- Post-package-manager installs (GitHub releases / official installers) ----
 install_fzf_upstream_linux
 install_fd_find
 ensure_fzf_zsh_integration
 install_starship_user
+install_delta_user
+install_ghq_user
+install_navi_user
+install_uv_user
 install_cargo_packages
 install_uv_tools
