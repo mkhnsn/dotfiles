@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# desktop-settings-v2
+
+os="{{ .chezmoi.os }}"
+[[ "$os" == "linux" ]] || exit 0
+
+# Detect desktop environment at runtime
+DE="${XDG_CURRENT_DESKTOP:-}"
+DE_lower="${DE,,}"  # lowercase for matching
+
+disable_suspend_gnome() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+  gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+}
+
+disable_suspend_kde() {
+  # KDE stores power settings in powermanagementprofilesrc
+  local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/powermanagementprofilesrc"
+  mkdir -p "$(dirname "$cfg")"
+
+  if command -v kwriteconfig6 >/dev/null 2>&1; then
+    kw=kwriteconfig6
+  elif command -v kwriteconfig5 >/dev/null 2>&1; then
+    kw=kwriteconfig5
+  else
+    return 0
+  fi
+
+  # Disable suspend on AC
+  "$kw" --file "$cfg" --group AC --group SuspendSession --key idleTime 0
+  "$kw" --file "$cfg" --group AC --group SuspendSession --key suspendType 0
+  # Disable suspend on battery
+  "$kw" --file "$cfg" --group Battery --group SuspendSession --key idleTime 0
+  "$kw" --file "$cfg" --group Battery --group SuspendSession --key suspendType 0
+}
+
+disable_suspend_systemd() {
+  # Fallback: mask sleep/suspend targets via loginctl (no sudo needed)
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl --user mask sleep.target suspend.target 2>/dev/null || true
+  fi
+}
+
+case "$DE_lower" in
+  *gnome*|*unity*|*budgie*|*cinnamon*)
+    disable_suspend_gnome
+    ;;
+  *kde*|*plasma*)
+    disable_suspend_kde
+    ;;
+  *)
+    # No recognized DE — try gsettings anyway (some setups don't set XDG_CURRENT_DESKTOP)
+    if command -v gsettings >/dev/null 2>&1 && gsettings list-schemas 2>/dev/null | grep -q 'org.gnome.settings-daemon.plugins.power'; then
+      disable_suspend_gnome
+    else
+      disable_suspend_systemd
+    fi
+    ;;
+esac

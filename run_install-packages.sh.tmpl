@@ -151,21 +151,22 @@ if command -v apt-get >/dev/null 2>&1; then
 
   # Optional packages (don't fail the whole script if missing)
   $SUDO apt-get install -y gh || true
-  $SUDO apt-get install -y eza || true
+  $SUDO apt-get install -y eza 2>/dev/null || true
   $SUDO apt-get install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf makecache -y || true
   $SUDO dnf install -y git curl ca-certificates fzf bat zoxide ripgrep || true
   $SUDO dnf install -y gh || true
-  $SUDO dnf install -y eza || true
+  # eza: not in all Fedora/RHEL repos; suppress "No match" noise
+  $SUDO dnf install -y eza 2>/dev/null || true
   $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
 elif command -v yum >/dev/null 2>&1; then
   $SUDO yum makecache -y || true
   $SUDO yum install -y git curl ca-certificates fzf bat zoxide ripgrep || true
   $SUDO yum install -y gh || true
-  $SUDO yum install -y eza || true
+  $SUDO yum install -y eza 2>/dev/null || true
 
 elif command -v pacman >/dev/null 2>&1; then
   $SUDO pacman -Sy --noconfirm git curl ca-certificates fzf bat zoxide ripgrep
