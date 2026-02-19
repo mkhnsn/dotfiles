@@ -24,4 +24,5 @@ brew "navi"
 brew "tealdeer"
 brew "uv"
 
+cask "windows-app"
 cask "visual-studio-code@insiders"
