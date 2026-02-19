@@ -1,7 +1,23 @@
 # ~/.local/share/chezmoi/.chezmoi.toml.tmpl (special filename read by `chezmoi init`)
 
-{{- $hostname := promptStringOnce . "hostname" "Hostname for this machine" -}}
-{{- $isServer := promptBoolOnce . "is_server" "Is this a server/dev box (y/n)" -}}
+{{- /* Hostname: default to current hostname, only prompt if not yet set */ -}}
+{{- $hostname := .chezmoi.hostname -}}
+{{- if and (hasKey . "hostname") (ne .hostname "") -}}
+{{-   $hostname = .hostname -}}
+{{- else -}}
+{{-   $hostname = promptString (printf "Hostname for this machine (%s)" .chezmoi.hostname) -}}
+{{-   if eq $hostname "" -}}
+{{-     $hostname = .chezmoi.hostname -}}
+{{-   end -}}
+{{- end -}}
+
+{{- /* Server flag: default No, only prompt if not yet set */ -}}
+{{- $isServer := false -}}
+{{- if hasKey . "is_server" -}}
+{{-   $isServer = .is_server -}}
+{{- else -}}
+{{-   $isServer = promptBool "Is this a server/dev box? (y/N, default: No)" -}}
+{{- end }}
 
 [data]
   hostname = {{ $hostname | quote }}

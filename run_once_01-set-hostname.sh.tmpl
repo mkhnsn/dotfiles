@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-{{ if and (eq .chezmoi.os "linux") .is_server -}}
+{{ if and (eq .chezmoi.os "linux") (dig "is_server" false .) -}}
 current="$(hostname)"
-desired="{{ .hostname }}"
+desired="{{ dig "hostname" .chezmoi.hostname . }}"
 
 if [[ "$current" != "$desired" ]]; then
   if command -v hostnamectl >/dev/null 2>&1; then

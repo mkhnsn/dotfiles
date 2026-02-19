@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-{{ if .is_server -}}
+{{ if dig "is_server" false . -}}
 
 # Skip if already connected
 if command -v tailscale >/dev/null 2>&1; then
