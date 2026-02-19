@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") .is_server -}}
+current="$(hostname)"
+desired="{{ .hostname }}"
+
+if [[ "$current" != "$desired" ]]; then
+  if command -v hostnamectl >/dev/null 2>&1; then
+    SUDO=""
+    if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+      SUDO="sudo"
+    fi
+    $SUDO hostnamectl set-hostname "$desired"
+    echo "Hostname set to $desired"
+
+    # Restart Tailscale so it picks up the new name
+    if command -v tailscale >/dev/null 2>&1; then
+      $SUDO systemctl restart tailscaled 2>/dev/null || true
+      echo "Tailscale restarted"
+    fi
+  fi
+fi
+{{ end -}}

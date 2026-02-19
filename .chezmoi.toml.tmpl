@@ -1,5 +1,12 @@
 # ~/.local/share/chezmoi/.chezmoi.toml.tmpl (special filename read by `chezmoi init`)
 
+{{- $hostname := promptStringOnce . "hostname" "Hostname for this machine" -}}
+{{- $isServer := promptBoolOnce . "is_server" "Is this a server/dev box (y/n)" -}}
+
+[data]
+  hostname = {{ $hostname | quote }}
+  is_server = {{ $isServer }}
+
 {{- if env "DOTFILES_FULL" }}
 
 [secret]
