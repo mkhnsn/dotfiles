@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if .is_server -}}
+
+# Skip if already connected
+if command -v tailscale >/dev/null 2>&1; then
+  status="$(tailscale status --json 2>/dev/null | grep -o '"BackendState":"[^"]*"' | head -1 || echo "")"
+  if [[ "$status" == *"Running"* ]]; then
+    echo "tailscale: already connected"
+    exit 0
+  fi
+fi
+
+{{ if eq .chezmoi.os "linux" -}}
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  SUDO="sudo"
+fi
+
+# Install if missing
+if ! command -v tailscale >/dev/null 2>&1; then
+  echo "tailscale: installing..."
+  curl -fsSL https://tailscale.com/install.sh | sh
+  $SUDO systemctl enable --now tailscaled
+fi
+
+# Connect with SSH enabled (Linux only)
+echo "tailscale: connecting with SSH enabled..."
+echo "tailscale: you'll need to authenticate in your browser."
+$SUDO tailscale up --ssh
+
+{{ else -}}
+# macOS: Tailscale is a GUI app; just connect if the CLI is available
+if ! command -v tailscale >/dev/null 2>&1; then
+  echo "tailscale: not installed. Install from App Store or: brew install --cask tailscale"
+  exit 0
+fi
+
+echo "tailscale: connecting..."
+echo "tailscale: you'll need to authenticate in your browser."
+tailscale up
+
+{{ end -}}
+
+echo "tailscale: connected"
+echo ""
+echo "REMINDER: Disable key expiry for this machine in the Tailscale admin console:"
+echo "  https://login.tailscale.com/admin/machines"
+
+{{ end -}}
