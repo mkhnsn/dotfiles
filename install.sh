@@ -14,7 +14,11 @@ DOTFILES_REPO="${DOTFILES_REPO:-$DOTFILES_REPO_DEFAULT}"
 CHEZMOI_BIN="${CHEZMOI_BIN:-chezmoi}"
 
 # Directory of this script (only meaningful when the repo is already cloned locally).
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# BASH_SOURCE is unset when run via bash -c "$(curl ...)", so fall back gracefully.
+SCRIPT_DIR=""
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 log() { printf '[dotfiles] %s\n' "$*"; }
 
@@ -56,7 +60,7 @@ fi
 #
 # If we are curl-running (no local repo), do a one-shot init from the repo.
 
-if [[ -f "$SCRIPT_DIR/dot_zshrc" || -f "$SCRIPT_DIR/.chezmoiexternal.toml" || -d "$SCRIPT_DIR/dot_config" ]]; then
+if [[ -n "$SCRIPT_DIR" ]] && [[ -f "$SCRIPT_DIR/dot_zshrc" || -f "$SCRIPT_DIR/.chezmoiexternal.toml" || -d "$SCRIPT_DIR/dot_config" ]]; then
   log "repo detected locally at: $SCRIPT_DIR"
   log "applying via chezmoi from local source dir"
   "$CHEZMOI_BIN" apply --source "$SCRIPT_DIR"
