@@ -1,0 +1,19 @@
+{{- if eq .chezmoi.os "darwin" }}
+Include ~/.ssh/1Password/config
+
+Host *
+	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+{{- end }}
+
+Host *
+	CanonicalizeHostname yes
+	CanonicalDomains halosaur-major.ts.net
+	CanonicalizeMaxDots 0
+
+Host *.halosaur-major.ts.net
+	ForwardAgent yes
+
+Host echo-dev.local
+	HostName echo-dev.local
+	User admin
