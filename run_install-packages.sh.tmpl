@@ -3,7 +3,7 @@ set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # cargo-packages: markless
 # uv-tools: specify-cli
-# linux-pkg-v3
+# linux-pkg-v4
 
 os="{{ .chezmoi.os }}"
 
@@ -256,6 +256,91 @@ install_fd_find() {
   fi
 }
 
+install_bandwhich_user() {
+  command -v bandwhich >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  # Available in pacman; skip GitHub install on Arch
+  command -v pacman >/dev/null 2>&1 && return 0
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
+
+  local bw_arch
+  case "$arch" in
+    amd64) bw_arch="x86_64" ;;
+    arm64) bw_arch="aarch64" ;;
+    *)     return 0 ;;
+  esac
+
+  local BANDWHICH_VERSION="0.23.1"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local url="https://github.com/imsnif/bandwhich/releases/download/v${BANDWHICH_VERSION}/bandwhich-v${BANDWHICH_VERSION}-${bw_arch}-unknown-linux-musl.tar.gz"
+
+  curl -fsSL "$url" -o "${tmpdir}/bandwhich.tgz" || { rm -rf "$tmpdir"; return 0; }
+  mkdir -p "$HOME/.local/bin"
+  tar -xzf "${tmpdir}/bandwhich.tgz" -C "$HOME/.local/bin" bandwhich || true
+  chmod +x "$HOME/.local/bin/bandwhich" 2>/dev/null || true
+  rm -rf "$tmpdir"
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+install_procs_user() {
+  command -v procs >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  # Available in pacman; skip GitHub install on Arch
+  command -v pacman >/dev/null 2>&1 && return 0
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
+
+  local procs_arch
+  case "$arch" in
+    amd64) procs_arch="x86_64" ;;
+    arm64) procs_arch="aarch64" ;;
+    *)     return 0 ;;
+  esac
+
+  local PROCS_VERSION="0.14.10"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local url="https://github.com/dalance/procs/releases/download/v${PROCS_VERSION}/procs-v${PROCS_VERSION}-${procs_arch}-linux.zip"
+
+  curl -fsSL "$url" -o "${tmpdir}/procs.zip" || { rm -rf "$tmpdir"; return 0; }
+  mkdir -p "$HOME/.local/bin"
+  unzip -o -j "${tmpdir}/procs.zip" -d "$HOME/.local/bin" 2>/dev/null || true
+  chmod +x "$HOME/.local/bin/procs" 2>/dev/null || true
+  rm -rf "$tmpdir"
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+install_duf_user() {
+  command -v duf >/dev/null 2>&1 && return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  local arch
+  arch="$(get_arch)"
+  [[ -n "$arch" ]] || return 0
+
+  local duf_arch
+  case "$arch" in
+    amd64) duf_arch="amd64" ;;
+    arm64) duf_arch="arm64" ;;
+    *)     return 0 ;;
+  esac
+
+  local DUF_VERSION="0.8.1"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local url="https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_linux_${duf_arch}.tar.gz"
+
+  curl -fsSL "$url" -o "${tmpdir}/duf.tgz" || { rm -rf "$tmpdir"; return 0; }
+  mkdir -p "$HOME/.local/bin"
+  tar -xzf "${tmpdir}/duf.tgz" -C "$HOME/.local/bin" duf || true
+  chmod +x "$HOME/.local/bin/duf" 2>/dev/null || true
+  rm -rf "$tmpdir"
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
 # ---- Distro package installs ----
 if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get update
@@ -292,6 +377,23 @@ else
   echo "No supported package manager found (apt/dnf/yum/pacman). Skipping."
   exit 0
 fi
+
+# ---- System monitoring tools (full_setup only) ----
+{{ if .full_setup -}}
+if command -v apt-get >/dev/null 2>&1; then
+  $SUDO apt-get install -y htop btop ncdu iftop iotop sysstat duf 2>/dev/null || true
+elif command -v dnf >/dev/null 2>&1; then
+  $SUDO dnf install -y htop btop ncdu iftop iotop sysstat duf 2>/dev/null || true
+elif command -v yum >/dev/null 2>&1; then
+  $SUDO yum install -y htop btop ncdu iftop iotop sysstat 2>/dev/null || true
+elif command -v pacman >/dev/null 2>&1; then
+  $SUDO pacman -Sy --noconfirm htop btop ncdu iftop iotop sysstat duf bandwhich procs || true
+fi
+
+install_duf_user
+install_bandwhich_user
+install_procs_user
+{{ end -}}
 
 # ---- Post-package-manager installs (GitHub releases / official installers) ----
 install_fzf_upstream_linux
