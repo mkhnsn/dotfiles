@@ -2,6 +2,16 @@
 
 export EDITOR="code --wait"
 
+# ---- history ----
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt SHARE_HISTORY          # share history across sessions in real time
+setopt HIST_IGNORE_ALL_DUPS   # deduplicate older entries
+setopt HIST_REDUCE_BLANKS     # trim whitespace
+setopt HIST_IGNORE_SPACE      # lines starting with space are private
+setopt APPEND_HISTORY         # append, don't overwrite
+
 # PATH basics
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/src/github.com/mkhnsn/scripts.git/:$PATH"
@@ -38,6 +48,7 @@ elif command -v fd-find >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND='fd-find --type f --hidden --follow --exclude .git'
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 fi
+export FZF_CTRL_R_OPTS='--scheme=history'
 
 # ---- completions dir ----
 ZSH_COMPLETIONS_DIR="$HOME/.config/zsh/completions"
