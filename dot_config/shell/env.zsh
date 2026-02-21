@@ -72,6 +72,11 @@ if command -v brew >/dev/null 2>&1; then
   _brew_prefix="$(brew --prefix)"
   fpath_prepend "$_brew_prefix/share/zsh-completions"
   fpath_prepend "$_brew_prefix/share/zsh/site-functions"
+
+  # Homebrew node ships a bash-style _npm that shadows the proper zsh one.
+  # Remove it so /usr/share/zsh/*/functions/_npm (with #compdef) wins.
+  [[ -L "$_brew_prefix/share/zsh/site-functions/_npm" ]] && \
+    rm -f "$_brew_prefix/share/zsh/site-functions/_npm"
 fi
 
 # System zsh completions
