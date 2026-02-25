@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") .full_setup -}}
+
+command -v dnf >/dev/null 2>&1 || exit 0
+
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  if command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+    if ! sudo -n true 2>/dev/null; then
+      echo "fedora-desktop: sudo requires password (non-interactive), skipping"
+      exit 0
+    fi
+  else
+    echo "fedora-desktop: not root and sudo not available, skipping"
+    exit 0
+  fi
+fi
+
+DE="${XDG_CURRENT_DESKTOP:-}"
+DE_lower="${DE,,}"
+
+# ---- GNOME tweaks & themes ----
+if [[ "$DE_lower" == *gnome* ]] || command -v gnome-shell >/dev/null 2>&1; then
+  echo "fedora-desktop: GNOME detected, installing tweaks..."
+  $SUDO dnf install -y gnome-tweaks gnome-themes-extra 2>/dev/null || true
+
+  # Disable GNOME Software autostart (slow, eats RAM — we manage packages via dnf/flatpak)
+  AUTOSTART_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
+  mkdir -p "$AUTOSTART_DIR"
+  GNOME_SW_DESKTOP="$AUTOSTART_DIR/org.gnome.Software.desktop"
+  if [[ ! -f "$GNOME_SW_DESKTOP" ]]; then
+    cat > "$GNOME_SW_DESKTOP" << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=GNOME Software
+Hidden=true
+EOF
+    echo "fedora-desktop: disabled GNOME Software autostart"
+  fi
+
+  # GNOME Extension Manager (via Flatpak)
+  if command -v flatpak >/dev/null 2>&1; then
+    if ! flatpak list --app 2>/dev/null | grep -q 'com.mattjakeman.ExtensionManager'; then
+      echo "fedora-desktop: installing Extension Manager (Flatpak)..."
+      flatpak install -y --noninteractive flathub com.mattjakeman.ExtensionManager 2>/dev/null || true
+    fi
+  fi
+fi
+
+# ---- Deja Dup backup tool ----
+if command -v flatpak >/dev/null 2>&1; then
+  if ! flatpak list --app 2>/dev/null | grep -q 'org.gnome.DejaDup'; then
+    echo "fedora-desktop: installing Deja Dup (Flatpak)..."
+    flatpak install -y --noninteractive flathub org.gnome.DejaDup 2>/dev/null || true
+  fi
+else
+  $SUDO dnf install -y deja-dup 2>/dev/null || true
+fi
+
+{{ end -}}

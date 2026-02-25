@@ -3,7 +3,7 @@ set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # cargo-packages: markless
 # uv-tools: specify-cli
-# linux-pkg-v4
+# linux-pkg-v5
 
 os="{{ .chezmoi.os }}"
 
@@ -371,6 +371,31 @@ elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf install -y gh git-delta glow chafa mosh micro tealdeer 2>/dev/null || true
   $SUDO dnf install -y eza 2>/dev/null || true
   $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard 2>/dev/null || true
+
+  # ---- Archive tools & FUSE/AppImage support ----
+  $SUDO dnf install -y p7zip p7zip-plugins unrar 2>/dev/null || true
+  $SUDO dnf install -y fuse fuse-libs 2>/dev/null || true
+
+{{ if .full_setup -}}
+  # ---- Multimedia codecs (requires RPM Fusion from 03-fedora-repos) ----
+  if dnf repolist --enabled 2>/dev/null | grep -q 'rpmfusion'; then
+    $SUDO dnf swap -y ffmpeg-free ffmpeg --allowerasing 2>/dev/null || true
+    $SUDO dnf install -y \
+      gstreamer1-plugins-good gstreamer1-plugins-bad-free \
+      gstreamer1-plugins-ugly gstreamer1-plugin-openh264 \
+      gstreamer1-plugin-libav 2>/dev/null || true
+    $SUDO dnf install -y gstreamer1-plugins-bad-freeworld 2>/dev/null || true
+  fi
+  # OpenH264 from Cisco (Fedora ships it disabled by default)
+  $SUDO dnf config-manager setopt fedora-cisco-openh264.enabled=1 2>/dev/null || true
+  $SUDO dnf install -y openh264 mozilla-openh264 2>/dev/null || true
+
+  # ---- Microsoft core fonts ----
+  if ! rpm -q msttcore-fonts-installer >/dev/null 2>&1; then
+    $SUDO dnf install -y curl cabextract xorg-x11-font-utils fontconfig 2>/dev/null || true
+    $SUDO rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm 2>/dev/null || true
+  fi
+{{ end -}}
 
 elif command -v yum >/dev/null 2>&1; then
   $SUDO yum makecache -y || true

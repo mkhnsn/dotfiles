@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") .full_setup -}}
+
+command -v dnf >/dev/null 2>&1 || exit 0
+
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  if command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+    if ! sudo -n true 2>/dev/null; then
+      echo "fedora-gpu: sudo requires password (non-interactive), skipping"
+      exit 0
+    fi
+  else
+    echo "fedora-gpu: not root and sudo not available, skipping"
+    exit 0
+  fi
+fi
+
+# Detect GPU vendor(s) via lspci
+gpu_info=""
+if command -v lspci >/dev/null 2>&1; then
+  gpu_info="$(lspci 2>/dev/null | grep -Ei 'vga|3d|display' || true)"
+fi
+
+if [[ -z "$gpu_info" ]]; then
+  echo "fedora-gpu: no GPU detected (lspci unavailable or no VGA devices), skipping"
+  exit 0
+fi
+
+has_nvidia=false
+has_amd=false
+has_intel=false
+echo "$gpu_info" | grep -qi 'nvidia' && has_nvidia=true
+echo "$gpu_info" | grep -qi 'amd\|radeon' && has_amd=true
+echo "$gpu_info" | grep -qi 'intel' && has_intel=true
+
+# Base Vulkan/Mesa packages (useful for any GPU)
+$SUDO dnf install -y mesa-dri-drivers mesa-vulkan-drivers vulkan-loader mesa-libGLU 2>/dev/null || true
+
+# ---- NVIDIA ----
+if [[ "$has_nvidia" == "true" ]]; then
+  echo "fedora-gpu: NVIDIA GPU detected"
+  if ! dnf repolist --enabled 2>/dev/null | grep -q 'rpmfusion-nonfree'; then
+    echo "fedora-gpu: RPM Fusion nonfree not enabled, skipping NVIDIA drivers"
+  else
+    # For RTX 4000+ (Ada Lovelace+), enable open kernel modules before installing
+    if echo "$gpu_info" | grep -qiE 'RTX [4-9]0|RTX 50|Ada|Blackwell'; then
+      echo "fedora-gpu: RTX 4000+ detected, enabling open kernel modules..."
+      $SUDO mkdir -p /etc/rpm
+      if [[ ! -f /etc/rpm/macros.nvidia-kmod ]] || ! grep -q '_with_kmod_nvidia_open' /etc/rpm/macros.nvidia-kmod 2>/dev/null; then
+        echo '%_with_kmod_nvidia_open 1' | $SUDO tee /etc/rpm/macros.nvidia-kmod >/dev/null
+      fi
+    fi
+
+    if ! rpm -q akmod-nvidia >/dev/null 2>&1; then
+      echo "fedora-gpu: installing akmod-nvidia..."
+      $SUDO dnf install -y kernel-devel kernel-headers 2>/dev/null || true
+      $SUDO dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda 2>/dev/null || true
+    fi
+
+    # VAAPI bridge for NVIDIA (hardware video decode in browsers)
+    $SUDO dnf install -y libva-nvidia-driver 2>/dev/null || true
+  fi
+fi
+
+# ---- AMD ----
+if [[ "$has_amd" == "true" ]]; then
+  echo "fedora-gpu: AMD GPU detected"
+  if dnf repolist --enabled 2>/dev/null | grep -q 'rpmfusion-free'; then
+    $SUDO dnf swap -y mesa-va-drivers mesa-va-drivers-freeworld --allowerasing 2>/dev/null || true
+    $SUDO dnf swap -y mesa-vdpau-drivers mesa-vdpau-drivers-freeworld --allowerasing 2>/dev/null || true
+  fi
+fi
+
+# ---- Intel ----
+if [[ "$has_intel" == "true" ]]; then
+  echo "fedora-gpu: Intel GPU detected"
+  $SUDO dnf install -y intel-media-driver 2>/dev/null || true
+  if dnf repolist --enabled 2>/dev/null | grep -q 'rpmfusion-free'; then
+    $SUDO dnf swap -y mesa-va-drivers mesa-va-drivers-freeworld --allowerasing 2>/dev/null || true
+  fi
+fi
+
+# VA-API utilities (useful for debugging hardware video acceleration)
+$SUDO dnf install -y ffmpeg-libs libva libva-utils 2>/dev/null || true
+
+echo "fedora-gpu: done"
+
+{{ end -}}

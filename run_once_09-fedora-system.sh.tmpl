@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") .full_setup -}}
+
+command -v dnf >/dev/null 2>&1 || exit 0
+
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  if command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+    if ! sudo -n true 2>/dev/null; then
+      echo "fedora-system: sudo requires password (non-interactive), skipping"
+      exit 0
+    fi
+  else
+    echo "fedora-system: not root and sudo not available, skipping"
+    exit 0
+  fi
+fi
+
+# ---- Detect laptop vs desktop ----
+has_battery=false
+for bat in /sys/class/power_supply/BAT*; do
+  [[ -d "$bat" ]] && has_battery=true && break
+done
+
+# ---- TLP battery management (laptops only) ----
+if [[ "$has_battery" == "true" ]]; then
+  echo "fedora-system: battery detected, setting up TLP..."
+
+  # TLP conflicts with tuned and power-profiles-daemon
+  for svc in tuned power-profiles-daemon; do
+    if systemctl is-active --quiet "$svc" 2>/dev/null || systemctl is-enabled --quiet "$svc" 2>/dev/null; then
+      $SUDO systemctl disable --now "$svc" 2>/dev/null || true
+      $SUDO systemctl mask "$svc" 2>/dev/null || true
+    fi
+  done
+
+  $SUDO dnf install -y tlp tlp-rdw 2>/dev/null || true
+  $SUDO systemctl enable --now tlp 2>/dev/null || true
+  # Prevent systemd-rfkill from conflicting with TLP's radio management
+  $SUDO systemctl mask systemd-rfkill.service systemd-rfkill.socket 2>/dev/null || true
+else
+  echo "fedora-system: no battery detected, skipping TLP"
+fi
+
+# ---- Disable auto-suspend on desktops ----
+if [[ "$has_battery" == "false" ]]; then
+  echo "fedora-system: desktop detected, disabling auto-suspend..."
+
+  # Mask sleep/suspend/hibernate targets so the system never auto-sleeps
+  $SUDO systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target 2>/dev/null || true
+
+  # GNOME: disable automatic suspend via dconf defaults (system-wide)
+  # This sets the default for all users; users can override in Settings if needed
+  DCONF_PROFILE="/etc/dconf/profile/user"
+  DCONF_POWER_DIR="/etc/dconf/db/local.d"
+  DCONF_POWER_FILE="$DCONF_POWER_DIR/01-power"
+  DCONF_LOCK_DIR="/etc/dconf/db/local.d/locks"
+  DCONF_LOCK_FILE="$DCONF_LOCK_DIR/01-power"
+
+  # Ensure dconf profile exists and includes local db
+  if [[ ! -f "$DCONF_PROFILE" ]] || ! grep -q 'local' "$DCONF_PROFILE" 2>/dev/null; then
+    $SUDO mkdir -p "$(dirname "$DCONF_PROFILE")"
+    printf 'user-db:user\nsystem-db:local\n' | $SUDO tee "$DCONF_PROFILE" >/dev/null
+  fi
+
+  $SUDO mkdir -p "$DCONF_POWER_DIR" "$DCONF_LOCK_DIR"
+
+  # sleep-inactive-ac-type='nothing' disables auto-suspend on AC power
+  if [[ ! -f "$DCONF_POWER_FILE" ]]; then
+    $SUDO tee "$DCONF_POWER_FILE" >/dev/null << 'EOF'
+[org/gnome/settings-daemon/plugins/power]
+sleep-inactive-ac-type='nothing'
+sleep-inactive-battery-type='nothing'
+EOF
+    $SUDO dconf update 2>/dev/null || true
+    echo "fedora-system: disabled GNOME auto-suspend defaults for desktops"
+  fi
+fi
+
+# ---- Boot optimization ----
+if systemctl is-enabled --quiet NetworkManager-wait-online.service 2>/dev/null; then
+  echo "fedora-system: disabling NetworkManager-wait-online.service..."
+  $SUDO systemctl disable NetworkManager-wait-online.service 2>/dev/null || true
+fi
+
+# ---- Flatpak auto-updates (systemd user timer) ----
+if command -v flatpak >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
+  TIMER_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+  mkdir -p "$TIMER_DIR"
+
+  if [[ ! -f "$TIMER_DIR/flatpak-update.service" ]]; then
+    cat > "$TIMER_DIR/flatpak-update.service" << 'EOF'
+[Unit]
+Description=Update Flatpak apps
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flatpak update -y --noninteractive
+EOF
+  fi
+
+  if [[ ! -f "$TIMER_DIR/flatpak-update.timer" ]]; then
+    cat > "$TIMER_DIR/flatpak-update.timer" << 'EOF'
+[Unit]
+Description=Daily Flatpak update
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target
+EOF
+  fi
+
+  systemctl --user daemon-reload 2>/dev/null || true
+  systemctl --user enable --now flatpak-update.timer 2>/dev/null || true
+  echo "fedora-system: flatpak auto-update timer enabled"
+fi
+
+# ---- Btrfs snapshots (only if root is btrfs) ----
+root_fstype="$(findmnt -n -o FSTYPE / 2>/dev/null || true)"
+if [[ "$root_fstype" == "btrfs" ]]; then
+  echo "fedora-system: btrfs root detected, installing snapshot tools..."
+
+  $SUDO dnf install -y btrfs-assistant snapper 2>/dev/null || true
+
+  # Create default snapper config for root if not present
+  if command -v snapper >/dev/null 2>&1; then
+    if ! $SUDO snapper -c root list >/dev/null 2>&1; then
+      $SUDO snapper -c root create-config / 2>/dev/null || true
+    fi
+    $SUDO systemctl enable --now snapper-timeline.timer 2>/dev/null || true
+    $SUDO systemctl enable --now snapper-cleanup.timer 2>/dev/null || true
+  fi
+else
+  echo "fedora-system: root is ${root_fstype:-unknown} (not btrfs), skipping snapshot tools"
+fi
+
+# ---- Dual-boot time fix ----
+if command -v timedatectl >/dev/null 2>&1; then
+  if timedatectl show --property=LocalRTC --value 2>/dev/null | grep -q 'yes'; then
+    echo "fedora-system: fixing RTC to UTC (dual-boot time fix)..."
+    $SUDO timedatectl set-local-rtc 0 --adjust-system-clock || true
+  fi
+fi
+
+# ---- Firmware updates ----
+if command -v fwupdmgr >/dev/null 2>&1; then
+  echo "fedora-system: checking for firmware updates..."
+  fwupdmgr refresh --force 2>/dev/null || true
+  fwupdmgr update -y --no-reboot 2>/dev/null || true
+fi
+
+{{ end -}}
