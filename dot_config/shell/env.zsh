@@ -14,7 +14,7 @@ setopt APPEND_HISTORY         # append, don't overwrite
 
 # PATH basics
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/src/github.com/mkhnsn/scripts.git/:$PATH"
+export PATH="$HOME/src/github.com/mkhnsn/scripts/:$PATH"
 
 # macOS-only paths
 if [[ "${OSTYPE:-}" == darwin* ]]; then

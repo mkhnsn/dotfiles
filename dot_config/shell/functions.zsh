@@ -191,6 +191,18 @@ SH
   esac
 }
 
+# ---- yazi (TUI file manager) ----
+
+# Wrapper: quit yazi and cd to the directory you were in
+y() {
+  local tmp cwd
+  tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+  command yazi "$@" --cwd-file="$tmp"
+  IFS= read -r -d '' cwd < "$tmp"
+  [[ "$cwd" != "$PWD" ]] && [[ -d "$cwd" ]] && builtin cd -- "$cwd"
+  rm -f -- "$tmp"
+}
+
 # ---- git worktree helpers ----
 
 # Create a worktree as a sibling directory: repo@branch
