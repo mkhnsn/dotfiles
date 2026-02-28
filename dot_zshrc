@@ -10,3 +10,6 @@ done
 
 # Prompt (starship) if installed
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+
+# OpenClaw completion
+[[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"

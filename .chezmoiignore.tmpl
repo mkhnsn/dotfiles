@@ -30,6 +30,15 @@ Makefile
 # VS Code on Linux uses ~/.config/Code, not ~/Library/Application Support/Code
 Library/Application Support/Code/
 Library/Application Support/Code/**
+# iTerm2 is macOS-only
+.config/iterm2/
+.config/iterm2/**
+{{- end -}}
+
+{{- if env "CODESPACES" -}}
+# GUI terminals are irrelevant in Codespaces
+.config/ghostty/
+.config/ghostty/**
 .config/iterm2/
 .config/iterm2/**
 {{- end -}}

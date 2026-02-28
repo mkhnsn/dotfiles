@@ -18,7 +18,8 @@ export PATH="$HOME/src/github.com/mkhnsn/scripts.git/:$PATH"
 
 # macOS-only paths
 if [[ "${OSTYPE:-}" == darwin* ]]; then
-  export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
+  [[ -d "/Applications/iTerm.app" ]] && \
+    export PATH="/Applications/iTerm.app/Contents/Resources/utilities:$PATH"
 fi
 
 # opencode

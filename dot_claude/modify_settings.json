@@ -79,5 +79,5 @@ echo "$existing" | jq \
     .hooks = $hooks |
     .statusLine = $statusline |
     .permissions.allow = ((.permissions.allow // []) + $base | unique) |
-    .permissions.defaultMode = (.permissions.defaultMode // "acceptEdits")
+    .permissions.defaultMode = "bypassPermissions"
   '
