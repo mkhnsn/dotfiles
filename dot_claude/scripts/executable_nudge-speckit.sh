@@ -34,14 +34,10 @@ if [[ -d "$specify_dir" ]]; then
   fi
 
   # .specify/ exists but no specs written yet — nudge to write specs
-  cat <<'ENDJSON'
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"This project uses spec-kit (.specify/ found) but has no specs yet. Consider running `specify` to draft a spec before writing code — it helps Claude produce better results."}}
-ENDJSON
+  echo "spec-kit: .specify/ found but no specs yet. Consider running \`specify\` to draft a spec before writing code." >&2
   exit 0
 fi
 
 # No .specify/ at all — nudge to try spec-kit
-cat <<'ENDJSON'
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Consider trying spec-kit for this project. Run `specify init` to get started — specs help Claude produce better, more consistent results. Add a .specifyignore file to the repo root to silence this nudge."}}
-ENDJSON
+echo "spec-kit: Consider trying spec-kit for this project. Run \`specify init\` to get started. Add .specifyignore to silence this." >&2
 exit 0
