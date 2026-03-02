@@ -71,6 +71,19 @@ base_permissions='[
   "Bash(git switch *)",
   "Bash(git merge *)",
   "Bash(git rebase *)",
+  "Bash(gh pr:*)",
+  "Bash(gh issue:*)",
+  "Bash(gh api:*)",
+  "Bash(gh run:*)",
+  "Bash(gh repo:*)",
+  "Bash(gh label:*)",
+  "Bash(gh auth:*)",
+  "Bash(ls:*)",
+  "Bash(tree:*)",
+  "Bash(wc:*)",
+  "Bash(sort:*)",
+  "Bash(mkdir:*)",
+  "mcp__ide__getDiagnostics",
   "WebFetch",
   "WebSearch",
   "Read(~/src/**)",
@@ -87,5 +100,6 @@ echo "$existing" | jq \
     .hooks = $hooks |
     .statusLine = $statusline |
     .permissions.allow = ((.permissions.allow // []) + $base | unique) |
-    .permissions.defaultMode = "bypassPermissions"
+    .permissions.defaultMode = "bypassPermissions" |
+    .env = ((.env // {}) + {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})
   '

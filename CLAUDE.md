@@ -79,7 +79,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | Event | Script | Behavior |
 |-------|--------|----------|
 | `PreToolUse` | `scripts/guard-destructive.sh` | Warns on destructive commands (commit/push to main, force push, reset --hard, rm -rf, etc.). User-overridable via approval prompt. |
-| `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write in spec-kit projects (.specify/ exists) with no specs yet, nudges user to write specs first. Advisory only, silent in non-spec-kit projects. |
+| `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write, nudges to use spec-kit. Silent if specs exist or `.specifyignore` is present at repo root. Advisory only. |
 | `PostToolUse` | `scripts/post-edit-lint.sh` | Auto-lints after Edit/Write: eslint (JS/TS), ruff (Python), rustfmt (Rust), gofmt (Go), shfmt (shell). Async, advisory only. |
 
 ### Skills (slash commands)
@@ -97,14 +97,22 @@ Defined in `dot_claude/agents/`. Use with `--agent <name>`:
 
 | Agent | Purpose |
 |-------|---------|
+| `architect` | System design, architecture analysis, and trade-off evaluation |
+| `debugger` | Investigate and fix bugs with root cause analysis |
+| `docs` | Technical writing (READMEs, API docs, code documentation) |
+| `refactorer` | Improve code structure without changing behavior |
 | `reviewer` | Code review focused on bugs, security, and breaking changes |
 | `security` | Security audit (secrets, injection, auth, deps, config) |
-| `docs` | Technical writing (READMEs, API docs, code documentation) |
+| `tester` | Write and run tests, find coverage gaps |
+| `ux-reviewer` | Frontend/UI audit for accessibility, usability, and consistency |
 
 ### Permissions
 
 Base permissions are merged into `settings.json` by the modify script (existing interactive permissions are preserved):
-- Non-destructive git: fetch, pull, status, log, diff, branch, stash, remote
+- Git: fetch, pull, status, log, diff, branch, stash, remote, add, commit, push, checkout, switch, merge, rebase
+- GitHub CLI: `gh pr`, `gh issue`, `gh api`, `gh run`, `gh repo`, `gh label`, `gh auth`
+- Safe utilities: `ls`, `tree`, `wc`, `sort`, `mkdir`
+- IDE: `mcp__ide__getDiagnostics`
 - `WebFetch`, `WebSearch`
 - `Read`, `Edit`, `Write` for `~/src/**`
 
