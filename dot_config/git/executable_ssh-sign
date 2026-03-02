@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Wrapper around ssh-keygen for git commit signing.
+# Uses 1Password (via ssh-agent) for local sessions, falls back to a
+# per-machine SSH key for remote sessions where biometric approval
+# can't be reached (Blink Shell, SSH into Mac, remote Claude Code).
+set -euo pipefail
+
+FALLBACK_KEY="$HOME/.ssh/id_ed25519_remote"
+
+use_fallback() {
+  # Remote SSH session — 1Password biometric can't approve
+  [[ -n "${SSH_CONNECTION:-}" || -n "${SSH_CLIENT:-}" ]] && return 0
+  # 1Password agent running (macOS / Linux socket paths)
+  [[ -S "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ]] && return 1
+  [[ -S "$HOME/.1password/agent.sock" ]] && return 1
+  # No 1Password agent found
+  return 0
+}
+
+if use_fallback && [[ -f "$FALLBACK_KEY" ]]; then
+  # Replace the key arg (-f <key>) with the fallback key
+  args=()
+  replace_next=false
+  for arg in "$@"; do
+    if $replace_next; then
+      args+=("$FALLBACK_KEY")
+      replace_next=false
+      continue
+    fi
+    args+=("$arg")
+    [[ "$arg" == "-f" ]] && replace_next=true
+  done
+  exec ssh-keygen "${args[@]}"
+else
+  exec ssh-keygen "$@"
+fi

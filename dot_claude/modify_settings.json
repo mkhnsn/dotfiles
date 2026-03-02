@@ -83,6 +83,7 @@ base_permissions='[
   "Bash(wc:*)",
   "Bash(sort:*)",
   "Bash(mkdir:*)",
+  "Bash(find-repo:*)",
   "mcp__ide__getDiagnostics",
   "WebFetch",
   "WebSearch",

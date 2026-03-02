@@ -116,6 +116,11 @@ Base permissions are merged into `settings.json` by the modify script (existing 
 - `WebFetch`, `WebSearch`
 - `Read`, `Edit`, `Write` for `~/src/**`
 
+### Utilities
+
+- **Repo lookup**: Run `find-repo <name>` to resolve a repo name to its filesystem path. Uses ghq. Supports partial matching (e.g., `find-repo pricing` matches `pricing-portal`). Run with no args to list all repos.
+- **Remote SSH signing**: `~/.config/git/ssh-sign` wraps `ssh-keygen` as `gpg.ssh.program`. In local sessions it passes through to 1Password; in remote sessions (`SSH_CONNECTION` set or no 1Password socket) it falls back to `~/.ssh/id_ed25519_remote`. The fallback key is generated once by `run_once_11-remote-signing-key.sh.tmpl`.
+
 ### Shell Functions (pipe mode)
 
 Defined in `dot_config/shell/functions.zsh`:

@@ -1,0 +1,34 @@
+{{- if not (env "CODESPACES") -}}
+#!/usr/bin/env bash
+# Generate a fallback SSH signing key for remote sessions where 1Password
+# biometric approval is unavailable (Blink Shell, SSH, remote Claude Code).
+set -euo pipefail
+
+KEY="$HOME/.ssh/id_ed25519_remote"
+
+if [[ -f "$KEY" ]]; then
+  echo "Remote signing key already exists: $KEY"
+  exit 0
+fi
+
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+ssh-keygen -t ed25519 -f "$KEY" -N "" -C "remote-signing-$(hostname -s)"
+
+echo ""
+echo "================================================"
+echo " Remote signing key generated"
+echo "================================================"
+echo ""
+echo " Public key:"
+echo "   $(cat "${KEY}.pub")"
+echo ""
+echo " Add it to GitHub as a signing key:"
+echo "   https://github.com/settings/ssh/new"
+echo "   (choose 'Signing key', not 'Authentication key')"
+echo ""
+echo " Optional: add to allowed_signers for local verification:"
+echo "   echo \"$(git config user.email) $(cat "${KEY}.pub")\" >> ~/.config/git/allowed_signers"
+echo ""
+{{ end -}}

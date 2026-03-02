@@ -27,7 +27,7 @@
   gpgsign = true
 
 [gpg "ssh"]
-  # Use a portable path so it works on macOS + Linux
+  program = ~/.config/git/ssh-sign
   allowedSignersFile = ~/.config/git/allowed_signers
 {{- else }}
 [commit]
