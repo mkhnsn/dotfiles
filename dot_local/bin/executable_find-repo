@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# find-repo — resolve repo names to filesystem paths via ghq
+set -euo pipefail
+
+if ! command -v ghq &>/dev/null; then
+  echo "error: ghq is not installed" >&2
+  exit 1
+fi
+
+repos=$(ghq list --full-path)
+
+# No args: list all repos
+if [[ $# -eq 0 ]]; then
+  echo "$repos"
+  exit 0
+fi
+
+# Filter by each argument (case-insensitive, matches against repo name)
+for query in "$@"; do
+  matches=$(echo "$repos" | while IFS= read -r path; do
+    name=${path##*/}
+    if echo "$name" | grep -qi "$query"; then
+      rel=${path#"$(ghq root)/"}
+      printf '%s → %s\n' "$rel" "$path"
+    fi
+  done)
+
+  if [[ -z "$matches" ]]; then
+    echo "no matches for '$query'" >&2
+    exit 1
+  fi
+
+  echo "$matches"
+done
