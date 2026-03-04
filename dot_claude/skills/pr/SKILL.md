@@ -45,10 +45,20 @@ Use `gh pr create` with:
 <Bulleted checklist of how to verify the changes>
 ```
 
-### 5. Link
+### 5. Request Review
+
+Assign `@copilot` as a reviewer:
+
+```bash
+gh pr edit --add-reviewer copilot
+```
+
+This is fire-and-forget — if it fails (e.g., copilot not available in the repo), log the error but don't block.
+
+### 6. Link
 
 If the org is `unstable-studios` and `link-unstable` is available, run it.
 
-### 6. Done
+### 7. Done
 
 Print the PR URL.

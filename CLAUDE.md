@@ -80,6 +80,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 |-------|--------|----------|
 | `PreToolUse` | `scripts/guard-destructive.sh` | Warns on destructive commands (commit/push to main, force push, reset --hard, rm -rf, etc.). User-overridable via approval prompt. |
 | `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write, nudges to use spec-kit. Silent if specs exist or `.specifyignore` is present at repo root. Advisory only. |
+| `PreToolUse` | `scripts/guard-merged-branch.sh` | On Bash/Edit/Write, warns if the current branch's PR has already been merged. Prompts to switch to main. Cached 60s. |
 | `PostToolUse` | `scripts/post-edit-lint.sh` | Auto-lints after Edit/Write: eslint (JS/TS), ruff (Python), rustfmt (Rust), gofmt (Go), shfmt (shell). Async, advisory only. |
 
 ### Skills (slash commands)
@@ -90,6 +91,8 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | `/pr` | `skills/pr/SKILL.md` | Creates a PR following coding-rules conventions |
 | `/new-repo` | `skills/new-repo/SKILL.md` | Scaffolds a new GitHub repo with README, license, CLAUDE.md |
 | `/coding-rules` | `skills/coding-rules/SKILL.md` | Git workflow and conventional commit conventions |
+| `/next` | `skills/next/SKILL.md` | Wrap up current work, clean stale branches, plan next task from GitHub issues |
+| `/reviews` | `skills/reviews/SKILL.md` | Check open PRs you authored for review comments, approvals, and requested changes |
 
 ### Custom Agents
 

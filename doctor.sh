@@ -21,13 +21,23 @@ if have op; then ok "op:     $(op --version 2>/dev/null || true)"; else info "op
 
 hr "Node toolchain"
 if have node; then
-  ok "node:   $(node -v)"
+  if node_ver=$(node -v 2>&1); then
+    ok "node:   $node_ver"
+  else
+    warn "node:   BROKEN — $(echo "$node_ver" | head -1)"
+    warn "        likely a Homebrew dylib mismatch; try: brew reinstall node"
+  fi
 else
   warn "node:   MISSING"
 fi
 
 if have pnpm; then
-  ok "pnpm:   $(pnpm -v)"
+  if pnpm_ver=$(pnpm -v 2>&1); then
+    ok "pnpm:   $pnpm_ver"
+  else
+    warn "pnpm:   BROKEN — $(echo "$pnpm_ver" | head -1)"
+    warn "        likely a Homebrew dylib mismatch; try: brew reinstall node"
+  fi
 else
   warn "pnpm:   MISSING"
 fi
@@ -101,6 +111,28 @@ if have zsh; then
   ' 2>/dev/null || warn "zsh completion check failed (non-fatal)"
 else
   warn "Skipping zsh completion wiring (zsh not installed)"
+fi
+
+hr "Homebrew linkage (macOS only)"
+if have brew; then
+  # Quick check: try a few key binaries for dylib load errors
+  broken=()
+  for bin in node ruby python3; do
+    if have "$bin"; then
+      if ! "$bin" --version >/dev/null 2>&1; then
+        broken+=("$bin")
+      fi
+    fi
+  done
+  if (( ${#broken[@]} > 0 )); then
+    warn "Broken binaries detected: ${broken[*]}"
+    warn "Likely cause: brew upgraded a dependency without relinking dependents"
+    warn "Fix: brew reinstall ${broken[*]}"
+  else
+    ok "Key binaries load OK"
+  fi
+else
+  info "brew not installed — skipping linkage check"
 fi
 
 hr "Git config signing sanity"
