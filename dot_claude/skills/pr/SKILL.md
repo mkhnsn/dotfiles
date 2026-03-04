@@ -13,6 +13,7 @@ This is a user-invokable skill. Run it as `/pr` or `/pr <base-branch>`.
 ### 1. Preflight
 
 Check the current state:
+
 - Ensure you're NOT on main/master (if so, ask the user to create a branch first)
 - Run `git status` to check for uncommitted changes — offer to commit them first
 - Run `git log main..HEAD --oneline` to see what commits will be in the PR
@@ -26,6 +27,7 @@ git push -u origin HEAD
 ### 3. Gather Context
 
 Analyze all commits in the branch (not just the latest):
+
 ```bash
 git log main..HEAD --format="%s%n%b"
 git diff main...HEAD --stat
@@ -34,26 +36,29 @@ git diff main...HEAD --stat
 ### 4. Create PR
 
 Use `gh pr create` with:
+
 - **Title**: Short summary (under 70 chars) derived from the commits. Use conventional commit style if the branch has a single logical change.
 - **Body**: Use this template:
 
 ```markdown
 ## Summary
+
 <1-3 bullet points describing what changed and why>
 
 ## Test plan
+
 <Bulleted checklist of how to verify the changes>
 ```
 
 ### 5. Request Review
 
-Assign `@copilot` as a reviewer:
+Assign `@Copilot` as a reviewer:
 
 ```bash
-gh pr edit --add-reviewer copilot
+gh pr edit --add-reviewer Copilot
 ```
 
-This is fire-and-forget — if it fails (e.g., copilot not available in the repo), log the error but don't block.
+This is fire-and-forget — if it fails (e.g., Copilot not available in the repo), log the error but don't block.
 
 ### 6. Link
 
