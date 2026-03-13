@@ -27,6 +27,11 @@ hooks='{
       "type": "command",
       "command": "bash ~/.claude/scripts/nudge-speckit.sh",
       "timeout": 3
+    },
+    {
+      "type": "command",
+      "command": "bash ~/.claude/scripts/nudge-echo-libs.sh",
+      "timeout": 3
     }]
   }],
   "PostToolUse": [{
