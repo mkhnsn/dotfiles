@@ -37,6 +37,7 @@ brew "duf"
 brew "iftop"
 brew "bandwhich"
 brew "procs"
+brew "cloudflared"
 
 cask "windows-app"
 cask "visual-studio-code@insiders"

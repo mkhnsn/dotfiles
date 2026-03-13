@@ -8,6 +8,8 @@ set -euo pipefail
 FALLBACK_KEY="$HOME/.ssh/id_ed25519_remote"
 
 use_fallback() {
+  # Claude Code — non-interactive, can't approve biometric
+  [[ -n "${CLAUDECODE:-}" ]] && return 0
   # Remote SSH session — 1Password biometric can't approve
   [[ -n "${SSH_CONNECTION:-}" || -n "${SSH_CLIENT:-}" ]] && return 0
   # 1Password agent running (macOS / Linux socket paths)
@@ -18,7 +20,8 @@ use_fallback() {
 }
 
 if use_fallback && [[ -f "$FALLBACK_KEY" ]]; then
-  # Replace the key arg (-f <key>) with the fallback key
+  # Replace the key arg (-f <key>) with the fallback private key
+  # and strip -U (agent signing) since we sign with the file directly.
   args=()
   replace_next=false
   for arg in "$@"; do
@@ -27,6 +30,7 @@ if use_fallback && [[ -f "$FALLBACK_KEY" ]]; then
       replace_next=false
       continue
     fi
+    [[ "$arg" == "-U" ]] && continue
     args+=("$arg")
     [[ "$arg" == "-f" ]] && replace_next=true
   done
