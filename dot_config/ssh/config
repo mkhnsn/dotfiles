@@ -1,6 +1,11 @@
 # Allow 1Password to manage its own SSH config
 Include ~/.ssh/1Password/config
 
+Host fog-jump-*
+  User admin
+  IdentitiesOnly yes
+  SetEnv TERM=xterm-256color
+
 Host *
   IdentityAgent $SSH_AUTH_SOCK
   AddKeysToAgent no
