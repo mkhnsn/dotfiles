@@ -2,7 +2,7 @@
 set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # cargo-packages: markless
-# uv-tools: specify-cli
+# uv-tools: specify-cli ntfy
 # linux-pkg-v5
 
 os="{{ .chezmoi.os }}"
@@ -20,10 +20,11 @@ install_cargo_packages() {
 install_uv_tools() {
   command -v uv >/dev/null 2>&1 || return 0
   command -v specify >/dev/null 2>&1 || uv tool install specify-cli || true
+  command -v ntfy >/dev/null 2>&1 || uv tool install 'ntfy[pid,emoji]' || true
 }
 
 want_cmds=(git fzf bat zoxide)
-want_cmds_optional=(rg gh starship eza delta ghq glow navi tldr micro mosh specify)
+want_cmds_optional=(rg gh starship eza delta ghq glow navi tldr micro mosh specify ntfy)
 
 missing=0
 for c in "${want_cmds[@]}" "${want_cmds_optional[@]}"; do
