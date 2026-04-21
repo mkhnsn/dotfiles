@@ -1,0 +1,11 @@
+{{- /*
+ntfy (dschep/ntfy) Pushover backend config.
+Tokens pulled from 1Password at `chezmoi apply` time; written to ~/.ntfy.yml (0600).
+In 1Password: `username` field holds the Pushover user key, `credential` holds the app API token.
+*/ -}}
+---
+backends:
+  - pushover
+pushover:
+  user_key: {{ onepasswordRead "op://Private/aoupzcglochihuupjzm2rm2e74/username" "PRVINDHU6FCCRFRCUD3NNHCJ7M" | quote }}
+  api_token: {{ onepasswordRead "op://Private/aoupzcglochihuupjzm2rm2e74/credential" "PRVINDHU6FCCRFRCUD3NNHCJ7M" | quote }}
