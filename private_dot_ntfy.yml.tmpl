@@ -2,8 +2,14 @@
 ntfy (dschep/ntfy) Pushover backend config.
 Tokens pulled from 1Password at `chezmoi apply` time; written to ~/.ntfy.yml (0600).
 In 1Password: `username` field holds the Pushover user key, `credential` holds the app API token.
+`ntfy_title` comes from chezmoi data (set by .chezmoi.toml.tmpl on init); falls back to
+hostname if missing so `chezmoi apply` still works before re-running `chezmoi init`.
 */ -}}
+{{- $title := .chezmoi.hostname -}}
+{{- if hasKey . "ntfy_title" -}}{{- $title = .ntfy_title -}}{{- end }}
 ---
+title: {{ $title | quote }}
+longer_than: 30
 backends:
   - pushover
 pushover:

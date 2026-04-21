@@ -122,7 +122,7 @@ Base permissions are merged into `settings.json` by the modify script (existing 
 
 - **Repo lookup**: Run `find-repo <name>` to resolve a repo name to its filesystem path. Uses ghq. Supports partial matching (e.g., `find-repo pricing` matches `pricing-portal`). Run with no args to list all repos.
 - **Remote SSH signing**: `~/.config/git/ssh-sign` wraps `ssh-keygen` as `gpg.ssh.program`. In local sessions it passes through to 1Password; in remote sessions (`SSH_CONNECTION` set or no 1Password socket) it falls back to `~/.ssh/id_ed25519_remote`. The fallback key is generated once by `run_once_11-remote-signing-key.sh.tmpl`.
-- **ntfy notifications**: `ntfy` (installed via `uv tool install`) auto-notifies when commands taking >10s finish in an unfocused terminal. On `full_setup` machines, `~/.ntfy.yml` is rendered from `private_dot_ntfy.yml.tmpl` with Pushover credentials pulled from 1Password at apply time; otherwise the file is skipped via `.chezmoiignore`. Use `ntfy done <cmd>` to force-track. `AUTO_NTFY_DONE_IGNORE` in `env.zsh` silences interactive tools (vim, tmux, ssh, claude, etc.).
+- **ntfy notifications**: `ntfy` (installed via `uv tool install`) auto-notifies when commands taking >30s (`longer_than`) finish in an unfocused terminal. On `full_setup` machines, `~/.ntfy.yml` is rendered from `private_dot_ntfy.yml.tmpl` with Pushover credentials pulled from 1Password at apply time; notification title comes from `ntfy_title` (prompted once at `chezmoi init`, defaults to hostname). Use `ntfy done <cmd>` to force-track. `AUTO_NTFY_DONE_IGNORE` in `env.zsh` silences interactive tools (vim, tmux, ssh, claude, etc.).
 
 ### Shell Functions (pipe mode)
 
