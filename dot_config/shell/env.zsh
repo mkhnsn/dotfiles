@@ -243,6 +243,13 @@ fi
 # Rust
 [[ -r "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
+# ntfy: auto-notify when long-running commands finish in an unfocused terminal.
+# Reads ~/.ntfy.yml (Pushover or other backends). Skip with AUTO_NTFY_DONE_IGNORE.
+if command -v ntfy >/dev/null 2>&1; then
+  export AUTO_NTFY_DONE_IGNORE="${AUTO_NTFY_DONE_IGNORE:-vim nvim micro less more man tmux screen ssh mosh htop btop ncdu yazi watch fzf claude}"
+  eval "$(ntfy shell-integration 2>/dev/null)" 2>/dev/null || true
+fi
+
 # Homebrew OpenSSL hint (only if brew exists)
 if command -v brew >/dev/null 2>&1; then
   _brew_prefix="${_brew_prefix:-$(brew --prefix)}"
