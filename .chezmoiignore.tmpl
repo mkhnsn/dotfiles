@@ -42,3 +42,8 @@ Library/Application Support/Code/**
 .config/iterm2/
 .config/iterm2/**
 {{- end -}}
+
+{{- if not .full_setup }}
+# ntfy config requires 1Password
+.ntfy.yml
+{{- end -}}
