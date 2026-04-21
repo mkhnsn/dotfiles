@@ -29,10 +29,22 @@
 {{-   $fullSetup = promptBool "Full setup? (1Password, secrets) (y/N, default: No)" -}}
 {{- end }}
 
+{{- /* Ntfy title: only prompted on full_setup machines. Defaults to hostname. */ -}}
+{{- $ntfyTitle := $hostname -}}
+{{- if hasKey . "ntfy_title" -}}
+{{-   $ntfyTitle = .ntfy_title -}}
+{{- else if $fullSetup -}}
+{{-   $ntfyTitle = promptString (printf "ntfy notification title (%s)" $hostname) -}}
+{{-   if eq $ntfyTitle "" -}}
+{{-     $ntfyTitle = $hostname -}}
+{{-   end -}}
+{{- end }}
+
 [data]
   hostname = {{ $hostname | quote }}
   is_server = {{ $isServer }}
   full_setup = {{ $fullSetup }}
+  ntfy_title = {{ $ntfyTitle | quote }}
 
 {{- if lookPath "delta" }}
 
