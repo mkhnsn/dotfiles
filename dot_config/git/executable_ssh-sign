@@ -19,7 +19,21 @@ use_fallback() {
   return 0
 }
 
-if use_fallback && [[ -f "$FALLBACK_KEY" ]]; then
+# git invokes this for BOTH `ssh-keygen -Y sign` (sign) and `-Y verify` /
+# `-Y find-principals` / `-Y check-novalidate` (verify). Only signing takes
+# `-f <key>`; on verify `-f` is the ALLOWED_SIGNERS file — substituting the
+# private key there makes ssh-keygen parse it as allowed_signers ("invalid key /
+# missing key" noise in `git log --show-signature`). So only rewrite on sign.
+is_signing() {
+  local prev=""
+  for arg in "$@"; do
+    [[ "$prev" == "-Y" && "$arg" == "sign" ]] && return 0
+    prev="$arg"
+  done
+  return 1
+}
+
+if use_fallback && is_signing "$@" && [[ -f "$FALLBACK_KEY" ]]; then
   # Replace the key arg (-f <key>) with the fallback private key
   # and strip -U (agent signing) since we sign with the file directly.
   args=()
