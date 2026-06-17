@@ -4,6 +4,9 @@
 
 [core]
   editor = nano
+  # Transport ssh wrapper: uses the on-disk key (bypassing the 1Password agent) in
+  # Claude Code / remote sessions, plain ssh → 1Password otherwise. See git-ssh.
+  sshCommand = ~/.config/git/git-ssh
 {{- if lookPath "delta" }}
   pager = delta
 {{- else }}
@@ -63,6 +66,9 @@
 
 [merge]
   conflictStyle = zdiff3
+
+[init]
+  defaultBranch = main
 
 [alias]
   sync = "!sh -c 'git fetch upstream --prune >/dev/null 2>&1 || true; cb=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); ub=$(git remote show upstream 2>/dev/null | sed -n \"s/.*HEAD branch: //p\"); if [ -z \"$ub\" ]; then ub=$(git symbolic-ref --quiet --short refs/remotes/upstream/HEAD 2>/dev/null | sed \"s@^upstream/@@\"); fi; if [ -z \"$cb\" ]; then cb=DETACHED; fi; if [ -z \"$ub\" ]; then echo \"❌ No upstream default branch found. Run: git remote set-head upstream -a\"; echo \"(debug: cb=$cb, ub=$ub)\"; exit 1; fi; if [ \"$cb\" != \"$ub\" ]; then echo \"❌ Refusing to sync: you are on $cb (expected $ub)\"; exit 1; fi; git merge --no-edit \"upstream/$ub\"'"

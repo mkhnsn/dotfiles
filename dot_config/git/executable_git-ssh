@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# ssh wrapper for git transport (set as core.sshCommand). Git reads it on every
+# fetch/push regardless of shell, so it works where a shell env var wouldn't —
+# Claude Code runs git in non-interactive shells that never source the zsh rc.
+#
+# In Claude Code (and remote SSH) sessions the 1Password agent can't satisfy its
+# biometric approval, so agent-based auth hangs. There we authenticate with the
+# on-disk per-machine key directly (IdentityAgent=none ignores SSH_AUTH_SOCK, so
+# 1Password is never consulted). Interactive local sessions fall through to plain
+# ssh → 1Password. Mirror of the commit-signing fallback (executable_ssh-sign).
+set -euo pipefail
+
+FALLBACK_KEY="$HOME/.ssh/id_ed25519_remote"
+
+use_fallback() {
+  # Claude Code — non-interactive, can't approve biometric
+  [[ -n "${CLAUDECODE:-}" ]] && return 0
+  # Remote SSH session — 1Password biometric can't be reached
+  [[ -n "${SSH_CONNECTION:-}" || -n "${SSH_CLIENT:-}" ]] && return 0
+  return 1
+}
+
+if use_fallback && [[ -f "$FALLBACK_KEY" ]]; then
+  exec ssh -i "$FALLBACK_KEY" -o IdentitiesOnly=yes -o IdentityAgent=none "$@"
+else
+  exec ssh "$@"
+fi
