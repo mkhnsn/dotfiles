@@ -355,7 +355,7 @@ install_duf_user() {
 # ---- Distro package installs ----
 if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get update
-  $SUDO apt-get install -y git curl ca-certificates fzf bat zoxide ripgrep
+  $SUDO apt-get install -y git curl ca-certificates unzip fzf bat zoxide ripgrep
 
   # Optional packages (don't fail the whole script if missing)
   $SUDO apt-get install -y gh || true
@@ -368,7 +368,7 @@ if command -v apt-get >/dev/null 2>&1; then
 
 elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf makecache -y || true
-  $SUDO dnf install -y git curl ca-certificates fzf bat zoxide ripgrep || true
+  $SUDO dnf install -y git curl ca-certificates unzip fzf bat zoxide ripgrep || true
   $SUDO dnf install -y gh git-delta glow chafa mosh micro tealdeer 2>/dev/null || true
   $SUDO dnf install -y eza 2>/dev/null || true
   $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard 2>/dev/null || true
@@ -400,12 +400,12 @@ elif command -v dnf >/dev/null 2>&1; then
 
 elif command -v yum >/dev/null 2>&1; then
   $SUDO yum makecache -y || true
-  $SUDO yum install -y git curl ca-certificates fzf bat zoxide ripgrep || true
+  $SUDO yum install -y git curl ca-certificates unzip fzf bat zoxide ripgrep || true
   $SUDO yum install -y gh chafa mosh micro 2>/dev/null || true
   $SUDO yum install -y eza 2>/dev/null || true
 
 elif command -v pacman >/dev/null 2>&1; then
-  $SUDO pacman -Sy --noconfirm git curl ca-certificates fzf bat zoxide ripgrep
+  $SUDO pacman -Sy --noconfirm git curl ca-certificates unzip fzf bat zoxide ripgrep
   $SUDO pacman -Sy --noconfirm github-cli eza git-delta glow chafa mosh micro tealdeer || true
   $SUDO pacman -Sy --noconfirm zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
