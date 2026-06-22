@@ -64,10 +64,17 @@ if [[ -n "$SCRIPT_DIR" ]] && [[ -f "$SCRIPT_DIR/dot_zshrc" || -f "$SCRIPT_DIR/.c
   log "repo detected locally at: $SCRIPT_DIR"
   log "applying via chezmoi from local source dir"
   "$CHEZMOI_BIN" apply --source "$SCRIPT_DIR"
-else
-  log "no local repo detected (likely curl-run); applying from repo: $DOTFILES_REPO"
-  log "initializing via chezmoi (one-shot) from repo"
+elif [[ "${DOTFILES_ONESHOT:-0}" == "1" ]]; then
+  # Ephemeral: init, apply, then purge the source/config. For throwaway shells.
+  log "no local repo detected; one-shot apply from repo: $DOTFILES_REPO"
   "$CHEZMOI_BIN" init --one-shot --apply "$DOTFILES_REPO"
+else
+  # Persistent install: clone the repo to chezmoi's source dir
+  # (~/.local/share/chezmoi) and keep the config, so `chezmoi apply`,
+  # `chezmoi edit`, and `chezmoi update` work afterward.
+  log "no local repo detected; installing + applying from repo: $DOTFILES_REPO"
+  "$CHEZMOI_BIN" init --apply "$DOTFILES_REPO"
+  log "source dir: $("$CHEZMOI_BIN" source-path 2>/dev/null || echo "$HOME/.local/share/chezmoi")"
 fi
 
 log "done"

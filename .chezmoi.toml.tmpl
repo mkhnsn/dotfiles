@@ -41,13 +41,14 @@
 {{- end }}
 
 {{- /* 1Password auth mode: "service" uses OP_SERVICE_ACCOUNT_TOKEN (headless/WSL,
-       no desktop app); "account" uses desktop-app integration. Decided by token
-       presence at init time, then persisted so it sticks across `chezmoi apply`. */ -}}
+       no desktop app); "account" uses desktop-app integration. A token in the env
+       is authoritative, so re-running `chezmoi init` with it set flips a machine to
+       service mode; otherwise the persisted value sticks, defaulting to account. */ -}}
 {{- $opMode := "account" -}}
-{{- if hasKey . "op_mode" -}}
-{{-   $opMode = .op_mode -}}
-{{- else if env "OP_SERVICE_ACCOUNT_TOKEN" -}}
+{{- if env "OP_SERVICE_ACCOUNT_TOKEN" -}}
 {{-   $opMode = "service" -}}
+{{- else if hasKey . "op_mode" -}}
+{{-   $opMode = .op_mode -}}
 {{- end }}
 
 [data]

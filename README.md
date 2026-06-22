@@ -76,11 +76,27 @@ export OP_SERVICE_ACCOUNT_TOKEN=ops_...
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"
 ```
 
+This is a **persistent install**: `install.sh` clones the repo to chezmoi's source dir
+(`~/.local/share/chezmoi`) and keeps the config, so `chezmoi apply` / `chezmoi edit` /
+`chezmoi update` work afterward. (Set `DOTFILES_ONESHOT=1` before the curl for a throwaway
+init-apply-purge instead.)
+
 `chezmoi init` sees the token and records `op_mode = "service"`; the token is persisted to
 `~/.config/op/service-account.env` (0600) and sourced by `env.zsh`, so later `chezmoi apply`
 runs and fresh shells stay authenticated without re-exporting it. `env.zsh` also adds both
 `~/.local/bin` and `~/bin` to PATH, so `chezmoi` is found regardless of where the installer
 placed it.
+
+**Switching an already-installed machine to service mode:** `op_mode` is decided at
+`chezmoi init` time, and an exported token is authoritative. So if a box was first applied
+without the token (and is stuck in `account` mode), just export the token and re-init:
+
+```bash
+export OP_SERVICE_ACCOUNT_TOKEN=ops_...     # or: source ~/.config/op/service-account.env
+chezmoi init                                # regenerates config -> op_mode = "service"
+chezmoi apply
+chezmoi data | grep op_mode                 # confirm -> "service"
+```
 
 **Rotating the token:** the `op` CLI can only `create` service accounts, not rotate or
 delete them — do that in the 1Password admin console (Developer Tools → Service Accounts →
