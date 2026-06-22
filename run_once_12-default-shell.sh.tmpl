@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure zsh is the default login shell. The dotfiles configure zsh, but the OS
+# may still drop you into bash (common on fresh Linux / WSL boxes). Headless-safe:
+# only changes the shell non-interactively (root or passwordless sudo), otherwise
+# it prints the one command to run by hand instead of hanging on a password prompt.
+
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  command -v sudo >/dev/null 2>&1 && SUDO="sudo"
+fi
+
+ZSH_BIN="$(command -v zsh || true)"
+
+# Install zsh if missing (Linux only; macOS ships it).
+if [[ -z "$ZSH_BIN" ]]; then
+  echo "default-shell: zsh not found, attempting install..."
+{{ if eq .chezmoi.os "linux" -}}
+  if command -v apt-get >/dev/null 2>&1; then
+    $SUDO apt-get install -y zsh || true
+  elif command -v dnf >/dev/null 2>&1; then
+    $SUDO dnf install -y zsh || true
+  elif command -v pacman >/dev/null 2>&1; then
+    $SUDO pacman -Sy --noconfirm zsh || true
+  fi
+  ZSH_BIN="$(command -v zsh || true)"
+{{ end -}}
+fi
+
+if [[ -z "$ZSH_BIN" ]]; then
+  echo "default-shell: zsh not available; skipping"
+  exit 0
+fi
+
+# Current login shell (getent on Linux; fall back to $SHELL where it's absent).
+current="$(getent passwd "$USER" 2>/dev/null | cut -d: -f7 || true)"
+[[ -z "$current" ]] && current="${SHELL:-}"
+if [[ "$current" == "$ZSH_BIN" ]]; then
+  echo "default-shell: already zsh ($ZSH_BIN)"
+  exit 0
+fi
+
+# chsh refuses a shell that isn't listed in /etc/shells.
+if ! grep -qxF "$ZSH_BIN" /etc/shells 2>/dev/null; then
+  echo "$ZSH_BIN" | $SUDO tee -a /etc/shells >/dev/null 2>&1 || true
+fi
+
+# Change the shell only if we can do it without an interactive password prompt.
+if [[ "${EUID:-$(id -u)}" -eq 0 ]] || { [[ -n "$SUDO" ]] && $SUDO -n true 2>/dev/null; }; then
+  if $SUDO chsh -s "$ZSH_BIN" "$USER" 2>/dev/null \
+    || $SUDO usermod -s "$ZSH_BIN" "$USER" 2>/dev/null; then
+    echo "default-shell: set login shell to $ZSH_BIN"
+    echo "  (WSL: run 'wsl --shutdown' from Windows, or just reopen the terminal, to pick it up)"
+    exit 0
+  fi
+fi
+
+echo "default-shell: couldn't change the shell automatically. Run:"
+echo "    chsh -s $ZSH_BIN"
+echo "  then reopen your terminal (WSL: 'wsl --shutdown' from Windows first)."
