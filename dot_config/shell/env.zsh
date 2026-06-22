@@ -13,7 +13,9 @@ setopt HIST_IGNORE_SPACE      # lines starting with space are private
 setopt APPEND_HISTORY         # append, don't overwrite
 
 # PATH basics
-export PATH="$HOME/.local/bin:$PATH"
+# Include both ~/.local/bin and ~/bin: the chezmoi installer drops its binary in
+# one or the other depending on flags, and WSL's default PATH includes neither.
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 export PATH="$HOME/src/github.com/mkhnsn/scripts/:$PATH"
 
 # macOS-only paths
@@ -33,9 +35,16 @@ fi
 
 
 # ---- 1Password CLI / chezmoi integration ----
-# Pin the default 1Password account so chezmoi/op never prompt.
-# Only set this if `op` exists, so we don't leak env noise into minimal shells.
-if command -v op >/dev/null 2>&1; then
+# Headless/WSL boxes authenticate with a service-account token instead of the
+# desktop app. Persist it in ~/.config/op/service-account.env (0600, gitignored,
+# written by run_once_05-1password) so `chezmoi apply` works in fresh shells.
+[[ -r "$HOME/.config/op/service-account.env" ]] && \
+  source "$HOME/.config/op/service-account.env"
+
+# Pin the default 1Password account so chezmoi/op never prompt — but only in
+# desktop-app (account) mode. Under a service token, OP_ACCOUNT is irrelevant
+# and selecting an account just adds confusion.
+if command -v op >/dev/null 2>&1 && [[ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; then
   export OP_ACCOUNT="unstablestudios.1password.com"
 fi
 

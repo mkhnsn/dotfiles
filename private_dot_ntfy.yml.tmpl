@@ -4,14 +4,21 @@ Tokens pulled from 1Password at `chezmoi apply` time; written to ~/.ntfy.yml (06
 In 1Password: `username` field holds the Pushover user key, `credential` holds the app API token.
 `ntfy_title` comes from chezmoi data (set by .chezmoi.toml.tmpl on init); falls back to
 hostname if missing so `chezmoi apply` still works before re-running `chezmoi init`.
+
+The item lives in the "Automation" vault of the unstablestudios account so a 1Password
+service account can read it — service accounts are a Business/Teams feature and can't
+access the built-in Private vault. In service mode the account-hint arg is omitted
+(chezmoi forbids account params with a service token); in account mode it pins the
+unstablestudios desktop-app account (LKHBSHPTMJBQLJ36YPLOP6LVLI).
 */ -}}
 {{- $title := .chezmoi.hostname -}}
 {{- if hasKey . "ntfy_title" -}}{{- $title = .ntfy_title -}}{{- end }}
+{{- $svc := and (hasKey . "op_mode") (eq .op_mode "service") -}}
 ---
 title: {{ $title | quote }}
 longer_than: 30
 backends:
   - pushover
 pushover:
-  user_key: {{ onepasswordRead "op://Private/aoupzcglochihuupjzm2rm2e74/username" "PRVINDHU6FCCRFRCUD3NNHCJ7M" | quote }}
-  api_token: {{ onepasswordRead "op://Private/aoupzcglochihuupjzm2rm2e74/credential" "PRVINDHU6FCCRFRCUD3NNHCJ7M" | quote }}
+  user_key: {{ if $svc }}{{ onepasswordRead "op://Automation/wkgeqx5kkxxunhwmwsg5533tja/username" | quote }}{{ else }}{{ onepasswordRead "op://Automation/wkgeqx5kkxxunhwmwsg5533tja/username" "LKHBSHPTMJBQLJ36YPLOP6LVLI" | quote }}{{ end }}
+  api_token: {{ if $svc }}{{ onepasswordRead "op://Automation/wkgeqx5kkxxunhwmwsg5533tja/credential" | quote }}{{ else }}{{ onepasswordRead "op://Automation/wkgeqx5kkxxunhwmwsg5533tja/credential" "LKHBSHPTMJBQLJ36YPLOP6LVLI" | quote }}{{ end }}

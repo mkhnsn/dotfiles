@@ -58,6 +58,32 @@ For the full experience (Homebrew packages, 1Password, etc.), use option 2 inste
 
 ---
 
+### 4. WSL / headless full setup (1Password service account)
+
+On Windows/WSL and headless servers there is no Linux 1Password desktop app, so the
+CLI can't use desktop-app integration. Use a **1Password service-account token** instead.
+
+**One-time provisioning (in 1Password):**
+
+1. Create a custom vault named `Automation` and move the ntfy Pushover item into it
+   (the built-in `Private` vault can't be shared with service accounts).
+2. Create a service account with read access to `Automation`; copy its token.
+
+**Install:**
+
+```bash
+export OP_SERVICE_ACCOUNT_TOKEN=ops_...
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"
+```
+
+`chezmoi init` sees the token and records `op_mode = "service"`; the token is persisted to
+`~/.config/op/service-account.env` (0600) and sourced by `env.zsh`, so later `chezmoi apply`
+runs and fresh shells stay authenticated without re-exporting it. `env.zsh` also adds both
+`~/.local/bin` and `~/bin` to PATH, so `chezmoi` is found regardless of where the installer
+placed it.
+
+---
+
 ## Updating
 
 Once installed, update configuration at any time with:
