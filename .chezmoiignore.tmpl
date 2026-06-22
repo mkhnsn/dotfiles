@@ -43,7 +43,11 @@ Library/Application Support/Code/**
 .config/iterm2/**
 {{- end -}}
 
-{{- if not .full_setup }}
-# ntfy config requires 1Password
+{{- /* ntfy config needs a working 1Password backend. Skip it when secrets can't
+       be resolved: not a full setup, or service mode with no token in the env yet
+       (so `chezmoi apply` degrades gracefully instead of hard-failing on op read). */ -}}
+{{- $svc := and (hasKey . "op_mode") (eq .op_mode "service") -}}
+{{- $svcNoToken := and $svc (not (env "OP_SERVICE_ACCOUNT_TOKEN")) -}}
+{{- if or (not .full_setup) $svcNoToken }}
 .ntfy.yml
 {{- end -}}

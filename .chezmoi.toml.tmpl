@@ -40,11 +40,23 @@
 {{-   end -}}
 {{- end }}
 
+{{- /* 1Password auth mode: "service" uses OP_SERVICE_ACCOUNT_TOKEN (headless/WSL,
+       no desktop app); "account" uses desktop-app integration. A token in the env
+       is authoritative, so re-running `chezmoi init` with it set flips a machine to
+       service mode; otherwise the persisted value sticks, defaulting to account. */ -}}
+{{- $opMode := "account" -}}
+{{- if env "OP_SERVICE_ACCOUNT_TOKEN" -}}
+{{-   $opMode = "service" -}}
+{{- else if hasKey . "op_mode" -}}
+{{-   $opMode = .op_mode -}}
+{{- end }}
+
 [data]
   hostname = {{ $hostname | quote }}
   is_server = {{ $isServer }}
   full_setup = {{ $fullSetup }}
   ntfy_title = {{ $ntfyTitle | quote }}
+  op_mode = {{ $opMode | quote }}
 
 {{- if lookPath "delta" }}
 
@@ -58,8 +70,14 @@ pager = "delta"
 command = "op"
 
 [onepassword]
+{{- if eq $opMode "service" }}
+# Service-account mode: op reads OP_SERVICE_ACCOUNT_TOKEN from the environment.
+# chezmoi errors if `account`/`prompt` are set here, so leave them off.
+mode = "service"
+{{- else }}
 mode = "account"
 prompt = true
 account = "unstablestudios" # subdomain is fine
+{{- end }}
 
 {{- end }}

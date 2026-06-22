@@ -58,6 +58,63 @@ For the full experience (Homebrew packages, 1Password, etc.), use option 2 inste
 
 ---
 
+### 4. WSL / headless full setup (1Password service account)
+
+On Windows/WSL and headless servers there is no Linux 1Password desktop app, so the
+CLI can't use desktop-app integration. Use a **1Password service-account token** instead.
+
+**One-time provisioning (in 1Password):**
+
+1. Create a custom vault named `Automation` and move the ntfy Pushover item into it
+   (the built-in `Private` vault can't be shared with service accounts).
+2. Create a service account with read access to `Automation`; copy its token.
+
+**Install:**
+
+```bash
+export OP_SERVICE_ACCOUNT_TOKEN=ops_...
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"
+```
+
+This is a **persistent install**: `install.sh` clones the repo to chezmoi's source dir
+(`~/.local/share/chezmoi`) and keeps the config, so `chezmoi apply` / `chezmoi edit` /
+`chezmoi update` work afterward. (Set `DOTFILES_ONESHOT=1` before the curl for a throwaway
+init-apply-purge instead.)
+
+`chezmoi init` sees the token and records `op_mode = "service"`; the token is persisted to
+`~/.config/op/service-account.env` (0600) and sourced by `env.zsh`, so later `chezmoi apply`
+runs and fresh shells stay authenticated without re-exporting it. `env.zsh` also adds both
+`~/.local/bin` and `~/bin` to PATH, so `chezmoi` is found regardless of where the installer
+placed it.
+
+**Switching an already-installed machine to service mode:** `op_mode` is decided at
+`chezmoi init` time, and an exported token is authoritative. So if a box was first applied
+without the token (and is stuck in `account` mode), just export the token and re-init:
+
+```bash
+export OP_SERVICE_ACCOUNT_TOKEN=ops_...     # or: source ~/.config/op/service-account.env
+chezmoi init                                # regenerates config -> op_mode = "service"
+chezmoi apply
+chezmoi data | grep op_mode                 # confirm -> "service"
+```
+
+**Rotating the token:** the `op` CLI can only `create` service accounts, not rotate or
+delete them — do that in the 1Password admin console (Developer Tools → Service Accounts →
+rotate the token, which keeps the same vault grants). Then update the two places the token
+lives: the 1Password item where you stashed it, and each machine's persisted file:
+
+```bash
+( umask 077; printf 'export OP_SERVICE_ACCOUNT_TOKEN=%q\n' 'ops_NEW...' > ~/.config/op/service-account.env )
+chmod 600 ~/.config/op/service-account.env
+exec zsh && op whoami   # reload + confirm the new token works
+```
+
+`run_once_05` never clobbers an existing `service-account.env`, so editing it directly is
+the rotation path — re-running the installer will not update it. No repo change is needed;
+the token never lives in chezmoi.
+
+---
+
 ## Updating
 
 Once installed, update configuration at any time with:
