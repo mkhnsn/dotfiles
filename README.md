@@ -113,6 +113,25 @@ exec zsh && op whoami   # reload + confirm the new token works
 the rotation path — re-running the installer will not update it. No repo change is needed;
 the token never lives in chezmoi.
 
+#### Windows Terminal theming (from WSL)
+
+`run_windows-terminal.sh.tmpl` mirrors the Ghostty look (JetBrains Mono + the `Darkside`
+scheme, slight transparency) into Windows Terminal. chezmoi runs inside WSL but Windows
+Terminal owns its `settings.json` on the Windows side, so the script **surgically merges**
+font / color scheme / opacity / default-profile into the existing file (under
+`/mnt/c/Users/<you>/AppData/Local/Packages/Microsoft.WindowsTerminal_*/LocalState/`) rather
+than overwriting it — everything the app manages (profiles, GUIDs) is preserved, and a
+one-time `settings.json.chezmoi.bak` backup is written.
+
+Two notes:
+
+- **Launch Windows Terminal once first** so `settings.json` and the WSL profile exist; the
+  script runs on every `chezmoi apply` and is a no-op until then (and idempotent after).
+- **Install `JetBrainsMono Nerd Font` on Windows** for starship/eza glyphs (Ghostty has a
+  built-in Nerd Font fallback; Windows Terminal does not). Grab it from
+  [nerdfonts.com](https://www.nerdfonts.com/font-downloads), or with `scoop`:
+  `scoop bucket add nerd-fonts && scoop install JetBrains-Mono`.
+
 ---
 
 ## Updating
