@@ -82,6 +82,21 @@ runs and fresh shells stay authenticated without re-exporting it. `env.zsh` also
 `~/.local/bin` and `~/bin` to PATH, so `chezmoi` is found regardless of where the installer
 placed it.
 
+**Rotating the token:** the `op` CLI can only `create` service accounts, not rotate or
+delete them — do that in the 1Password admin console (Developer Tools → Service Accounts →
+rotate the token, which keeps the same vault grants). Then update the two places the token
+lives: the 1Password item where you stashed it, and each machine's persisted file:
+
+```bash
+( umask 077; printf 'export OP_SERVICE_ACCOUNT_TOKEN=%q\n' 'ops_NEW...' > ~/.config/op/service-account.env )
+chmod 600 ~/.config/op/service-account.env
+exec zsh && op whoami   # reload + confirm the new token works
+```
+
+`run_once_05` never clobbers an existing `service-account.env`, so editing it directly is
+the rotation path — re-running the installer will not update it. No repo change is needed;
+the token never lives in chezmoi.
+
 ---
 
 ## Updating
