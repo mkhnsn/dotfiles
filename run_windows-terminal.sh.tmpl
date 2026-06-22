@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+
+# Mirror the Ghostty look (JetBrains Mono + Darkside theme, slight transparency)
+# into Windows Terminal when running under WSL. Windows Terminal owns its
+# settings.json (JSONC, auto-generated profile GUIDs), so we surgically MERGE
+# a few keys rather than overwrite — everything else the app manages is kept.
+#
+# Runs every apply (plain run_) so it retries until Windows Terminal has been
+# launched once and its settings.json exists. Idempotent.
+
+# WSL only.
+grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null || exit 0
+command -v python3 >/dev/null 2>&1 || { echo "windows-terminal: python3 not found; skipping"; exit 0; }
+
+# Locate Windows Terminal settings.json on the Windows side. Covers Store
+# (stable + preview) and unpackaged (winget/zip) installs across any user.
+settings=""
+for p in \
+  /mnt/c/Users/*/AppData/Local/Packages/Microsoft.WindowsTerminal_*/LocalState/settings.json \
+  /mnt/c/Users/*/AppData/Local/Packages/Microsoft.WindowsTerminalPreview_*/LocalState/settings.json \
+  "/mnt/c/Users/*/AppData/Local/Microsoft/Windows Terminal/settings.json" ; do
+  for match in $p; do
+    [[ -f "$match" ]] && settings="$match" && break 2
+  done
+done
+
+if [[ -z "$settings" ]]; then
+  echo "windows-terminal: settings.json not found — launch Windows Terminal once, then re-run 'chezmoi apply'."
+  exit 0
+fi
+
+python3 - "$settings" "${WSL_DISTRO_NAME:-}" <<'PY'
+import json, sys, os, shutil
+
+path, distro = sys.argv[1], sys.argv[2]
+
+# --- Darkside palette (translated from Ghostty's bundled theme) ---
+SCHEME = {
+    "name": "Darkside",
+    "background": "#222324", "foreground": "#bababa",
+    "cursorColor": "#bbbbbb", "selectionBackground": "#303333",
+    "black": "#000000", "red": "#e8341c", "green": "#68c256", "yellow": "#f2d42c",
+    "blue": "#1c98e8", "purple": "#8e69c9", "cyan": "#1c98e8", "white": "#bababa",
+    "brightBlack": "#4c4c4c", "brightRed": "#e05a4f", "brightGreen": "#77b869",
+    "brightYellow": "#efd64b", "brightBlue": "#387cd3", "brightPurple": "#957bbe",
+    "brightCyan": "#3d97e2", "brightWhite": "#bababa",
+}
+# Use the Nerd Font variant so starship/eza glyphs render (install it on Windows;
+# see the README). Falls back gracefully if absent.
+FONT_FACE = "JetBrainsMono Nerd Font"
+FONT_SIZE = 14
+
+def strip_jsonc(text):
+    """Remove // and /* */ comments and trailing commas, respecting strings."""
+    out, i, n = [], 0, len(text)
+    in_str = esc = False
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if esc: esc = False
+            elif c == '\\': esc = True
+            elif c == '"': in_str = False
+            i += 1; continue
+        if c == '"':
+            in_str = True; out.append(c); i += 1; continue
+        if c == '/' and i + 1 < n and text[i+1] == '/':
+            i += 2
+            while i < n and text[i] not in '\r\n': i += 1
+            continue
+        if c == '/' and i + 1 < n and text[i+1] == '*':
+            i += 2
+            while i + 1 < n and not (text[i] == '*' and text[i+1] == '/'): i += 1
+            i += 2; continue
+        out.append(c); i += 1
+    s = ''.join(out)
+    # drop trailing commas:  ,]  or  ,}
+    import re
+    return re.sub(r',(\s*[}\]])', r'\1', s)
+
+raw = open(path, encoding='utf-8').read()
+try:
+    data = json.loads(strip_jsonc(raw))
+except Exception as e:
+    print(f"windows-terminal: could not parse settings.json ({e}); leaving it untouched.")
+    sys.exit(0)
+
+# Back up once (never clobber an existing backup).
+bak = path + ".chezmoi.bak"
+if not os.path.exists(bak):
+    shutil.copy2(path, bak)
+
+# --- profiles.defaults: font + color scheme + transparency + padding ---
+profiles = data.setdefault("profiles", {})
+if isinstance(profiles, list):                 # very old schema
+    profiles = data["profiles"] = {"list": profiles}
+defaults = profiles.setdefault("defaults", {})
+defaults["font"] = {"face": FONT_FACE, "size": FONT_SIZE}
+defaults["colorScheme"] = "Darkside"
+defaults["opacity"] = 92
+defaults["useAcrylic"] = True                  # blur, approximating Ghostty's background-blur
+defaults["padding"] = "8"
+
+# --- schemes: add/replace Darkside by name ---
+schemes = data.setdefault("schemes", [])
+schemes[:] = [s for s in schemes if s.get("name") != "Darkside"] + [SCHEME]
+
+# --- defaultProfile: point at the WSL distro profile, if present ---
+plist = profiles.get("list", []) if isinstance(profiles, dict) else []
+def is_wsl(p): return "Wsl" in str(p.get("source", ""))
+wsl = [p for p in plist if is_wsl(p)]
+chosen = next((p for p in wsl if distro and p.get("name") == distro), wsl[0] if wsl else None)
+if chosen and chosen.get("guid"):
+    data["defaultProfile"] = chosen["guid"]
+    picked = f'default profile -> {chosen.get("name")}'
+else:
+    picked = "no WSL profile found (default profile unchanged)"
+
+with open(path, "w", encoding='utf-8') as f:
+    json.dump(data, f, indent=4, ensure_ascii=False)
+    f.write("\n")
+
+print(f"windows-terminal: applied JetBrains Mono + Darkside; {picked}")
+print(f"  file:   {path}")
+print(f"  backup: {bak}")
+PY
+
+{{ end -}}
