@@ -61,6 +61,9 @@ VS Code templates live in `.chezmoitemplates/vscode/` as the single source of tr
 Chezmoi templates use Go template syntax with these key variables:
 - `.chezmoi.os` - Operating system ("darwin", "linux")
 - `.codespaces` - Boolean for GitHub Codespaces environment
+- `.full_setup` - Boolean; enables 1Password/secrets (seed: `DOTFILES_FULL`)
+- `.op_mode` - `"account"` (desktop app) or `"service"` (token); see Utilities
+- `.dev_openshift` - Boolean; opt-in OpenShift client toolchain (seed: `DOTFILES_OPENSHIFT`). When set, `run_dev-openshift.sh.tmpl` installs Node 22 (fnm)/Python/Ansible in WSL and symlinks `podman`/`helm`/`oc` to the Windows `.exe`; `scripts/windows-client.ps1` handles the Windows side. Read flags with `dig "dev_openshift" false .` (key may be absent pre-init).
 - Secrets accessed via `{{ secret ... }}` with 1Password
 
 ## External Dependencies
