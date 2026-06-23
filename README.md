@@ -136,6 +136,33 @@ Two notes:
   `-Mono` variant keeps icons single-cell-width, best for terminals. `FONT_FACE` in
   `run_windows-terminal.sh.tmpl` must match the family name shown in the WT font dropdown.
 
+#### OpenShift client dev toolchain (`dev_openshift`)
+
+Opt-in toolchain for the OpenShift client engagement. Enable it at init by answering yes to
+the "OpenShift dev toolchain?" prompt, seeding `DOTFILES_OPENSHIFT=1` in the env, or setting
+`dev_openshift = true` in the chezmoi config. It's off by default, so personal machines are
+unaffected.
+
+When on, `run_dev-openshift.sh.tmpl` (every apply, idempotent) installs **inside WSL/Linux**:
+
+- **Node.js 22 LTS** via [`fnm`](https://github.com/Schniz/fnm) (installed to `~/.local/bin`;
+  `env.zsh` wires up `fnm env --use-on-cd`).
+- **Python 3** with `venv`/`pip` (`python3-full` on apt).
+- **Ansible**, isolated via `uv tool install ansible` (falls back to a `~/.venvs/ansible` venv).
+
+And on WSL it **symlinks the Windows binaries** into `~/.local/bin` — `podman`, `helm`, `oc` →
+the `.exe` on the Windows PATH (these are the FIPS-approved Windows builds; chezmoi shims, it
+does not install them). Git stays WSL-native on purpose. If a `.exe` isn't found, apply still
+succeeds and prints a hint.
+
+> Path-translation caveat: the shimmed `podman`/`helm`/`oc` are Windows binaries, so paths you
+> pass them are Windows paths — use `wslpath -w` when handing them a WSL path.
+
+The Windows side is a separate, explicit step — run **`scripts/windows-client.ps1`** once from
+**Windows PowerShell** (the repo is reachable at `\\wsl$\<distro>\home\<you>\.local\share\chezmoi\`).
+It installs Podman, Podman Desktop, Helm, Git for Windows (winget) and `oc` (public mirror).
+**CRC and its FIPS bundle** need a Red Hat pull secret and are printed as manual steps.
+
 ---
 
 ## Updating

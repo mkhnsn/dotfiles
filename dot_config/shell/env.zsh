@@ -33,6 +33,11 @@ if command -v ghq >/dev/null 2>&1; then
   mkdir -p "$GHQ_ROOT" 2>/dev/null || true
 fi
 
+# fnm (Node version manager) — only present on dev_openshift boxes
+if command -v fnm >/dev/null 2>&1; then
+  eval "$(fnm env --use-on-cd --shell zsh)"
+fi
+
 
 # ---- 1Password CLI / chezmoi integration ----
 # Headless/WSL boxes authenticate with a service-account token instead of the
