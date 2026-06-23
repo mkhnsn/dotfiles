@@ -66,14 +66,43 @@ fi
 # WSL interop. Git stays WSL-native on purpose (shimming git.exe breaks path
 # translation). Best-effort: link when present, otherwise point at the bootstrap.
 if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
+  missing=()
   for tool in podman helm oc; do
     if exe="$(command -v "$tool.exe" 2>/dev/null)"; then
       ln -sf "$exe" "$HOME/.local/bin/$tool"
       note "linked $tool -> $exe"
     else
-      note "$tool.exe not on Windows PATH — install it on Windows (scripts/windows-client.ps1)"
+      missing+=("$tool")
     fi
   done
+
+  # Build the exact "run it in Windows PowerShell" command, autodetecting the
+  # Windows path to the bootstrap (no hardcoded distro name).
+  src="${CHEZMOI_SOURCE_DIR:-$HOME/.local/share/chezmoi}"
+  ps1="$src/scripts/windows-client.ps1"
+  winps1=""
+  if [[ -f "$ps1" ]] && command -v wslpath >/dev/null 2>&1; then
+    winps1="$(wslpath -w "$ps1" 2>/dev/null || true)"
+  fi
+
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo ""
+    echo "────────────────────────────────────────────────────────────────────"
+    echo " OpenShift: Windows tools not found in WSL yet: ${missing[*]}"
+    echo " Install them once from *Windows PowerShell* (not WSL):"
+    echo ""
+    if [[ -n "$winps1" ]]; then
+      echo "   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass"
+      echo "   & \"$winps1\""
+    else
+      echo "   run: scripts/windows-client.ps1  (from the repo, in Windows PowerShell)"
+    fi
+    echo ""
+    echo " Then re-run 'chezmoi apply' here to link podman/helm/oc."
+    echo "────────────────────────────────────────────────────────────────────"
+  elif [[ -n "$winps1" ]]; then
+    note "podman/helm/oc linked. Windows bootstrap: & \"$winps1\""
+  fi
 fi
 
 {{ end -}}
