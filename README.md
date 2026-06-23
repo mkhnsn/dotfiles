@@ -127,10 +127,13 @@ Two notes:
 
 - **Launch Windows Terminal once first** so `settings.json` and the WSL profile exist; the
   script runs on every `chezmoi apply` and is a no-op until then (and idempotent after).
-- **Install `JetBrainsMono Nerd Font` on Windows** for starship/eza glyphs (Ghostty has a
-  built-in Nerd Font fallback; Windows Terminal does not). Grab it from
-  [nerdfonts.com](https://www.nerdfonts.com/font-downloads), or with `scoop`:
-  `scoop bucket add nerd-fonts && scoop install JetBrains-Mono`.
+- **Install a JetBrains Mono Nerd Font on Windows** for starship/eza glyphs (Ghostty has a
+  built-in Nerd Font fallback; Windows Terminal does not). With `scoop` (run from Windows
+  PowerShell, not WSL): `scoop bucket add nerd-fonts && scoop install JetBrains-Mono`, or
+  grab it from [nerdfonts.com](https://www.nerdfonts.com/font-downloads). Then check the
+  exact family name in the Windows Terminal font dropdown — it may register as
+  `JetBrains Mono` or `JetBrainsMono Nerd Font` depending on the build — and make
+  `FONT_FACE` in `run_windows-terminal.sh.tmpl` match it.
 
 ---
 
