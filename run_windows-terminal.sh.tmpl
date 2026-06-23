@@ -48,9 +48,12 @@ SCHEME = {
     "brightYellow": "#efd64b", "brightBlue": "#387cd3", "brightPurple": "#957bbe",
     "brightCyan": "#3d97e2", "brightWhite": "#bababa",
 }
-# Use the Nerd Font variant so starship/eza glyphs render (install it on Windows;
-# see the README). Falls back gracefully if absent.
-FONT_FACE = "JetBrainsMono Nerd Font"
+# Must match the family name Windows registered for the installed font (check the
+# Windows Terminal font dropdown). The scoop nerd-fonts JetBrains-Mono registers
+# under the base "JetBrains Mono" name here, and its glyphs (starship/eza) come
+# from that patched file. If icons render as boxes, set this to the exact Nerd
+# Font family name shown in the dropdown instead.
+FONT_FACE = "JetBrains Mono"
 FONT_SIZE = 14
 
 def strip_jsonc(text):
