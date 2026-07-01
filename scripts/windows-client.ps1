@@ -41,8 +41,31 @@ function Install-WingetPackage($id, $name) {
 # ---- winget packages ----
 Install-WingetPackage 'RedHat.Podman'          'Podman'
 Install-WingetPackage 'RedHat.Podman-Desktop'  'Podman Desktop'
-Install-WingetPackage 'Helm.Helm'              'Helm'
+# Helm is installed NATIVELY in WSL at v3.x by run_dev-openshift.sh -- the winget Helm is v4.x,
+# which breaks Helm-3 charts -- so it is intentionally NOT installed on Windows.
 Install-WingetPackage 'Git.Git'                'Git for Windows'
+
+# ---- Podman machine (Podman needs a running Linux VM to pull images / log in) ----
+$podmanExe = (Get-Command podman.exe -ErrorAction SilentlyContinue).Source
+if (-not $podmanExe) { $podmanExe = Join-Path $env:ProgramFiles 'RedHat\Podman\podman.exe' }
+if (Test-Path $podmanExe) {
+    # podman writes progress to stderr; with $ErrorActionPreference='Stop' PowerShell turns
+    # that into a terminating NativeCommandError, so relax it for just these native calls.
+    $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    $machines = & $podmanExe machine list --noheading 2>$null
+    if (-not $machines) {
+        # --rootful: on WSL the rootless user socket often fails to come up, so the
+        # client can't reach the machine ("ssh: rejected: connect failed"). The rootful
+        # system socket is reliable, and container dev usually wants root anyway.
+        Info "initializing the podman machine (one-time; downloads a VM image, a few minutes)..."
+        & $podmanExe machine init --rootful
+    }
+    Info "ensuring the podman machine is running (no-op if already running)..."
+    & $podmanExe machine start
+    $ErrorActionPreference = $eap
+} else {
+    Warn "podman.exe not on PATH yet; open a fresh shell and re-run to init/start the podman machine."
+}
 
 # ---- oc (OpenShift CLI) from the public mirror ----
 $ocDir = Join-Path $env:LOCALAPPDATA 'Programs\oc'
@@ -52,7 +75,7 @@ if (Get-Command oc.exe -ErrorAction SilentlyContinue) {
     Info "downloading oc (OpenShift CLI)..."
     New-Item -ItemType Directory -Force -Path $ocDir | Out-Null
     $zip = Join-Path $env:TEMP 'openshift-client-windows.zip'
-    $url = 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-windows.zip'
+    $url = 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.18/openshift-client-windows.zip'
     try {
         Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
         Expand-Archive -Path $zip -DestinationPath $ocDir -Force
@@ -73,8 +96,13 @@ if (Get-Command oc.exe -ErrorAction SilentlyContinue) {
 # ---- CRC + FIPS bundle (manual; auth-gated) ----
 Write-Host ""
 Warn "CRC (OpenShift Local) + the FIPS bundle need a Red Hat pull secret and are not automated:"
-Write-Host "  1. Download CRC:        https://console.redhat.com/openshift/create/local"
-Write-Host "  2. Download the FIPS bundle (Hyper-V) from the same page."
-Write-Host "  3. crc setup --bundle <path-to-fips-bundle.crcbundle>"
+Write-Host "  1. Install CRC:         https://console.redhat.com/openshift/create/local"
+Write-Host "  2. Get the Hyper-V FIPS bundle (4.18.x) and your Red Hat pull secret."
+Write-Host "  3. Configure CRC with ABSOLUTE paths (relative paths do not resolve reliably):"
+Write-Host "       crc config set bundle           C:\path\to\crc_hyperv_4.18.x_amd64.crcbundle"
+Write-Host "       crc config set pull-secret-file C:\path\to\pull-secret.txt"
+Write-Host "       crc setup"
+Write-Host "       crc start"
+Write-Host "  4. In WSL, add the apps-crc.testing hosts entries (doc section 7) using 'crc ip'."
 Write-Host ""
 Info "Done. In WSL, run 'chezmoi apply' so podman/helm/oc get symlinked from these Windows binaries."
