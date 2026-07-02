@@ -67,6 +67,32 @@ if (Test-Path $podmanExe) {
     Warn "podman.exe not on PATH yet; open a fresh shell and re-run to init/start the podman machine."
 }
 
+# ---- Auto-start the Podman machine at logon (it doesn't come up on boot) ----
+# So a reboot doesn't leave the dev env down. CRC is deliberately NOT auto-started:
+# it's heavy (24-40 GB RAM) and a resumed cluster can come up unhealthy after a full
+# shutdown -- bring it up on demand (or via the deployment scripts) instead.
+#   Disable later:  Unregister-ScheduledTask -TaskName podman-machine-autostart -Confirm:$false
+# If registration hits access-denied, re-run this from an elevated shell.
+function Register-LogonTask($taskName, $description, $exe, $exeArgs) {
+    if (-not $exe -or -not (Test-Path $exe)) {
+        Warn "skipping logon task '$taskName' (executable not found)."
+        return
+    }
+    try {
+        $action  = New-ScheduledTaskAction -Execute $exe -Argument $exeArgs
+        $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+        $set     = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+        $princ   = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
+        Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
+            -Settings $set -Principal $princ -Description $description -Force | Out-Null
+        Info "registered logon task '$taskName'."
+    } catch {
+        Warn "could not register '$taskName': $($_.Exception.Message) (try an elevated shell)."
+    }
+}
+
+Register-LogonTask 'podman-machine-autostart' 'Start the Podman machine at logon' $podmanExe 'machine start'
+
 # ---- oc (OpenShift CLI) from the public mirror ----
 $ocDir = Join-Path $env:LOCALAPPDATA 'Programs\oc'
 if (Get-Command oc.exe -ErrorAction SilentlyContinue) {
