@@ -31,6 +31,17 @@ else
 fi
 export KUBECONFIG="$KUBE"
 
+# CRC's API serving cert SAN doesn't include api.crc.testing, so oc can't verify it.
+# Patch the copied kubeconfig to skip verification (same as the deploy playbooks do),
+# so plain `oc` works afterward without --insecure-skip-tls-verify on every command.
+if command -v oc >/dev/null 2>&1; then
+  _cluster="$(oc config view -o jsonpath='{.clusters[0].name}' 2>/dev/null)"
+  if [[ -n "$_cluster" ]]; then
+    oc config unset "clusters.${_cluster}.certificate-authority-data" >/dev/null 2>&1 || true
+    oc config set-cluster "$_cluster" --insecure-skip-tls-verify=true >/dev/null 2>&1 || true
+  fi
+fi
+
 # --- base names needed just to reach the API + console ---
 base=(api.crc.testing
       oauth-openshift.apps-crc.testing
@@ -50,7 +61,7 @@ write_block "${base[@]}"
 
 # Phase 2: discover every live route and rewrite the block with the full set.
 if command -v oc >/dev/null 2>&1; then
-  mapfile -t routes < <(oc get routes -A -o jsonpath='{range .items[*]}{.spec.host}{"\n"}{end}' 2>/dev/null | awk 'NF' | sort -u)
+  mapfile -t routes < <(oc --insecure-skip-tls-verify=true get routes -A -o jsonpath='{range .items[*]}{.spec.host}{"\n"}{end}' 2>/dev/null | awk 'NF' | sort -u)
   if [[ ${#routes[@]} -gt 0 ]]; then
     mapfile -t all < <(printf '%s\n' "${base[@]}" "${routes[@]}" | awk 'NF' | sort -u)
     write_block "${all[@]}"
