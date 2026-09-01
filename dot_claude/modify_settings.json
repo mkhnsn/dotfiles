@@ -93,8 +93,7 @@ base_permissions='[
   "WebFetch",
   "WebSearch",
   "Read(~/src/**)",
-  "Edit(~/src/**)",
-  "Write(~/src/**)"
+  "Edit(~/src/**)"
 ]'
 
 # Merge everything: hooks and statusLine are replaced; permissions.allow is merged + deduped
