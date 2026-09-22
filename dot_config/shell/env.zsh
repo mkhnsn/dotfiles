@@ -53,6 +53,13 @@ if command -v op >/dev/null 2>&1 && [[ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; th
   export OP_ACCOUNT="unstablestudios.1password.com"
 fi
 
+# ---- JFrog / Artifactory (NGDE PL2/PL3 bundle builds) ----
+# Rendered from 1Password at `chezmoi apply` time (dot_config/private_jfrog-env.tmpl).
+# The PL3 build scripts look for /tmp/jfrog.env, which tmpfs wipes on every WSL restart;
+# they fall back to JF_USER/JF_API_KEY from the environment, which this supplies.
+[[ -r "$HOME/.config/jfrog-env" ]] && \
+  source "$HOME/.config/jfrog-env"
+
 # ---- fzf defaults ----
 # Use fd if available (faster, respects .gitignore-ish behavior)
 # Ubuntu sometimes ships it as `fd-find`.
