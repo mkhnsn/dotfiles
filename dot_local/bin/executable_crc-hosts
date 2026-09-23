@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# crc-hosts — wire this WSL box into a Windows OpenShift Local (crc) cluster.
+#
+#   * refreshes ~/.kube/config from the Windows-side crc kubeconfig
+#   * writes a managed /etc/hosts block: api.crc.testing plus every route the
+#     cluster is currently serving (*.apps-crc.testing), all pointed at the crc IP
+#
+# Re-run any time (e.g. after deploying apps) to pick up new routes -- it only
+# rewrites its own managed block, leaving the rest of /etc/hosts untouched.
+#
+# The IP defaults to 127.0.0.1, which is correct when .wslconfig uses
+# networkingMode=mirrored (WSL shares the Windows loopback and crc binds there).
+# Override for other setups:  crc-hosts <ip>   or   CRC_IP=<ip> crc-hosts
+set -euo pipefail
+
+CRC_IP="${1:-${CRC_IP:-127.0.0.1}}"
+BEGIN="# BEGIN crc (managed by crc-hosts)"
+END="# END crc (managed by crc-hosts)"
+KUBE="$HOME/.kube/config"
+
+note() { printf '[crc-hosts] %s\n' "$*"; }
+
+# --- refresh kubeconfig from the Windows crc machine dir (any Windows user) ---
+kc_win="$(ls /mnt/c/Users/*/.crc/machines/crc/kubeconfig 2>/dev/null | head -1 || true)"
+if [[ -n "$kc_win" && -f "$kc_win" ]]; then
+  mkdir -p "$(dirname "$KUBE")"
+  install -m 600 "$kc_win" "$KUBE"
+  note "kubeconfig -> $KUBE (from $kc_win)"
+else
+  note "WARN: crc kubeconfig not found under /mnt/c/Users/*/.crc; skipping kube refresh"
+fi
+export KUBECONFIG="$KUBE"
+
+# CRC's API serving cert SAN doesn't include api.crc.testing, so oc can't verify it.
+# Patch the copied kubeconfig to skip verification (same as the deploy playbooks do),
+# so plain `oc` works afterward without --insecure-skip-tls-verify on every command.
+if command -v oc >/dev/null 2>&1; then
+  _cluster="$(oc config view -o jsonpath='{.clusters[0].name}' 2>/dev/null)"
+  if [[ -n "$_cluster" ]]; then
+    oc config unset "clusters.${_cluster}.certificate-authority-data" >/dev/null 2>&1 || true
+    oc config set-cluster "$_cluster" --insecure-skip-tls-verify=true >/dev/null 2>&1 || true
+  fi
+fi
+
+# --- base names needed just to reach the API + console ---
+base=(api.crc.testing
+      oauth-openshift.apps-crc.testing
+      console-openshift-console.apps-crc.testing
+      default-route-openshift-image-registry.apps-crc.testing)
+
+write_block() {   # args: hostnames
+  local tmp; tmp="$(mktemp)"
+  sed "/^${BEGIN}\$/,/^${END}\$/d" /etc/hosts > "$tmp"
+  { echo "$BEGIN"; for h in "$@"; do echo "$CRC_IP $h"; done; echo "$END"; } >> "$tmp"
+  sudo cp "$tmp" /etc/hosts
+  rm -f "$tmp"
+}
+
+# Phase 1: base entries so `oc` can resolve/reach the API.
+write_block "${base[@]}"
+
+# Phase 2: discover every live route and rewrite the block with the full set.
+if command -v oc >/dev/null 2>&1; then
+  mapfile -t routes < <(oc --insecure-skip-tls-verify=true get routes -A -o jsonpath='{range .items[*]}{.spec.host}{"\n"}{end}' 2>/dev/null | awk 'NF' | sort -u)
+  if [[ ${#routes[@]} -gt 0 ]]; then
+    mapfile -t all < <(printf '%s\n' "${base[@]}" "${routes[@]}" | awk 'NF' | sort -u)
+    write_block "${all[@]}"
+    note "wrote ${#all[@]} entries -> /etc/hosts (all -> $CRC_IP)"
+  else
+    note "no routes returned by oc (is the cluster up and kubeconfig valid?); kept ${#base[@]} base entries"
+  fi
+else
+  note "oc not on PATH; kept ${#base[@]} base entries -- run 'chezmoi apply' to link oc, then re-run"
+fi
+
+note "done. test with:  oc get co   (KUBECONFIG=$KUBE)"

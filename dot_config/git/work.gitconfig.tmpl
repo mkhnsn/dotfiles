@@ -1,0 +1,12 @@
+# Work git identity -- applied only inside the work repo tree via an includeIf in
+# ~/.gitconfig. Values come from chezmoi prompts (work_git_name / work_git_email) and
+# live in the local chezmoi config, not this repo.
+{{- if and (hasKey . "work_git_name") (hasKey . "work_git_email") }}
+[user]
+  name = {{ .work_git_name }}
+  email = {{ .work_git_email }}
+{{- end }}
+
+# Don't sign these commits (the remote may not verify SSH signatures).
+[commit]
+  gpgsign = false

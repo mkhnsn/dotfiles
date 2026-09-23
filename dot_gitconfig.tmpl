@@ -48,6 +48,13 @@
 [include]
   path = ~/.gitconfig.local
 
+{{- if and .dev_openshift (hasKey . "work_repo_dir") }}
+
+# Work identity (and no commit signing) applied only inside the work repo tree.
+[includeIf "gitdir:{{ .work_repo_dir }}/"]
+  path = ~/.config/git/work.gitconfig
+{{- end }}
+
 {{- if lookPath "delta" }}
 [interactive]
   diffFilter = delta --color-only

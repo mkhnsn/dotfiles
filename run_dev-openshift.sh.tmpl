@@ -4,9 +4,11 @@ set -euo pipefail
 {{ if and (eq .chezmoi.os "linux") (dig "dev_openshift" false .) -}}
 
 # OpenShift client dev toolchain (opt-in via the `dev_openshift` flag).
-#   - Installs Node 22 LTS, Python 3 + venv, and Ansible INSIDE WSL/Linux.
-#   - On WSL, symlinks Podman / Helm / oc to the FIPS-approved Windows binaries
+#   - Installs Node 22 LTS + Node 24, Python 3 + venv, Ansible, and Helm 3.x INSIDE WSL.
+#   - On WSL, symlinks Podman / oc to the FIPS-approved Windows binaries
 #     (does not install them — see scripts/windows-client.ps1 for the Windows side).
+#     Helm is installed natively at v3.x because the Windows (winget) Helm is v4.x,
+#     which breaks Helm-3 charts.
 # Plain run_ (every apply): idempotent, each step guarded so it retries cleanly.
 
 SUDO=""
@@ -30,6 +32,10 @@ if command -v fnm >/dev/null 2>&1; then
   if ! fnm list 2>/dev/null | grep -q 'v22\.'; then
     note "installing Node 22 LTS"
     fnm install 22 >/dev/null 2>&1 || note "fnm install 22 failed"
+  fi
+  if ! fnm list 2>/dev/null | grep -q 'v24\.'; then
+    note "installing Node 24 (some frontend repos pin it)"
+    fnm install 24 >/dev/null 2>&1 || note "fnm install 24 failed"
   fi
   fnm alias default 22 >/dev/null 2>&1 || true
 fi
@@ -61,13 +67,30 @@ if ! command -v ansible >/dev/null 2>&1; then
   fi
 fi
 
+# ---- Helm 3.x (native; the Windows/winget Helm is 4.x, which breaks Helm-3 charts) ----
+if ! { command -v helm >/dev/null 2>&1 && helm version --short 2>/dev/null | grep -q '^v3\.'; }; then
+  note "installing Helm 3.x into ~/.local/bin"
+  helm_tag="$(curl -fsSL 'https://api.github.com/repos/helm/helm/releases?per_page=40' 2>/dev/null | grep -oE '"tag_name": *"v3\.[0-9]+\.[0-9]+"' | head -1 | grep -oE 'v3\.[0-9.]+')"
+  if [[ -n "$helm_tag" ]]; then
+    helm_tmp="$(mktemp -d)"
+    if curl -fsSL "https://get.helm.sh/helm-${helm_tag}-linux-amd64.tar.gz" | tar -xz -C "$helm_tmp" 2>/dev/null; then
+      rm -f "$HOME/.local/bin/helm"   # drop any stale winget Helm 4 symlink
+      install -m 0755 "$helm_tmp/linux-amd64/helm" "$HOME/.local/bin/helm"
+      note "installed Helm $helm_tag"
+    fi
+    rm -rf "$helm_tmp"
+  else
+    note "could not resolve latest Helm 3 tag; skipping"
+  fi
+fi
+
 # ---- Windows .exe shims (WSL only) ----
-# Podman / Helm / oc come from the FIPS-approved Windows install, reached via
-# WSL interop. Git stays WSL-native on purpose (shimming git.exe breaks path
-# translation). Best-effort: link when present, otherwise point at the bootstrap.
+# Podman / oc come from the FIPS-approved Windows install, reached via WSL interop.
+# Git stays WSL-native on purpose (shimming git.exe breaks path translation), and
+# Helm is installed natively above (the Windows Helm is the wrong major). Best-effort.
 if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
   missing=()
-  for tool in podman helm oc; do
+  for tool in podman oc; do
     if exe="$(command -v "$tool.exe" 2>/dev/null)"; then
       ln -sf "$exe" "$HOME/.local/bin/$tool"
       note "linked $tool -> $exe"
@@ -98,10 +121,10 @@ if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
       echo "   run: scripts/windows-client.ps1  (from the repo, in Windows PowerShell)"
     fi
     echo ""
-    echo " Then re-run 'chezmoi apply' here to link podman/helm/oc."
+    echo " Then re-run 'chezmoi apply' here to link podman/oc."
     echo "────────────────────────────────────────────────────────────────────"
   elif [[ -n "$winps1" ]]; then
-    note "podman/helm/oc linked. Windows bootstrap: & \"$winps1\""
+    note "podman/oc linked. Windows bootstrap: & \"$winps1\""
   fi
 fi
 

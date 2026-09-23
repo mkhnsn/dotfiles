@@ -51,3 +51,10 @@ Library/Application Support/Code/**
 {{- if or (not .full_setup) $svcNoToken }}
 .ntfy.yml
 {{- end -}}
+
+{{- /* JFrog credentials: same 1Password gating as .ntfy.yml, and only on machines
+       with the OpenShift toolchain, since the PL2/PL3 bundle builds are the only
+       thing that uses them. */ -}}
+{{- if or (not .full_setup) $svcNoToken (not (dig "dev_openshift" false .)) }}
+.config/jfrog-env
+{{- end -}}

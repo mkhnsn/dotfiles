@@ -62,6 +62,35 @@
 {{-   $devOpenshift = promptBool "OpenShift dev toolchain? (Node, Python, Ansible, Podman/Helm/oc shims) (y/N, default: No)" -}}
 {{- end }}
 
+{{- /* Work git identity for a specific repo tree (opt-in via dev_openshift). Prompted
+       only on dev_openshift machines; env-seedable and persisted after first init. Applied
+       ONLY inside that tree, via an includeIf in dot_gitconfig.tmpl. The values live in the
+       local chezmoi config, never in this repo. */ -}}
+{{- $workGitName := "" -}}
+{{- if hasKey . "work_git_name" -}}
+{{-   $workGitName = .work_git_name -}}
+{{- else if env "WORK_GIT_NAME" -}}
+{{-   $workGitName = env "WORK_GIT_NAME" -}}
+{{- else if $devOpenshift -}}
+{{-   $workGitName = promptString "Work git name (for the work repo tree)" -}}
+{{- end }}
+{{- $workGitEmail := "" -}}
+{{- if hasKey . "work_git_email" -}}
+{{-   $workGitEmail = .work_git_email -}}
+{{- else if env "WORK_GIT_EMAIL" -}}
+{{-   $workGitEmail = env "WORK_GIT_EMAIL" -}}
+{{- else if $devOpenshift -}}
+{{-   $workGitEmail = promptString "Work git email (for the work repo tree)" -}}
+{{- end }}
+{{- $workRepoDir := "~/src/work" -}}
+{{- if hasKey . "work_repo_dir" -}}
+{{-   $workRepoDir = .work_repo_dir -}}
+{{- else if env "WORK_REPO_DIR" -}}
+{{-   $workRepoDir = env "WORK_REPO_DIR" -}}
+{{- else if $devOpenshift -}}
+{{-   $workRepoDir = promptString "Work repo root (git identity applies inside it)" "~/src/work" -}}
+{{- end }}
+
 [data]
   hostname = {{ $hostname | quote }}
   is_server = {{ $isServer }}
@@ -69,6 +98,9 @@
   ntfy_title = {{ $ntfyTitle | quote }}
   op_mode = {{ $opMode | quote }}
   dev_openshift = {{ $devOpenshift }}
+  work_git_name = {{ $workGitName | quote }}
+  work_git_email = {{ $workGitEmail | quote }}
+  work_repo_dir = {{ $workRepoDir | quote }}
 
 {{- if lookPath "delta" }}
 
