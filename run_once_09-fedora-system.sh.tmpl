@@ -45,40 +45,7 @@ else
   echo "fedora-system: no battery detected, skipping TLP"
 fi
 
-# ---- Disable auto-suspend on desktops ----
-if [[ "$has_battery" == "false" ]]; then
-  echo "fedora-system: desktop detected, disabling auto-suspend..."
-
-  # Mask sleep/suspend/hibernate targets so the system never auto-sleeps
-  $SUDO systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target 2>/dev/null || true
-
-  # GNOME: disable automatic suspend via dconf defaults (system-wide)
-  # This sets the default for all users; users can override in Settings if needed
-  DCONF_PROFILE="/etc/dconf/profile/user"
-  DCONF_POWER_DIR="/etc/dconf/db/local.d"
-  DCONF_POWER_FILE="$DCONF_POWER_DIR/01-power"
-  DCONF_LOCK_DIR="/etc/dconf/db/local.d/locks"
-  DCONF_LOCK_FILE="$DCONF_LOCK_DIR/01-power"
-
-  # Ensure dconf profile exists and includes local db
-  if [[ ! -f "$DCONF_PROFILE" ]] || ! grep -q 'local' "$DCONF_PROFILE" 2>/dev/null; then
-    $SUDO mkdir -p "$(dirname "$DCONF_PROFILE")"
-    printf 'user-db:user\nsystem-db:local\n' | $SUDO tee "$DCONF_PROFILE" >/dev/null
-  fi
-
-  $SUDO mkdir -p "$DCONF_POWER_DIR" "$DCONF_LOCK_DIR"
-
-  # sleep-inactive-ac-type='nothing' disables auto-suspend on AC power
-  if [[ ! -f "$DCONF_POWER_FILE" ]]; then
-    $SUDO tee "$DCONF_POWER_FILE" >/dev/null << 'EOF'
-[org/gnome/settings-daemon/plugins/power]
-sleep-inactive-ac-type='nothing'
-sleep-inactive-battery-type='nothing'
-EOF
-    $SUDO dconf update 2>/dev/null || true
-    echo "fedora-system: disabled GNOME auto-suspend defaults for desktops"
-  fi
-fi
+# Desktop auto-suspend (incl. the GDM greeter) is handled by run_no-suspend.sh.tmpl
 
 # ---- Boot optimization ----
 if systemctl is-enabled --quiet NetworkManager-wait-online.service 2>/dev/null; then
