@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# no-suspend-v1
+#
+# Keep battery-less Linux desktops awake even when nobody is logged in.
+# The per-user gsettings in run_configure-desktop only apply once you log in;
+# before that the GDM greeter runs its own gnome-settings-daemon (as the gdm
+# user, reading the "gdm" dconf profile) which suspends after 15 min on AC.
+#
+# Runs on every apply but is a no-op once configured, so a skipped run
+# (e.g. sudo needed a password with no TTY) is retried next time.
+
+{{ if and (eq .chezmoi.os "linux") (not (env "CODESPACES")) -}}
+
+{{ if not (dig "is_server" false .) -}}
+for bat in /sys/class/power_supply/BAT*; do
+  [[ -d "$bat" ]] && exit 0 # laptops keep normal sleep behavior unless is_server
+done
+{{ end -}}
+
+TARGETS=(sleep.target suspend.target hibernate.target hybrid-sleep.target)
+GDM_DB_DIR="/etc/dconf/db/gdm.d"
+GDM_FILE="$GDM_DB_DIR/95-no-suspend"
+GDM_LOCK="$GDM_DB_DIR/locks/95-no-suspend"
+
+GDM_SETTINGS="[org/gnome/settings-daemon/plugins/power]
+sleep-inactive-ac-type='nothing'
+sleep-inactive-battery-type='nothing'"
+GDM_LOCKS="/org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-type
+/org/gnome/settings-daemon/plugins/power/sleep-inactive-battery-type"
+
+has_gdm=false
+if command -v gdm >/dev/null 2>&1 || [[ -x /usr/sbin/gdm ]] || systemctl cat gdm.service >/dev/null 2>&1; then
+  has_gdm=true
+fi
+
+targets_masked() {
+  local t
+  for t in "${TARGETS[@]}"; do
+    [[ "$(systemctl is-enabled "$t" 2>/dev/null || true)" == "masked" ]] || return 1
+  done
+}
+
+gdm_configured() {
+  [[ "$has_gdm" == "true" ]] || return 0
+  [[ "$(cat "$GDM_FILE" 2>/dev/null)" == "$GDM_SETTINGS" ]] &&
+    [[ "$(cat "$GDM_LOCK" 2>/dev/null)" == "$GDM_LOCKS" ]]
+}
+
+if targets_masked && gdm_configured; then
+  exit 0
+fi
+
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  if ! command -v sudo >/dev/null 2>&1; then
+    echo "no-suspend: not root and sudo not available, skipping"
+    exit 0
+  fi
+  SUDO="sudo"
+  if ! sudo -n true 2>/dev/null; then
+    if [[ -t 0 ]]; then
+      echo "no-suspend: sudo needed to disable system suspend"
+      sudo -v
+    else
+      echo "no-suspend: sudo requires a password and no TTY; will retry on next 'chezmoi apply'"
+      exit 0
+    fi
+  fi
+fi
+
+# Hard guarantee: nothing (greeter, logind, user session) can suspend the box
+if ! targets_masked; then
+  $SUDO systemctl mask "${TARGETS[@]}"
+  echo "no-suspend: masked ${TARGETS[*]}"
+fi
+
+# Stop the GDM greeter from trying to suspend in the first place
+if ! gdm_configured; then
+  $SUDO mkdir -p "$GDM_DB_DIR/locks"
+  printf '%s\n' "$GDM_SETTINGS" | $SUDO tee "$GDM_FILE" >/dev/null
+  printf '%s\n' "$GDM_LOCKS" | $SUDO tee "$GDM_LOCK" >/dev/null
+
+  # Fedora ships /usr/share/dconf/profile/gdm with system-db:gdm; only create
+  # an /etc profile if neither exists
+  if [[ ! -f /etc/dconf/profile/gdm && ! -f /usr/share/dconf/profile/gdm ]]; then
+    $SUDO mkdir -p /etc/dconf/profile
+    printf 'user-db:user\nsystem-db:gdm\n' | $SUDO tee /etc/dconf/profile/gdm >/dev/null
+  fi
+
+  $SUDO dconf update
+  echo "no-suspend: disabled GDM greeter auto-suspend"
+fi
+
+{{ end -}}
