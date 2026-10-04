@@ -13,8 +13,12 @@ set -euo pipefail
 {{ if and (eq .chezmoi.os "linux") (not (env "CODESPACES")) -}}
 
 {{ if not (dig "is_server" false .) -}}
-for bat in /sys/class/power_supply/BAT*; do
-  [[ -d "$bat" ]] && exit 0 # laptops keep normal sleep behavior unless is_server
+# Supply names are driver-defined (BAT0, CMB0, ...), so match on type. Skip
+# scope=Device batteries (wireless mice, controllers) so desktops still count.
+for ps in /sys/class/power_supply/*; do
+  [[ "$(cat "$ps/type" 2>/dev/null)" == "Battery" ]] || continue
+  [[ "$(cat "$ps/scope" 2>/dev/null)" == "Device" ]] && continue
+  exit 0 # laptops keep normal sleep behavior unless is_server
 done
 {{ end -}}
 
@@ -30,9 +34,12 @@ GDM_LOCKS="/org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-type
 /org/gnome/settings-daemon/plugins/power/sleep-inactive-battery-type"
 
 has_gdm=false
-if command -v gdm >/dev/null 2>&1 || [[ -x /usr/sbin/gdm ]] || systemctl cat gdm.service >/dev/null 2>&1; then
-  has_gdm=true
-fi
+for dm in gdm gdm3; do # gdm3 on Debian/Ubuntu
+  if command -v "$dm" >/dev/null 2>&1 || [[ -x "/usr/sbin/$dm" ]] || systemctl cat "$dm.service" >/dev/null 2>&1; then
+    has_gdm=true
+    break
+  fi
+done
 
 targets_masked() {
   local t
