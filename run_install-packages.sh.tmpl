@@ -246,6 +246,16 @@ install_fzf_upstream_linux() {
   export PATH="$HOME/.local/bin:$PATH"
 }
 
+# Debian/Ubuntu (incl. WSL) ship bat's binary as `batcat` to avoid a name clash
+# with an old `bacula` tool. Symlink it to `bat` in ~/.local/bin so the name is
+# consistent across platforms (matches what env.zsh expects).
+link_bat_name() {
+  command -v bat >/dev/null 2>&1 && return 0
+  command -v batcat >/dev/null 2>&1 || return 0
+  mkdir -p "$HOME/.local/bin"
+  ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+}
+
 install_fd_find() {
   command -v fd >/dev/null 2>&1 && return 0
   command -v fdfind >/dev/null 2>&1 && return 0
@@ -436,6 +446,7 @@ systemctl --user enable --now code-server 2>/dev/null || true
 # ---- Post-package-manager installs (GitHub releases / official installers) ----
 install_fzf_upstream_linux
 install_fd_find
+link_bat_name
 ensure_fzf_zsh_integration
 install_starship_user
 install_delta_user
