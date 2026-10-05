@@ -44,17 +44,21 @@ Library/Application Support/Code/**
 {{- end -}}
 
 {{- /* ntfy config needs a working 1Password backend. Skip it when secrets can't
-       be resolved: not a full setup, or service mode with no token in the env yet
-       (so `chezmoi apply` degrades gracefully instead of hard-failing on op read). */ -}}
+       be resolved: not a full setup, service mode with no token in the env yet,
+       or account mode over SSH (the desktop app isn't reachable from an SSH
+       session), so `chezmoi apply` degrades gracefully instead of hard-failing
+       on op read. Ignored files are left as they are on disk. */ -}}
 {{- $svc := and (hasKey . "op_mode") (eq .op_mode "service") -}}
 {{- $svcNoToken := and $svc (not (env "OP_SERVICE_ACCOUNT_TOKEN")) -}}
-{{- if or (not .full_setup) $svcNoToken }}
+{{- $acctOverSSH := and (not $svc) (env "SSH_CONNECTION") -}}
+{{- $noOp := or $svcNoToken $acctOverSSH -}}
+{{- if or (not .full_setup) $noOp }}
 .ntfy.yml
 {{- end -}}
 
 {{- /* JFrog credentials: same 1Password gating as .ntfy.yml, and only on machines
        with the OpenShift toolchain, since the PL2/PL3 bundle builds are the only
        thing that uses them. */ -}}
-{{- if or (not .full_setup) $svcNoToken (not (dig "dev_openshift" false .)) }}
+{{- if or (not .full_setup) $noOp (not (dig "dev_openshift" false .)) }}
 .config/jfrog-env
 {{- end -}}
