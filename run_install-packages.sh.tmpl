@@ -364,7 +364,10 @@ install_duf_user() {
 
 # ---- Distro package installs ----
 if command -v apt-get >/dev/null 2>&1; then
-  $SUDO apt-get update
+  # A single broken third-party source (e.g. a vendor repo without a suite for
+  # a new Ubuntu release) makes `apt-get update` exit 100; warn and install
+  # from the indexes that did refresh instead of aborting the whole apply.
+  $SUDO apt-get update || echo "install-packages: apt-get update had errors (see above); continuing" >&2
   $SUDO apt-get install -y git curl ca-certificates unzip fzf bat zoxide ripgrep
 
   # Optional packages (don't fail the whole script if missing)
