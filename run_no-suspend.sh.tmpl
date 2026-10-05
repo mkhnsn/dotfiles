@@ -12,6 +12,8 @@ set -euo pipefail
 
 {{ if and (eq .chezmoi.os "linux") (not (env "CODESPACES")) -}}
 
+{{ template "todo.sh" }}
+
 {{ if not (dig "is_server" false .) -}}
 # Supply names are driver-defined (BAT0, CMB0, ...), so match on type. Skip
 # scope=Device batteries (wireless mice, controllers) so desktops still count.
@@ -62,6 +64,7 @@ SUDO=""
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   if ! command -v sudo >/dev/null 2>&1; then
     echo "no-suspend: not root and sudo not available, skipping"
+    todo "no-suspend: skipped (no sudo available); this machine may still auto-suspend"
     exit 0
   fi
   SUDO="sudo"
@@ -71,6 +74,7 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
       sudo -v
     else
       echo "no-suspend: sudo requires a password and no TTY; will retry on next 'chezmoi apply'"
+      todo "no-suspend: skipped (sudo needs a password); run 'chezmoi apply' from a terminal"
       exit 0
     fi
   fi

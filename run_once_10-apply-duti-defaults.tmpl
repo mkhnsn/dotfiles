@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+{{ template "todo.sh" }}
+
 # Only on macOS
 if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 0
@@ -18,6 +20,7 @@ if ! command -v duti >/dev/null 2>&1; then
     brew install duti
   else
     echo "duti: Homebrew not found; install duti manually, then rerun."
+    todo "duti: install Homebrew or duti, then re-run 'chezmoi apply' for default-app associations"
     exit 0
   fi
 fi

@@ -8,6 +8,7 @@
 # acquired, and the script re-runs when its content changes.
 # Defines $SUDO ("" when root, "sudo" otherwise).
 
+{{ template "todo.sh" }}
 STAMP_NAME={{ . | quote }}
 STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
 STAMP="$STAMP_DIR/$STAMP_NAME.done"
@@ -22,6 +23,7 @@ SUDO=""
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   if ! command -v sudo >/dev/null 2>&1; then
     echo "$STAMP_NAME: not root and sudo not available, skipping"
+    todo "$STAMP_NAME: skipped (no sudo available)"
     exit 0
   fi
   SUDO="sudo"
@@ -30,10 +32,12 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
       echo "$STAMP_NAME: sudo needed"
       if ! sudo -v; then
         echo "$STAMP_NAME: no sudo; will retry on next 'chezmoi apply'"
+        todo "$STAMP_NAME: skipped (sudo failed); re-run 'chezmoi apply'"
         exit 0
       fi
     else
       echo "$STAMP_NAME: sudo requires a password and no TTY; will retry on next 'chezmoi apply'"
+      todo "$STAMP_NAME: skipped (sudo needs a password); run 'chezmoi apply' from a terminal"
       exit 0
     fi
   fi

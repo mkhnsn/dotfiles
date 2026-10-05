@@ -3,6 +3,8 @@ set -euo pipefail
 
 {{ if and (eq .chezmoi.os "linux") .full_setup -}}
 
+{{ template "todo.sh" }}
+
 # Skip if no display manager is enabled (no GUI login configured)
 has_dm=false
 for dm in gdm gdm3 sddm lightdm; do
@@ -51,6 +53,7 @@ if command -v grdctl >/dev/null 2>&1; then
   echo ""
   echo "GNOME Remote Desktop enabled on port 3389."
   echo "Set credentials with:  grdctl rdp set-credentials <user> <password>"
+  todo "Remote desktop: set RDP credentials with 'grdctl rdp set-credentials <user> <password>'"
   echo "Or enable in:          Settings > Sharing > Remote Desktop"
   exit 0
 fi

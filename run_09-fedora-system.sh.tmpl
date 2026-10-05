@@ -117,6 +117,7 @@ if command -v timedatectl >/dev/null 2>&1; then
       echo "  To fix both sides: in an admin PowerShell on Windows run"
       echo "    reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation /v RealTimeIsUniversal /t REG_DWORD /d 1 /f"
       echo "  then here: sudo timedatectl set-local-rtc 0 --adjust-system-clock"
+      todo "dual-boot clock: optional, set Windows RealTimeIsUniversal=1, then 'sudo timedatectl set-local-rtc 0 --adjust-system-clock' (details above)"
     else
       echo "fedora-system: fixing RTC to UTC..."
       $SUDO timedatectl set-local-rtc 0 --adjust-system-clock || true
@@ -132,6 +133,7 @@ if command -v fwupdmgr >/dev/null 2>&1; then
   fwupdmgr refresh --force >/dev/null 2>&1 || true
   if fwupdmgr get-updates </dev/null >/dev/null 2>&1; then
     echo "fedora-system: firmware updates available; review with 'fwupdmgr get-updates', install with 'fwupdmgr update'"
+    todo "firmware updates available: review with 'fwupdmgr get-updates', install with 'fwupdmgr update'"
   fi
 fi
 

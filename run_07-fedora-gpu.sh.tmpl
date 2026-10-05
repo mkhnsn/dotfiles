@@ -33,6 +33,7 @@ if [[ "$has_nvidia" == "true" ]]; then
   echo "fedora-gpu: NVIDIA GPU detected"
   if ! dnf repolist --enabled 2>/dev/null | grep -q 'rpmfusion-nonfree'; then
     echo "fedora-gpu: RPM Fusion nonfree not enabled, skipping NVIDIA drivers"
+    todo "NVIDIA drivers not installed: RPM Fusion nonfree isn't enabled (see fedora-repos output)"
   else
     # For RTX 4000+ (Ada Lovelace+), enable open kernel modules before installing
     if echo "$gpu_info" | grep -qiE 'RTX [4-9]0|RTX 50|Ada|Blackwell'; then
