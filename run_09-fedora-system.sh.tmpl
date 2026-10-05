@@ -5,24 +5,16 @@ set -euo pipefail
 
 command -v dnf >/dev/null 2>&1 || exit 0
 
-SUDO=""
-if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
-  if command -v sudo >/dev/null 2>&1; then
-    SUDO="sudo"
-    if ! sudo -n true 2>/dev/null; then
-      echo "fedora-system: sudo requires password (non-interactive), skipping"
-      exit 0
-    fi
-  else
-    echo "fedora-system: not root and sudo not available, skipping"
-    exit 0
-  fi
-fi
+{{ template "sudo-once.sh" "fedora-system" }}
 
 # ---- Detect laptop vs desktop ----
+# Match on sysfs type (names are driver-defined); ignore peripheral batteries
 has_battery=false
-for bat in /sys/class/power_supply/BAT*; do
-  [[ -d "$bat" ]] && has_battery=true && break
+for ps in /sys/class/power_supply/*; do
+  [[ "$(cat "$ps/type" 2>/dev/null)" == "Battery" ]] || continue
+  [[ "$(cat "$ps/scope" 2>/dev/null)" == "Device" ]] && continue
+  has_battery=true
+  break
 done
 
 # ---- TLP battery management (laptops only) ----
@@ -110,10 +102,25 @@ else
 fi
 
 # ---- Dual-boot time fix ----
+# Linux wants the hardware clock in UTC; Windows defaults to local time.
+# Switching Linux alone makes Windows show the wrong time, so when a Windows
+# install is present only print the two-sided fix.
 if command -v timedatectl >/dev/null 2>&1; then
   if timedatectl show --property=LocalRTC --value 2>/dev/null | grep -q 'yes'; then
-    echo "fedora-system: fixing RTC to UTC (dual-boot time fix)..."
-    $SUDO timedatectl set-local-rtc 0 --adjust-system-clock || true
+    has_windows=false
+    if $SUDO test -d /boot/efi/EFI/Microsoft 2>/dev/null ||
+      { command -v efibootmgr >/dev/null 2>&1 && efibootmgr 2>/dev/null | grep -qi 'windows boot manager'; }; then
+      has_windows=true
+    fi
+    if [[ "$has_windows" == "true" ]]; then
+      echo "fedora-system: RTC is in local time and Windows is installed; leaving it."
+      echo "  To fix both sides: in an admin PowerShell on Windows run"
+      echo "    reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation /v RealTimeIsUniversal /t REG_DWORD /d 1 /f"
+      echo "  then here: sudo timedatectl set-local-rtc 0 --adjust-system-clock"
+    else
+      echo "fedora-system: fixing RTC to UTC..."
+      $SUDO timedatectl set-local-rtc 0 --adjust-system-clock || true
+    fi
   fi
 fi
 
