@@ -125,10 +125,14 @@ if command -v timedatectl >/dev/null 2>&1; then
 fi
 
 # ---- Firmware updates ----
+# Report only: flashing firmware (some updates are staged for the next boot)
+# shouldn't happen unattended during an apply. Install with `fwupdmgr update`.
 if command -v fwupdmgr >/dev/null 2>&1; then
   echo "fedora-system: checking for firmware updates..."
-  fwupdmgr refresh --force 2>/dev/null || true
-  fwupdmgr update -y --no-reboot 2>/dev/null || true
+  fwupdmgr refresh --force >/dev/null 2>&1 || true
+  if fwupdmgr get-updates </dev/null >/dev/null 2>&1; then
+    echo "fedora-system: firmware updates available; review with 'fwupdmgr get-updates', install with 'fwupdmgr update'"
+  fi
 fi
 
 {{ end -}}
