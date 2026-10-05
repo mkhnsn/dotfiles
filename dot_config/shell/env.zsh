@@ -281,6 +281,18 @@ fi
 export PAGER='less'
 export LESS='-R -F -X --mouse'
 
+# bat: on Debian/Ubuntu (incl. WSL) the binary installs as `batcat` to dodge a
+# name clash with an old `bacula` tool, so `bat` doesn't exist. Symlink it onto
+# PATH (~/.local/bin is prepended above) so `bat`, MANPAGER's `sh -c` subshell,
+# fzf previews, and the cache-refresh script all resolve the same name.
+if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
+  if [[ ! -e "$HOME/.local/bin/bat" ]]; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+  fi
+  hash -r 2>/dev/null   # forget the cached "bat: not found" lookup this shell
+fi
+
 # Better cat (interactive only)
 if command -v bat >/dev/null 2>&1; then
   alias cat='bat --paging=auto'
@@ -288,7 +300,9 @@ fi
 
 # Prefer bat for previewing files
 export BAT_PAGER='less -RFX --mouse'
-export BAT_THEME='GitHub'   # or Nord, Dracula, GitHub, etc.
+# Dark theme to match the terminal's Darkside scheme (bg #222324). The old light
+# "GitHub" theme rendered as near-invisible gray-on-gray on the dark background.
+export BAT_THEME='OneHalfDark'
 
 # Man pages through bat (colorized, searchable)
 if command -v bat >/dev/null 2>&1; then
