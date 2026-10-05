@@ -91,7 +91,7 @@ printf '%-50s %8s %8s %8s  %s\n' "REPO" ".git" "junk" "total" "LOCAL-ONLY WORK"
 
 # ---- counters for the end-of-run summary ----
 N_REPOS=0; N_CLEANED=0; N_SKIP_SAFE=0; N_SKIP_BUSY=0; N_FETCH_FAIL=0; N_GC_FAIL=0
-N_ART_DIRS=0; N_ART_REFUSED=0; N_BRANCHES=0; N_GONE_SAFE=0; N_GONE_KEPT=0; N_GONE_DEL=0; N_GONE_REPOS=0; N_NO_DEFAULT=0; N_LFS=0
+N_ART_DIRS=0; N_ART_REFUSED=0; N_BRANCHES=0; N_GONE_SAFE=0; N_BR_FAIL=0; N_GONE_KEPT=0; N_GONE_DEL=0; N_GONE_REPOS=0; N_NO_DEFAULT=0; N_LFS=0
 KB_TOTAL=0; KB_GIT=0; KB_ART=0; KB_BEFORE=0; KB_AFTER=0
 FLAGGED=""; BUSY=""; MISSING_ROOTS=""; NO_DEFAULT=""; GONE_KEPT=""
 
@@ -219,6 +219,8 @@ while IFS= read -r gitdir; do
       if [ "$b" = "$cur" ]; then echo "    kept gone branch $b (currently checked out)"; continue; fi
       if git branch -D --quiet -- "$b" 2>/dev/null; then
         echo "    deleted gone branch: $b"; N_GONE_DEL=$((N_GONE_DEL+1))
+      else
+        echo "    couldn't delete gone branch $b (checked out in another worktree?)"; N_BR_FAIL=$((N_BR_FAIL+1))
       fi
     done <<< "$gone_safe"
   fi
@@ -235,6 +237,8 @@ while IFS= read -r gitdir; do
         case "$b" in "$db"|"$cur"|main|master|develop|trunk) continue ;; esac
         if git branch -d -- "$b" >/dev/null 2>&1; then
           echo "    deleted merged branch: $b"; N_BRANCHES=$((N_BRANCHES+1))
+        else
+          echo "    couldn't delete merged branch $b (checked out in another worktree?)"; N_BR_FAIL=$((N_BR_FAIL+1))
         fi
       done <<< "$merged"
     fi
@@ -298,6 +302,7 @@ else
   elif [ $N_GONE_SAFE -gt 0 ]; then
     echo "  gone branches left in place: $N_GONE_SAFE merged/squash-merged (rerun with --gone to remove)"
   fi
+  [ $N_BR_FAIL -gt 0 ] && echo "  branches git refused to delete: $N_BR_FAIL (scroll up; usually checked out in another worktree)"
   [ $N_LFS -gt 0 ] && echo "  LFS caches pruned: $N_LFS"
   [ $N_GC_FAIL -gt 0 ] && echo "  WARNING: git gc failed in $(plural $N_GC_FAIL repo) — scroll up for which"
   [ $N_FETCH_FAIL -gt 0 ] && echo "  fetch failed in $(plural $N_FETCH_FAIL repo) (offline or auth?)"
