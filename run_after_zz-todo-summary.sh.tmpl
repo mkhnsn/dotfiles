@@ -12,6 +12,14 @@ if [[ -s "$DOTFILES_TODO" ]]; then
   done < <(awk 'NF && !seen[$0]++' "$DOTFILES_TODO")
 fi
 
+# Persistent checks: re-evaluated every apply, so the reminder stays until done.
+# Tailscale reports Self.KeyExpiry only while key expiry is enabled.
+if command -v tailscale >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+  if tailscale status --json 2>/dev/null | python3 -c 'import json,sys; s=json.load(sys.stdin); sys.exit(0 if s.get("BackendState")=="Running" and (s.get("Self") or {}).get("KeyExpiry") else 1)' 2>/dev/null; then
+    items+=("Tailscale: key expiry is on for this machine; disable it at https://login.tailscale.com/admin/machines")
+  fi
+fi
+
 {{- /* Mirrors .chezmoiignore.tmpl: account-mode secrets are skipped over SSH. */}}
 {{ if and .full_setup (ne (dig "op_mode" "account" .) "service") (env "SSH_CONNECTION") -}}
 items+=("1Password-backed files (.ntfy.yml, jfrog-env) were skipped over SSH; run 'chezmoi apply' at the desktop to refresh them")

@@ -33,7 +33,9 @@ EOF
   if command -v flatpak >/dev/null 2>&1; then
     if ! flatpak list --app 2>/dev/null | grep -q 'com.mattjakeman.ExtensionManager'; then
       echo "fedora-desktop: installing Extension Manager (Flatpak)..."
-      flatpak install -y --noninteractive flathub com.mattjakeman.ExtensionManager 2>/dev/null || true
+      # System install via sudo: without it flatpak asks polkit, which fails over SSH.
+      $SUDO flatpak install -y --noninteractive flathub com.mattjakeman.ExtensionManager ||
+        { todo "Extension Manager: flatpak install failed; run 'sudo flatpak install flathub com.mattjakeman.ExtensionManager'"; RETRY_NEXT_APPLY=1; }
     fi
   fi
 fi
@@ -42,7 +44,9 @@ fi
 if command -v flatpak >/dev/null 2>&1; then
   if ! flatpak list --app 2>/dev/null | grep -q 'org.gnome.DejaDup'; then
     echo "fedora-desktop: installing Deja Dup (Flatpak)..."
-    flatpak install -y --noninteractive flathub org.gnome.DejaDup 2>/dev/null || true
+    # System install via sudo: without it flatpak asks polkit, which fails over SSH.
+    $SUDO flatpak install -y --noninteractive flathub org.gnome.DejaDup ||
+      { todo "Deja Dup: flatpak install failed; run 'sudo flatpak install flathub org.gnome.DejaDup'"; RETRY_NEXT_APPLY=1; }
   fi
 else
   $SUDO dnf install -y deja-dup 2>/dev/null || true

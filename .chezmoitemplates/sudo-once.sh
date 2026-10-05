@@ -44,5 +44,7 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
 fi
 
 # From here on, a clean exit (including an early `exit 0`) records the stamp;
-# a failure leaves it unset so the next apply retries.
-trap 'rc=$?; if [[ $rc -eq 0 ]]; then mkdir -p "$STAMP_DIR" && printf "%s\n" "$STAMP_HASH" > "$STAMP"; fi' EXIT
+# a failure leaves it unset so the next apply retries. A step that failed
+# without aborting the script can set RETRY_NEXT_APPLY=1 to skip the stamp too.
+RETRY_NEXT_APPLY=""
+trap 'rc=$?; if [[ $rc -eq 0 && -z "$RETRY_NEXT_APPLY" ]]; then mkdir -p "$STAMP_DIR" && printf "%s\n" "$STAMP_HASH" > "$STAMP"; fi' EXIT
