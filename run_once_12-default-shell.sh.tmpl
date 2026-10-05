@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+{{ template "todo.sh" }}
+
 # Ensure zsh is the default login shell. The dotfiles configure zsh, but the OS
 # may still drop you into bash (common on fresh Linux / WSL boxes). Headless-safe:
 # only changes the shell non-interactively (root or passwordless sudo), otherwise
@@ -57,5 +59,6 @@ if [[ "${EUID:-$(id -u)}" -eq 0 ]] || { [[ -n "$SUDO" ]] && $SUDO -n true 2>/dev
 fi
 
 echo "default-shell: couldn't change the shell automatically. Run:"
+todo "Login shell is not zsh: run 'chsh -s $ZSH_BIN', then reopen your terminal"
 echo "    chsh -s $ZSH_BIN"
 echo "  then reopen your terminal (WSL: 'wsl --shutdown' from Windows first)."

@@ -3,6 +3,8 @@ set -euo pipefail
 
 {{ if dig "is_server" false . -}}
 
+{{ template "todo.sh" }}
+
 # Skip if already connected
 if command -v tailscale >/dev/null 2>&1; then
   status="$(tailscale status --json 2>/dev/null | grep -o '"BackendState":"[^"]*"' | head -1 || echo "")"
@@ -46,6 +48,7 @@ tailscale up
 echo "tailscale: connected"
 echo ""
 echo "REMINDER: Disable key expiry for this machine in the Tailscale admin console:"
+todo "Tailscale: disable key expiry for this machine at https://login.tailscale.com/admin/machines"
 echo "  https://login.tailscale.com/admin/machines"
 
 {{ end -}}

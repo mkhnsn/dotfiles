@@ -3,6 +3,8 @@ set -euo pipefail
 
 {{ if eq .chezmoi.os "linux" -}}
 
+{{ template "todo.sh" }}
+
 # Mirror the Ghostty look (JetBrains Mono + Darkside theme, slight transparency)
 # into Windows Terminal when running under WSL. Windows Terminal owns its
 # settings.json (JSONC, auto-generated profile GUIDs), so we surgically MERGE
@@ -29,6 +31,7 @@ done
 
 if [[ -z "$settings" ]]; then
   echo "windows-terminal: settings.json not found — launch Windows Terminal once, then re-run 'chezmoi apply'."
+  todo "Windows Terminal: launch it once, then re-run 'chezmoi apply' to apply the theme"
   exit 0
 fi
 

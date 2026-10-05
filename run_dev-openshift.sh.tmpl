@@ -3,6 +3,8 @@ set -euo pipefail
 
 {{ if and (eq .chezmoi.os "linux") (dig "dev_openshift" false .) -}}
 
+{{ template "todo.sh" }}
+
 # OpenShift client dev toolchain (opt-in via the `dev_openshift` flag).
 #   - Installs Node 22 LTS + Node 24, Python 3 + venv, Ansible, and Helm 3.x INSIDE WSL.
 #   - On WSL, symlinks Podman / oc to the FIPS-approved Windows binaries
@@ -122,6 +124,7 @@ if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
     fi
     echo ""
     echo " Then re-run 'chezmoi apply' here to link podman/oc."
+    todo "OpenShift: Windows tools missing (${missing[*]}); run windows-client.ps1 from Windows PowerShell (command above), then 'chezmoi apply'"
     echo "────────────────────────────────────────────────────────────────────"
   elif [[ -n "$winps1" ]]; then
     note "podman/oc linked. Windows bootstrap: & \"$winps1\""

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Print every manual follow-up recorded during this apply in one block at the
+# bottom, so skipped steps don't scroll past unnoticed. Runs on every apply.
+
+{{ template "todo.sh" }}
+
+items=()
+if [[ -s "$DOTFILES_TODO" ]]; then
+  while IFS= read -r line; do
+    items+=("$line")
+  done < <(awk 'NF && !seen[$0]++' "$DOTFILES_TODO")
+fi
+
+{{- /* Mirrors .chezmoiignore.tmpl: account-mode secrets are skipped over SSH. */}}
+{{ if and .full_setup (ne (dig "op_mode" "account" .) "service") (env "SSH_CONNECTION") -}}
+items+=("1Password-backed files (.ntfy.yml, jfrog-env) were skipped over SSH; run 'chezmoi apply' at the desktop to refresh them")
+{{ end -}}
+
+[[ ${#items[@]} -gt 0 ]] || exit 0
+
+if [[ -t 1 ]]; then
+  bold=$'\e[1m' yellow=$'\e[33m' reset=$'\e[0m'
+else
+  bold="" yellow="" reset=""
+fi
+
+rule="────────────────────────────────────────────────────────────────────"
+echo ""
+echo "${yellow}${rule}${reset}"
+echo "${yellow}${bold} Needs your attention (${#items[@]}):${reset}"
+echo "${yellow}${rule}${reset}"
+for line in "${items[@]}"; do
+  echo " ${yellow}•${reset} $line"
+done
+echo "${yellow}${rule}${reset}"
