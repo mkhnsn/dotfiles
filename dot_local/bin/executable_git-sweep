@@ -1,0 +1,271 @@
+#!/bin/bash
+# git-sweep — reclaim disk space across many local git clones, safely.
+#
+# Default is a dry run: it reports each repo's size, reclaimable build junk,
+# and anything that exists only locally. Nothing changes without --apply.
+#
+# Usage:
+#   git-sweep [options] [ROOT ...]     (ROOT defaults to $GHQ_ROOT, `ghq root`, or ~/src)
+#   git sweep [options] [ROOT ...]     (same thing, as a git subcommand)
+#
+# Options:
+#   --apply            Actually do the cleanup (otherwise report only)
+#   --artifacts        Delete ignored build dirs (node_modules, dist, .venv, ...)
+#   --branches         Delete local branches already merged into the default branch
+#   --fetch            Run `git fetch --prune` first (network; slow on many repos)
+#   --depth N          How deep to look for repos under ROOT (default 4)
+#   --only-safe        With --apply, skip repos that have uncommitted, stashed,
+#                      or unpushed work (they're still reported)
+#   -h, --help
+#
+# Always runs on --apply: git worktree prune, git gc (normal, keeps reflog),
+# git lfs prune (if the repo uses LFS). Never runs: reflog expire, gc --prune=now,
+# git clean -x, or anything that touches tracked or untracked-but-not-ignored files.
+#
+# Written for macOS (bash 3.2 / BSD tools); also works on Linux.
+
+set -u
+
+APPLY=0; ARTIFACTS=0; BRANCHES=0; FETCH=0; DEPTH=4; ONLY_SAFE=0
+ROOTS=()
+
+# Ignored directories considered safe to delete (regenerable build output / caches).
+# Matched against the directory's basename. Ignored *files* (.env, local configs)
+# are never touched.
+ARTIFACT_DIRS="node_modules dist build out target bin obj .next .nuxt .svelte-kit .turbo
+.parcel-cache .cache .venv venv env __pycache__ .pytest_cache .mypy_cache .ruff_cache
+.tox .gradle .terraform coverage .nyc_output DerivedData Pods .build vendor/bundle"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --apply) APPLY=1 ;;
+    --artifacts) ARTIFACTS=1 ;;
+    --branches) BRANCHES=1 ;;
+    --fetch) FETCH=1 ;;
+    --only-safe) ONLY_SAFE=1 ;;
+    --depth) shift; DEPTH="$1" ;;
+    -h|--help) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "Unknown option: $1" >&2; exit 2 ;;
+    *) ROOTS+=("$1") ;;
+  esac
+  shift
+done
+if [ ${#ROOTS[@]} -eq 0 ]; then
+  DEFAULT_ROOT="${GHQ_ROOT:-}"
+  [ -z "$DEFAULT_ROOT" ] && command -v ghq >/dev/null 2>&1 && DEFAULT_ROOT=$(ghq root 2>/dev/null)
+  ROOTS=("${DEFAULT_ROOT:-$HOME/src}")
+fi
+
+kb() { du -sk "$1" 2>/dev/null | awk '{print $1}'; }
+human() { awk -v k="${1:-0}" 'BEGIN{ split("K M G T",u," "); i=1; while (k>=1024 && i<4){k/=1024;i++} printf (i==1?"%d%s":"%.1f%s"), k, u[i] }'; }
+
+is_artifact() {
+  local name="$1" a
+  for a in $ARTIFACT_DIRS; do
+    case "$name" in "$a"|*/"$a") return 0 ;; esac
+  done
+  return 1
+}
+
+# List ignored directories in the repo that match the artifact allowlist.
+# Prints repo-relative paths, one per line, without trailing slash.
+artifact_paths() {
+  git ls-files -z --others --ignored --exclude-standard --directory 2>/dev/null \
+    | tr '\0' '\n' | while IFS= read -r p; do
+        case "$p" in */) ;; *) continue ;; esac   # directories only
+        p="${p%/}"
+        is_artifact "$p" && printf '%s\n' "$p"
+      done
+}
+
+default_branch() {
+  local b
+  b=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null) && { echo "${b#origin/}"; return; }
+  for b in main master trunk develop; do
+    git show-ref --verify --quiet "refs/heads/$b" && { echo "$b"; return; }
+  done
+}
+
+
+[ $APPLY -eq 1 ] && MODE="APPLY" || MODE="DRY RUN"
+echo "git-sweep — $MODE  (artifacts=$ARTIFACTS branches=$BRANCHES fetch=$FETCH only-safe=$ONLY_SAFE)"
+printf '%-50s %8s %8s %8s  %s\n' "REPO" ".git" "junk" "total" "LOCAL-ONLY WORK"
+
+# ---- counters for the end-of-run summary ----
+N_REPOS=0; N_CLEANED=0; N_SKIP_SAFE=0; N_SKIP_BUSY=0; N_FETCH_FAIL=0; N_GC_FAIL=0
+N_ART_DIRS=0; N_ART_REFUSED=0; N_BRANCHES=0; N_NO_DEFAULT=0; N_LFS=0
+KB_TOTAL=0; KB_GIT=0; KB_ART=0; KB_BEFORE=0; KB_AFTER=0
+FLAGGED=""; BUSY=""; MISSING_ROOTS=""; NO_DEFAULT=""
+
+pretty() { printf '%s' "${1/#$HOME/\~}"; }
+
+# Find repos: a .git *directory* (skips submodules and linked worktrees, which have a .git file).
+find_repos() {
+  local root
+  for root in "${ROOTS[@]}"; do
+    find "$root" -maxdepth "$DEPTH" -type d -name .git -prune -print 2>/dev/null
+  done | sort
+}
+
+RESOLVED=()
+for root in "${ROOTS[@]}"; do
+  if r=$(cd "$root" 2>/dev/null && pwd); then RESOLVED+=("$r")
+  else MISSING_ROOTS="$MISSING_ROOTS $root"; fi
+done
+ROOTS=("${RESOLVED[@]+"${RESOLVED[@]}"}")
+
+while IFS= read -r gitdir; do
+  [ -z "$gitdir" ] && continue
+  repo="${gitdir%/.git}"
+  cd "$repo" || continue
+  N_REPOS=$((N_REPOS+1))
+
+  # Skip repos mid-operation (rebase/merge/cherry-pick in progress).
+  if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] || [ -f .git/MERGE_HEAD ] || [ -f .git/CHERRY_PICK_HEAD ]; then
+    printf '%-50s  SKIPPED: rebase/merge in progress\n' "$(pretty "$repo")"
+    N_SKIP_BUSY=$((N_SKIP_BUSY+1)); BUSY="$BUSY
+  $(pretty "$repo")"
+    continue
+  fi
+
+  if [ $FETCH -eq 1 ] && [ -n "$(git remote)" ]; then
+    git fetch --all --prune --quiet 2>/dev/null || N_FETCH_FAIL=$((N_FETCH_FAIL+1))
+  fi
+
+  # Local-only work detection
+  flags=""
+  [ -n "$(git status --porcelain 2>/dev/null)" ] && flags="$flags dirty"
+  ns=$(git stash list 2>/dev/null | wc -l | tr -d ' ')
+  [ "$ns" -gt 0 ] && flags="$flags stash:$ns"
+  if [ -z "$(git remote)" ]; then
+    flags="$flags no-remote"
+  else
+    nu=$(git log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')
+    [ "$nu" -gt 0 ] && flags="$flags unpushed:$nu"
+  fi
+  flags="${flags# }"
+  [ -n "$flags" ] && FLAGGED="$FLAGGED
+  $(printf '%-48s %s' "$(pretty "$repo")" "$flags")"
+
+  git_kb=$(kb .git); total_kb=$(kb .)
+  art_kb=0
+  arts=$(artifact_paths)
+  if [ -n "$arts" ]; then
+    art_kb=$(while IFS= read -r p; do kb "$p"; done <<< "$arts" | awk '{s+=$1} END{print s+0}')
+  fi
+  KB_TOTAL=$((KB_TOTAL+total_kb)); KB_GIT=$((KB_GIT+git_kb)); KB_ART=$((KB_ART+art_kb))
+
+  printf '%-50s %8s %8s %8s  %s\n' "$(pretty "$repo")" "$(human "$git_kb")" "$(human "$art_kb")" "$(human "$total_kb")" "${flags:--}"
+
+  [ $APPLY -eq 1 ] || continue
+
+  if [ $ONLY_SAFE -eq 1 ] && [ -n "$flags" ]; then
+    echo "    skipped (--only-safe)"
+    N_SKIP_SAFE=$((N_SKIP_SAFE+1))
+    continue
+  fi
+
+  N_CLEANED=$((N_CLEANED+1)); KB_BEFORE=$((KB_BEFORE+total_kb))
+  git worktree prune 2>/dev/null
+  git gc --quiet 2>/dev/null || { N_GC_FAIL=$((N_GC_FAIL+1)); echo "    WARNING: git gc failed"; }
+  if [ -f .gitattributes ] && grep -q 'filter=lfs' .gitattributes 2>/dev/null && git lfs env >/dev/null 2>&1; then
+    git lfs prune >/dev/null 2>&1 && N_LFS=$((N_LFS+1))
+  fi
+
+  if [ $ARTIFACTS -eq 1 ] && [ -n "$arts" ]; then
+    while IFS= read -r p; do
+      # Belt and braces: confirm git still considers it ignored and untracked.
+      if git check-ignore -q -- "$p" && [ -z "$(git ls-files -- "$p" | head -1)" ]; then
+        rm -rf -- "$p" && N_ART_DIRS=$((N_ART_DIRS+1))
+      else
+        N_ART_REFUSED=$((N_ART_REFUSED+1)); echo "    kept $p (no longer looks ignored/untracked)"
+      fi
+    done <<< "$arts"
+  fi
+
+  if [ $BRANCHES -eq 1 ]; then
+    db=$(default_branch)
+    cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
+    if [ -z "$db" ]; then
+      N_NO_DEFAULT=$((N_NO_DEFAULT+1)); NO_DEFAULT="$NO_DEFAULT
+  $(pretty "$repo")"
+      echo "    branches: couldn't determine default branch, skipped"
+    else
+      merged=$(git for-each-ref --format='%(refname:short)' --merged "$db" refs/heads/)
+      while IFS= read -r b; do
+        [ -z "$b" ] && continue
+        case "$b" in "$db"|"$cur"|main|master|develop|trunk) continue ;; esac
+        if git branch -d -- "$b" >/dev/null 2>&1; then
+          echo "    deleted merged branch: $b"; N_BRANCHES=$((N_BRANCHES+1))
+        fi
+      done <<< "$merged"
+    fi
+  fi
+
+  after_kb=$(kb .)
+  KB_AFTER=$((KB_AFTER+after_kb))
+  echo "    $(human "$total_kb") -> $(human "$after_kb")"
+done < <(find_repos)
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+plural() { [ "$1" -eq 1 ] && printf '%s %s' "$1" "$2" || printf '%s %ss' "$1" "$2"; }
+ROOTS_PRETTY=""; for r in "${ROOTS[@]+"${ROOTS[@]}"}"; do ROOTS_PRETTY="$ROOTS_PRETTY $(pretty "$r")"; done; ROOTS_PRETTY="${ROOTS_PRETTY# }"
+N_FLAGGED=$(printf '%s' "$FLAGGED" | grep -c . )
+
+echo
+echo "================================ SUMMARY ($MODE) ================================"
+[ -n "$MISSING_ROOTS" ] && echo "Not found (skipped):$MISSING_ROOTS"
+
+if [ $N_REPOS -eq 0 ]; then
+  echo "No git repos found under: ${ROOTS_PRETTY:-<none>} (depth $DEPTH). Try a different folder or --depth."
+  exit 0
+fi
+
+echo "Scanned $(plural $N_REPOS repo) under $ROOTS_PRETTY — $(human $KB_TOTAL) total, $(human $KB_GIT) of it in .git"
+
+if [ $APPLY -eq 0 ]; then
+  echo "Reclaimable build junk (--artifacts): $(human $KB_ART)"
+  [ $N_FLAGGED -gt 0 ] && echo "Repos with local-only work: $N_FLAGGED (listed below)"
+  [ $N_SKIP_BUSY -gt 0 ] && echo "Skipped, rebase/merge in progress: $N_SKIP_BUSY"
+  [ $N_FETCH_FAIL -gt 0 ] && echo "Fetch failed in $(plural $N_FETCH_FAIL repo) (offline or auth?) — unpushed counts there may be stale"
+  [ $FETCH -eq 0 ] && echo "Note: no --fetch, so 'unpushed' is measured against your last fetch."
+  echo
+  echo "Nothing was changed. Suggested next step:"
+  sugg="git-sweep --apply"
+  [ "$KB_ART" -gt 0 ] && sugg="$sugg --artifacts"
+  sugg="$sugg --branches"
+  [ $N_FLAGGED -gt 0 ] && sugg="$sugg --only-safe"
+  echo "  $sugg $ROOTS_PRETTY"
+else
+  saved=$((KB_BEFORE-KB_AFTER)); [ $saved -lt 0 ] && saved=0
+  echo "Cleaned:  $(plural $N_CLEANED repo)   $(human $KB_BEFORE) -> $(human $KB_AFTER)   (freed $(human $saved))"
+  if [ $ARTIFACTS -eq 1 ]; then
+    echo "  build dirs removed: $N_ART_DIRS"
+    [ $N_ART_REFUSED -gt 0 ] && echo "  build dirs kept by safety check: $N_ART_REFUSED"
+  elif [ "$KB_ART" -gt 0 ]; then
+    echo "  build junk left in place: $(human $KB_ART) (rerun with --artifacts to remove)"
+  fi
+  if [ $BRANCHES -eq 1 ]; then
+    echo "  merged branches deleted: $N_BRANCHES"
+    [ $N_NO_DEFAULT -gt 0 ] && echo "  branch cleanup skipped (no default branch found): $N_NO_DEFAULT"
+  fi
+  [ $N_LFS -gt 0 ] && echo "  LFS caches pruned: $N_LFS"
+  [ $N_GC_FAIL -gt 0 ] && echo "  WARNING: git gc failed in $(plural $N_GC_FAIL repo) — scroll up for which"
+  [ $N_FETCH_FAIL -gt 0 ] && echo "  fetch failed in $(plural $N_FETCH_FAIL repo) (offline or auth?)"
+  [ $N_SKIP_SAFE -gt 0 ] && echo "Skipped (--only-safe): $(plural $N_SKIP_SAFE repo) with local-only work"
+  [ $N_SKIP_BUSY -gt 0 ] && echo "Skipped (rebase/merge in progress): $N_SKIP_BUSY"
+  if [ $N_FLAGGED -gt 0 ] && [ $ONLY_SAFE -eq 0 ]; then
+    echo "Note: $N_FLAGGED cleaned repos had local-only work. Their work is untouched (nothing here"
+    echo "      touches uncommitted changes, stashes, or unmerged commits), but they're worth a look."
+  fi
+fi
+
+if [ $N_FLAGGED -gt 0 ]; then
+  echo
+  echo "Local-only work (push, commit, or delete deliberately before relying on the remote):$FLAGGED"
+fi
+[ -n "$BUSY" ] && { echo; echo "Finish or abort the rebase/merge in:$BUSY"; }
+[ -n "$NO_DEFAULT" ] && { echo; echo "No default branch detected (set one with 'git remote set-head origin -a'):$NO_DEFAULT"; }
+exit 0
