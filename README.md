@@ -234,9 +234,12 @@ locally. It changes nothing unless you pass `--apply`:
 ```bash
 git-sweep                                             # dry run with summary
 git-sweep --apply --artifacts --branches --only-safe  # clean, skipping repos with local-only work
+git-sweep --apply --gone                              # also drop branches whose PR merged
 ```
 
-Run `git-sweep --help` for all options.
+For the current repo only, `empty-yard-debris` fetches, lists local branches whose remote
+branch was deleted, and removes the ones that are merged or squash-merged (asks first;
+`-n` dry run, `-y` no prompt, `-f` also delete unmerged ones). Run either with `--help`.
 
 ---
 

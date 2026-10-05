@@ -12,6 +12,8 @@
 #   --apply            Actually do the cleanup (otherwise report only)
 #   --artifacts        Delete ignored build dirs (node_modules, dist, .venv, ...)
 #   --branches         Delete local branches already merged into the default branch
+#   --gone             Delete local branches whose remote branch was deleted, if they're
+#                      merged or squash-merged (same as empty-yard-debris, across repos)
 #   --fetch            Run `git fetch --prune` first (network; slow on many repos)
 #   --depth N          How deep to look for repos under ROOT (default 4)
 #   --only-safe        With --apply, skip repos that have uncommitted, stashed,
@@ -26,7 +28,9 @@
 
 set -u
 
-APPLY=0; ARTIFACTS=0; BRANCHES=0; FETCH=0; DEPTH=4; ONLY_SAFE=0
+{{ template "git-branches.sh" }}
+
+APPLY=0; ARTIFACTS=0; BRANCHES=0; GONE=0; FETCH=0; DEPTH=4; ONLY_SAFE=0
 ROOTS=()
 
 # Ignored directories considered safe to delete (regenerable build output / caches).
@@ -41,6 +45,7 @@ while [ $# -gt 0 ]; do
     --apply) APPLY=1 ;;
     --artifacts) ARTIFACTS=1 ;;
     --branches) BRANCHES=1 ;;
+    --gone) GONE=1 ;;
     --fetch) FETCH=1 ;;
     --only-safe) ONLY_SAFE=1 ;;
     --depth) shift; DEPTH="$1" ;;
@@ -78,24 +83,17 @@ artifact_paths() {
       done
 }
 
-default_branch() {
-  local b
-  b=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null) && { echo "${b#origin/}"; return; }
-  for b in main master trunk develop; do
-    git show-ref --verify --quiet "refs/heads/$b" && { echo "$b"; return; }
-  done
-}
 
 
 [ $APPLY -eq 1 ] && MODE="APPLY" || MODE="DRY RUN"
-echo "git-sweep — $MODE  (artifacts=$ARTIFACTS branches=$BRANCHES fetch=$FETCH only-safe=$ONLY_SAFE)"
+echo "git-sweep — $MODE  (artifacts=$ARTIFACTS branches=$BRANCHES gone=$GONE fetch=$FETCH only-safe=$ONLY_SAFE)"
 printf '%-50s %8s %8s %8s  %s\n' "REPO" ".git" "junk" "total" "LOCAL-ONLY WORK"
 
 # ---- counters for the end-of-run summary ----
 N_REPOS=0; N_CLEANED=0; N_SKIP_SAFE=0; N_SKIP_BUSY=0; N_FETCH_FAIL=0; N_GC_FAIL=0
-N_ART_DIRS=0; N_ART_REFUSED=0; N_BRANCHES=0; N_NO_DEFAULT=0; N_LFS=0
+N_ART_DIRS=0; N_ART_REFUSED=0; N_BRANCHES=0; N_GONE_SAFE=0; N_GONE_KEPT=0; N_GONE_DEL=0; N_GONE_REPOS=0; N_NO_DEFAULT=0; N_LFS=0
 KB_TOTAL=0; KB_GIT=0; KB_ART=0; KB_BEFORE=0; KB_AFTER=0
-FLAGGED=""; BUSY=""; MISSING_ROOTS=""; NO_DEFAULT=""
+FLAGGED=""; BUSY=""; MISSING_ROOTS=""; NO_DEFAULT=""; GONE_KEPT=""
 
 pretty() { printf '%s' "${1/#$HOME/\~}"; }
 
@@ -132,6 +130,29 @@ while IFS= read -r gitdir; do
     git fetch --all --prune --quiet 2>/dev/null || N_FETCH_FAIL=$((N_FETCH_FAIL+1))
   fi
 
+  # Branches whose remote was deleted, split into safe-to-delete (merged or
+  # squash-merged into the default branch) and unmerged.
+  db=$(default_branch); cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
+  gone_safe=""; gone_unmerged=""; ngs=0; ngu=0
+  gone=$(gone_branches)
+  if [ -n "$gone" ]; then
+    N_GONE_REPOS=$((N_GONE_REPOS+1))
+    [ -n "$db" ] && base=$(base_ref "$db")
+    while IFS= read -r b; do
+      [ -z "$b" ] || [ "$b" = "$db" ] && continue
+      if [ -n "$db" ] && [ "$(branch_merge_state "$b" "$base")" != unmerged ]; then
+        gone_safe="$gone_safe$b
+"; ngs=$((ngs+1))
+      else
+        gone_unmerged="$gone_unmerged$b
+"; ngu=$((ngu+1))
+      fi
+    done <<< "$gone"
+    N_GONE_SAFE=$((N_GONE_SAFE+ngs)); N_GONE_KEPT=$((N_GONE_KEPT+ngu))
+    [ $ngu -gt 0 ] && GONE_KEPT="$GONE_KEPT
+  $(printf '%-48s %s' "$(pretty "$repo")" "$(printf '%s' "$gone_unmerged" | tr '\n' ' ' | sed 's/ $//')")"
+  fi
+
   # Local-only work detection
   flags=""
   [ -n "$(git status --porcelain 2>/dev/null)" ] && flags="$flags dirty"
@@ -140,7 +161,12 @@ while IFS= read -r gitdir; do
   if [ -z "$(git remote)" ]; then
     flags="$flags no-remote"
   else
-    nu=$(git log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')
+    # Count commits on no remote, ignoring gone branches already merged/squash-merged
+    # (their commits live on in the default branch, just under different hashes).
+    heads=$(git for-each-ref --format='%(refname)' refs/heads/ | while IFS= read -r r; do
+      printf '%s' "$gone_safe" | grep -qxF -- "${r#refs/heads/}" || echo "$r"; done)
+    nu=0
+    [ -n "$heads" ] && nu=$(git log --oneline $heads --not --remotes 2>/dev/null | wc -l | tr -d ' ')
     [ "$nu" -gt 0 ] && flags="$flags unpushed:$nu"
   fi
   flags="${flags# }"
@@ -156,6 +182,10 @@ while IFS= read -r gitdir; do
   KB_TOTAL=$((KB_TOTAL+total_kb)); KB_GIT=$((KB_GIT+git_kb)); KB_ART=$((KB_ART+art_kb))
 
   printf '%-50s %8s %8s %8s  %s\n' "$(pretty "$repo")" "$(human "$git_kb")" "$(human "$art_kb")" "$(human "$total_kb")" "${flags:--}"
+  if [ $GONE -eq 1 ] && [ $APPLY -eq 0 ] && [ -n "$gone" ]; then
+    [ $ngs -gt 0 ] && echo "    gone, safe to delete: $(printf '%s' "$gone_safe" | tr '\n' ' ' | sed 's/ $//')"
+    [ $ngu -gt 0 ] && echo "    gone, NOT merged (kept): $(printf '%s' "$gone_unmerged" | tr '\n' ' ' | sed 's/ $//')"
+  fi
 
   [ $APPLY -eq 1 ] || continue
 
@@ -183,9 +213,17 @@ while IFS= read -r gitdir; do
     done <<< "$arts"
   fi
 
+  if [ $GONE -eq 1 ] && [ -n "$gone_safe" ]; then
+    while IFS= read -r b; do
+      [ -z "$b" ] && continue
+      if [ "$b" = "$cur" ]; then echo "    kept gone branch $b (currently checked out)"; continue; fi
+      if git branch -D --quiet -- "$b" 2>/dev/null; then
+        echo "    deleted gone branch: $b"; N_GONE_DEL=$((N_GONE_DEL+1))
+      fi
+    done <<< "$gone_safe"
+  fi
+
   if [ $BRANCHES -eq 1 ]; then
-    db=$(default_branch)
-    cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
     if [ -z "$db" ]; then
       N_NO_DEFAULT=$((N_NO_DEFAULT+1)); NO_DEFAULT="$NO_DEFAULT
   $(pretty "$repo")"
@@ -230,12 +268,16 @@ if [ $APPLY -eq 0 ]; then
   [ $N_FLAGGED -gt 0 ] && echo "Repos with local-only work: $N_FLAGGED (listed below)"
   [ $N_SKIP_BUSY -gt 0 ] && echo "Skipped, rebase/merge in progress: $N_SKIP_BUSY"
   [ $N_FETCH_FAIL -gt 0 ] && echo "Fetch failed in $(plural $N_FETCH_FAIL repo) (offline or auth?) — unpushed counts there may be stale"
-  [ $FETCH -eq 0 ] && echo "Note: no --fetch, so 'unpushed' is measured against your last fetch."
+  if [ $N_GONE_REPOS -gt 0 ]; then
+    echo "Branches whose remote was deleted: $((N_GONE_SAFE+N_GONE_KEPT)) in $(plural $N_GONE_REPOS repo) — $N_GONE_SAFE merged/squash-merged (--gone deletes), $N_GONE_KEPT not merged (kept)"
+  fi
+  [ $FETCH -eq 0 ] && echo "Note: no --fetch, so 'unpushed' and gone branches reflect your last fetch."
   echo
   echo "Nothing was changed. Suggested next step:"
   sugg="git-sweep --apply"
   [ "$KB_ART" -gt 0 ] && sugg="$sugg --artifacts"
   sugg="$sugg --branches"
+  [ $N_GONE_SAFE -gt 0 ] && sugg="$sugg --gone"
   [ $N_FLAGGED -gt 0 ] && sugg="$sugg --only-safe"
   echo "  $sugg $ROOTS_PRETTY"
 else
@@ -251,6 +293,11 @@ else
     echo "  merged branches deleted: $N_BRANCHES"
     [ $N_NO_DEFAULT -gt 0 ] && echo "  branch cleanup skipped (no default branch found): $N_NO_DEFAULT"
   fi
+  if [ $GONE -eq 1 ]; then
+    echo "  gone branches deleted (merged/squash-merged): $N_GONE_DEL"
+  elif [ $N_GONE_SAFE -gt 0 ]; then
+    echo "  gone branches left in place: $N_GONE_SAFE merged/squash-merged (rerun with --gone to remove)"
+  fi
   [ $N_LFS -gt 0 ] && echo "  LFS caches pruned: $N_LFS"
   [ $N_GC_FAIL -gt 0 ] && echo "  WARNING: git gc failed in $(plural $N_GC_FAIL repo) — scroll up for which"
   [ $N_FETCH_FAIL -gt 0 ] && echo "  fetch failed in $(plural $N_FETCH_FAIL repo) (offline or auth?)"
@@ -265,6 +312,10 @@ fi
 if [ $N_FLAGGED -gt 0 ]; then
   echo
   echo "Local-only work (push, commit, or delete deliberately before relying on the remote):$FLAGGED"
+fi
+if [ -n "$GONE_KEPT" ]; then
+  echo
+  echo "Gone branches with unmerged work (never auto-deleted; review, or run 'empty-yard-debris -f' in the repo):$GONE_KEPT"
 fi
 [ -n "$BUSY" ] && { echo; echo "Finish or abort the rebase/merge in:$BUSY"; }
 [ -n "$NO_DEFAULT" ] && { echo; echo "No default branch detected (set one with 'git remote set-head origin -a'):$NO_DEFAULT"; }
