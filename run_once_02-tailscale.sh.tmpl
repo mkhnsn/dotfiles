@@ -5,13 +5,20 @@ set -euo pipefail
 
 {{ template "todo.sh" }}
 
-# Skip if already connected
+# Only bring Tailscale up on a box that has never been logged in. Any other
+# state (Running, Stopped after `tailscale down`, ...) means it's already set
+# up; re-running `tailscale up` there conflicts with existing non-default
+# flags (e.g. --operator) and would abort the whole apply.
 if command -v tailscale >/dev/null 2>&1; then
-  status="$(tailscale status --json 2>/dev/null | grep -o '"BackendState":"[^"]*"' | head -1 || echo "")"
-  if [[ "$status" == *"Running"* ]]; then
-    echo "tailscale: already connected"
-    exit 0
-  fi
+  # `status --json` is pretty-printed ("BackendState": "Running"), so allow spaces.
+  state="$(tailscale status --json 2>/dev/null | grep -Eo '"BackendState": *"[^"]*"' | head -1 | sed -E 's/.*"([^"]*)"$/\1/' || true)"
+  case "$state" in
+    ""|NoState|NeedsLogin) ;;
+    *)
+      echo "tailscale: already set up (state: $state)"
+      exit 0
+      ;;
+  esac
 fi
 
 {{ if eq .chezmoi.os "linux" -}}
@@ -30,7 +37,11 @@ fi
 # Connect with SSH enabled (Linux only)
 echo "tailscale: connecting with SSH enabled..."
 echo "tailscale: you'll need to authenticate in your browser."
-$SUDO tailscale up --ssh
+if ! $SUDO tailscale up --ssh; then
+  echo "tailscale: 'tailscale up' failed (see above)"
+  todo "Tailscale: 'tailscale up --ssh' failed; run it by hand (add any flags it asks for)"
+  exit 0
+fi
 
 {{ else -}}
 # macOS: Tailscale is a GUI app; just connect if the CLI is available
@@ -41,7 +52,10 @@ fi
 
 echo "tailscale: connecting..."
 echo "tailscale: you'll need to authenticate in your browser."
-tailscale up
+if ! tailscale up; then
+  todo "Tailscale: 'tailscale up' failed; connect from the Tailscale app"
+  exit 0
+fi
 
 {{ end -}}
 
