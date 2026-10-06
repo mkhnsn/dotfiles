@@ -225,6 +225,22 @@ This clears the completion cache and forces regeneration.
 
 No private keys are stored in this repository.
 
+### Reclaiming disk space across clones
+
+`git-sweep` (installed to `~/.local/bin`, also runs as `git sweep`) scans every repo under
+your ghq root and reports size, reclaimable build output, and any work that exists only
+locally. It changes nothing unless you pass `--apply`:
+
+```bash
+git-sweep                                             # dry run with summary
+git-sweep --apply --artifacts --branches --only-safe  # clean, skipping repos with local-only work
+git-sweep --apply --gone                              # also drop branches whose PR merged
+```
+
+For the current repo only, `empty-yard-debris` fetches, lists local branches whose remote
+branch was deleted, and removes the ones that are merged or squash-merged (asks first;
+`-n` dry run, `-y` no prompt, `-f` also delete unmerged ones). Run either with `--help`.
+
 ---
 
 ## 1Password Integration
