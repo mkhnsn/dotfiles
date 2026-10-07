@@ -16,7 +16,6 @@ setopt APPEND_HISTORY         # append, don't overwrite
 # Include both ~/.local/bin and ~/bin: the chezmoi installer drops its binary in
 # one or the other depending on flags, and WSL's default PATH includes neither.
 export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
-export PATH="$HOME/src/github.com/mkhnsn/scripts/:$PATH"
 
 # macOS-only paths
 if [[ "${OSTYPE:-}" == darwin* ]]; then
