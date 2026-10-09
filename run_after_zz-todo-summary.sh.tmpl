@@ -20,6 +20,15 @@ if command -v tailscale >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; t
   fi
 fi
 
+# Repo-only files that older versions deployed to $HOME. chezmoi doesn't delete
+# a target once it's ignored, so flag leftovers (keep in sync with the
+# "Repo-only documentation" block in .chezmoiignore.tmpl).
+for f in CLAUDE.md Brewfile; do
+  if [[ -e "$HOME/$f" ]]; then
+    items+=("Stale ~/$f from an older dotfiles version (now repo-only); remove it: rm ~/$f")
+  fi
+done
+
 {{- /* Mirrors .chezmoiignore.tmpl: account-mode secrets are skipped over SSH. */}}
 {{ if and .full_setup (ne (dig "op_mode" "account" .) "service") (env "SSH_CONNECTION") -}}
 items+=("1Password-backed files (.ntfy.yml, jfrog-env) were skipped over SSH; run 'chezmoi apply' at the desktop to refresh them")
