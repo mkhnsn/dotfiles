@@ -73,7 +73,7 @@ Defined in `.chezmoiexternal.toml`:
 
 ## Claude Code Integration
 
-This repo manages Claude Code configuration via `dot_claude/`. Settings are merged at apply time by `dot_claude/modify_settings.json` (a chezmoi modify script that preserves interactively-set keys like `enabledPlugins`).
+This repo manages Claude Code configuration via `dot_claude/`. User-wide instructions loaded in every session live in `dot_claude/CLAUDE.md` (→ `~/.claude/CLAUDE.md`); keep it short since it adds context everywhere. The repo's own `CLAUDE.md` and `Brewfile` are excluded from `$HOME` via `.chezmoiignore.tmpl`. Settings are merged at apply time by `dot_claude/modify_settings.json` (a chezmoi modify script that preserves interactively-set keys like `enabledPlugins`).
 
 ### Hooks
 
@@ -83,6 +83,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 |-------|--------|----------|
 | `PreToolUse` | `scripts/guard-destructive.sh` | Warns on destructive commands (commit/push to main, force push, reset --hard, rm -rf, etc.). User-overridable via approval prompt. |
 | `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write, nudges to use spec-kit. Silent if specs exist or `.specifyignore` is present at repo root. Advisory only. |
+| `PreToolUse` | `scripts/nudge-echo-libs.sh` | On Edit/Write of files importing `@unstable-studios/*`, reminds Claude to read those packages' READMEs from `node_modules`. Advisory only. |
 | `PostToolUse` | `scripts/post-edit-lint.sh` | Auto-lints after Edit/Write: eslint (JS/TS), ruff (Python), rustfmt (Rust), gofmt (Go), shfmt (shell). Async, advisory only. |
 
 ### Skills (slash commands)
