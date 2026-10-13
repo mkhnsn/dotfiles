@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") (dig "is_server" false .) -}}
+
+{{ template "todo.sh" }}
+
+# Keep the WSL distro running on server/dev boxes so remote access (Tailscale
+# SSH into WSL) survives with no terminal open. WSL stops a distro shortly after
+# its last wsl.exe client exits, even with systemd services running, so a
+# hidden `wsl.exe --exec sleep infinity` holds it up. A Startup-folder shortcut
+# (no admin needed) starts it at Windows logon; this script also starts it now.
+# Plain run_ (every apply): idempotent.
+
+# WSL only.
+grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null || exit 0
+distro="${WSL_DISTRO_NAME:-}"
+[[ -n $distro ]] || { echo "wsl-keepalive: WSL_DISTRO_NAME unset; skipping"; exit 0; }
+ps=/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe
+[[ -x $ps ]] || { echo "wsl-keepalive: powershell.exe not found; skipping"; exit 0; }
+
+# conhost --headless runs wsl.exe with no visible console window.
+DISTRO="$distro" WSLENV="DISTRO" "$ps" -NoProfile -NonInteractive -Command '
+  $lnk = Join-Path ([Environment]::GetFolderPath("Startup")) "wsl-keepalive.lnk"
+  $args = "--headless wsl.exe -d $env:DISTRO --exec /bin/sleep infinity"
+  $sh = New-Object -ComObject WScript.Shell
+  $s = $sh.CreateShortcut($lnk)
+  if ($s.Arguments -ne $args) {
+    $s.TargetPath = "$env:WINDIR\System32\conhost.exe"
+    $s.Arguments = $args
+    $s.WindowStyle = 7
+    $s.Save()
+    "wsl-keepalive: wrote $lnk"
+  }
+' | tr -d '\r'
+
+# Start it now unless a keepalive is already running.
+if ! pgrep -fx '/bin/sleep infinity' >/dev/null; then
+  "$ps" -NoProfile -NonInteractive -Command \
+    "Start-Process -WindowStyle Hidden conhost.exe -ArgumentList '--headless wsl.exe -d $distro --exec /bin/sleep infinity'" \
+    && echo "wsl-keepalive: started"
+fi
+
+todo "WSL keepalive starts at Windows logon; after a reboot, sign in to Windows (or enable auto-logon) before remote access works"
+
+{{ end -}}
