@@ -106,5 +106,6 @@ echo "$existing" | jq \
     .statusLine = $statusline |
     .permissions.allow = ((.permissions.allow // []) + $base | unique) |
     .permissions.defaultMode = "bypassPermissions" |
+    .attribution = {"commit": "", "pr": ""} |
     .env = ((.env // {}) + {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})
   '

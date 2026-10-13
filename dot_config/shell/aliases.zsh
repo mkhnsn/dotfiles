@@ -33,6 +33,7 @@ alias treee="tree -C --gitignore -a -I '.git' --dirsfirst"
 
 # VS Code Insiders
 alias codi='code-insiders'
+[[ -f ~/src/ngde/ngde.code-workspace ]] && alias ngde='code-insiders ~/src/ngde/ngde.code-workspace'
 
 # Markdown viewer (markless, installed via: cargo install markless)
 if command -v markless >/dev/null 2>&1; then
