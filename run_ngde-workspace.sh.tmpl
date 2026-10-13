@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if and (eq .chezmoi.os "linux") (dig "dev_openshift" false .) -}}
+
+{{ template "todo.sh" }}
+
+# Clone the private workspace-root repo into ~/src/ngde on OpenShift dev boxes.
+# Its contents live in that private repo, not here. Plain run_ (every apply):
+# does nothing once ~/src/ngde is a git checkout.
+dest="$HOME/src/ngde"
+repo="unstable-studios/ngde-workspace"
+# HTTPS with gh's credentials, regardless of gh's git_protocol (SSH may be blocked).
+clone() { local d=$1; shift; git -c credential.helper= -c credential.helper='!gh auth git-credential' clone --quiet "$@" "https://github.com/$repo.git" "$d"; }
+
+[[ -d $dest/.git ]] && exit 0
+
+if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
+  todo "ngde workspace not cloned: run 'gh auth login', then 'chezmoi apply'"
+  exit 0
+fi
+
+if [[ ! -e $dest ]]; then
+  mkdir -p "${dest%/*}"
+  clone "$dest" || todo "ngde workspace clone failed: see run_ngde-workspace.sh"
+else
+  # Directory already exists (repos cloned before the workspace repo): adopt it
+  # in place without overwriting local files, then restore any missing ones.
+  tmp="$(mktemp -d)"
+  if clone "$tmp/ws" --no-checkout; then
+    mv "$tmp/ws/.git" "$dest/.git"
+    git -C "$dest" reset --quiet
+    git -C "$dest" ls-files -d -z | xargs -0 -r git -C "$dest" checkout --
+  else
+    todo "ngde workspace clone failed: see run_ngde-workspace.sh"
+  fi
+  rm -rf "$tmp"
+fi
+[[ -d $dest/.git ]] && todo "ngde workspace ready; run $dest/bootstrap.sh to clone the app repos"
+
+{{ end -}}
