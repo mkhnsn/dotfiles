@@ -18,6 +18,13 @@ setopt APPEND_HISTORY         # append, don't overwrite
 export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 export PATH="$HOME/src/github.com/mkhnsn/scripts/:$PATH"
 
+# WSL sessions not started by wsl.exe (Tailscale SSH, systemd units) get no
+# Windows PATH. Interop still works, so add the system dirs back for
+# powershell.exe / cmd.exe.
+if [[ -d /mnt/c/WINDOWS/System32 ]] && ! command -v powershell.exe >/dev/null 2>&1; then
+  export PATH="$PATH:/mnt/c/WINDOWS/System32:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0:/mnt/c/WINDOWS"
+fi
+
 # macOS-only paths
 if [[ "${OSTYPE:-}" == darwin* ]]; then
   [[ -d "/Applications/iTerm.app" ]] && \
