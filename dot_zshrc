@@ -3,6 +3,14 @@
 # Keep startup fast and predictable.
 export ZDOTDIR="$HOME"
 
+# Remote logins (ssh, mosh) land in a persistent tmux session. Skipped inside
+# tmux, VS Code terminals, and non-interactive shells. Opt out per login with
+# `ssh -t host NO_TMUX=1 zsh -l`. Detaching ends the connection.
+if [[ -n ${SSH_CONNECTION:-} && -z ${TMUX:-} && -z ${NO_TMUX:-} && $- == *i* \
+      && ${TERM_PROGRAM:-} != vscode ]] && command -v tmux >/dev/null 2>&1; then
+  exec tmux new-session -A -s main
+fi
+
 # Load shared shell config.
 for f in "$HOME/.config/shell"/{env,aliases,functions}.zsh; do
   [[ -r "$f" ]] && source "$f"

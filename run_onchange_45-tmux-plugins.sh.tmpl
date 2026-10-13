@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# tmux plugins: install whatever tmux.conf lists via TPM.
+# {{ include "dot_config/tmux/tmux.conf" | sha256sum }}
+
+command -v tmux >/dev/null 2>&1 || exit 0
+tpm="$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
+[[ -x $tpm ]] || exit 0
+
+# TPM reads the plugin list from a tmux server; use a throwaway one.
+TMUX_TMPDIR="$(mktemp -d)" bash -c "
+  tmux -f '$HOME/.config/tmux/tmux.conf' new-session -d -s tpm-install
+  '$tpm' >/dev/null || true
+  tmux kill-server
+"
