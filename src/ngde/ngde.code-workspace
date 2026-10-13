@@ -1,0 +1,262 @@
+{
+  "folders": [
+    {
+      "path": "ctdss-api"
+    },
+    {
+      "path": "ctdss-ui"
+    },
+    {
+      "path": "nas-airflow"
+    },
+    {
+      "path": "arbiter"
+    },
+    {
+      "path": "arbiter-ui"
+    },
+    {
+      "path": "iac"
+    },
+    {
+      "path": "iac-pl3",
+      "name": "iac-pl3 (worktree)"
+    },
+    {
+      "path": "pipeline-shared-lib"
+    },
+    {
+      "path": "scan-triage"
+    },
+    {
+      "path": ".",
+      "name": "ngde (root)"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.egg-info": true,
+      "**/.pytest_cache": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/coverage": true,
+      "**/.venv": true,
+      "**/uv.lock": true,
+      "**/package-lock.json": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/.venv/**": true,
+      "**/dist/**": true
+    },
+    "git.autoRepositoryDetection": "subFolders",
+    "git.detectSubmodules": true
+  },
+  "extensions": {
+    "recommendations": [
+      "anthropic.claude-code",
+      "ms-vscode-remote.remote-wsl",
+      "ms-python.python",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "redhat.vscode-yaml"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Claude (all repos)",
+        "type": "shell",
+        "command": "claude",
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        },
+        "presentation": {
+          "panel": "dedicated",
+          "focus": true
+        }
+      },
+      {
+        "label": "git: sync all repos",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "sync"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "ngde: prereqs",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "prereqs"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "crc: status",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "crc-status"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "crc: memcheck",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "crc-memcheck"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "crc: start",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "crc-start"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "dedicated",
+          "clear": true
+        }
+      },
+      {
+        "label": "crc: stop",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "crc-stop"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "oc: login (kubeadmin)",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "login"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "oc: unhealthy pods",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "pods-bad"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "oc: follow logs",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "logs",
+          "${input:namespace}"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "new",
+          "focus": true
+        }
+      },
+      {
+        "label": "pl3: health check",
+        "type": "shell",
+        "command": "./dev",
+        "args": [
+          "health",
+          "${input:namespace}"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ngde (root)}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "panel": "dedicated",
+          "clear": true
+        }
+      }
+    ],
+    "inputs": [
+      {
+        "id": "namespace",
+        "type": "pickString",
+        "description": "Namespace",
+        "options": [
+          "sdren",
+          "arbiter"
+        ],
+        "default": "sdren"
+      }
+    ]
+  }
+}

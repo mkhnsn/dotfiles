@@ -66,3 +66,10 @@ Library/Application Support/Code/**
 {{- if or (not .full_setup) $noOp (not (dig "dev_openshift" false .)) }}
 .config/jfrog-env
 {{- end -}}
+
+{{- /* NGDE (AFTC_CDSS) workspace root: dev task runner, VS Code workspace, and
+       bootstrap script for the repos under ~/src/ngde. Only on CDSS dev boxes. */ -}}
+{{- if not (dig "dev_openshift" false .) }}
+src/ngde/
+src/ngde/**
+{{- end -}}

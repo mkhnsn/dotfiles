@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# Common NGDE dev tasks: local CRC, PL3 prereqs, health checks.
+# Usage: ./dev <command> [args]   (./dev help lists commands)
+# VS Code tasks in ngde.code-workspace call this; keep logic here, not there.
+set -euo pipefail
+
+NGDE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PL3="$NGDE/iac-pl3/pl3"
+WORK="${PL3_WORK:-$HOME/pl3-work}"
+
+# CRC sizing used by the PL3 dev flow (see ~/pl3-work/RESUME.md)
+CRC_MEMORY="${CRC_MEMORY:-32768}"
+CRC_CPUS="${CRC_CPUS:-12}"
+CRC_DISK_SIZE="${CRC_DISK_SIZE:-600}"
+
+# chezmoi renders this from 1Password; the PL3 scripts fall back to
+# JF_USER/JF_API_KEY when /tmp/jfrog.env is missing. VS Code tasks don't run
+# .zshrc, so load it here.
+[[ -z ${JF_API_KEY:-} && -r $HOME/.config/jfrog-env ]] && source "$HOME/.config/jfrog-env"
+
+die() { echo "error: $*" >&2; exit 1; }
+
+# --- prereqs ---------------------------------------------------------------
+
+cmd_prereqs() {
+  local bad=0 t
+  for t in crc oc podman helm ansible-playbook op; do
+    command -v "$t" >/dev/null && echo "ok    $t" || { echo "MISSING $t"; bad=1; }
+  done
+  if [[ -n ${JF_USER:-} && -n ${JF_API_KEY:-} ]]; then
+    echo "ok    JF_USER/JF_API_KEY"
+  else
+    echo "MISSING JF_USER/JF_API_KEY (chezmoi apply renders ~/.config/jfrog-env)"; bad=1
+  fi
+  mkdir -p "$WORK/tmp" && echo "ok    $WORK/tmp"
+  return "$bad"
+}
+
+# --- crc -------------------------------------------------------------------
+
+# Hyper-V needs the VM's full RAM as commit headroom, not free RAM.
+cmd_crc_memcheck() {
+  local out committed limit need
+  out="$(powershell.exe -NoProfile -Command \
+    '$m=Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory; "{0} {1}" -f [int]($m.CommittedBytes/1MB),[int]($m.CommitLimit/1MB)' | tr -d '\r')"
+  read -r committed limit <<<"$out"
+  need="$CRC_MEMORY"
+  printf 'commit: %d of %d MB used, %d MB free; CRC needs %d MB\n' \
+    "$committed" "$limit" "$((limit - committed))" "$need"
+  if (( limit - committed < need )); then
+    echo "NOT ENOUGH commit headroom. Close apps or reboot Windows (a force-stopped VM can hold ~50 GB)." >&2
+    return 1
+  fi
+  echo "ok"
+}
+
+cmd_crc_status() { crc status || true; }
+
+cmd_crc_start() {
+  cmd_crc_memcheck
+  crc config set memory "$CRC_MEMORY" >/dev/null
+  crc config set cpus "$CRC_CPUS" >/dev/null
+  crc config set disk-size "$CRC_DISK_SIZE" >/dev/null
+  crc start
+  cmd_login
+}
+
+cmd_crc_stop() {
+  # A hung VM ("Disk Usage: 0B of 0B") ignores a plain stop.
+  crc stop || { echo "plain stop failed, forcing" >&2; crc stop -f; }
+}
+
+cmd_login() {
+  local line
+  line="$(crc console --credentials | grep -o "oc login -u kubeadmin[^']*")" \
+    || die "could not read kubeadmin credentials (is CRC running?)"
+  eval "$line --insecure-skip-tls-verify=true" >/dev/null
+  echo "logged in: $(oc whoami) @ $(oc whoami --show-server)"
+}
+
+# --- cluster ---------------------------------------------------------------
+
+cmd_health() {
+  local ns="${1:-sdren}"
+  python3 "$PL3/health/pl3_health_check.py" \
+    --config "$PL3/health/critical-components.json" \
+    --include-ctdss --workload-namespace "$ns" \
+    --timeout-seconds 300 --output-dir "$WORK/health"
+}
+
+cmd_pods_bad() {
+  # Everything not Running/Succeeded, plus Running pods with unready containers.
+  oc get pods -A --no-headers | awk '
+    $4 != "Running" && $4 != "Completed" { print; next }
+    { split($3, r, "/"); if (r[1] != r[2] && $4 == "Running") print }'
+}
+
+cmd_logs() {
+  local ns="${1:?namespace}" deploy="${2:-}"
+  if [[ -z $deploy ]]; then
+    oc get deploy -n "$ns" -o name
+    read -rp "deployment: " deploy
+  fi
+  oc logs -n "$ns" -f --tail=200 --all-containers "deploy/${deploy#deployment.apps/}"
+}
+
+# --- git -------------------------------------------------------------------
+
+REPOS=(arbiter arbiter-ui ctdss-api ctdss-ui iac iac-pl3 nas-airflow pipeline-shared-lib)
+
+# Fetch every repo, fast-forward the current branch when it is safe, and report
+# where each one stands against its default branch. Never merges or rebases.
+cmd_sync() {
+  local r g base branch up note behind_base
+  for r in "${REPOS[@]}"; do
+    g=(git -C "$NGDE/$r")
+    [[ -e $NGDE/$r/.git ]] || { printf '%-20s missing (run ./bootstrap.sh)\n' "$r"; continue; }
+    if ! "${g[@]}" fetch --quiet --prune origin 2>/dev/null; then
+      printf '%-20s FETCH FAILED\n' "$r"; continue
+    fi
+    base="$("${g[@]}" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/Dev)"
+    branch="$("${g[@]}" symbolic-ref --quiet --short HEAD || echo '(detached)')"
+    up="$("${g[@]}" for-each-ref --format='%(upstream:short)' "refs/heads/$branch" 2>/dev/null)"
+    note=""
+
+    if [[ -n "$("${g[@]}" status --porcelain --untracked-files=no)" ]]; then
+      note="dirty, not updated"
+    elif [[ -n $up ]] && ! "${g[@]}" rev-parse --quiet --verify "refs/remotes/$up" >/dev/null; then
+      note="upstream gone (merged/deleted?)"
+    elif [[ -n $up ]]; then
+      if "${g[@]}" merge --ff-only --quiet "$up" 2>/dev/null; then
+        note="up to date with $up"
+      else
+        note="DIVERGED from $up"
+      fi
+    elif [[ $branch == "(detached)" ]] && "${g[@]}" merge-base --is-ancestor HEAD "$base"; then
+      # iac-pl3 sits detached on Dev; move it forward along Dev.
+      "${g[@]}" checkout --quiet --detach "$base"
+      note="detached, moved to $base"
+    else
+      note="no upstream"
+    fi
+
+    behind_base="$("${g[@]}" rev-list --count "HEAD..$base")"
+    (( behind_base > 0 )) && note+="; $behind_base behind $base"
+    (( ${#branch} > 40 )) && branch="${branch:0:39}~"
+    printf '%-20s %-40s %s\n' "$r" "$branch" "$note"
+  done
+}
+
+# --------------------------------------------------------------------------
+
+cmd_help() {
+  cat <<EOF
+./dev <command>
+
+  prereqs              check tools and JFrog creds; make $WORK/tmp
+  crc-memcheck         Hyper-V commit headroom vs CRC_MEMORY ($CRC_MEMORY MB)
+  crc-status           crc status
+  crc-start            memcheck, set crc config, start, oc login
+  crc-stop             stop (forces if the VM is hung)
+  login                oc login as kubeadmin to the running CRC
+  health [ns]          PL3 health check (default ns: sdren), output in $WORK/health
+  pods-bad             pods not Running/Completed or not fully ready
+  logs <ns> [deploy]   follow a deployment's logs (prompts if no deploy given)
+  sync                 fetch all repos, fast-forward clean branches, report vs Dev
+EOF
+}
+
+cmd="${1:-help}"; shift || true
+fn="cmd_${cmd//-/_}"
+declare -F "$fn" >/dev/null || { cmd_help; die "unknown command: $cmd"; }
+"$fn" "$@"

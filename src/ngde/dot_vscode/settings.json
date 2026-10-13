@@ -1,0 +1,13 @@
+{
+  "files.exclude": {
+    "arbiter": true,
+    "arbiter-ui": true,
+    "ctdss-api": true,
+    "ctdss-ui": true,
+    "iac": true,
+    "iac-pl3": true,
+    "nas-airflow": true,
+    "pipeline-shared-lib": true,
+    "scan-triage": true
+  }
+}
