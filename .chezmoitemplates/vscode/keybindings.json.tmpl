@@ -6,5 +6,40 @@
         "text": "\u001b\r"
     },
     "when": "terminalFocus"
+  },
+  // Workspace tasks (ngde): ctrl+alt+d then a letter; ctrl+alt+d t picks any task.
+  {
+    "key": "ctrl+alt+d t",
+    "command": "workbench.action.tasks.runTask"
+  },
+  {
+    "key": "ctrl+alt+d s",
+    "command": "workbench.action.tasks.runTask",
+    "args": "git: sync all repos"
+  },
+  {
+    "key": "ctrl+alt+d c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "crc: start"
+  },
+  {
+    "key": "ctrl+alt+d x",
+    "command": "workbench.action.tasks.runTask",
+    "args": "crc: stop"
+  },
+  {
+    "key": "ctrl+alt+d h",
+    "command": "workbench.action.tasks.runTask",
+    "args": "pl3: health check"
+  },
+  {
+    "key": "ctrl+alt+d p",
+    "command": "workbench.action.tasks.runTask",
+    "args": "oc: unhealthy pods"
+  },
+  {
+    "key": "ctrl+alt+d l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "oc: login (kubeadmin)"
   }
 ]

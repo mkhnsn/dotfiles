@@ -43,7 +43,7 @@ chezmoi apply              # Renders templates to $HOME
 ```
 
 ### VS Code Configuration
-VS Code templates live in `.chezmoitemplates/vscode/` as the single source of truth. OS-specific wrappers in `dot_config/Code/User/` (Linux) and `Library/Application Support/Code/User/` (macOS) include these templates.
+VS Code templates live in `.chezmoitemplates/vscode/` as the single source of truth. OS-specific wrappers in `dot_config/Code/User/` (Linux) and `Library/Application Support/Code/User/` (macOS) include these templates; macOS Insiders (`Code - Insiders/User/`) gets keybindings only. Keybindings include `ctrl+alt+d <letter>` chords that run workspace tasks by label (ngde: s sync, c/x CRC start/stop, h health, p pods, l login, t any task).
 
 ### Shell Configuration
 - `dot_zshrc` sources `~/.config/shell/` modules
