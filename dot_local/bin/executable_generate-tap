@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Required parameters:
+# @raycast.schemaVersion 1
+# @raycast.title Generate TAP
+# @raycast.mode fullOutput
+# @raycast.author Unstable Studios
+# Optional parameters:
+# @raycast.packageName Unstable Studios IT
+# @raycast.icon 🔑
+# @raycast.argument1 { "type": "text", "placeholder": "mike (or mike@unstablestudios.com)" }
+# @raycast.argument2 { "type": "text", "placeholder": "minutes (default 60)", "optional": true }
+# @raycast.description Mint a Temporary Access Pass for a user and copy it to the clipboard. Wraps m365-tenant/scripts/New-Tap.ps1 (refuses Global Admins; needs a tenant session as the admin identity).
+
+set -uo pipefail
+
+# Raycast's PATH can be tiny. Add common install locations.
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+UPN="${1:?user is required}"
+MINUTES="${2:-60}"
+LOG_FILE="$HOME/.local/log/generate-tap.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+log() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOG_FILE"; }
+strip_ansi() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g'; }
+fail() { local msg; msg=$(printf '%s' "$1" | strip_ansi); log "FAIL: $msg"; printf '%s\n' "$msg"; exit 1; }
+
+log "--- invoked: UPN=$UPN MINUTES=$MINUTES"
+
+# The TAP script lives in the m365-tenant repo (ghq layout); find-repo resolves it.
+REPO=$(find-repo m365-tenant 2>/dev/null | sed -n 's/.*→ //p' | head -1)
+[[ -n "$REPO" && -f "$REPO/scripts/New-Tap.ps1" ]] || fail "m365-tenant repo not found (find-repo m365-tenant)"
+PWSH=$(command -v pwsh || true)
+[[ -n "$PWSH" ]] || fail "pwsh not found"
+
+# Quiet mode prints one line: UPN<TAB>TAP<TAB>expiry. Stderr kept apart so errors don't get parsed as a TAP.
+STDERR_FILE=$(mktemp)
+OUTPUT=$(cd "$REPO" && TAP_UPN="$UPN" TAP_MIN="$MINUTES" "$PWSH" -NoProfile -NonInteractive -Command \
+    './scripts/New-Tap.ps1 -User $env:TAP_UPN -Minutes ([int]$env:TAP_MIN) -Quiet -Confirm:$false' 2>"$STDERR_FILE" </dev/null)
+EXIT_CODE=$?
+STDERR_CLEAN=$(strip_ansi < "$STDERR_FILE"); rm -f "$STDERR_FILE"
+log "pwsh exit=$EXIT_CODE stdout=$(printf '%s' "$OUTPUT" | strip_ansi | cut -f1,3) stderr=$STDERR_CLEAN"
+[[ $EXIT_CODE -eq 0 ]] || fail "New-Tap failed: ${STDERR_CLEAN:-$OUTPUT}"
+
+LINE=$(printf '%s\n' "$OUTPUT" | strip_ansi | grep -m1 $'\t' || true)
+RESOLVED=$(printf '%s' "$LINE" | cut -f1)
+TAP=$(printf '%s' "$LINE" | cut -f2)
+EXPIRES=$(printf '%s' "$LINE" | cut -f3)
+[[ -n "$TAP" ]] || fail "No TAP in output. stderr: ${STDERR_CLEAN:-none} stdout: ${OUTPUT:-none}"
+
+printf '%s' "$TAP" | pbcopy
+log "OK: TAP issued for $RESOLVED, expires $EXPIRES"
+
+PAD=6; INNER=$(( ${#TAP} + PAD * 2 ))
+BAR=$(printf '─%.0s' $(seq 1 "$INNER")); PAD_SP=$(printf ' %.0s' $(seq 1 "$PAD")); BLANK=$(printf ' %.0s' $(seq 1 "$INNER"))
+cat <<OUT
+
+User:    $RESOLVED
+Expires: $EXPIRES (UTC)
+
+
+  ┌${BAR}┐
+  │${BLANK}│
+  │${PAD_SP}${TAP}${PAD_SP}│
+  │${BLANK}│
+  └${BAR}┘
+
+
+(copied to clipboard)
+OUT
