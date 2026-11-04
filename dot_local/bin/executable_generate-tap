@@ -26,9 +26,13 @@ fail() { local msg; msg=$(printf '%s' "$1" | strip_ansi); log "FAIL: $msg"; prin
 
 log "--- invoked: UPN=$UPN MINUTES=$MINUTES"
 
-# The TAP script lives in the m365-tenant repo (ghq layout); find-repo resolves it.
-REPO=$(find-repo m365-tenant 2>/dev/null | sed -n 's/.*→ //p' | head -1)
-[[ -n "$REPO" && -f "$REPO/scripts/New-Tap.ps1" ]] || fail "m365-tenant repo not found (find-repo m365-tenant)"
+# The TAP script lives in the m365-tenant repo (ghq layout). Raycast doesn't load the zsh
+# environment, so GHQ_ROOT (normally set there) is defaulted here; then find-repo, then the
+# conventional path as a last resort.
+export GHQ_ROOT="${GHQ_ROOT:-$HOME/src}"
+REPO=$(find-repo m365-tenant 2>/dev/null | sed -n 's/.*→ //p' | head -1 || true)
+[[ -n "$REPO" ]] || REPO="$GHQ_ROOT/github.com/unstable-studios/m365-tenant"
+[[ -f "$REPO/scripts/New-Tap.ps1" ]] || fail "m365-tenant repo not found (looked via find-repo and at $REPO)"
 PWSH=$(command -v pwsh || true)
 [[ -n "$PWSH" ]] || fail "pwsh not found"
 
