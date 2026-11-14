@@ -7,8 +7,10 @@ command -v tmux >/dev/null 2>&1 || exit 0
 tpm="$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
 [[ -x $tpm ]] || exit 0
 
-# TPM reads the plugin list from a tmux server; use a throwaway one.
-TMUX_TMPDIR="$(mktemp -d)" bash -c "
+# TPM reads the plugin list from a tmux server; use a throwaway one. Drop $TMUX so
+# neither TPM nor kill-server reaches the server this apply may be running inside
+# (with it set, `tmux kill-server` killed the user's own session).
+env -u TMUX TMUX_TMPDIR="$(mktemp -d)" bash -c "
   tmux -f '$HOME/.config/tmux/tmux.conf' new-session -d -s tpm-install
   '$tpm' >/dev/null || true
   tmux kill-server
