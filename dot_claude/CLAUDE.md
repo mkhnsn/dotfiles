@@ -10,6 +10,7 @@ These apply in every project. Project-level CLAUDE.md files take precedence.
 
 ## Docs
 - Update docs (README, CLAUDE.md) in the same change when behavior changes; skip docs for self-explanatory code.
+- User-facing text (labels, help, errors, confirmations) follows the `ui-copy` skill: say what something is or what to do, briefly; no commentary.
 
 ## Environment
 - Repos live under `~/src` (ghq). Resolve a repo name to its path with `find-repo <name>`.

@@ -96,6 +96,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | `/coding-rules` | `skills/coding-rules/SKILL.md` | Git workflow and conventional commit conventions |
 | `/next` | `skills/next/SKILL.md` | Wrap up current work, clean stale branches, plan next task from GitHub issues |
 | `/reviews` | `skills/reviews/SKILL.md` | Check open PRs you authored for review comments, approvals, and requested changes |
+| `/ui-copy` | `skills/ui-copy/SKILL.md` | Rules for UI text; topic files in `references/` (add new topics there and index them in SKILL.md) |
 
 ### Custom Agents
 
