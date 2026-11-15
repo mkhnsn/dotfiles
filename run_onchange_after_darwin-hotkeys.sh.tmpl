@@ -17,6 +17,7 @@ defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 263 \
 
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-echo "1Password: set Quick Access back to Cmd+Shift+Space (Settings → General → Show Quick Access)" >> "$DOTFILES_TODO"
+# 1Password settings live in a TCC-protected Group Container, so this one stays manual.
+todo "1Password: set Quick Access back to Cmd+Shift+Space (Settings → General → Show Quick Access)"
 {{- end -}}
 {{- end }}
