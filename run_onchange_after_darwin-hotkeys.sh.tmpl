@@ -1,6 +1,9 @@
 {{- if eq .chezmoi.os "darwin" -}}
+{{- $macos := output "sw_vers" "-productVersion" | trim -}}
+{{- if ge (atoi (index (splitList "." $macos) 0)) 27 -}}
 #!/usr/bin/env bash
 set -euo pipefail
+# rendered for macOS {{ $macos }} — version embedded so OS upgrades re-trigger run_onchange
 
 {{ template "todo.sh" }}
 
@@ -14,6 +17,6 @@ defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 263 \
 
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-# 1Password's settings live in a TCC-protected Group Container — can't script it.
 echo "1Password: set Quick Access back to Cmd+Shift+Space (Settings → General → Show Quick Access)" >> "$DOTFILES_TODO"
+{{- end -}}
 {{- end }}
