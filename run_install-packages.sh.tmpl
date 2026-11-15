@@ -27,6 +27,10 @@ install_uv_tools() {
 
 want_cmds=(git fzf bat zoxide)
 want_cmds_optional=(rg gh starship eza delta ghq glow navi tldr micro mosh specify ntfy)
+{{ if .full_setup -}}
+# Deploy tooling: Doppler for secrets, Terraform for infra.
+want_cmds_optional+=(doppler terraform)
+{{ end -}}
 
 missing=0
 for c in "${want_cmds[@]}" "${want_cmds_optional[@]}"; do
@@ -366,6 +370,49 @@ install_duf_user() {
   export PATH="$HOME/.local/bin:$PATH"
 }
 
+# ---- Deploy tooling (full_setup): Doppler CLI and Terraform, from their vendors' repos ----
+install_deploy_tools_dnf() {
+  if ! command -v doppler >/dev/null 2>&1; then
+    [[ -f /etc/yum.repos.d/doppler-cli.repo ]] || \
+      $SUDO curl -fsSL "https://packages.doppler.com/public/cli/config.rpm.txt?distro=fedora&codename=$(rpm -E %fedora)" \
+        -o /etc/yum.repos.d/doppler-cli.repo || true
+    $SUDO dnf install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
+  fi
+  if ! command -v terraform >/dev/null 2>&1; then
+    [[ -f /etc/yum.repos.d/hashicorp.repo ]] || \
+      $SUDO curl -fsSL https://rpm.releases.hashicorp.com/fedora/hashicorp.repo \
+        -o /etc/yum.repos.d/hashicorp.repo || true
+    $SUDO dnf install -y terraform 2>/dev/null || todo "install-packages: terraform failed to install"
+  fi
+}
+
+install_deploy_tools_apt() {
+  local codename
+  codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-}")"
+  [[ -n "$codename" ]] || return 0
+  $SUDO install -d -m 0755 /usr/share/keyrings
+  if ! command -v doppler >/dev/null 2>&1; then
+    if [[ ! -f /etc/apt/sources.list.d/doppler-cli.list ]]; then
+      curl -fsSL https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key \
+        | $SUDO gpg --dearmor --yes -o /usr/share/keyrings/doppler-archive-keyring.gpg || true
+      echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" \
+        | $SUDO tee /etc/apt/sources.list.d/doppler-cli.list >/dev/null
+      $SUDO apt-get update -o Dir::Etc::sourcelist=sources.list.d/doppler-cli.list -o Dir::Etc::sourceparts=- || true
+    fi
+    $SUDO apt-get install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
+  fi
+  if ! command -v terraform >/dev/null 2>&1; then
+    if [[ ! -f /etc/apt/sources.list.d/hashicorp.list ]]; then
+      curl -fsSL https://apt.releases.hashicorp.com/gpg \
+        | $SUDO gpg --dearmor --yes -o /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
+      echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $codename main" \
+        | $SUDO tee /etc/apt/sources.list.d/hashicorp.list >/dev/null
+      $SUDO apt-get update -o Dir::Etc::sourcelist=sources.list.d/hashicorp.list -o Dir::Etc::sourceparts=- || true
+    fi
+    $SUDO apt-get install -y terraform 2>/dev/null || todo "install-packages: terraform failed to install"
+  fi
+}
+
 # ---- Distro package installs ----
 if command -v apt-get >/dev/null 2>&1; then
   # A single broken third-party source (e.g. a vendor repo without a suite for
@@ -383,6 +430,9 @@ if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get install -y chafa mosh micro tealdeer 2>/dev/null || true
   # git-delta and glow not in Ubuntu stable repos — installed via helpers below
   $SUDO apt-get install -y git-delta 2>/dev/null || true
+{{ if .full_setup -}}
+  install_deploy_tools_apt
+{{ end -}}
   $SUDO apt-get install -y glow 2>/dev/null || true
   $SUDO apt-get install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
@@ -391,6 +441,9 @@ elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf install -y git curl ca-certificates unzip fzf bat zoxide ripgrep || true
   $SUDO dnf install -y gh git-delta glow chafa mosh micro tealdeer 2>/dev/null || true
   $SUDO dnf install -y eza 2>/dev/null || true
+{{ if .full_setup -}}
+  install_deploy_tools_dnf
+{{ end -}}
   $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard 2>/dev/null || true
 
   # ---- Archive tools & FUSE/AppImage support ----
