@@ -372,9 +372,13 @@ install_duf_user() {
 
 # ---- Deploy tooling (full_setup): Doppler CLI and Terraform, from their vendors' repos ----
 install_deploy_tools_dnf() {
+  # The vendors' repo files are Fedora's; other dnf distros skip this.
+  local fedora
+  fedora="$(rpm -E %fedora 2>/dev/null || true)"
+  [[ "$fedora" =~ ^[0-9]+$ ]] || return 0
   if ! command -v doppler >/dev/null 2>&1; then
     [[ -f /etc/yum.repos.d/doppler-cli.repo ]] || \
-      $SUDO curl -fsSL "https://packages.doppler.com/public/cli/config.rpm.txt?distro=fedora&codename=$(rpm -E %fedora)" \
+      $SUDO curl -fsSL "https://packages.doppler.com/public/cli/config.rpm.txt?distro=fedora&codename=${fedora}" \
         -o /etc/yum.repos.d/doppler-cli.repo || true
     $SUDO dnf install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
   fi
@@ -386,31 +390,44 @@ install_deploy_tools_dnf() {
   fi
 }
 
+# Adds an apt source signed by a vendor key. The keyring is written first and the
+# source only once the keyring is in place, so a failed attempt retries next apply.
+add_apt_source() {
+  local name="$1" key_url="$2" line="$3"
+  local keyring="/usr/share/keyrings/${name}-archive-keyring.gpg"
+  local list="/etc/apt/sources.list.d/${name}.list"
+  [[ -f "$list" ]] && return 1
+  local tmp
+  tmp="$(mktemp)"
+  if curl -fsSL "$key_url" | gpg --dearmor --yes -o "$tmp" && [[ -s "$tmp" ]]; then
+    $SUDO install -D -m 0644 "$tmp" "$keyring" || { rm -f "$tmp"; return 1; }
+    echo "deb [signed-by=${keyring}] ${line}" | $SUDO tee "$list" >/dev/null
+    rm -f "$tmp"
+    return 0
+  fi
+  rm -f "$tmp"
+  todo "install-packages: couldn't add the ${name} apt source"
+  return 1
+}
+
 install_deploy_tools_apt() {
-  local codename
-  codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-}")"
-  [[ -n "$codename" ]] || return 0
-  $SUDO install -d -m 0755 /usr/share/keyrings
+  command -v doppler >/dev/null 2>&1 && command -v terraform >/dev/null 2>&1 && return 0
+  command -v gpg >/dev/null 2>&1 || $SUDO apt-get install -y gnupg || return 0
+  local codename added=0
+  # Ubuntu derivatives (Mint, Pop!_OS) name their own release; HashiCorp serves Ubuntu's.
+  codename="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}")"
   if ! command -v doppler >/dev/null 2>&1; then
-    if [[ ! -f /etc/apt/sources.list.d/doppler-cli.list ]]; then
-      curl -fsSL https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key \
-        | $SUDO gpg --dearmor --yes -o /usr/share/keyrings/doppler-archive-keyring.gpg || true
-      echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" \
-        | $SUDO tee /etc/apt/sources.list.d/doppler-cli.list >/dev/null
-      $SUDO apt-get update -o Dir::Etc::sourcelist=sources.list.d/doppler-cli.list -o Dir::Etc::sourceparts=- || true
-    fi
-    $SUDO apt-get install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
+    add_apt_source doppler-cli https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key \
+      "https://packages.doppler.com/public/cli/deb/debian any-version main" && added=1
   fi
-  if ! command -v terraform >/dev/null 2>&1; then
-    if [[ ! -f /etc/apt/sources.list.d/hashicorp.list ]]; then
-      curl -fsSL https://apt.releases.hashicorp.com/gpg \
-        | $SUDO gpg --dearmor --yes -o /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
-      echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $codename main" \
-        | $SUDO tee /etc/apt/sources.list.d/hashicorp.list >/dev/null
-      $SUDO apt-get update -o Dir::Etc::sourcelist=sources.list.d/hashicorp.list -o Dir::Etc::sourceparts=- || true
-    fi
-    $SUDO apt-get install -y terraform 2>/dev/null || todo "install-packages: terraform failed to install"
+  if ! command -v terraform >/dev/null 2>&1 && [[ -n "$codename" ]]; then
+    add_apt_source hashicorp https://apt.releases.hashicorp.com/gpg \
+      "https://apt.releases.hashicorp.com ${codename} main" && added=1
   fi
+  # A full update: updating one source list alone would drop the other lists' caches.
+  [[ "$added" -eq 1 ]] && { $SUDO apt-get update || true; }
+  command -v doppler >/dev/null 2>&1 || $SUDO apt-get install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
+  command -v terraform >/dev/null 2>&1 || $SUDO apt-get install -y terraform 2>/dev/null || todo "install-packages: terraform failed to install"
 }
 
 # ---- Distro package installs ----
