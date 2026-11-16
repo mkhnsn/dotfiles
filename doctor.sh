@@ -19,6 +19,11 @@ if have git; then ok "git:    $(git --version)"; else warn "git:    MISSING"; fi
 if have gh; then ok "gh:     $(gh --version | head -n 1)"; else warn "gh:     MISSING"; fi
 if have op; then ok "op:     $(op --version 2>/dev/null || true)"; else info "op:     not installed (fine unless you use op:// secrets)"; fi
 
+hr "Deploy tooling"
+if have doppler; then ok "doppler:   $(doppler --version 2>/dev/null)"; else warn "doppler:   MISSING (installed on full_setup machines)"; fi
+if have doppler && [[ -z "$(doppler configure get token --plain 2>/dev/null)" ]]; then warn "doppler:   not logged in; run: doppler login"; fi
+if have terraform; then ok "terraform: $(CHECKPOINT_DISABLE=1 terraform version 2>/dev/null | head -n 1)"; else warn "terraform: MISSING (installed on full_setup machines)"; fi
+
 hr "Node toolchain"
 if have node; then
   if node_ver=$(node -v 2>&1); then

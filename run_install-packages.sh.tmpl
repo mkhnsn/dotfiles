@@ -27,6 +27,10 @@ install_uv_tools() {
 
 want_cmds=(git fzf bat zoxide)
 want_cmds_optional=(rg gh starship eza delta ghq glow navi tldr micro mosh specify ntfy)
+{{ if .full_setup -}}
+# Deploy tooling: Doppler for secrets, Terraform for infra.
+want_cmds_optional+=(doppler terraform)
+{{ end -}}
 
 missing=0
 for c in "${want_cmds[@]}" "${want_cmds_optional[@]}"; do
@@ -366,6 +370,66 @@ install_duf_user() {
   export PATH="$HOME/.local/bin:$PATH"
 }
 
+# ---- Deploy tooling (full_setup): Doppler CLI and Terraform, from their vendors' repos ----
+install_deploy_tools_dnf() {
+  # The vendors' repo files are Fedora's; other dnf distros skip this.
+  local fedora
+  fedora="$(rpm -E %fedora 2>/dev/null || true)"
+  [[ "$fedora" =~ ^[0-9]+$ ]] || return 0
+  if ! command -v doppler >/dev/null 2>&1; then
+    [[ -f /etc/yum.repos.d/doppler-cli.repo ]] || \
+      $SUDO curl -fsSL "https://packages.doppler.com/public/cli/config.rpm.txt?distro=fedora&codename=${fedora}" \
+        -o /etc/yum.repos.d/doppler-cli.repo || true
+    $SUDO dnf install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
+  fi
+  if ! command -v terraform >/dev/null 2>&1; then
+    [[ -f /etc/yum.repos.d/hashicorp.repo ]] || \
+      $SUDO curl -fsSL https://rpm.releases.hashicorp.com/fedora/hashicorp.repo \
+        -o /etc/yum.repos.d/hashicorp.repo || true
+    $SUDO dnf install -y terraform 2>/dev/null || todo "install-packages: terraform failed to install"
+  fi
+}
+
+# Adds an apt source signed by a vendor key. The keyring is written first and the
+# source only once the keyring is in place, so a failed attempt retries next apply.
+add_apt_source() {
+  local name="$1" key_url="$2" line="$3"
+  local keyring="/usr/share/keyrings/${name}-archive-keyring.gpg"
+  local list="/etc/apt/sources.list.d/${name}.list"
+  [[ -f "$list" ]] && return 1
+  local tmp
+  tmp="$(mktemp)"
+  if curl -fsSL "$key_url" | gpg --dearmor --yes -o "$tmp" && [[ -s "$tmp" ]]; then
+    $SUDO install -D -m 0644 "$tmp" "$keyring" || { rm -f "$tmp"; return 1; }
+    echo "deb [signed-by=${keyring}] ${line}" | $SUDO tee "$list" >/dev/null
+    rm -f "$tmp"
+    return 0
+  fi
+  rm -f "$tmp"
+  todo "install-packages: couldn't add the ${name} apt source"
+  return 1
+}
+
+install_deploy_tools_apt() {
+  command -v doppler >/dev/null 2>&1 && command -v terraform >/dev/null 2>&1 && return 0
+  command -v gpg >/dev/null 2>&1 || $SUDO apt-get install -y gnupg || return 0
+  local codename added=0
+  # Ubuntu derivatives (Mint, Pop!_OS) name their own release; HashiCorp serves Ubuntu's.
+  codename="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}")"
+  if ! command -v doppler >/dev/null 2>&1; then
+    add_apt_source doppler-cli https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key \
+      "https://packages.doppler.com/public/cli/deb/debian any-version main" && added=1
+  fi
+  if ! command -v terraform >/dev/null 2>&1 && [[ -n "$codename" ]]; then
+    add_apt_source hashicorp https://apt.releases.hashicorp.com/gpg \
+      "https://apt.releases.hashicorp.com ${codename} main" && added=1
+  fi
+  # A full update: updating one source list alone would drop the other lists' caches.
+  [[ "$added" -eq 1 ]] && { $SUDO apt-get update || true; }
+  command -v doppler >/dev/null 2>&1 || $SUDO apt-get install -y doppler 2>/dev/null || todo "install-packages: doppler failed to install"
+  command -v terraform >/dev/null 2>&1 || $SUDO apt-get install -y terraform 2>/dev/null || todo "install-packages: terraform failed to install"
+}
+
 # ---- Distro package installs ----
 if command -v apt-get >/dev/null 2>&1; then
   # A single broken third-party source (e.g. a vendor repo without a suite for
@@ -383,6 +447,9 @@ if command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get install -y chafa mosh micro tealdeer 2>/dev/null || true
   # git-delta and glow not in Ubuntu stable repos — installed via helpers below
   $SUDO apt-get install -y git-delta 2>/dev/null || true
+{{ if .full_setup -}}
+  install_deploy_tools_apt
+{{ end -}}
   $SUDO apt-get install -y glow 2>/dev/null || true
   $SUDO apt-get install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard || true
 
@@ -391,6 +458,9 @@ elif command -v dnf >/dev/null 2>&1; then
   $SUDO dnf install -y git curl ca-certificates unzip fzf bat zoxide ripgrep || true
   $SUDO dnf install -y gh git-delta glow chafa mosh micro tealdeer 2>/dev/null || true
   $SUDO dnf install -y eza 2>/dev/null || true
+{{ if .full_setup -}}
+  install_deploy_tools_dnf
+{{ end -}}
   $SUDO dnf install -y zsh-syntax-highlighting zsh-autosuggestions wl-clipboard 2>/dev/null || true
 
   # ---- Archive tools & FUSE/AppImage support ----

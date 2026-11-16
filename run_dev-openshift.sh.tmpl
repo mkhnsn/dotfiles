@@ -40,6 +40,17 @@ if command -v fnm >/dev/null 2>&1; then
     fnm install 24 >/dev/null 2>&1 || note "fnm install 24 failed"
   fi
   fnm alias default 22 >/dev/null 2>&1 || true
+  # pnpm through corepack, so each repo gets the version its packageManager pins.
+  # Shims go in ~/.local/bin, which stays on PATH whichever Node fnm switches to.
+  if ! command -v pnpm >/dev/null 2>&1; then
+    fnm use default >/dev/null 2>&1 || true
+    if command -v corepack >/dev/null 2>&1; then
+      note "enabling pnpm through corepack"
+      corepack enable --install-directory "$HOME/.local/bin" pnpm || note "corepack enable failed"
+    else
+      todo "dev-openshift: no corepack in Node; install pnpm by hand"
+    fi
+  fi
 fi
 
 # ---- Python 3 (full stdlib + venv) ----
