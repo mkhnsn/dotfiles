@@ -44,7 +44,11 @@ cd "$(git rev-parse --show-toplevel)" || exit 1
 
 if [ $FETCH -eq 1 ]; then
   if [ -n "$(git remote)" ]; then
-    git fetch --all --prune --quiet || echo "${CY}Fetch failed; using the last known remote state.${C0}" >&2
+    if git fetch --all --prune --quiet; then
+      refresh_origin_head
+    else
+      echo "${CY}Fetch failed; using the last known remote state.${C0}" >&2
+    fi
   else
     echo "No remotes configured, so no branch can be gone." ; exit 0
   fi

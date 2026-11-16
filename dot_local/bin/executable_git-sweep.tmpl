@@ -127,7 +127,7 @@ while IFS= read -r gitdir; do
   fi
 
   if [ $FETCH -eq 1 ] && [ -n "$(git remote)" ]; then
-    git fetch --all --prune --quiet 2>/dev/null || N_FETCH_FAIL=$((N_FETCH_FAIL+1))
+    if git fetch --all --prune --quiet 2>/dev/null; then refresh_origin_head; else N_FETCH_FAIL=$((N_FETCH_FAIL+1)); fi
   fi
 
   # Branches whose remote was deleted, split into safe-to-delete (merged or
