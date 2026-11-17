@@ -52,6 +52,18 @@ if [[ "$os" == "darwin" ]]; then
 
   BREWFILE="{{ .chezmoi.sourceDir }}/Brewfile"
 
+  # Doppler moved to homebrew/core (no tap to trust, no deprecated cask postflight).
+  # Remove the old cask and taps once; untap needs trust to read what it removes.
+  if brew list --cask --full-name 2>/dev/null | grep -qx 'dopplerhq/doppler/doppler'; then
+    brew uninstall --cask dopplerhq/doppler/doppler || true
+  fi
+  for old_tap in dopplerhq/doppler dopplerhq/cli; do
+    if brew tap | grep -qx "$old_tap"; then
+      brew trust --tap "$old_tap" >/dev/null 2>&1 || true
+      brew untap --force "$old_tap" || todo "Homebrew: remove the old tap by hand: brew untap --force $old_tap"
+    fi
+  done
+
   # Homebrew 7 refuses formulae from third-party taps until they're trusted. A tap
   # listed in the Brewfile is trusted on purpose, so trust each one first.
   while read -r tap; do
@@ -62,6 +74,12 @@ if [[ "$os" == "darwin" ]]; then
   brew bundle check --file "$BREWFILE" >/dev/null 2>&1 || brew bundle --file "$BREWFILE"
 
 {{ if not (dig "is_server" false .) -}}
+  # Rosetta first: some apps (Parallels' setup, Intel-only vendor apps) need it.
+  if [[ "$(uname -m)" == arm64 ]] && ! arch -x86_64 /usr/bin/true 2>/dev/null; then
+    sudo softwareupdate --install-rosetta --agree-to-license ||
+      todo "Rosetta: run sudo softwareupdate --install-rosetta --agree-to-license"
+  fi
+
   # Workstation GUI apps. --adopt takes over apps already in /Applications. Failures
   # (App Store not signed in, an app that differs from the cask) become a todo instead
   # of failing the whole apply; mac-setup checks this file too.

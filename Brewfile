@@ -1,4 +1,3 @@
-tap "dopplerhq/doppler"
 tap "hashicorp/tap"
 tap "timrogers/tap"
 
@@ -46,9 +45,9 @@ brew "bandwhich"
 brew "procs"
 brew "cloudflared"
 brew "hashicorp/tap/terraform"
+brew "doppler"
 brew "node"
 brew "pnpm"
 
-cask "dopplerhq/doppler/doppler"
 cask "windows-app"
 cask "visual-studio-code@insiders"

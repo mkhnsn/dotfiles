@@ -23,7 +23,8 @@ setup() {
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
   export PATH="$STUBS:/usr/bin:/bin"
   # Everything passes by default; tests break one thing at a time.
-  stub uname       'echo Darwin'
+  stub uname       '[ "${1:-}" = -m ] && echo arm64 || echo Darwin'
+  stub arch        'exit 0'
   stub id          '[ "${1:-}" = -u ] && echo 501 || /usr/bin/id "$@"'
   stub ioreg       'echo "    | \"IOPlatformSerialNumber\" = \"TESTSERIAL\""'
   stub scutil      'echo Test-Mac'
@@ -143,6 +144,15 @@ test_no_brew() {
   rm "$STUBS/brew"
   run "$SCRIPT" --status
   assert_open "Homebrew installed"; assert_open "Brewfile packages installed"
+}
+
+test_rosetta_missing_on_apple_silicon() {
+  stub arch 'exit 1'
+  run "$SCRIPT" --status
+  assert_open "Rosetta installed"
+  stub uname '[ "${1:-}" = -m ] && echo x86_64 || echo Darwin'
+  run "$SCRIPT" --status
+  assert_done "Rosetta installed"
 }
 
 test_op_without_accounts() {
