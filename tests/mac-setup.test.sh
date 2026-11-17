@@ -238,6 +238,19 @@ test_guided_runs_action_then_rechecks() {
   assert_rc 0; assert_done "GitHub CLI signed in"; assert_has "All done."
 }
 
+test_guided_prompts_and_action_output_are_shown() {
+  # Regression: `exec 3<tty 2>/dev/null` silenced stderr, hiding prompts and gh's login code.
+  stub gh "if [ \"\$1 \$2\" = 'auth login' ]; then echo 'one-time code: ABCD-1234' >&2; printf '#!/bin/sh\nexit 0\n' > $STUBS/gh; exit 0; fi; exit 1"
+  rm -f "$XDG_STATE_HOME/mac-setup/escrow"
+  printf 'y\ny\n\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Done? [y/N/q]"
+  assert_has "Do it now? [Y/n/s=skip/q=quit]"
+  assert_has "one-time code: ABCD-1234"
+  assert_has "Enter to re-check"
+  assert_has "All done."
+}
+
 test_guided_skip_leaves_step_open() {
   stub doppler 'exit 1'
   printf 's\n' > "$T/answers"
