@@ -101,6 +101,7 @@ check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
                      command -v brew >/dev/null 2>&1 || return 0
                      brew doctor check_for_installed_developer_tools check_if_supported_sdk_available >/dev/null 2>&1; }
 check_brew()       { command -v brew >/dev/null 2>&1; }
+check_rosetta()    { [ "$(uname -m)" != arm64 ] || arch -x86_64 /usr/bin/true 2>/dev/null; }
 check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/null | grep -q .; }
 OP_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
@@ -139,6 +140,7 @@ help_ninja()      { echo "NinjaOne agent not running. SimpleMDM installs it; che
 help_escrow()     { echo "In SimpleMDM, open this Mac ($SERIAL), reveal the FDE Recovery Key and Activation Lock Bypass Code, and save both in 1Password (one item named after the Mac and serial)."; }
 help_clt()        { echo "Command Line Tools missing or stale (Homebrew refuses old ones)."; }
 help_brew()       { echo "Homebrew isn't installed."; }
+help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
 help_op_browser()  { echo "In 1Password: Settings > Browser > Connect with 1Password in the browser, and install the extension in Chrome. Settings > General > Show Quick Access: Cmd+Shift+Space."; }
@@ -173,6 +175,7 @@ act_clt() {
   echo "Click Install in the window that opened, and wait for it to finish."
 }
 act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && eval "$(/opt/homebrew/bin/brew shellenv)"; }
+act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
 act_op_ssh()       { open -a 1Password; }
 act_op_browser()   { open -a 1Password; open "https://1password.com/downloads/browser-extension"; }
@@ -208,6 +211,7 @@ ninja|NinjaOne agent running|MDM
 escrow|FileVault key and Activation Lock code saved to 1Password|MDM
 clt|Command Line Tools current|Tools
 brew|Homebrew installed|Tools
+rosetta|Rosetta installed|Tools
 onepassword|1Password CLI connected|Tools
 op_ssh|1Password SSH agent on|Tools
 op_browser|1Password browser integration and Quick Access shortcut|Tools
