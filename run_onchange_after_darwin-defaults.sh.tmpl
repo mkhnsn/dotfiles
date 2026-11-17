@@ -1,0 +1,8 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+# Apply macOS settings and the Dock whenever mac-defaults changes.
+# mac-defaults hash: {{ include "dot_local/bin/executable_mac-defaults" | sha256sum }}
+# shortcuts hash: {{ include "macos/symbolichotkeys.plist" | sha256sum }}
+set -euo pipefail
+"$HOME/.local/bin/mac-defaults"
+{{ end -}}

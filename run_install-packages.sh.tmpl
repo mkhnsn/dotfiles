@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
+# Brewfile.workstation hash: {{ include "Brewfile.workstation" | sha256sum }}
 # cargo-packages: markless
 # uv-tools: specify-cli ntfy
 
@@ -59,6 +60,20 @@ if [[ "$os" == "darwin" ]]; then
 
   # Ensure Brewfile state is satisfied (covers formulae that don't add a command, like zsh-completions)
   brew bundle check --file "$BREWFILE" >/dev/null 2>&1 || brew bundle --file "$BREWFILE"
+
+{{ if not (dig "is_server" false .) -}}
+  # Workstation GUI apps. --adopt takes over apps already in /Applications. Failures
+  # (App Store not signed in, an app that differs from the cask) become a todo instead
+  # of failing the whole apply; mac-setup checks this file too.
+  WS_BREWFILE="{{ .chezmoi.sourceDir }}/Brewfile.workstation"
+  while read -r tap; do
+    brew trust --tap "$tap" >/dev/null 2>&1 || true
+  done < <(sed -n 's/^tap "\([^"]*\)".*/\1/p' "$WS_BREWFILE")
+  if ! brew bundle check --no-upgrade --file "$WS_BREWFILE" >/dev/null 2>&1; then
+    HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$WS_BREWFILE" ||
+      todo "Workstation apps: some failed to install; run mac-setup (sign in to the App Store for mas apps)"
+  fi
+{{ end -}}
 
   # Only run fzf install if key-bindings aren't set up yet (it prompts interactively)
   [[ -r "$HOME/.fzf.zsh" ]] || "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true

@@ -18,7 +18,7 @@ PASS=0 FAIL=0 OUT="" RC=0
 
 setup() {
   T="$(mktemp -d)"
-  export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none"
+  export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
   STUBS="$HOME/.local/bin"
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
   export PATH="$STUBS:/usr/bin:/bin"
@@ -41,8 +41,17 @@ setup() {
   stub tailscale   'printf "{\n  \"BackendState\": \"Running\",\n  \"Self\": {\n    \"DNSName\": \"test-mac.example.ts.net.\",\n    \"Tags\": [\"tag:echo-admin\"]\n  }\n}\n"'
   stub osascript   'echo "Litra On/Off"'
   stub open        'exit 0'
+  stub mac-defaults 'exit 0'
+  stub defaults    'printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n"'
+  for a in Festivitas Cursorful HueForge "MASSO Link" "EXStar Hub" 3DconnexionSettings gridfinity-studio; do
+    mkdir -p "$MAC_SETUP_APPS/$a.app"
+  done
   mark_done escrow
   mark_done remote
+  mark_done licences
+  mark_done op_browser
+  mkdir -p "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t"
+  touch "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 }
 teardown() { rm -rf "$T"; }
 
@@ -211,7 +220,135 @@ test_manual_steps_start_open() {
   rm -rf "$XDG_STATE_HOME/mac-setup"
   run "$SCRIPT" --status
   assert_open "FileVault key and Activation Lock code saved to 1Password"
-  assert_open "Ninja Remote Screen Recording approved"; assert_has "2 step(s) left"
+  assert_open "Apps signed in and activated"
+  assert_open "1Password browser integration"
+  assert_open "Ninja Remote Screen Recording approved"; assert_has "4 step(s) left"
+}
+
+test_workstation_apps_missing() {
+  stub brew "case \"\$1 \$2\" in 'bundle check') case \"\$*\" in *Brewfile.workstation*) exit 1 ;; esac ;; --prefix*) echo $T/brew ;; esac; exit 0"
+  run "$SCRIPT" --status
+  assert_open "Workstation apps installed"; assert_done "Brewfile packages installed"
+}
+
+test_vendor_app_missing_lists_its_site() {
+  rm -rf "$MAC_SETUP_APPS/HueForge.app"
+  run "$SCRIPT" --status
+  assert_open "Apps without a cask installed"
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "HueForge  https://shop.thehueforge.com"; assert_lacks "Festivitas  https"
+}
+
+test_op_ssh_agent_off() {
+  rm -f "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+  run "$SCRIPT" --status
+  assert_open "1Password SSH agent on"
+  run "$SCRIPT_SERVER" --status
+  assert_done "1Password SSH agent on"
+}
+
+test_gridfinity_missing() {
+  rm -rf "$MAC_SETUP_APPS/gridfinity-studio.app"
+  run "$SCRIPT" --status
+  assert_open "gridfinity-studio installed"
+}
+
+test_settings_differ_shows_diff() {
+  stub mac-defaults '[ "$1" = --diff ] && echo "  com.apple.dock autohide: 0 (want true)"; exit 1'
+  run "$SCRIPT" --status
+  assert_open "macOS settings and Dock"
+  printf 'n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "com.apple.dock autohide: 0 (want true)"
+}
+
+test_default_browser_safari() {
+  stub defaults 'printf "    {\n        LSHandlerRoleAll = \"com.apple.safari\";\n        LSHandlerURLScheme = http;\n    },\n    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = mailto;\n    },\n"'
+  run "$SCRIPT" --status
+  assert_open "Default browser is Chrome"
+}
+
+test_server_skips_workstation_steps() {
+  rm -rf "$MAC_SETUP_APPS"/*.app "$XDG_STATE_HOME/mac-setup/licences"
+  stub defaults 'exit 1'
+  stub brew "case \"\$*\" in *Brewfile.workstation*) exit 1 ;; --prefix) echo $T/brew ;; esac; exit 0"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Workstation apps installed"; assert_done "Apps without a cask installed"
+  assert_done "gridfinity-studio installed"; assert_done "Apps signed in and activated"
+  assert_done "Default browser is Chrome"
+  assert_done "BetterTouchTool installed from folivora.ai"
+}
+
+# ---- mac-defaults ------------------------------------------------------------------
+
+DEFAULTS_SCRIPT="$HERE/../dot_local/bin/executable_mac-defaults"
+
+# A fake `defaults` that stores values in files, and a fake dockutil with a Dock list.
+fake_prefs() {
+  mkdir -p "$T/prefs"
+  stub defaults "f=\"$T/prefs/\$2.\${3:-}\"; case \"\$1\" in
+    read) if [ -z \"\${3:-}\" ] && [ -f \"\$2\" ]; then cat \"\$2\"; elif [ -f \"\$f\" ]; then cat \"\$f\"; else exit 1; fi ;;
+    import) cp \"\$3\" \"$T/prefs/\$2.\" ;;
+    export) cp \"$T/prefs/\$2.\" \"\$3\" ;;
+    write) v=\"\$5\"; [ \"\$v\" = true ] && v=1; [ \"\$v\" = false ] && v=0; echo \"\$v\" > \"\$f\" ;;
+  esac"
+  stub killall 'exit 0'
+  : > "$T/dock"
+  stub dockutil "case \"\$1\" in
+    --list) while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentApps\tplist\tid\n' \"\$n\"; done < $T/dock ;;
+    --remove) : > $T/dock ;;
+    --add) basename \"\$2\" .app >> $T/dock ;;
+  esac"
+  for a in "Google Chrome" Mail Ghostty; do mkdir -p "$MAC_SETUP_APPS/$a.app"; done
+  echo "shortcuts-v1" > "$T/shortcuts.plist"
+  export MAC_DEFAULTS_SHORTCUTS="$T/shortcuts.plist"
+}
+
+test_defaults_check_fails_then_apply_fixes_it() {
+  fake_prefs
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 1
+  run "$DEFAULTS_SCRIPT"; assert_rc 0
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 0
+}
+
+test_defaults_dock_skips_missing_apps_in_order() {
+  fake_prefs
+  run "$DEFAULTS_SCRIPT" --dock
+  assert_has "left out of the Dock"
+  [ "$(paste -sd, - < "$T/dock")" = "Google Chrome,Mail,Ghostty" ] || fail "dock order: $(paste -sd, - < "$T/dock")"
+}
+
+test_defaults_diff_names_the_setting() {
+  fake_prefs
+  "$RUN_BASH" "$DEFAULTS_SCRIPT" >/dev/null 2>&1
+  echo 0 > "$T/prefs/com.apple.dock.autohide"
+  run "$DEFAULTS_SCRIPT" --diff
+  assert_has "com.apple.dock autohide: 0 (want true)"; assert_lacks "tilesize"
+}
+
+test_defaults_shortcuts_applied_and_checked() {
+  fake_prefs
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 1
+  "$RUN_BASH" "$DEFAULTS_SCRIPT" >/dev/null 2>&1
+  [ "$(cat "$T/prefs/com.apple.symbolichotkeys." 2>/dev/null)" = shortcuts-v1 ] || fail "shortcuts not imported"
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 0
+  echo changed > "$T/prefs/com.apple.symbolichotkeys."
+  run "$DEFAULTS_SCRIPT" --diff; assert_has "Keyboard shortcuts differ"
+}
+
+test_defaults_export_shortcuts() {
+  fake_prefs
+  echo mine > "$T/prefs/com.apple.symbolichotkeys."
+  run "$DEFAULTS_SCRIPT" --export-shortcuts
+  assert_rc 0; [ "$(cat "$T/shortcuts.plist")" = mine ] || fail "not exported"
+}
+
+test_defaults_new_app_breaks_dock_check() {
+  fake_prefs
+  "$RUN_BASH" "$DEFAULTS_SCRIPT" >/dev/null 2>&1
+  mkdir -p "$MAC_SETUP_APPS/Slack.app"
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 1
 }
 
 test_reset_forgets_manual_steps() {
