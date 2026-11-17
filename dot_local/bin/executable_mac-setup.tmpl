@@ -69,7 +69,8 @@ confirmed() { [ -f "$STATE_DIR/$1" ]; }
 workstation() { [ "$ROLE" = workstation ]; }
 
 # Apps with no Homebrew cask: app bundle | where to get it.
-VENDOR_APPS="Festivitas|https://festivitas.app
+VENDOR_APPS="OpenSCAD|https://openscad.org/downloads.html
+Festivitas|https://festivitas.app
 Cursorful|https://cursorful.com
 HueForge|https://shop.thehueforge.com
 MASSO Link|https://www.masso.com.au
@@ -158,7 +159,7 @@ help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit th
 help_app_exports() { echo "Restore the private app exports saved in 1Password: Stream Deck (Preferences > Profiles > Restore), BetterDisplay (Settings > Application > Import), LightBurn (File > Import Prefs; Devices > Import). Make them on the old Mac first."; }
 help_vm()          { echo "Windows VM (VCarve): shut it down on the old Mac (not suspended), copy ~/Parallels/vWindows 11.pvm (86 GB) to ~/Parallels here (external SSD, or rsync over the network), open it in Parallels and choose 'I moved it'. Answer y if there's no VM to move."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
-help_browser()    { echo "Make Google Chrome the default browser (macOS asks you to confirm)."; }
+help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
 
 # ---- Actions: what this script can do itself (optional) --------------------------

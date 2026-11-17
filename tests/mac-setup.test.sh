@@ -43,7 +43,7 @@ setup() {
   stub open        'exit 0'
   stub mac-defaults 'exit 0'
   stub defaults    'printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n"'
-  for a in Festivitas Cursorful HueForge "MASSO Link" "EXStar Hub" 3DconnexionSettings gridfinity-studio; do
+  for a in OpenSCAD Festivitas Cursorful HueForge "MASSO Link" "EXStar Hub" 3DconnexionSettings gridfinity-studio; do
     mkdir -p "$MAC_SETUP_APPS/$a.app"
   done
   mark_done escrow
@@ -350,6 +350,24 @@ test_defaults_shortcuts_applied_and_checked() {
   run "$DEFAULTS_SCRIPT" --check; assert_rc 0
   echo changed > "$T/prefs/com.apple.symbolichotkeys."
   run "$DEFAULTS_SCRIPT" --diff; assert_has "Keyboard shortcuts differ"
+}
+
+test_defaults_finds_shortcuts_via_chezmoi_source_dir() {
+  # Regression: inside `chezmoi apply`, `chezmoi source-path` is empty and shortcuts were skipped.
+  fake_prefs
+  unset MAC_DEFAULTS_SHORTCUTS
+  stub chezmoi 'exit 0'
+  mkdir -p "$T/src/macos"; echo shortcuts-v2 > "$T/src/macos/symbolichotkeys.plist"
+  CHEZMOI_SOURCE_DIR="$T/src" run "$DEFAULTS_SCRIPT"
+  [ "$(cat "$T/prefs/com.apple.symbolichotkeys." 2>/dev/null)" = shortcuts-v2 ] || fail "shortcuts not imported from CHEZMOI_SOURCE_DIR"
+}
+
+test_defaults_without_source_skips_shortcuts_cleanly() {
+  fake_prefs
+  unset MAC_DEFAULTS_SHORTCUTS
+  stub chezmoi 'exit 0'
+  run "$DEFAULTS_SCRIPT"
+  assert_rc 0; assert_has "shortcuts file not found, skipped"
 }
 
 test_defaults_export_shortcuts() {

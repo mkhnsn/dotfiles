@@ -125,6 +125,25 @@ class AppPrefs(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("not in the allowlist", r.stderr)
 
+    def test_source_dir_from_chezmoi_env(self):
+        # Inside `chezmoi apply`, CHEZMOI_SOURCE_DIR is the only reliable way to the repo.
+        src = os.path.join(self.t, "src")
+        os.makedirs(os.path.join(src, "macos"))
+        shutil.copytree(self.repo, os.path.join(src, "macos", "prefs"))
+        self.mac("com.example.app", {"showIcons": True})
+        env = {k: v for k, v in self.env.items() if k != "APP_PREFS_DIR"}
+        r = subprocess.run([sys.executable, "-I", TOOL, "export"], env=dict(env, CHEZMOI_SOURCE_DIR=src),
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(os.path.exists(os.path.join(src, "macos", "prefs", "com.example.app.plist")))
+
+    def test_missing_allowlist_is_a_clear_error(self):
+        os.remove(os.path.join(self.repo, "allowlist"))
+        r = self.run_tool("check")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("no allowlist at", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+
     def test_allowlist_line_needs_a_tab(self):
         with open(os.path.join(self.repo, "allowlist"), "w") as f:
             f.write("com.example.app showIcons\n")
