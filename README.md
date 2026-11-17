@@ -246,6 +246,23 @@ branch was deleted, and removes the ones that are merged or squash-merged (asks 
 
 ---
 
+## New Mac checklist
+
+`mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
+FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
+Tools, Homebrew, the 1Password CLI, dotfiles and Brewfile, `gh` and Doppler sign-in,
+Tailscale (name and tag), BetterTouchTool and its preset, and Ninja Remote's Screen
+Recording approval. It ticks what's done, says what to do next, offers to do it when it
+can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
+Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`.
+
+Tests: `make test` renders it, runs shellcheck and `tests/mac-setup.test.sh` (stub commands, no
+dependencies), also under bash 3.2 in Docker. CI runs the same on every PR.
+
+The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
+`tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
+(`docs/devices/README.md`).
+
 ## BetterTouchTool
 
 BTT is installed from [folivora.ai](https://folivora.ai), not Homebrew (BTT warns about

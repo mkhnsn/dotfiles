@@ -1,0 +1,210 @@
+#!/bin/bash
+# mac-setup — walk a new Mac through setup, checking each step.
+#
+# Each step has a check. Steps that pass are ticked; for the first one that fails it
+# says what to do, offers to do it when it can, and re-checks before moving on.
+# Safe to re-run any time: it picks up where things stand.
+#
+# Usage:
+#   mac-setup            guided run
+#   mac-setup --status   checks only, no prompts (exit 1 if anything is left)
+#   mac-setup --reset    forget the steps you confirmed by hand
+#
+# Steps you can only confirm by hand are remembered in ~/.local/state/mac-setup.
+# Runbook: unstable-studios/echo-core docs/devices/README.md (New Mac runbook).
+# Bash 3.2-compatible (stock macOS).
+
+# check_/help_/act_ functions are called by name ("check_$id").
+# shellcheck disable=SC2317,SC2329  # SC2317 on older shellcheck
+
+set -u
+
+[ "$(uname -s)" = "Darwin" ] || { echo "mac-setup: macOS only"; exit 1; }
+
+# MAC_SETUP_BREW overrides where to look for Homebrew (tests).
+for b in ${MAC_SETUP_BREW:-/opt/homebrew/bin/brew /usr/local/bin/brew}; do
+  [ -x "$b" ] && eval "$("$b" shellenv)" && break
+done
+export PATH="$HOME/.local/bin:$PATH"
+
+# From chezmoi data (set on `chezmoi init`).
+HOSTNAME_WANT="{{ .hostname }}"
+{{- if dig "is_server" false . }}
+TAG_WANT="tag:echo-core"
+{{- else }}
+TAG_WANT="tag:echo-admin"
+{{- end }}
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/mac-setup"
+# Overridable for tests (tests/mac-setup.test.sh).
+APPS="${MAC_SETUP_APPS:-/Applications}"
+TTY="${MAC_SETUP_TTY:-/dev/tty}"
+SERIAL="$(ioreg -l | awk -F'"' '/IOPlatformSerialNumber/{print $4; exit}')"
+MODE=guided
+case "${1:-}" in
+  --status) MODE=status ;;
+  --reset) rm -rf "$STATE_DIR"; echo "Forgot the steps confirmed by hand."; exit 0 ;;
+  -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+  "") ;;
+  *) echo "usage: mac-setup [--status|--reset]"; exit 1 ;;
+esac
+mkdir -p "$STATE_DIR"
+if [ "$MODE" = guided ]; then
+  exec 3<"$TTY" 2>/dev/null || { echo "mac-setup: needs a terminal for prompts; use --status"; exit 1; }
+fi
+
+if [ -t 1 ]; then G=$'\e[32m'; Y=$'\e[33m'; D=$'\e[2m'; B=$'\e[1m'; R=$'\e[0m'; else G='' Y='' D='' B='' R=''; fi
+
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+ts_bin() {
+  command -v tailscale 2>/dev/null && return 0
+  [ -x "$APPS/Tailscale.app/Contents/MacOS/Tailscale" ] && echo "$APPS/Tailscale.app/Contents/MacOS/Tailscale"
+}
+ts_json() { local t; t="$(ts_bin)" || return 1; [ -n "$t" ] && "$t" status --json --peers=false 2>/dev/null; }
+confirmed() { [ -f "$STATE_DIR/$1" ]; }
+
+# ---- Checks: each returns 0 when the step is done ----------------------------------
+
+check_user()       { [ "$(id -u)" -ne 0 ] && [ -n "${HOME:-}" ]; }
+check_mdm()        { profiles status -type enrollment 2>/dev/null | grep -q "MDM enrollment: Yes"; }
+check_filevault()  { fdesetup status 2>/dev/null | grep -q "FileVault is On"; }
+check_profiles()   { local p; p="$(system_profiler SPConfigurationProfileDataType 2>/dev/null)";
+                     printf '%s' "$p" | grep -q "macOS: Firewall" && printf '%s' "$p" | grep -q "macOS: NinjaOne privacy"; }
+check_ninja()      { pgrep -f NinjaRMMAgent/programfiles/ninjarmm-macagent >/dev/null; }
+check_escrow()     { confirmed escrow; }
+# Ask Homebrew's own doctor checks, which are what make it refuse stale tools.
+check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
+                     command -v brew >/dev/null 2>&1 || return 0
+                     brew doctor check_for_installed_developer_tools check_if_supported_sdk_available >/dev/null 2>&1; }
+check_brew()       { command -v brew >/dev/null 2>&1; }
+check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/null | grep -q .; }
+check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] &&
+                     chezmoi verify --exclude=scripts,templates >/dev/null 2>&1; }
+check_brewfile()   { brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile" >/dev/null 2>&1; }
+check_gh()         { gh auth status >/dev/null 2>&1; }
+check_doppler()    { doppler me >/dev/null 2>&1; }
+check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
+# The console machine name is the first label of DNSName (HostName is the OS hostname).
+check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
+check_ts_tag()     { ts_json | grep -q "\"$TAG_WANT\""; }
+check_btt()        { [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
+check_btt_preset() { pgrep -x BetterTouchTool >/dev/null &&
+                     osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
+check_remote()     { confirmed remote; }
+
+# ---- Help: what to do when a check fails ------------------------------------------
+
+help_user()       { echo "Run this in Terminal as yourself, not as root or from Ninja's terminal (it's root)."; }
+help_mdm()        { echo "Not enrolled. Erase the Mac and set it up again so ADE enrolls it (check the serial is assigned to SimpleMDM - macOS in ABM)."; }
+help_filevault()  { echo "Turn on FileVault: System Settings > Privacy & Security > FileVault. The MDM profile escrows the key."; }
+help_profiles()   { echo "MDM profiles missing. Check the device is in the Terminals group in SimpleMDM and push profiles from its device page."; }
+help_ninja()      { echo "NinjaOne agent not running. SimpleMDM installs it; check the app install on the device page, or reinstall the agent pkg."; }
+help_escrow()     { echo "In SimpleMDM, open this Mac ($SERIAL), reveal the FDE Recovery Key and Activation Lock Bypass Code, and save both in 1Password (one item named after the Mac and serial)."; }
+help_clt()        { echo "Command Line Tools missing or stale (Homebrew refuses old ones)."; }
+help_brew()       { echo "Homebrew isn't installed."; }
+help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI."; }
+help_chezmoi()    { echo "Dotfiles not applied, or out of date."; }
+help_brewfile()   { echo "Brewfile packages missing."; }
+help_gh()         { echo "GitHub CLI not signed in (git uses it for HTTPS)."; }
+help_doppler()    { echo "Doppler CLI not signed in."; }
+help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found."; }
+help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WANT"). Rename it: admin console > Machines > ... > Edit machine name (turn off auto-generate)."; }
+help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
+help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
+help_btt_preset() { echo "Import the BTT preset from the dotfiles. Start BTT first; it asks for Accessibility once."; }
+help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
+
+# ---- Actions: what this script can do itself (optional) --------------------------
+
+act_clt() {
+  if [ -d /Library/Developer/CommandLineTools ]; then
+    echo "Removing the old Command Line Tools (asks for your password)…"
+    sudo rm -rf /Library/Developer/CommandLineTools
+  fi
+  xcode-select --install
+  echo "Click Install in the window that opened, and wait for it to finish."
+}
+act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && eval "$(/opt/homebrew/bin/brew shellenv)"; }
+act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
+act_chezmoi() {
+  if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update
+  else bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"; fi
+}
+act_brewfile()    { chezmoi apply; }
+act_gh()          { gh auth login --web --git-protocol https; }
+act_doppler()     { doppler login; }
+act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
+act_btt()         { open "https://folivora.ai"; }
+act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
+
+# ---- Steps, in order: id | title | phase -------------------------------------------
+
+STEPS="user|Running as your own user|Basics
+mdm|Enrolled in SimpleMDM|MDM
+filevault|FileVault on|MDM
+profiles|MDM profiles installed|MDM
+ninja|NinjaOne agent running|MDM
+escrow|FileVault key and Activation Lock code saved to 1Password|MDM
+clt|Command Line Tools current|Tools
+brew|Homebrew installed|Tools
+onepassword|1Password CLI connected|Tools
+chezmoi|Dotfiles applied|Dotfiles
+brewfile|Brewfile packages installed|Dotfiles
+gh|GitHub CLI signed in|Accounts
+doppler|Doppler signed in|Accounts
+tailscale|Tailscale connected|Network
+ts_name|Tailscale name is $(lower "$HOSTNAME_WANT")|Network
+ts_tag|Tailscale tag $TAG_WANT|Network
+btt|BetterTouchTool installed from folivora.ai|Apps
+btt_preset|BetterTouchTool preset imported|Apps
+remote|Ninja Remote Screen Recording approved|Apps"
+
+MANUAL=" escrow remote "   # steps confirmed by hand, remembered in $STATE_DIR
+
+has_fn() { type "$1" >/dev/null 2>&1; }
+
+run_step() {
+  local id="$1" title="$2" ans
+  while :; do
+    if "check_$id"; then printf '  %s✓%s %s\n' "$G" "$R" "$title"; return 0; fi
+    if [ "$MODE" = status ]; then printf '  %s○%s %s\n' "$Y" "$R" "$title"; return 1; fi
+
+    printf '\n  %s→ %s%s\n' "$B" "$title" "$R"
+    printf '    %s\n' "$("help_$id")"
+    if has_fn "act_$id"; then
+      read -r -p "    Do it now? [Y/n/s=skip/q=quit] " ans <&3 || ans=q
+      case "$ans" in
+        n|N) ;;
+        s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;;
+        q|Q) exit 1 ;;
+        *) "act_$id" <&3 ;;
+      esac
+    fi
+    case "$MANUAL" in
+      *" $id "*)
+        read -r -p "    Done? [y/N/q] " ans <&3 || ans=q
+        case "$ans" in y|Y) touch "$STATE_DIR/$id" ;; q|Q) exit 1 ;; *) return 1 ;; esac ;;
+      *)
+        read -r -p "    Enter to re-check, s to skip, q to quit: " ans <&3 || ans=q
+        case "$ans" in s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;; q|Q) exit 1 ;; esac ;;
+    esac
+  done
+}
+
+printf '%smac-setup%s  %s (%s), %s\n' "$B" "$R" "$(scutil --get ComputerName 2>/dev/null)" "$SERIAL" "$(sw_vers -productVersion)"
+left=0 phase_prev=""
+while IFS='|' read -r id title phase; do
+  [ "$phase" != "$phase_prev" ] && printf '\n%s%s%s\n' "$D" "$phase" "$R" && phase_prev="$phase"
+  run_step "$id" "$title" || left=$((left+1))
+done <<EOF
+$STEPS
+EOF
+
+echo
+if [ "$left" -eq 0 ]; then
+  printf '%sAll done.%s Soak for a week or two: a Ninja Backup run completes, a restore works, alerts arrive.\n' "$G" "$R"
+else
+  printf '%s%d step(s) left.%s Run mac-setup again any time.\n' "$Y" "$left" "$R"
+  [ "$MODE" = status ] && exit 1
+fi
+exit 0

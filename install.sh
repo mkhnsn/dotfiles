@@ -100,3 +100,6 @@ else
 fi
 
 log "done"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  log "next: run 'mac-setup' to check the rest of this Mac's setup step by step"
+fi
