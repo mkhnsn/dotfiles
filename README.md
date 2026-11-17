@@ -36,8 +36,11 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/ins
 
 Notes:
 
-- macOS requires Homebrew to already be installed
-- You'll be prompted to sign into 1Password (once)
+- Run it as your own user in Terminal, not as root or from an RMM shell (Ninja's terminal runs as root)
+- macOS: installs Homebrew first if it's missing, which also installs the Command Line Tools (git); it asks for your password
+- Full setup: before any template is rendered, `.install-password-manager.sh` (a chezmoi
+  `read-source-state.pre` hook) installs 1Password and its CLI on macOS and waits while you
+  sign in and turn on Settings > Developer > Integrate with 1Password CLI
 - Works on Linux too — installs chezmoi and applies dotfiles in one step
 
 ---
