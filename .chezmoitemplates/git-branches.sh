@@ -2,6 +2,14 @@
 # Usage (from a script template): template "git-branches.sh"
 # Bash 3.2-compatible (stock macOS). Functions run in the current repo.
 
+# Re-read the remote's default branch into origin/HEAD. `git fetch` never updates it,
+# so it goes stale when the default branch is renamed or changed on the remote.
+# Network call; call it right after fetching. Silent on failure (offline, no origin).
+refresh_origin_head() {
+  git remote get-url origin >/dev/null 2>&1 || return 0
+  git remote set-head origin --auto >/dev/null 2>&1 || true
+}
+
 # Default branch name: origin/HEAD if set, else the first of main/master/trunk/develop that exists.
 default_branch() {
   local b
