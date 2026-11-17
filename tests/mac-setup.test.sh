@@ -119,7 +119,16 @@ test_not_enrolled() {
 test_filevault_off() {
   stub fdesetup 'echo "FileVault is Off."'
   run "$SCRIPT" --status
-  assert_open "FileVault on"
+  assert_open "FileVault on (workstations)"
+}
+
+test_server_skips_filevault_and_escrow() {
+  stub fdesetup 'echo "FileVault is Off."'
+  rm -f "$XDG_STATE_HOME/mac-setup/escrow"
+  run "$SCRIPT_SERVER" --status
+  assert_done "FileVault on (workstations)"; assert_done "FileVault key and Activation Lock code saved"
+  run "$SCRIPT" --status
+  assert_open "FileVault on (workstations)"
 }
 
 test_profiles_need_both() {
