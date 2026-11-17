@@ -84,6 +84,13 @@ test_header_shows_mac() {
   assert_has "Test-Mac (TESTSERIAL), 27.2"
 }
 
+test_header_shows_role() {
+  run "$SCRIPT" --status
+  assert_has "Role: workstation"
+  run "$SCRIPT_SERVER" --status
+  assert_has "Role: server"
+}
+
 test_root_is_flagged() {
   stub id '[ "${1:-}" = -u ] && echo 0'
   run "$SCRIPT" --status

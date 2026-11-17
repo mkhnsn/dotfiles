@@ -31,8 +31,10 @@ export PATH="$HOME/.local/bin:$PATH"
 HOSTNAME_WANT="{{ .hostname }}"
 {{- if dig "is_server" false . }}
 TAG_WANT="tag:echo-core"
+ROLE="server"
 {{- else }}
 TAG_WANT="tag:echo-admin"
+ROLE="workstation"
 {{- end }}
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/mac-setup"
@@ -196,6 +198,7 @@ run_step() {
 }
 
 printf '%smac-setup%s  %s (%s), %s\n' "$B" "$R" "$(scutil --get ComputerName 2>/dev/null)" "$SERIAL" "$(sw_vers -productVersion)"
+printf '%sRole: %s (is_server in ~/.config/chezmoi/chezmoi.toml; change it and run chezmoi apply)%s\n' "$D" "$ROLE" "$R"
 left=0 phase_prev=""
 while IFS='|' read -r id title phase; do
   [ "$phase" != "$phase_prev" ] && printf '\n%s%s%s\n' "$D" "$phase" "$R" && phase_prev="$phase"
