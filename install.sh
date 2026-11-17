@@ -22,6 +22,28 @@ fi
 
 log() { printf '[dotfiles] %s\n' "$*"; }
 
+# ---- Run as the user whose home gets the dotfiles ----
+if [[ -z "${HOME:-}" ]]; then
+  echo "[dotfiles] ERROR: HOME isn't set. Run this from a login shell as your own user." >&2
+  exit 1
+fi
+if [[ "$(uname -s)" == "Darwin" && "${EUID:-$(id -u)}" -eq 0 ]]; then
+  echo "[dotfiles] ERROR: running as root. Run this as your own user (Homebrew refuses root)." >&2
+  exit 1
+fi
+
+# ---- macOS prereqs: Homebrew, which also installs the Command Line Tools (git) ----
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  for brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [[ -x "$brew" ]] && eval "$("$brew" shellenv)" && break
+  done
+  if ! command -v brew >/dev/null 2>&1; then
+    log "installing Homebrew (and the Command Line Tools); it asks for your password"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  fi
+fi
+
 # ---- Minimal prereqs (Linux only; skip if we can't elevate) ----
 if command -v apt-get >/dev/null 2>&1; then
   export DEBIAN_FRONTEND=noninteractive

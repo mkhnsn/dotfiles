@@ -110,6 +110,10 @@ pager = "delta"
 
 {{- if $fullSetup }}
 
+# Install the 1Password CLI before templates are rendered (they call onepasswordRead).
+[hooks.read-source-state.pre]
+command = {{ joinPath .chezmoi.sourceDir ".install-password-manager.sh" | quote }}
+
 [secret]
 command = "op"
 
