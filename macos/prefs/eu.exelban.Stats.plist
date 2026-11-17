@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LaunchAtLoginNext</key>
+	<true/>
+	<key>NSStatusItem Restore Position Battery_battery</key>
+	<integer>1051</integer>
+	<key>NSStatusItem Restore Position CPU_mini</key>
+	<integer>1258</integer>
+	<key>NSStatusItem Restore Position Disk_mini</key>
+	<integer>1164</integer>
+	<key>NSStatusItem Restore Position Network_speed</key>
+	<integer>1093</integer>
+	<key>NSStatusItem Restore Position RAM_mini</key>
+	<integer>1211</integer>
+</dict>
+</plist>

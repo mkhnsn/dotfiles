@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>3dview.colorscheme</key>
+	<string>Tomorrow</string>
+	<key>advanced.applicationFontFamily</key>
+	<string>SF Pro</string>
+	<key>advanced.consoleAutoClear</key>
+	<true/>
+	<key>advanced.consoleFontFamily</key>
+	<string>SF Mono</string>
+	<key>advanced.customizerFontFamily</key>
+	<string>SF Pro</string>
+	<key>advanced.toolbarExport2D</key>
+	<string>svg</string>
+	<key>advanced.toolbarExport3D</key>
+	<string>3mf</string>
+	<key>design.autoReload</key>
+	<true/>
+	<key>editor.fontfamily</key>
+	<string>SF Mono</string>
+	<key>editor.fontsize</key>
+	<integer>14</integer>
+	<key>editor.indentStyle</key>
+	<string>Spaces</string>
+	<key>editor.syntaxhighlight</key>
+	<string>For Light Background</string>
+	<key>export-3mf.add-meta-data</key>
+	<string>false</string>
+	<key>export-3mf.always-show-dialog</key>
+	<string>false</string>
+	<key>feature.lazy-union</key>
+	<true/>
+	<key>feature.textmetrics</key>
+	<true/>
+	<key>input.enableDriverHIDAPI</key>
+	<string>true</string>
+	<key>inputMouse.ctrlLeftClick</key>
+	<string>1</string>
+	<key>inputMouse.ctrlShiftLeftClick</key>
+	<string>3</string>
+	<key>inputMouse.preset</key>
+	<string>1</string>
+	<key>launcher.showOnStartup</key>
+	<false/>
+	<key>printing.localAppFileFormat</key>
+	<string>asciistl</string>
+	<key>printing.octoPrintFileFormat</key>
+	<string>asciistl</string>
+	<key>printing.printServiceFileFormat</key>
+	<string>asciistl</string>
+	<key>view.hide3DViewToolbar</key>
+	<false/>
+	<key>view.hideConsole</key>
+	<false/>
+	<key>view.hideCustomizer</key>
+	<false/>
+	<key>view.hideEditor</key>
+	<false/>
+	<key>view.hideEditorToolbar</key>
+	<false/>
+	<key>view.hideErrorLog</key>
+	<true/>
+	<key>view.hideViewportControl</key>
+	<true/>
+	<key>view.orthogonalProjection</key>
+	<true/>
+	<key>view.showAxes</key>
+	<true/>
+	<key>view.showEdges</key>
+	<false/>
+	<key>view.showScaleProportional</key>
+	<true/>
+</dict>
+</plist>

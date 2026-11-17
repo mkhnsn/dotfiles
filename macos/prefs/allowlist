@@ -1,0 +1,74 @@
+# App settings carried between Macs by app-prefs: domain<TAB>key pattern (fnmatch).
+# This repo is public. Add a key only after checking it holds no licence, token or
+# personal data (list names with `app-prefs diff`, never print values).
+
+# com.surteesstudios.Bartender
+com.surteesstudios.Bartender	BartenderBarOnlyOnNotchScreens
+com.surteesstudios.Bartender	HideItemsWhenShowingOthers
+com.surteesstudios.Bartender	HideShownItemsLeaveItemsToRightOfBartender
+com.surteesstudios.Bartender	HideShownItemsWhen
+com.surteesstudios.Bartender	IfScreenIsBiggerDontHide
+com.surteesstudios.Bartender	MenuBarColoring-SpaceSettings
+com.surteesstudios.Bartender	MenuBarShape
+com.surteesstudios.Bartender	MenuBarStyle
+com.surteesstudios.Bartender	MouseExitDelay
+com.surteesstudios.Bartender	MouseOverMenuBarTogglesBartender
+com.surteesstudios.Bartender	ProfileSettings
+com.surteesstudios.Bartender	ScrollingMenuBarShowsHiddenItems
+com.surteesstudios.Bartender	SeperatePills
+com.surteesstudios.Bartender	ShowAllItemsWhenDragging
+com.surteesstudios.Bartender	ShowDivider
+com.surteesstudios.Bartender	TriggerSettings
+com.surteesstudios.Bartender	UseBartenderBar
+com.surteesstudios.Bartender	com.sureteesstudios.bartender.shortcuts
+com.surteesstudios.Bartender	notchbar.*
+com.surteesstudios.Bartender	stored_style
+com.surteesstudios.Bartender	launchAtLogin.isEnabled
+
+# com.naotanhaocan.BetterMouse
+# config left out: it holds the licence email (binary, can't be trimmed)
+com.naotanhaocan.BetterMouse	mice
+com.naotanhaocan.BetterMouse	keyboards
+com.naotanhaocan.BetterMouse	appitems
+com.naotanhaocan.BetterMouse	logikeys
+
+# com.lwouis.alt-tab-macos
+com.lwouis.alt-tab-macos	appearance*
+com.lwouis.alt-tab-macos	hide*
+com.lwouis.alt-tab-macos	show*
+com.lwouis.alt-tab-macos	preview*
+com.lwouis.alt-tab-macos	*Shortcut*
+com.lwouis.alt-tab-macos	shortcutCount
+com.lwouis.alt-tab-macos	windowOrder
+com.lwouis.alt-tab-macos	windowDisplayDelay
+com.lwouis.alt-tab-macos	titleTruncation
+com.lwouis.alt-tab-macos	menubarIcon
+com.lwouis.alt-tab-macos	mouseHoverEnabled
+com.lwouis.alt-tab-macos	preferencesVersion
+
+# eu.exelban.Stats
+eu.exelban.Stats	NSStatusItem Restore Position *
+eu.exelban.Stats	LaunchAtLoginNext
+
+# dk.simonbs.Festivitas
+dk.simonbs.Festivitas	dockStringLights_*
+dk.simonbs.Festivitas	menuBarStringLights_*
+dk.simonbs.Festivitas	isSnowEnabled
+dk.simonbs.Festivitas	snow*
+dk.simonbs.Festivitas	dockMenuBarVisibility
+
+# org.openscad.OpenSCAD
+org.openscad.OpenSCAD	3dview.*
+org.openscad.OpenSCAD	advanced.*
+org.openscad.OpenSCAD	design.*
+org.openscad.OpenSCAD	editor.*
+org.openscad.OpenSCAD	export-3mf.*
+org.openscad.OpenSCAD	feature.*
+org.openscad.OpenSCAD	input.*
+org.openscad.OpenSCAD	inputMouse.*
+org.openscad.OpenSCAD	launcher.*
+org.openscad.OpenSCAD	printing.*
+org.openscad.OpenSCAD	view.*
+
+# com.hegenberg.KeyboardCleanTool
+com.hegenberg.KeyboardCleanTool	startAfterStart

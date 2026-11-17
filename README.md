@@ -276,6 +276,16 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   changes. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
   `mac-defaults --export-shortcuts` and commit.
 - Default browser: Chrome, set by `mac-setup` with `defaultbrowser` (macOS asks to confirm).
+- `app-prefs`: chosen app settings (Bartender, BetterMouse, AltTab, Stats, Festivitas,
+  OpenSCAD, KeyboardCleanTool) in `macos/prefs/`, allow-list only (`macos/prefs/allowlist`),
+  so licences and app state stay out of this public repo. `app-prefs export` on the Mac
+  you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply;
+  quit the apps first). `check` and `diff` list differing key names, never values. A test
+  fails if a committed setting looks like a licence, token or email address.
+- PrusaSlicer user presets (filament, print) are plain dotfiles under
+  `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
+- Kept private, through each app's own export saved in 1Password: Stream Deck profiles,
+  BetterDisplay settings, LightBurn prefs and devices. `mac-setup` reminds you to restore them.
 
 ## BetterTouchTool
 

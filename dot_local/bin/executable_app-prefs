@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""app-prefs — carry chosen app settings between Macs, allow-list only.
+
+  app-prefs export [domain...]   save allow-listed keys from this Mac into the repo
+  app-prefs apply  [domain...]   merge the saved keys into this Mac's settings
+  app-prefs check                exit 0 if every saved key matches this Mac
+  app-prefs diff                 list domains and key names that differ (never values)
+
+macos/prefs/allowlist holds `domain<TAB>pattern` lines (fnmatch patterns on key names).
+Only matching keys are exported, so licences, purchase records and app state never reach
+the repo; the repo is public, so add a key only after checking it holds no secret.
+apply merges (defaults export, update, defaults import): keys not in the repo, such as a
+licence on the new Mac, are kept. A running app is skipped, since it would write its own
+settings back when it quits; quit it and run apply again.
+"""
+import fnmatch
+import os
+import plistlib
+import subprocess
+import sys
+
+DEFAULTS = os.environ.get("APP_PREFS_DEFAULTS", "defaults")  # overridable for tests
+
+
+def prefs_dir():
+    d = os.environ.get("APP_PREFS_DIR")
+    if d:
+        return d
+    src = subprocess.run(["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+    return os.path.join(src, "macos", "prefs")
+
+
+def allowlist(base):
+    rules = {}
+    with open(os.path.join(base, "allowlist"), encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            domain, _, pattern = line.partition("\t")
+            if not pattern:
+                sys.exit(f"app-prefs: allowlist line needs domain<TAB>pattern: {line!r}")
+            rules.setdefault(domain.strip(), []).append(pattern.strip())
+    return rules
+
+
+def read_domain(domain):
+    r = subprocess.run([DEFAULTS, "export", domain, "-"], capture_output=True)
+    if r.returncode != 0 or not r.stdout.strip():
+        return {}
+    return plistlib.loads(r.stdout)
+
+
+def write_domain(domain, data):
+    subprocess.run([DEFAULTS, "import", domain, "-"], input=plistlib.dumps(data, fmt=plistlib.FMT_XML), check=True)
+
+
+def running(domain):
+    r = subprocess.run(["lsappinfo", "find", f"bundleid={domain}"], capture_output=True, text=True)
+    return bool(r.stdout.strip())
+
+
+def allowed(key, patterns):
+    return any(fnmatch.fnmatchcase(key, p) for p in patterns)
+
+
+def saved_path(base, domain):
+    return os.path.join(base, f"{domain}.plist")
+
+
+def load_saved(base, domain):
+    p = saved_path(base, domain)
+    if not os.path.exists(p):
+        return None
+    with open(p, "rb") as f:
+        return plistlib.load(f)
+
+
+def pick(rules, names):
+    unknown = [n for n in names if n not in rules]
+    if unknown:
+        sys.exit(f"app-prefs: not in the allowlist: {', '.join(unknown)}")
+    return names or sorted(rules)
+
+
+def cmd_export(base, rules, names):
+    for domain in pick(rules, names):
+        live = read_domain(domain)
+        kept = {k: v for k, v in live.items() if allowed(k, rules[domain])}
+        if not kept:
+            print(f"{domain}: no allow-listed keys on this Mac, skipped")
+            continue
+        with open(saved_path(base, domain), "wb") as f:
+            plistlib.dump(kept, f, fmt=plistlib.FMT_XML, sort_keys=True)
+        print(f"{domain}: saved {len(kept)} of {len(live)} keys")
+
+
+def cmd_apply(base, rules, names):
+    skipped = 0
+    for domain in pick(rules, names):
+        saved = load_saved(base, domain)
+        if saved is None:
+            continue
+        # Never apply a key the allowlist no longer covers.
+        saved = {k: v for k, v in saved.items() if allowed(k, rules[domain])}
+        if running(domain):
+            print(f"{domain}: app is running, skipped (quit it, then run app-prefs apply)")
+            skipped += 1
+            continue
+        live = read_domain(domain)
+        live.update(saved)
+        write_domain(domain, live)
+        print(f"{domain}: applied {len(saved)} keys")
+    return 1 if skipped else 0
+
+
+def differences(base, rules):
+    out = []
+    for domain in sorted(rules):
+        saved = load_saved(base, domain)
+        if saved is None:
+            continue
+        live = read_domain(domain)
+        keys = sorted(k for k, v in saved.items() if allowed(k, rules[domain]) and live.get(k) != v)
+        if keys:
+            out.append((domain, keys))
+    return out
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__.strip())
+        return 0
+    cmd, names = argv[0], argv[1:]
+    base = prefs_dir()
+    rules = allowlist(base)
+    if cmd == "export":
+        cmd_export(base, rules, names)
+        return 0
+    if cmd == "apply":
+        return cmd_apply(base, rules, names)
+    if cmd == "check":
+        return 1 if differences(base, rules) else 0
+    if cmd == "diff":
+        for domain, keys in differences(base, rules):
+            print(f"  {domain}: {', '.join(keys)}")
+        return 0
+    print("usage: app-prefs export|apply|check|diff [domain...]", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
