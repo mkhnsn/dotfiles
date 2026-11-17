@@ -40,6 +40,8 @@ brew "bandwhich"
 brew "procs"
 brew "cloudflared"
 brew "hashicorp/tap/terraform"
+brew "node"
+brew "pnpm"
 
 cask "dopplerhq/doppler/doppler"
 cask "windows-app"
