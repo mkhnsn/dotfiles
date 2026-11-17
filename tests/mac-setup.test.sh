@@ -234,7 +234,7 @@ test_manual_steps_start_open() {
   run "$SCRIPT" --status
   assert_open "FileVault key and Activation Lock code saved to 1Password"
   assert_open "Apps signed in and activated"
-  assert_open "1Password browser integration"
+  assert_open "Chrome signed in, 1Password browser integration"
   assert_open "Private app exports restored"; assert_open "Virtual machines moved"
   assert_open "Ninja Remote Screen Recording approved"; assert_has "6 step(s) left"
 }

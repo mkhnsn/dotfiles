@@ -143,7 +143,7 @@ help_brew()       { echo "Homebrew isn't installed."; }
 help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
-help_op_browser()  { echo "In 1Password: Settings > Browser > Connect with 1Password in the browser, and install the extension in Chrome. Settings > General > Show Quick Access: Cmd+Shift+Space."; }
+help_op_browser()  { echo "Sign in to your Google profile in Chrome; Chrome Sync installs the 1Password extension. Then in 1Password: Settings > Browser > Connect with 1Password in the browser, and Settings > General > Show Quick Access: Cmd+Shift+Space."; }
 help_chezmoi()    { echo "Dotfiles not applied, or out of date."; }
 help_brewfile()   { echo "Brewfile packages missing."; }
 help_gh()         { echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too."; }
@@ -178,7 +178,7 @@ act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com
 act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
 act_op_ssh()       { open -a 1Password; }
-act_op_browser()   { open -a 1Password; open "https://1password.com/downloads/browser-extension"; }
+act_op_browser()   { open -a "Google Chrome"; open -a 1Password; }
 act_chezmoi() {
   if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update
   else bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"; fi
@@ -214,7 +214,7 @@ brew|Homebrew installed|Tools
 rosetta|Rosetta installed|Tools
 onepassword|1Password CLI connected|Tools
 op_ssh|1Password SSH agent on|Tools
-op_browser|1Password browser integration and Quick Access shortcut|Tools
+op_browser|Chrome signed in, 1Password browser integration and Quick Access|Tools
 chezmoi|Dotfiles applied|Dotfiles
 brewfile|Brewfile packages installed|Dotfiles
 gh|GitHub CLI signed in|Accounts
