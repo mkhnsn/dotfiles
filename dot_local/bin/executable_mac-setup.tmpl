@@ -14,11 +14,15 @@
 # Runbook: unstable-studios/echo-core docs/devices/README.md (New Mac runbook).
 # Bash 3.2-compatible (stock macOS).
 
+# check_/help_/act_ functions are called by name ("check_$id").
+# shellcheck disable=SC2329
+
 set -u
 
 [ "$(uname -s)" = "Darwin" ] || { echo "mac-setup: macOS only"; exit 1; }
 
-for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+# MAC_SETUP_BREW overrides where to look for Homebrew (tests).
+for b in ${MAC_SETUP_BREW:-/opt/homebrew/bin/brew /usr/local/bin/brew}; do
   [ -x "$b" ] && eval "$("$b" shellenv)" && break
 done
 export PATH="$HOME/.local/bin:$PATH"
@@ -32,6 +36,9 @@ TAG_WANT="tag:echo-admin"
 {{- end }}
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/mac-setup"
+# Overridable for tests (tests/mac-setup.test.sh).
+APPS="${MAC_SETUP_APPS:-/Applications}"
+TTY="${MAC_SETUP_TTY:-/dev/tty}"
 SERIAL="$(ioreg -l | awk -F'"' '/IOPlatformSerialNumber/{print $4; exit}')"
 MODE=guided
 case "${1:-}" in
@@ -42,13 +49,16 @@ case "${1:-}" in
   *) echo "usage: mac-setup [--status|--reset]"; exit 1 ;;
 esac
 mkdir -p "$STATE_DIR"
+if [ "$MODE" = guided ]; then
+  exec 3<"$TTY" 2>/dev/null || { echo "mac-setup: needs a terminal for prompts; use --status"; exit 1; }
+fi
 
-if [ -t 1 ]; then G=$'\e[32m'; Y=$'\e[33m'; D=$'\e[2m'; B=$'\e[1m'; R=$'\e[0m'; else G= Y= D= B= R=; fi
+if [ -t 1 ]; then G=$'\e[32m'; Y=$'\e[33m'; D=$'\e[2m'; B=$'\e[1m'; R=$'\e[0m'; else G='' Y='' D='' B='' R=''; fi
 
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 ts_bin() {
   command -v tailscale 2>/dev/null && return 0
-  [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ] && echo /Applications/Tailscale.app/Contents/MacOS/Tailscale
+  [ -x "$APPS/Tailscale.app/Contents/MacOS/Tailscale" ] && echo "$APPS/Tailscale.app/Contents/MacOS/Tailscale"
 }
 ts_json() { local t; t="$(ts_bin)" || return 1; [ -n "$t" ] && "$t" status --json --peers=false 2>/dev/null; }
 confirmed() { [ -f "$STATE_DIR/$1" ]; }
@@ -77,7 +87,7 @@ check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
 check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
 check_ts_tag()     { ts_json | grep -q "\"$TAG_WANT\""; }
-check_btt()        { [ -d /Applications/BetterTouchTool.app ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
+check_btt()        { [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 check_btt_preset() { pgrep -x BetterTouchTool >/dev/null &&
                      osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
 check_remote()     { confirmed remote; }
@@ -123,7 +133,7 @@ act_chezmoi() {
 act_brewfile()    { chezmoi apply; }
 act_gh()          { gh auth login --web --git-protocol https; }
 act_doppler()     { doppler login; }
-act_tailscale()   { [ -d /Applications/Tailscale.app ] || brew install --cask tailscale-app; open -a Tailscale; }
+act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
 act_btt()         { open "https://folivora.ai"; }
 act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
 
@@ -162,20 +172,20 @@ run_step() {
     printf '\n  %s→ %s%s\n' "$B" "$title" "$R"
     printf '    %s\n' "$("help_$id")"
     if has_fn "act_$id"; then
-      read -r -p "    Do it now? [Y/n/s=skip/q=quit] " ans </dev/tty || ans=q
+      read -r -p "    Do it now? [Y/n/s=skip/q=quit] " ans <&3 || ans=q
       case "$ans" in
         n|N) ;;
         s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;;
         q|Q) exit 1 ;;
-        *) "act_$id" </dev/tty ;;
+        *) "act_$id" <&3 ;;
       esac
     fi
     case "$MANUAL" in
       *" $id "*)
-        read -r -p "    Done? [y/N/q] " ans </dev/tty || ans=q
+        read -r -p "    Done? [y/N/q] " ans <&3 || ans=q
         case "$ans" in y|Y) touch "$STATE_DIR/$id" ;; q|Q) exit 1 ;; *) return 1 ;; esac ;;
       *)
-        read -r -p "    Enter to re-check, s to skip, q to quit: " ans </dev/tty || ans=q
+        read -r -p "    Enter to re-check, s to skip, q to quit: " ans <&3 || ans=q
         case "$ans" in s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;; q|Q) exit 1 ;; esac ;;
     esac
   done

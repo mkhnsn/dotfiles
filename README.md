@@ -256,6 +256,9 @@ Recording approval. It ticks what's done, says what to do next, offers to do it 
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`.
 
+Tests: `make test` renders it, runs shellcheck and `tests/mac-setup.test.sh` (stub commands, no
+dependencies), also under bash 3.2 in Docker. CI runs the same on every PR.
+
 The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 `tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
 (`docs/devices/README.md`).
