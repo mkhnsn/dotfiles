@@ -1,0 +1,149 @@
+#!/bin/bash
+# mac-defaults — apply (or check) macOS settings and the Dock layout.
+#
+#   mac-defaults           apply settings, then the Dock if dockutil is installed
+#   mac-defaults --check   exit 0 if every setting and the Dock already match
+#   mac-defaults --diff    list the settings and Dock entries that differ
+#   mac-defaults --dock    apply only the Dock (apps that aren't installed are skipped)
+#   mac-defaults --export-shortcuts   save this Mac's system keyboard shortcuts into the repo
+#
+# System keyboard shortcuts (screenshots, Spotlight, input sources, ...) are the whole
+# com.apple.symbolichotkeys domain, kept in macos/symbolichotkeys.plist. Change them in
+# System Settings > Keyboard > Keyboard Shortcuts, then --export-shortcuts and commit.
+#
+# Run by run_onchange_after_darwin-defaults on apply, and offered by mac-setup.
+# Bash 3.2-compatible (stock macOS).
+
+set -u
+[ "$(uname -s)" = "Darwin" ] || { echo "mac-defaults: macOS only"; exit 1; }
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+APPS="${MAC_SETUP_APPS:-/Applications}"
+SYSAPPS="${MAC_SETUP_SYSAPPS:-/System/Applications}"   # overridable for tests
+SHORTCUTS="${MAC_DEFAULTS_SHORTCUTS:-$(chezmoi source-path 2>/dev/null)/macos/symbolichotkeys.plist}"
+
+# domain | key | type | value   (bools as true/false; `defaults read` prints 1/0)
+SETTINGS="com.apple.dock|autohide|bool|true
+com.apple.dock|tilesize|int|54
+com.apple.dock|show-recents|bool|false
+com.apple.dock|magnification|bool|false
+com.apple.dock|mru-spaces|bool|false
+com.apple.finder|ShowPathbar|bool|true
+com.apple.finder|FXPreferredViewStyle|string|Nlsv
+com.apple.finder|_FXSortFoldersFirst|bool|true
+com.apple.finder|NewWindowTarget|string|PfHm
+NSGlobalDomain|AppleShowAllExtensions|bool|true
+NSGlobalDomain|AppleInterfaceStyle|string|Dark
+NSGlobalDomain|NSAutomaticSpellingCorrectionEnabled|bool|false
+NSGlobalDomain|AppleKeyboardUIMode|int|2
+NSGlobalDomain|com.apple.swipescrolldirection|bool|true
+com.apple.screencapture|show-thumbnail|bool|true"
+
+# Dock apps in order. System apps live in /System/Applications.
+DOCK_APPS="Google Chrome
+Mail
+Microsoft Outlook
+Fantastical
+Claude
+Bear
+Slack
+Signal
+WhatsApp
+Messages
+Visual Studio Code - Insiders
+1Password
+Ghostty
+System Settings"
+
+want() { case "$1" in true) echo 1 ;; false) echo 0 ;; *) echo "$1" ;; esac; }
+
+settings_ok() {
+  local domain key type value
+  while IFS='|' read -r domain key type value; do
+    [ "$(defaults read "$domain" "$key" 2>/dev/null)" = "$(want "$value")" ] || return 1
+  done <<EOF
+$SETTINGS
+EOF
+}
+
+show_diff() {
+  local domain key type value cur
+  while IFS='|' read -r domain key type value; do
+    cur="$(defaults read "$domain" "$key" 2>/dev/null)"
+    [ "$cur" = "$(want "$value")" ] || printf '  %s %s: %s (want %s)\n' "$domain" "$key" "${cur:-unset}" "$value"
+  done <<EOF
+$SETTINGS
+EOF
+  shortcuts_ok || echo "  Keyboard shortcuts differ from macos/symbolichotkeys.plist"
+  if ! command -v dockutil >/dev/null 2>&1; then echo "  Dock: dockutil not installed"
+  elif ! dock_ok; then printf '  Dock: %s\n  want: %s\n' "$(dock_current | paste -sd, -)" "$(dock_wanted | paste -sd, -)"; fi
+}
+
+shortcuts_ok() {
+  [ -f "$SHORTCUTS" ] || return 0
+  [ "$(defaults read com.apple.symbolichotkeys 2>/dev/null)" = "$(defaults read "$SHORTCUTS" 2>/dev/null)" ]
+}
+
+apply_shortcuts() {
+  [ -f "$SHORTCUTS" ] || return 0
+  defaults import com.apple.symbolichotkeys "$SHORTCUTS"
+  /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u >/dev/null 2>&1 || true
+}
+
+apply_settings() {
+  local domain key type value
+  while IFS='|' read -r domain key type value; do
+    defaults write "$domain" "$key" "-$type" "$value"
+  done <<EOF
+$SETTINGS
+EOF
+  defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
+  killall Dock Finder SystemUIServer >/dev/null 2>&1 || true
+}
+
+app_path() {
+  local d
+  for d in "$APPS" "$SYSAPPS" "$SYSAPPS/Utilities"; do
+    [ -d "$d/$1.app" ] && { echo "$d/$1.app"; return 0; }
+  done
+  return 1
+}
+
+# The Dock apps that are installed, in order.
+dock_wanted() {
+  local name
+  while IFS= read -r name; do app_path "$name" >/dev/null && echo "$name"; done <<EOF
+$DOCK_APPS
+EOF
+}
+
+dock_current() { dockutil --list 2>/dev/null | awk -F'\t' '$3 == "persistentApps" { print $1 }'; }
+
+dock_ok() {
+  command -v dockutil >/dev/null 2>&1 || return 1
+  [ "$(dock_current)" = "$(dock_wanted)" ]
+}
+
+apply_dock() {
+  command -v dockutil >/dev/null 2>&1 || { echo "mac-defaults: dockutil not installed (Brewfile.workstation)"; return 1; }
+  local name
+  dockutil --remove all --no-restart >/dev/null 2>&1
+  while IFS= read -r name; do
+    dockutil --add "$(app_path "$name")" --no-restart >/dev/null 2>&1
+  done <<EOF
+$(dock_wanted)
+EOF
+  killall Dock >/dev/null 2>&1 || true
+  missing="$(printf '%s\n' "$DOCK_APPS" | while IFS= read -r n; do app_path "$n" >/dev/null || echo "$n"; done)"
+  [ -n "$missing" ] && printf 'Not installed yet, left out of the Dock: %s\n' "$(echo "$missing" | paste -sd, -)"
+  return 0
+}
+
+case "${1:-}" in
+  --check) settings_ok && shortcuts_ok && dock_ok ;;
+  --export-shortcuts) defaults export com.apple.symbolichotkeys "$SHORTCUTS" && echo "Saved to $SHORTCUTS" ;;
+  --dock)  apply_dock ;;
+  --diff)  show_diff ;;
+  "")      apply_settings; apply_shortcuts; command -v dockutil >/dev/null 2>&1 && apply_dock; exit 0 ;;
+  *)       echo "usage: mac-defaults [--check|--diff|--dock|--export-shortcuts]"; exit 1 ;;
+esac

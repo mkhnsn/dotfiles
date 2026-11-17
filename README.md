@@ -250,9 +250,10 @@ branch was deleted, and removes the ones that are merged or squash-merged (asks 
 
 `mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
 FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
-Tools, Homebrew, the 1Password CLI, dotfiles and Brewfile, `gh` and Doppler sign-in,
-Tailscale (name and tag), BetterTouchTool and its preset, and Ninja Remote's Screen
-Recording approval. It ticks what's done, says what to do next, offers to do it when it
+Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
+Tailscale (name and tag), BetterTouchTool and its preset, workstation apps (Brewfile, vendor
+downloads, gridfinity-studio, licences), Ninja Remote's Screen Recording approval, macOS
+settings and the Dock, and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`.
 
@@ -262,6 +263,19 @@ dependencies), also under bash 3.2 in Docker. CI runs the same on every PR.
 The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 `tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
 (`docs/devices/README.md`).
+
+## Workstation apps and macOS settings
+
+- `Brewfile.workstation`: GUI apps for workstation Macs (casks, plus App Store apps through
+  `mas`; sign in to the App Store first). Installed after the base Brewfile unless
+  `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
+  without a cask, licences and sign-ins are `mac-setup` steps.
+- `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
+  (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
+  (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
+  changes. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
+  `mac-defaults --export-shortcuts` and commit.
+- Default browser: Chrome, set by `mac-setup` with `defaultbrowser` (macOS asks to confirm).
 
 ## BetterTouchTool
 

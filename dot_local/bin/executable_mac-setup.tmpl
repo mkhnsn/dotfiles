@@ -66,6 +66,25 @@ ts_bin() {
 }
 ts_json() { local t; t="$(ts_bin)" || return 1; [ -n "$t" ] && "$t" status --json --peers=false 2>/dev/null; }
 confirmed() { [ -f "$STATE_DIR/$1" ]; }
+workstation() { [ "$ROLE" = workstation ]; }
+
+# Apps with no Homebrew cask: app bundle | where to get it.
+VENDOR_APPS="Festivitas|https://festivitas.app
+Cursorful|https://cursorful.com
+HueForge|https://shop.thehueforge.com
+MASSO Link|https://www.masso.com.au
+EXStar Hub|https://www.shining3d.com
+3DconnexionSettings|https://3dconnexion.com/drivers"
+vendor_missing() {
+  local name url
+  while IFS='|' read -r name url; do [ -d "$APPS/$name.app" ] || echo "$name|$url"; done <<EOF
+$VENDOR_APPS
+EOF
+}
+default_browser() {
+  defaults read "$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure" LSHandlers 2>/dev/null |
+    awk 'BEGIN{RS="}"} /LSHandlerURLScheme = http;/ { if (match($0,/LSHandlerRoleAll = "[^"]*"/)) print substr($0,RSTART+20,RLENGTH-21) }'
+}
 
 # ---- Checks: each returns 0 when the step is done ----------------------------------
 
@@ -82,6 +101,9 @@ check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
                      brew doctor check_for_installed_developer_tools check_if_supported_sdk_available >/dev/null 2>&1; }
 check_brew()       { command -v brew >/dev/null 2>&1; }
 check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/null | grep -q .; }
+OP_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
+check_op_browser() { workstation || return 0; confirmed op_browser; }
 check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] &&
                      chezmoi verify --exclude=scripts,templates >/dev/null 2>&1; }
 check_brewfile()   { brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile" >/dev/null 2>&1; }
@@ -91,10 +113,17 @@ check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
 check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
 check_ts_tag()     { ts_json | grep -q "\"$TAG_WANT\""; }
-check_btt()        { [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
-check_btt_preset() { pgrep -x BetterTouchTool >/dev/null &&
+check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
+check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null &&
                      osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
 check_remote()     { confirmed remote; }
+check_ws_apps()    { workstation || return 0
+                     brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
+check_vendor()     { workstation || return 0; [ -z "$(vendor_missing)" ]; }
+check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
+check_licences()   { workstation || return 0; confirmed licences; }
+check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
+check_browser()    { workstation || return 0; [ "$(default_browser)" = com.google.chrome ]; }
 
 # ---- Help: what to do when a check fails ------------------------------------------
 
@@ -107,6 +136,8 @@ help_escrow()     { echo "In SimpleMDM, open this Mac ($SERIAL), reveal the FDE 
 help_clt()        { echo "Command Line Tools missing or stale (Homebrew refuses old ones)."; }
 help_brew()       { echo "Homebrew isn't installed."; }
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI."; }
+help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
+help_op_browser()  { echo "In 1Password: Settings > Browser > Connect with 1Password in the browser, and install the extension in Chrome. Settings > General > Show Quick Access: Cmd+Shift+Space."; }
 help_chezmoi()    { echo "Dotfiles not applied, or out of date."; }
 help_brewfile()   { echo "Brewfile packages missing."; }
 help_gh()         { echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too."; }
@@ -116,6 +147,12 @@ help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WA
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
 help_btt_preset() { echo "Import the BTT preset from the dotfiles. Start BTT first; it asks for Accessibility once."; }
+help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."; }
+help_vendor()     { echo "Apps without a Homebrew cask, from their own sites:"; vendor_missing | while IFS='|' read -r n u; do printf '      %s  %s\n' "$n" "$u"; done; }
+help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
+help_licences()   { echo "Sign in or activate: Microsoft 365 (Office), Fantastical, PDF Expert, Bartender, BetterDisplay, BetterMouse (set the mouse to standard scrolling; the trackpad stays natural), DaisyDisk, Parallels, LightBurn, HueForge, Fusion, Raycast, Slack, Claude."; }
+help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
+help_browser()    { echo "Make Google Chrome the default browser (macOS asks you to confirm)."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
 
 # ---- Actions: what this script can do itself (optional) --------------------------
@@ -130,6 +167,8 @@ act_clt() {
 }
 act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && eval "$(/opt/homebrew/bin/brew shellenv)"; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
+act_op_ssh()       { open -a 1Password; }
+act_op_browser()   { open -a 1Password; open "https://1password.com/downloads/browser-extension"; }
 act_chezmoi() {
   if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update
   else bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"; fi
@@ -139,6 +178,16 @@ act_gh()          { gh auth login --web --git-protocol https; }
 act_doppler()     { doppler login; }
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
 act_btt()         { open "https://folivora.ai"; }
+act_ws_apps()     { HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$(chezmoi source-path)/Brewfile.workstation"; }
+act_vendor()      { vendor_missing | while IFS='|' read -r n u; do open "$u"; done; }
+act_gridfinity() {
+  local tmp; tmp="$(mktemp -d)"
+  gh release download -R unstable-studios/gridfinity-studio --pattern '*arm64-mac.zip' -D "$tmp" &&
+    ditto -x -k "$tmp"/*arm64-mac.zip "$APPS" && echo "Installed gridfinity-studio"
+  rm -rf "$tmp"
+}
+act_defaults()    { mac-defaults; }
+act_browser()     { defaultbrowser chrome; }
 act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
 
 # ---- Steps, in order: id | title | phase -------------------------------------------
@@ -152,6 +201,8 @@ escrow|FileVault key and Activation Lock code saved to 1Password|MDM
 clt|Command Line Tools current|Tools
 brew|Homebrew installed|Tools
 onepassword|1Password CLI connected|Tools
+op_ssh|1Password SSH agent on|Tools
+op_browser|1Password browser integration and Quick Access shortcut|Tools
 chezmoi|Dotfiles applied|Dotfiles
 brewfile|Brewfile packages installed|Dotfiles
 gh|GitHub CLI signed in|Accounts
@@ -161,9 +212,15 @@ ts_name|Tailscale name is $(lower "$HOSTNAME_WANT")|Network
 ts_tag|Tailscale tag $TAG_WANT|Network
 btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
-remote|Ninja Remote Screen Recording approved|Apps"
+ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
+vendor|Apps without a cask installed|Apps
+gridfinity|gridfinity-studio installed|Apps
+licences|Apps signed in and activated|Apps
+remote|Ninja Remote Screen Recording approved|Apps
+defaults|macOS settings and Dock|Settings
+browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote licences op_browser "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.

@@ -1,0 +1,82 @@
+# GUI apps for workstation Macs (not servers: is_server = false).
+# Installed by run_install-packages after the base Brewfile, with --adopt so apps
+# already in /Applications are taken over instead of failing. App Store apps need
+# you signed in to the App Store. Apps without a cask (vendor downloads, licences)
+# are mac-setup steps.
+
+tap "steipete/tap"
+
+brew "mas"
+brew "dockutil"
+brew "defaultbrowser"
+
+# Everyday
+cask "google-chrome"
+cask "raycast"
+cask "ghostty"
+cask "claude"
+cask "slack"
+cask "fantastical"
+cask "signal"
+cask "whatsapp"
+cask "discord"
+cask "spotify"
+cask "zoom"
+cask "microsoft-outlook"
+cask "microsoft-word"
+cask "microsoft-excel"
+cask "microsoft-powerpoint"
+cask "microsoft-onenote"
+cask "onedrive"
+cask "pdf-expert"
+cask "anylist"
+cask "tailscale-app"
+
+# Menu bar and window management
+cask "bartender"
+cask "betterdisplay"
+cask "bettermouse"
+cask "stats"
+cask "alt-tab"
+cask "steipete/tap/codexbar"
+cask "daisydisk"
+cask "keyboardcleantool"
+
+# Dev
+cask "docker-desktop"
+cask "utm"
+cask "parallels"
+cask "vnc-viewer"
+cask "netspot"
+cask "figma"
+cask "handbrake-app"
+
+# CAD and making
+cask "autodesk-fusion"
+cask "openscad"
+cask "prusaslicer"
+cask "bambu-studio"
+cask "blender"
+cask "lightburn"
+cask "xtool-studio"
+cask "openrocket"
+
+# Hardware and devices
+cask "elgato-stream-deck"
+cask "insta360-link-controller"
+cask "raspberry-pi-imager"
+cask "balenaetcher"
+cask "via"
+
+# Personal
+cask "steam"
+
+# App Store
+mas "Bear", id: 1091189122
+mas "Telegram", id: 747648890
+mas "The Unarchiver", id: 425424353
+mas "Goodnotes", id: 1444383602
+mas "Xcode", id: 497799835
+mas "Shapr3D", id: 1091675654
+mas "Vivid", id: 6443470555
+mas "Equinox", id: 1591510203
