@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>appearanceSize</key>
+	<string>0</string>
+	<key>appearanceStyle</key>
+	<string>2</string>
+	<key>appearanceVisibility</key>
+	<string>0</string>
+	<key>hideSpaceNumberLabels</key>
+	<string>true</string>
+	<key>hideWindowlessApps</key>
+	<string>false</string>
+	<key>menubarIcon</key>
+	<string>0</string>
+	<key>mouseHoverEnabled</key>
+	<string>false</string>
+	<key>preferencesVersion</key>
+	<string>11.10.1</string>
+	<key>previewFadeInAnimation</key>
+	<string>false</string>
+	<key>previewFocusedWindow</key>
+	<string>false</string>
+	<key>shortcutCount</key>
+	<string>3</string>
+	<key>showAppsOrWindows10</key>
+	<string>1</string>
+	<key>showAppsOrWindows2</key>
+	<string>1</string>
+	<key>showAppsOrWindows3</key>
+	<string>1</string>
+	<key>showAppsOrWindows4</key>
+	<string>1</string>
+	<key>showAppsOrWindows5</key>
+	<string>1</string>
+	<key>showAppsOrWindows6</key>
+	<string>1</string>
+	<key>showAppsOrWindows7</key>
+	<string>1</string>
+	<key>showAppsOrWindows8</key>
+	<string>1</string>
+	<key>showAppsOrWindows9</key>
+	<string>1</string>
+	<key>showOnScreen</key>
+	<string>1</string>
+	<key>showTitles</key>
+	<string>2</string>
+	<key>showWindowlessApps</key>
+	<integer>0</integer>
+	<key>showWindowlessApps10</key>
+	<string>0</string>
+	<key>showWindowlessApps2</key>
+	<integer>0</integer>
+	<key>showWindowlessApps3</key>
+	<integer>0</integer>
+	<key>titleTruncation</key>
+	<string>1</string>
+	<key>windowDisplayDelay</key>
+	<string>0</string>
+	<key>windowOrder</key>
+	<string>0</string>
+</dict>
+</plist>

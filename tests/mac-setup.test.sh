@@ -50,6 +50,9 @@ setup() {
   mark_done remote
   mark_done licences
   mark_done op_browser
+  mark_done app_exports
+  mark_done vm
+  stub app-prefs 'exit 0'
   mkdir -p "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t"
   touch "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 }
@@ -222,7 +225,8 @@ test_manual_steps_start_open() {
   assert_open "FileVault key and Activation Lock code saved to 1Password"
   assert_open "Apps signed in and activated"
   assert_open "1Password browser integration"
-  assert_open "Ninja Remote Screen Recording approved"; assert_has "4 step(s) left"
+  assert_open "Private app exports restored"; assert_open "Virtual machines moved"
+  assert_open "Ninja Remote Screen Recording approved"; assert_has "6 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -246,6 +250,17 @@ test_op_ssh_agent_off() {
   assert_open "1Password SSH agent on"
   run "$SCRIPT_SERVER" --status
   assert_done "1Password SSH agent on"
+}
+
+test_app_prefs_differ_lists_apps() {
+  stub app-prefs '[ "$1" = diff ] && echo "  com.surteesstudios.Bartender: ProfileSettings"; exit 1'
+  run "$SCRIPT" --status
+  assert_open "Saved app settings applied"
+  printf 'n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "com.surteesstudios.Bartender: ProfileSettings"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Saved app settings applied"
 }
 
 test_gridfinity_missing() {

@@ -32,3 +32,6 @@ jobs:
 
       - name: mac-setup tests (bash 5)
         run: bash tests/mac-setup.test.sh
+
+      - name: app-prefs tests (and guard on committed settings)
+        run: python3 -I tests/app_prefs_test.py
