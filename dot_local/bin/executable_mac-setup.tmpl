@@ -91,11 +91,12 @@ default_browser() {
 
 check_user()       { [ "$(id -u)" -ne 0 ] && [ -n "${HOME:-}" ]; }
 check_mdm()        { profiles status -type enrollment 2>/dev/null | grep -q "MDM enrollment: Yes"; }
-check_filevault()  { fdesetup status 2>/dev/null | grep -q "FileVault is On"; }
+# Servers run without FileVault so they recover from restarts unattended (echo-core two-machine plan).
+check_filevault()  { workstation || return 0; fdesetup status 2>/dev/null | grep -q "FileVault is On"; }
 check_profiles()   { local p; p="$(system_profiler SPConfigurationProfileDataType 2>/dev/null)";
                      printf '%s' "$p" | grep -q "macOS: Firewall" && printf '%s' "$p" | grep -q "macOS: NinjaOne privacy"; }
 check_ninja()      { pgrep -f NinjaRMMAgent/programfiles/ninjarmm-macagent >/dev/null; }
-check_escrow()     { confirmed escrow; }
+check_escrow()     { workstation || return 0; confirmed escrow; }
 # Ask Homebrew's own doctor checks, which are what make it refuse stale tools.
 check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
                      command -v brew >/dev/null 2>&1 || return 0
@@ -205,7 +206,7 @@ act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
 
 STEPS="user|Running as your own user|Basics
 mdm|Enrolled in SimpleMDM|MDM
-filevault|FileVault on|MDM
+filevault|FileVault on (workstations)|MDM
 profiles|MDM profiles installed|MDM
 ninja|NinjaOne agent running|MDM
 escrow|FileVault key and Activation Lock code saved to 1Password|MDM
