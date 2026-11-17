@@ -6,6 +6,9 @@
   app-prefs check                exit 0 if every saved key matches this Mac
   app-prefs diff                 list domains and key names that differ (never values)
 
+Exit codes: 0 done, 1 some apps were running and skipped (or check found differences),
+2 error.
+
 macos/prefs/allowlist holds `domain<TAB>pattern` lines (fnmatch patterns on key names).
 Only matching keys are exported, so licences, purchase records and app state never reach
 the repo; the repo is public, so add a key only after checking it holds no secret.
@@ -22,24 +25,37 @@ import sys
 DEFAULTS = os.environ.get("APP_PREFS_DEFAULTS", "defaults")  # overridable for tests
 
 
+def fail(msg):
+    print(f"app-prefs: {msg}", file=sys.stderr)
+    sys.exit(2)
+
+
 def prefs_dir():
     d = os.environ.get("APP_PREFS_DIR")
     if d:
         return d
-    src = subprocess.run(["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+    # chezmoi sets CHEZMOI_SOURCE_DIR for its scripts; `chezmoi source-path` returns
+    # nothing when called from inside a running `chezmoi apply`.
+    src = os.environ.get("CHEZMOI_SOURCE_DIR") or subprocess.run(
+        ["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+    if not src:
+        fail("can't find the dotfiles source (set CHEZMOI_SOURCE_DIR or APP_PREFS_DIR)")
     return os.path.join(src, "macos", "prefs")
 
 
 def allowlist(base):
     rules = {}
-    with open(os.path.join(base, "allowlist"), encoding="utf-8") as f:
+    path = os.path.join(base, "allowlist")
+    if not os.path.exists(path):
+        fail(f"no allowlist at {path}")
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.rstrip("\n")
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
             domain, _, pattern = line.partition("\t")
             if not pattern:
-                sys.exit(f"app-prefs: allowlist line needs domain<TAB>pattern: {line!r}")
+                fail(f"allowlist line needs domain<TAB>pattern: {line!r}")
             rules.setdefault(domain.strip(), []).append(pattern.strip())
     return rules
 
@@ -79,7 +95,7 @@ def load_saved(base, domain):
 def pick(rules, names):
     unknown = [n for n in names if n not in rules]
     if unknown:
-        sys.exit(f"app-prefs: not in the allowlist: {', '.join(unknown)}")
+        fail(f"not in the allowlist: {', '.join(unknown)}")
     return names or sorted(rules)
 
 

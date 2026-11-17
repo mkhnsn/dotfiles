@@ -4,5 +4,6 @@
 # prefs hash: {{ output "sh" "-c" (printf "cat %q/macos/prefs/* | shasum" .chezmoi.sourceDir) | trim }}
 set -uo pipefail
 # Running apps are skipped (they'd write their own settings back); mac-setup re-checks.
-"$HOME/.local/bin/app-prefs" apply || echo "app-prefs: some apps were running; quit them and run app-prefs apply"
+# Exit 1 means running apps were skipped (it says which); 2 is an error. Neither fails the apply.
+"$HOME/.local/bin/app-prefs" apply || true
 {{ end -}}

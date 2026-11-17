@@ -1,4 +1,5 @@
 # GUI apps for workstation Macs (not servers: is_server = false).
+# OpenSCAD is a vendor download in mac-setup: its cask was disabled (fails Gatekeeper).
 # Installed by run_install-packages after the base Brewfile, with --adopt so apps
 # already in /Applications are taken over instead of failing. App Store apps need
 # you signed in to the App Store. Apps without a cask (vendor downloads, licences)
@@ -46,14 +47,13 @@ cask "keyboardcleantool"
 cask "docker-desktop"
 cask "utm"
 cask "parallels"
-cask "vnc-viewer"
+cask "realvnc-connect-viewer"
 cask "netspot"
 cask "figma"
 cask "handbrake-app"
 
 # CAD and making
 cask "autodesk-fusion"
-cask "openscad"
 cask "prusaslicer"
 cask "bambu-studio"
 cask "blender"
@@ -66,7 +66,7 @@ cask "elgato-stream-deck"
 cask "insta360-link-controller"
 cask "raspberry-pi-imager"
 cask "balenaetcher"
-cask "via"
+# VIA: use the web app at https://usevia.app (its cask was disabled, fails Gatekeeper)
 
 # Personal
 cask "steam"
