@@ -1,5 +1,4 @@
-tap "homebrew/bundle"
-tap "dopplerhq/cli"
+tap "dopplerhq/doppler"
 tap "hashicorp/tap"
 
 brew "zsh-completions"
@@ -40,8 +39,8 @@ brew "iftop"
 brew "bandwhich"
 brew "procs"
 brew "cloudflared"
-brew "dopplerhq/cli/doppler"
 brew "hashicorp/tap/terraform"
 
+cask "dopplerhq/doppler/doppler"
 cask "windows-app"
 cask "visual-studio-code@insiders"
