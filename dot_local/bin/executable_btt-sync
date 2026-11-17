@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Required parameters:
+# @raycast.schemaVersion 1
+# @raycast.title BetterTouchTool: Export Preset
+# @raycast.mode compact
+# Optional parameters:
+# @raycast.packageName Dotfiles
+# @raycast.icon 🖱️
+# @raycast.description Export BetterTouchTool's Default preset into the dotfiles repo
+
+# Sync BetterTouchTool's Default preset with the dotfiles repo (macos/btt/).
+#   btt-sync export   BTT -> repo (then review and commit the diff)
+#   btt-sync import   repo -> BTT (on a new Mac, after installing BTT from folivora.ai)
+# The preset includes BTT's general settings. It's in a public repo: keep secrets out of triggers.
+
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "btt-sync: macOS only"
+  exit 1
+fi
+if [[ ! -d /Applications/BetterTouchTool.app ]]; then
+  echo "btt-sync: install BetterTouchTool from https://folivora.ai first (not Homebrew)"
+  exit 1
+fi
+
+preset="$(chezmoi source-path)/macos/btt/Default.bttpreset"
+
+case "${1:-export}" in
+  export)
+    # BTT can't write to every path; export to Downloads, then move into the repo.
+    tmp="$HOME/Downloads/.btt-sync-$$.bttpreset"
+    osascript -e "tell application \"BetterTouchTool\" to export_preset \"Default\" outputPath \"$tmp\" compress false includeSettings true" >/dev/null
+    mv "$tmp" "$preset"
+    echo "Exported to $preset"
+    git -C "$(dirname "$preset")" diff --stat -- "$preset" || true
+    ;;
+  import)
+    osascript -e "tell application \"BetterTouchTool\" to import_preset \"$preset\"" >/dev/null
+    echo "Imported $preset. Check BTT > Configuration; activate the preset if it isn't."
+    ;;
+  *)
+    echo "usage: btt-sync [export|import]"
+    exit 1
+    ;;
+esac

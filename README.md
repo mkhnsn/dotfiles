@@ -246,6 +246,17 @@ branch was deleted, and removes the ones that are merged or squash-merged (asks 
 
 ---
 
+## BetterTouchTool
+
+BTT is installed from [folivora.ai](https://folivora.ai), not Homebrew (BTT warns about
+Homebrew installs: `brew upgrade` replaces the app under its own updater). Its Default preset,
+with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed by chezmoi:
+
+- `btt-sync import` on a new Mac, after installing BTT
+- `btt-sync export` after changing triggers, then review and commit the diff
+
+This repo is public: keep secrets out of BTT triggers.
+
 ## 1Password Integration
 
 1Password is used for:

@@ -1,9 +1,15 @@
 tap "dopplerhq/doppler"
 tap "hashicorp/tap"
+tap "timrogers/tap"
 
 brew "zsh-completions"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
+
+# Used by BetterTouchTool triggers (macos/btt): display reset, Litra light
+brew "displayplacer"
+brew "timrogers/tap/litra"
+
 brew "git"
 brew "bat"
 brew "duti"
