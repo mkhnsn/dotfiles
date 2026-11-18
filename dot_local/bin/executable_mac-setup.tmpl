@@ -108,7 +108,8 @@ EOF2
 }
 # Private app exports: label | app | where to restore | old Mac step name
 EXPORTS="Stream Deck|Elgato Stream Deck|Preferences > Profiles > Restore
-BetterDisplay|BetterDisplay|Settings > Application > Import"
+BetterDisplay|BetterDisplay|Settings > Application > Import
+BetterMouse|BetterMouse|its settings, restore the configuration backup"
 export_field() { printf '%s\n' "$EXPORTS" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
 export_steps() { local l
   while IFS='|' read -r l _ _; do echo "export:$l|$l export restored|Apps"; done <<EOF2
@@ -176,7 +177,10 @@ check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
 check_licence()    { workstation || return 0; confirmed "licence:$1" || confirmed licences; }
 check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
-check_export()     { workstation || return 0; confirmed "export:$1" || confirmed app_exports; }
+EXPORTS_DIR="${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}/Apps/Mac app exports"
+check_onedrive()   { workstation || return 0; [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}" ]; }
+# BetterMouse wasn't in the combined step, so the old confirmation doesn't cover it.
+check_export()     { workstation || return 0; confirmed "export:$1" || { [ "$1" != BetterMouse ] && confirmed app_exports; }; }
 check_vm()         { workstation || return 0; confirmed vm; }
 check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
 check_browser()    { workstation || return 0; [ "$(default_browser)" = com.google.chrome ]; }
@@ -221,6 +225,7 @@ help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
 help_licence()    { local n; n="$(licence_field "$1" 3)"; echo "Open $1 and sign in or enter its licence.${n:+ $n}"; }
 help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit these apps first; a running app writes its own settings back:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
+help_onedrive()    { echo "Sign in to OneDrive with your Unstable Studios account (mike@unstablestudios.com). The private app exports sync through it."; }
 help_export()      { echo "Restore $1 from its export in OneDrive (Unstable Studios) > Apps > Mac app exports: $(export_field "$1" 3). Make the export on the old Mac first."; }
 help_vm()          { cat <<'EOV'
 Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Parallels: File > Pack ("vWindows 11.pvmp", about half the size) and write its checksum: shasum -a 256 "vWindows 11.pvmp" | cut -d' ' -f1 > "vWindows 11.sha256.txt".
@@ -249,7 +254,8 @@ act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1passwo
 act_op_ssh()       { open -a 1Password; }
 act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
 act_licence()      { open -a "$(licence_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
-act_export()       { open "$HOME/Library/CloudStorage/OneDrive-UnstableStudios/Apps/Mac app exports" 2>/dev/null; open -a "$(export_field "$1" 2)" 2>/dev/null; }
+act_onedrive()     { open -a OneDrive; }
+act_export()       { open "$EXPORTS_DIR" 2>/dev/null; open -a "$(export_field "$1" 2)" 2>/dev/null; }
 act_chezmoi() {
   if chezmoi_config_stale; then chezmoi init; return; fi
   if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update
@@ -316,6 +322,7 @@ $(vendor_steps)
 gridfinity|gridfinity-studio installed|Apps
 $(licence_steps)
 app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
+onedrive|OneDrive signed in (Unstable Studios)|Apps
 $(export_steps)
 vm|Virtual machines moved|Apps
 remote|Ninja Remote Screen Recording approved|Apps

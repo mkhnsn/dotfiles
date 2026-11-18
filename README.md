@@ -348,7 +348,7 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
-  Mac app exports: Stream Deck profiles and BetterDisplay settings. `mac-setup` reminds you to restore them.
+  Mac app exports: Stream Deck profiles, BetterDisplay settings and the BetterMouse configuration backup (`mac-setup` checks OneDrive is signed in first). `mac-setup` reminds you to restore them.
 
 ## BetterTouchTool
 

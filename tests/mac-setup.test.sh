@@ -19,7 +19,8 @@ PASS=0 FAIL=0 OUT="" RC=0
 setup() {
   T="$(mktemp -d)"
   export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
-  export MAC_SETUP_LOCKHART="$T/lockhart"
+  export MAC_SETUP_LOCKHART="$T/lockhart" MAC_SETUP_ONEDRIVE="$T/OneDrive"
+  mkdir -p "$T/OneDrive"
   STUBS="$HOME/.local/bin"
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
   export PATH="$STUBS:/usr/bin:/bin"
@@ -58,6 +59,7 @@ setup() {
   mark_done licences
   mark_done op_browser
   mark_done app_exports
+  mark_done export_BetterMouse
   mark_done vm
   stub app-prefs 'exit 0'
   mkdir -p "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t"
@@ -253,9 +255,10 @@ test_manual_steps_start_open() {
   assert_open "Chrome signed in to your Google profile"; assert_open "1Password connected to the browser"
   assert_open "1Password Quick Access on Cmd+Shift+Space"
   assert_open "Stream Deck export restored"; assert_open "BetterDisplay export restored"
+  assert_open "BetterMouse export restored"
   assert_open "Virtual machines moved"; assert_open "Ninja Remote Screen Recording approved"
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
-  assert_has "24 step(s) left"
+  assert_has "25 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -536,6 +539,18 @@ test_combined_confirmation_still_counts() {
   run "$SCRIPT" --status
   assert_done "FileVault key saved to 1Password"; assert_done "Stream Deck export restored"
   assert_done "LightBurn signed in or activated"
+}
+
+test_onedrive_must_be_signed_in() {
+  rmdir "$T/OneDrive"
+  run "$SCRIPT" --status
+  assert_open "OneDrive signed in (Unstable Studios)"
+}
+
+test_new_export_not_covered_by_old_confirmation() {
+  rm -f "$XDG_STATE_HOME/mac-setup/export_BetterMouse"
+  run "$SCRIPT" --status
+  assert_done "Stream Deck export restored"; assert_open "BetterMouse export restored"
 }
 
 # ---- Run -------------------------------------------------------------------------
