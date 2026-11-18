@@ -270,6 +270,14 @@ test_workstation_apps_missing() {
   assert_open "Workstation apps installed"; assert_done "Brewfile packages installed"
 }
 
+test_workstation_apps_skip_self_managed() {
+  # bundle check passes only when brew-why's skip list reaches it.
+  stub brew "case \"\$1 \$2\" in 'bundle check') case \"\$*\" in *Brewfile.workstation*) [ \"\$HOMEBREW_BUNDLE_CASK_SKIP\" = onedrive ] ;; esac ;; --prefix*) echo $T/brew ;; esac; exit 0"
+  stub brew-why '[ "$1" = --skip ] && echo onedrive'
+  run "$SCRIPT" --status
+  assert_done "Workstation apps installed"
+}
+
 test_workstation_apps_help_has_brew_why() {
   stub brew "case \"\$1 \$2\" in 'bundle check') case \"\$*\" in *Brewfile.workstation*) exit 1 ;; esac ;; --prefix*) echo $T/brew ;; esac; exit 0"
   stub brew-why 'echo "utm: UTM 4.7.4 is installed outside Homebrew (cask: 5.0.9). To let Homebrew replace and manage it: brew install --cask --force utm"'

@@ -4,9 +4,14 @@
     brew-why                      # the missing casks in Brewfile.workstation
     brew-why --brewfile FILE      # ... in another Brewfile
     brew-why utm onedrive         # these casks
+    brew-why --skip               # casks brew bundle should skip on this machine
 
 Prints one line per cask: the cause and a command that fixes it. Exits 1 if
-anything is missing. Used by the dotfiles' install script (the end-of-apply
+anything is missing. Apps already installed in a way Homebrew can't take over
+(an installer package that updates itself, a copy newer than the cask) are
+skipped on this machine: --skip prints them for HOMEBREW_BUNDLE_CASK_SKIP, and
+the default listing mentions them on stderr without counting them. Machines
+without the app still get the cask. Used by the dotfiles' install script (the end-of-apply
 summary) and by mac-setup. Python 3 standard library only.
 """
 
@@ -33,12 +38,12 @@ def default_brewfile():
         return os.path.expanduser("~/.local/share/chezmoi/Brewfile.workstation")
 
 
-def missing(brewfile):
+def missing(brewfile, skip=""):
     """Casks and other entries `brew bundle check` reports as missing."""
     out = subprocess.run(
         ["brew", "bundle", "check", "--no-upgrade", "--verbose", "--file", brewfile],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-        env={**os.environ, "HOMEBREW_NO_AUTO_UPDATE": "1"},
+        env={**os.environ, "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_BUNDLE_CASK_SKIP": skip},
     ).stdout
     casks, other = [], []
     for line in out.splitlines():
@@ -106,8 +111,11 @@ def installer_apps(cask):
 
 
 def explain(token, cask, brewfile_name):
+    """(skip, line): skip is True when the app is already installed in a way
+    Homebrew can't or shouldn't take over, so brew bundle should leave it out
+    on this machine (other machines still get the cask)."""
     if cask is None:
-        return f"{token}: Homebrew doesn't know this cask. Check its name in {brewfile_name}"
+        return False, f"{token}: Homebrew doesn't know this cask. Check its name in {brewfile_name}"
     cver = str(cask.get("version", "")).split(",")[0]
     keep = f"To keep yours, remove cask \"{token}\" from {brewfile_name}"
     for app in artifacts(cask, "app"):
@@ -118,44 +126,76 @@ def explain(token, cask, brewfile_name):
         name = os.path.basename(path)[:-4]
         was = f"{name} {have}" if have else name
         if have and cver not in ("", "latest") and version_key(have) > version_key(cver):
-            return (f"{token}: {was} is installed outside Homebrew and is newer than the cask ({cver}), "
-                    f"so Homebrew won't take it over. {keep}, or leave it until the cask catches up")
+            return True, (f"{token}: {was} is installed outside Homebrew and is newer than the cask ({cver}), "
+                          f"so it's skipped here until the cask catches up")
         if have and cver not in ("", "latest") and version_key(have) == version_key(cver):
-            return (f"{token}: {was} is installed outside Homebrew. "
-                    f"To let Homebrew manage it: brew install --cask --adopt {token}. {keep}")
-        return (f"{token}: {was} is installed outside Homebrew" + (f" (cask: {cver})" if cver not in ("", "latest") else "")
-                + f". To let Homebrew replace and manage it: brew install --cask --force {token}. {keep}")
+            return False, (f"{token}: {was} is installed outside Homebrew. "
+                           f"To let Homebrew manage it: brew install --cask --adopt {token}. {keep}")
+        return False, (f"{token}: {was} is installed outside Homebrew" + (f" (cask: {cver})" if cver not in ("", "latest") else "")
+                       + f". To let Homebrew replace and manage it: brew install --cask --force {token}. {keep}")
     if artifacts(cask, "app"):
-        return f"{token}: not installed. Install it: brew install --cask {token} (the error says why if it fails)"
+        return False, f"{token}: not installed. Install it: brew install --cask {token} (the error says why if it fails)"
     # pkg and installer casks: find the app from the paths their uninstall removes.
     paths = installer_apps(cask) + [p for n in cask.get("name", []) for p in [find_app(n)] if p]
     # The main app first, not its helpers ("Autodesk Fusion", not "... Service Utility").
     paths.sort(key=lambda p: bool(re.search(r"utility|remove|uninstall|updater|helper", os.path.basename(p), re.I)))
     for path in paths:
         if os.path.isdir(path):
-            return (f"{token}: {os.path.basename(path)[:-4]} is installed by its own installer and updates itself; "
-                    f"Homebrew can't take over installer packages. {keep}")
-    return (f"{token}: not installed. Install it in a terminal (installers can ask for your password): "
-            f"brew install --cask {token}")
+            return True, (f"{token}: {os.path.basename(path)[:-4]} is installed by its own installer and updates itself, "
+                          f"so it's skipped here (Homebrew can't take over installer packages)")
+    return False, (f"{token}: not installed. Install it in a terminal (installers can ask for your password): "
+                   f"brew install --cask {token}")
+
+
+def brewfile_casks(brewfile):
+    try:
+        with open(brewfile) as f:
+            return re.findall(r'^\s*cask\s+"([^"]+)"', f.read(), re.M)
+    except OSError:
+        return []
+
+
+def to_skip(brewfile):
+    """Brewfile casks not installed by Homebrew whose app is already here in a
+    way Homebrew can't take over: (token, line) pairs."""
+    listed = subprocess.run(["brew", "list", "--cask", "-1"], capture_output=True, text=True).stdout.split()
+    candidates = [c for c in brewfile_casks(brewfile) if c not in listed and c.split("/")[-1] not in listed]
+    info = cask_info(candidates) if candidates else {}
+    out = []
+    for t in candidates:
+        skip, line = explain(t, info.get(t), os.path.basename(brewfile))
+        if skip:
+            out.append((t, line))
+    return out
 
 
 def main(argv):
-    brewfile = None
-    if argv[:1] == ["--brewfile"] and len(argv) > 1:
-        brewfile, argv = argv[1], argv[2:]
-    elif argv[:1] in (["-h"], ["--help"]):
-        print(__doc__.strip())
+    brewfile, skip_mode = None, False
+    while argv[:1] in (["--brewfile"], ["--skip"], ["-h"], ["--help"]):
+        if argv[0] == "--brewfile" and len(argv) > 1:
+            brewfile, argv = argv[1], argv[2:]
+        elif argv[0] == "--skip":
+            skip_mode, argv = True, argv[1:]
+        else:
+            print(__doc__.strip())
+            return 0
+    if skip_mode:
+        print(" ".join(t for t, _ in to_skip(brewfile or default_brewfile())))
         return 0
     other = []
     if argv:
         tokens = argv
     else:
         brewfile = brewfile or default_brewfile()
-        tokens, other = missing(brewfile)
+        skipped = to_skip(brewfile)
+        for _, line in skipped:
+            print(line, file=sys.stderr)  # fine as it is: not a todo
+        env_skip = " ".join([os.environ.get("HOMEBREW_BUNDLE_CASK_SKIP", "")] + [t for t, _ in skipped]).strip()
+        tokens, other = missing(brewfile, env_skip)
     name = os.path.basename(brewfile) if brewfile else "the Brewfile"
     info = cask_info(tokens) if tokens else {}
     for t in tokens:
-        print(explain(t, info.get(t), name))
+        print(explain(t, info.get(t), name)[1])
     for o in other:
         if "App Store" in o or "mas" in o.lower():
             print(f"{o} Sign in to the App Store (open App Store > Sign In), then run brew bundle --file {brewfile}")

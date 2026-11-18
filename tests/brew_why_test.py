@@ -43,7 +43,10 @@ class Explain(unittest.TestCase):
         self.tmp.cleanup()
 
     def why(self, c):
-        return bw.explain(c["token"], c, "Brewfile.workstation")
+        return bw.explain(c["token"], c, "Brewfile.workstation")[1]
+
+    def skip(self, c):
+        return bw.explain(c["token"], c, "Brewfile.workstation")[0]
 
     def test_older_copy_suggests_force(self):
         app(self.apps, "UTM", "4.7.4")
@@ -57,6 +60,7 @@ class Explain(unittest.TestCase):
         line = self.why(cask("xtool-studio", "1.2.11,121,abc", "xTool Studio"))
         self.assertIn("newer than the cask (1.2.11)", line)
         self.assertNotIn("--force", line)
+        self.assertTrue(self.skip(cask("xtool-studio", "1.2.11", "xTool Studio")))
 
     def test_same_version_suggests_adopt(self):
         app(self.apps, "Blender", "5.3.0")
@@ -76,13 +80,26 @@ class Explain(unittest.TestCase):
         line = self.why(c)
         self.assertTrue(line.startswith("autodesk-fusion: Autodesk Fusion is installed by its own installer"), line)
         self.assertNotIn("--force", line)
+        self.assertTrue(self.skip(c), "installer apps that update themselves are skipped here")
+
+    def test_fixable_ones_are_not_skipped(self):
+        app(self.apps, "UTM", "4.7.4")
+        self.assertFalse(self.skip(cask("utm", "5.0.9", "UTM")), "an older copy has a fix (--force), so it's reported")
+        self.assertFalse(self.skip(cask("raycast", "1.0", "Raycast")), "not installed: Homebrew installs it")
+        self.assertFalse(self.skip(cask("onedrive", "26.1", name="OneDrive")), "other machines still get installer casks")
+
+    def test_brewfile_casks(self):
+        bf = os.path.join(self.apps, "Brewfile")
+        with open(bf, "w") as f:
+            f.write('brew "jq"\ncask "utm"\n  cask "user/tap/thing", args: {}\nmas "Xcode", id: 1\n')
+        self.assertEqual(bw.brewfile_casks(bf), ["utm", "user/tap/thing"])
 
     def test_not_installed(self):
         self.assertIn("not installed. Install it: brew install --cask raycast", self.why(cask("raycast", "1.0", "Raycast")))
         self.assertIn("in a terminal", self.why(cask("onedrive", "26.1", name="OneDrive")))
 
     def test_unknown_cask(self):
-        self.assertIn("doesn't know this cask", bw.explain("nope", None, "Brewfile.workstation"))
+        self.assertIn("doesn't know this cask", bw.explain("nope", None, "Brewfile.workstation")[1])
 
     def test_version_order(self):
         self.assertLess(bw.version_key("v2.0.4"), bw.version_key("2.0.12"))

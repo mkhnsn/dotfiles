@@ -88,6 +88,12 @@ if [[ "$os" == "darwin" ]]; then
   while read -r tap; do
     brew trust --tap "$tap" >/dev/null 2>&1 || true
   done < <(sed -n 's/^tap "\([^"]*\)".*/\1/p' "$WS_BREWFILE")
+  # Apps already installed in a way Homebrew can't take over (an installer package
+  # that updates itself, a copy newer than the cask) are skipped on this machine;
+  # machines without them still get the cask.
+  HOMEBREW_BUNDLE_CASK_SKIP="$("$HOME/.local/bin/brew-why" --skip --brewfile "$WS_BREWFILE" 2>/dev/null || true)"
+  export HOMEBREW_BUNDLE_CASK_SKIP
+  [[ -n $HOMEBREW_BUNDLE_CASK_SKIP ]] && echo "Workstation apps installed outside Homebrew, skipped here: $HOMEBREW_BUNDLE_CASK_SKIP"
   if ! brew bundle check --no-upgrade --file "$WS_BREWFILE" >/dev/null 2>&1; then
     if ! HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$WS_BREWFILE"; then
       why="$("$HOME/.local/bin/brew-why" --brewfile "$WS_BREWFILE" 2>/dev/null || true)"

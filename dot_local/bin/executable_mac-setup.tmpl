@@ -177,8 +177,10 @@ check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ]
 check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null &&
                      osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
 check_remote()     { confirmed remote; }
+# Casks whose app is already installed in a way Homebrew can't take over (see brew-why).
+ws_skip()          { command -v brew-why >/dev/null 2>&1 && brew-why --skip --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null; }
 check_ws_apps()    { workstation || return 0
-                     brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
+                     HOMEBREW_BUNDLE_CASK_SKIP="$(ws_skip)" brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
 check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
 # Confirmations saved before the US spelling ("licence:<app>", "licences") still count.
@@ -286,7 +288,7 @@ act_gh()          { gh auth login --web --git-protocol https; }
 act_doppler()     { doppler login; }
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
 act_btt()         { open "https://folivora.ai"; }
-act_ws_apps()     { HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$(chezmoi source-path)/Brewfile.workstation"; }
+act_ws_apps()     { HOMEBREW_CASK_OPTS="--adopt" HOMEBREW_BUNDLE_CASK_SKIP="$(ws_skip)" brew bundle --file "$(chezmoi source-path)/Brewfile.workstation"; }
 act_vendor()      { open "$(vendor_url "$1")"; }
 act_gridfinity() {
   local tmp; tmp="$(mktemp -d)"
