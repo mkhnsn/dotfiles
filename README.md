@@ -307,7 +307,10 @@ downloads, gridfinity-studio, licences), Ninja Remote's Screen Recording approva
 backup run, macOS
 settings and the Dock, and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
-Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`.
+Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
+steps are split per item (each app without a cask, each licence, each app export, each
+escrowed secret, the browser pieces), so each gets its own tick and its own "Do it now?"
+(opening the download page, the app, or the exports folder).
 
 Tests: `make test` renders it, runs shellcheck and `tests/mac-setup.test.sh` (stub commands, no
 dependencies), also under bash 3.2 in Docker. CI runs the same on every PR.
@@ -345,7 +348,7 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
-  Mac app exports: Stream Deck profiles and BetterDisplay settings. `mac-setup` reminds you to restore them.
+  Mac app exports: Stream Deck profiles, BetterDisplay settings and the BetterMouse configuration backup (`mac-setup` checks OneDrive is signed in first). `mac-setup` reminds you to restore them.
 
 ## BetterTouchTool
 

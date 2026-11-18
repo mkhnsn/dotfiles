@@ -19,7 +19,8 @@ PASS=0 FAIL=0 OUT="" RC=0
 setup() {
   T="$(mktemp -d)"
   export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
-  export MAC_SETUP_LOCKHART="$T/lockhart"
+  export MAC_SETUP_LOCKHART="$T/lockhart" MAC_SETUP_ONEDRIVE="$T/OneDrive"
+  mkdir -p "$T/OneDrive"
   STUBS="$HOME/.local/bin"
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
   export PATH="$STUBS:/usr/bin:/bin"
@@ -54,10 +55,11 @@ setup() {
   done
   mark_done escrow
   mark_done remote
-  mark_done ninja_backup
+  mark_done ninja_backup_run
   mark_done licences
   mark_done op_browser
   mark_done app_exports
+  mark_done export_BetterMouse
   mark_done vm
   stub app-prefs 'exit 0'
   mkdir -p "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t"
@@ -132,7 +134,8 @@ test_server_skips_filevault_and_escrow() {
   stub fdesetup 'echo "FileVault is Off."'
   rm -f "$XDG_STATE_HOME/mac-setup/escrow"
   run "$SCRIPT_SERVER" --status
-  assert_done "FileVault on (workstations)"; assert_done "FileVault key and Activation Lock code saved"
+  assert_done "FileVault on (workstations)"; assert_done "FileVault key saved to 1Password"
+  assert_done "Activation Lock code saved to 1Password"
   run "$SCRIPT" --status
   assert_open "FileVault on (workstations)"
 }
@@ -247,12 +250,15 @@ test_btt_preset_missing() {
 test_manual_steps_start_open() {
   rm -rf "$XDG_STATE_HOME/mac-setup"
   run "$SCRIPT" --status
-  assert_open "FileVault key and Activation Lock code saved to 1Password"
-  assert_open "Apps signed in and activated"
-  assert_open "Chrome signed in, 1Password browser integration"
-  assert_open "Private app exports restored"; assert_open "Virtual machines moved"
-  assert_open "Ninja Remote Screen Recording approved"
-  assert_open "Ninja Backup deployed and a backup run succeeded"; assert_has "7 step(s) left"
+  assert_open "FileVault key saved to 1Password"; assert_open "Activation Lock code saved to 1Password"
+  assert_open "Fusion signed in or activated"; assert_open "Claude signed in or activated"
+  assert_open "Chrome signed in to your Google profile"; assert_open "1Password connected to the browser"
+  assert_open "1Password Quick Access on Cmd+Shift+Space"
+  assert_open "Stream Deck export restored"; assert_open "BetterDisplay export restored"
+  assert_open "BetterMouse export restored"
+  assert_open "Virtual machines moved"; assert_open "Ninja Remote Screen Recording approved"
+  assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
+  assert_has "25 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -264,10 +270,10 @@ test_workstation_apps_missing() {
 test_vendor_app_missing_lists_its_site() {
   rm -rf "$MAC_SETUP_APPS/HueForge.app"
   run "$SCRIPT" --status
-  assert_open "Apps without a cask installed"
-  printf 'q\n' > "$T/answers"
+  assert_open "HueForge installed"; assert_done "Festivitas installed"
+  printf 'n\nq\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_has "HueForge  https://shop.thehueforge.com"; assert_lacks "Festivitas  https"
+  assert_has "Download it from https://shop.thehueforge.com"
 }
 
 test_op_ssh_agent_off() {
@@ -315,8 +321,8 @@ test_server_skips_workstation_steps() {
   stub defaults 'exit 1'
   stub brew "case \"\$*\" in *Brewfile.workstation*) exit 1 ;; --prefix) echo $T/brew ;; esac; exit 0"
   run "$SCRIPT_SERVER" --status
-  assert_done "Workstation apps installed"; assert_done "Apps without a cask installed"
-  assert_done "gridfinity-studio installed"; assert_done "Apps signed in and activated"
+  assert_done "Workstation apps installed"; assert_done "HueForge installed"
+  assert_done "gridfinity-studio installed"; assert_done "Slack signed in or activated"
   assert_done "Default browser is Chrome"
   assert_done "BetterTouchTool installed from folivora.ai"
 }
@@ -445,7 +451,8 @@ test_guided_prompts_and_action_output_are_shown() {
   # Regression: `exec 3<tty 2>/dev/null` silenced stderr, hiding prompts and gh's login code.
   stub gh "if [ \"\$1 \$2\" = 'auth login' ]; then echo 'one-time code: ABCD-1234' >&2; printf '#!/bin/sh\nexit 0\n' > $STUBS/gh; exit 0; fi; exit 1"
   rm -f "$XDG_STATE_HOME/mac-setup/escrow"
-  printf 'y\ny\n\n' > "$T/answers"
+  # Two escrow items (Done? y each), then gh (Do it now? y, Enter to re-check).
+  printf 'y\ny\ny\n\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
   assert_has "Done? [y/N/q]"
   assert_has "Do it now? [Y/n/s=skip/q=quit]"
@@ -508,15 +515,42 @@ test_ssh_server_needs_listener_and_access_group() {
 test_ninja_backup_needs_lockhart() {
   rm -f "$MAC_SETUP_LOCKHART"
   run "$SCRIPT" --status
-  assert_open "Ninja Backup deployed and a backup run succeeded"
+  assert_open "Ninja Backup deployed to this Mac"
   run "$SCRIPT_SERVER" --status
-  assert_done "Ninja Backup deployed and a backup run succeeded"
+  assert_done "Ninja Backup deployed to this Mac"
 }
 
 test_chezmoi_stale_config_template() {
   stub chezmoi "case \"\$1\" in source-path) echo $T/src ;; verify) echo 'chezmoi: warning: config file template has changed, run chezmoi init to regenerate config file' >&2 ;; esac; exit 0"
   run "$SCRIPT" --status
   assert_open "Dotfiles applied"
+}
+
+test_per_item_confirmations_are_separate() {
+  rm -f "$XDG_STATE_HOME/mac-setup/licences"
+  printf 'n\ny\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  run "$SCRIPT" --status
+  assert_done "Microsoft 365 (Office) signed in or activated"
+  assert_open "Fantastical signed in or activated"
+}
+
+test_combined_confirmation_still_counts() {
+  run "$SCRIPT" --status
+  assert_done "FileVault key saved to 1Password"; assert_done "Stream Deck export restored"
+  assert_done "LightBurn signed in or activated"
+}
+
+test_onedrive_must_be_signed_in() {
+  rmdir "$T/OneDrive"
+  run "$SCRIPT" --status
+  assert_open "OneDrive signed in (Unstable Studios)"
+}
+
+test_new_export_not_covered_by_old_confirmation() {
+  rm -f "$XDG_STATE_HOME/mac-setup/export_BetterMouse"
+  run "$SCRIPT" --status
+  assert_done "Stream Deck export restored"; assert_open "BetterMouse export restored"
 }
 
 # ---- Run -------------------------------------------------------------------------
