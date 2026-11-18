@@ -361,6 +361,9 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
   Mac app exports: Stream Deck profiles, BetterDisplay settings and the BetterMouse configuration backup (`mac-setup` checks OneDrive is signed in first). `mac-setup` reminds you to restore them.
 
+When workstation apps fail to install, the end-of-apply summary lists each one with its cause and the
+command that fixes it. Run `brew-why` any time for the same list (`brew-why <cask>` for one app).
+
 ## BetterTouchTool
 
 BTT is installed from [folivora.ai](https://folivora.ai), not Homebrew (BTT warns about
