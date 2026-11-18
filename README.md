@@ -284,8 +284,8 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   fails if a committed setting looks like a licence, token or email address.
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
-- Kept private, through each app's own export saved in 1Password: Stream Deck profiles,
-  BetterDisplay settings, LightBurn prefs and devices. `mac-setup` reminds you to restore them.
+- Kept private, through each app's own export saved in 1Password: Stream Deck profiles and
+  BetterDisplay settings. `mac-setup` reminds you to restore them.
 
 ## BetterTouchTool
 
