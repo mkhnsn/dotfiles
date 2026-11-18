@@ -362,7 +362,9 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   Mac app exports: Stream Deck profiles, BetterDisplay settings and the BetterMouse configuration backup (`mac-setup` checks OneDrive is signed in first). `mac-setup` reminds you to restore them.
 
 When workstation apps fail to install, the end-of-apply summary lists each one with its cause and the
-command that fixes it. Run `brew-why` any time for the same list (`brew-why <cask>` for one app).
+command that fixes it. Apps that are already installed in a way Homebrew can't take over (an installer
+that updates itself, like OneDrive or Fusion, or a newer copy) are skipped on that Mac and still installed on
+the others. Run `brew-why` any time for the same list (`brew-why <cask>` for one app).
 
 ## BetterTouchTool
 
