@@ -5,7 +5,7 @@ set -euo pipefail
 # from its latest echo-provision-v* release. Runs on every apply; skips quietly
 # where gh isn't signed in with access to the repo.
 
-{{ if and (or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux")) .full_setup (not .codespaces) -}}
+{{ if and (or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux")) .full_setup (not (dig "codespaces" false .)) -}}
 {{ template "todo.sh" }}
 
 command -v gh >/dev/null 2>&1 || exit 0
