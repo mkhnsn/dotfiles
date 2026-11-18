@@ -81,15 +81,22 @@ if [[ "$os" == "darwin" ]]; then
   fi
 
   # Workstation GUI apps. --adopt takes over apps already in /Applications. Failures
-  # (App Store not signed in, an app that differs from the cask) become a todo instead
-  # of failing the whole apply; mac-setup checks this file too.
+  # (App Store not signed in, an app that differs from the cask) become todos instead
+  # of failing the whole apply: brew-why says, per app, why and what to run.
+  # mac-setup checks this file too.
   WS_BREWFILE="{{ .chezmoi.sourceDir }}/Brewfile.workstation"
   while read -r tap; do
     brew trust --tap "$tap" >/dev/null 2>&1 || true
   done < <(sed -n 's/^tap "\([^"]*\)".*/\1/p' "$WS_BREWFILE")
   if ! brew bundle check --no-upgrade --file "$WS_BREWFILE" >/dev/null 2>&1; then
-    HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$WS_BREWFILE" ||
-      todo "Workstation apps: some failed to install; run mac-setup (sign in to the App Store for mas apps)"
+    if ! HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$WS_BREWFILE"; then
+      why="$("$HOME/.local/bin/brew-why" --brewfile "$WS_BREWFILE" 2>/dev/null || true)"
+      if [[ -n $why ]]; then
+        while IFS= read -r line; do todo "Workstation app $line"; done <<<"$why"
+      else
+        todo "Workstation apps: some failed to install; run brew-why for each one's fix"
+      fi
+    fi
   fi
 {{ end -}}
 

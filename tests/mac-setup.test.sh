@@ -270,6 +270,14 @@ test_workstation_apps_missing() {
   assert_open "Workstation apps installed"; assert_done "Brewfile packages installed"
 }
 
+test_workstation_apps_help_has_brew_why() {
+  stub brew "case \"\$1 \$2\" in 'bundle check') case \"\$*\" in *Brewfile.workstation*) exit 1 ;; esac ;; --prefix*) echo $T/brew ;; esac; exit 0"
+  stub brew-why 'echo "utm: UTM 4.7.4 is installed outside Homebrew (cask: 5.0.9). To let Homebrew replace and manage it: brew install --cask --force utm"'
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "    utm: UTM 4.7.4 is installed outside Homebrew"; assert_has "brew install --cask --force utm"
+}
+
 test_vendor_app_missing_lists_its_site() {
   rm -rf "$MAC_SETUP_APPS/HueForge.app"
   run "$SCRIPT" --status

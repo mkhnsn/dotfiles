@@ -229,7 +229,8 @@ help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
 help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import the BTT preset from the dotfiles. It asks for Accessibility once.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
-help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."; }
+help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
+                    command -v brew-why >/dev/null 2>&1 && brew-why --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null | sed 's/^/    /'; true; }
 help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1") and install it."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
 help_license()    { local n; n="$(license_field "$1" 3)"; echo "Open $1 and sign in or enter its license.${n:+ $n}"; }

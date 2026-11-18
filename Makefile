@@ -25,4 +25,5 @@ test:
 	@shellcheck -S warning -s bash tests/*.sh install.sh
 	@/bin/bash tests/mac-setup.test.sh
 	@python3 -I tests/app_prefs_test.py
+	@python3 -I tests/brew_why_test.py
 	@if command -v docker >/dev/null 2>&1; then docker run --rm -v "$$PWD:/w" -w /w bash:3.2 bash tests/mac-setup.test.sh; fi

@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""brew-why: why Brewfile casks aren't installed, and what to run about it.
+
+    brew-why                      # the missing casks in Brewfile.workstation
+    brew-why --brewfile FILE      # ... in another Brewfile
+    brew-why utm onedrive         # these casks
+
+Prints one line per cask: the cause and a command that fixes it. Exits 1 if
+anything is missing. Used by the dotfiles' install script (the end-of-apply
+summary) and by mac-setup. Python 3 standard library only.
+"""
+
+import json
+import os
+import plistlib
+import re
+import subprocess
+import sys
+
+
+def app_dirs():
+    env = os.environ.get("BREW_WHY_APPS")  # tests
+    if env:
+        return env.split(":")
+    return ["/Applications", os.path.expanduser("~/Applications")]
+
+
+def default_brewfile():
+    try:
+        src = subprocess.run(["chezmoi", "source-path"], capture_output=True, text=True, check=True).stdout.strip()
+        return os.path.join(src, "Brewfile.workstation")
+    except (OSError, subprocess.CalledProcessError):
+        return os.path.expanduser("~/.local/share/chezmoi/Brewfile.workstation")
+
+
+def missing(brewfile):
+    """Casks and other entries `brew bundle check` reports as missing."""
+    out = subprocess.run(
+        ["brew", "bundle", "check", "--no-upgrade", "--verbose", "--file", brewfile],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        env={**os.environ, "HOMEBREW_NO_AUTO_UPDATE": "1"},
+    ).stdout
+    casks, other = [], []
+    for line in out.splitlines():
+        m = re.match(r"^→ Cask (\S+) needs to be", line)
+        if m:
+            casks.append(m.group(1))
+        elif line.startswith("→ "):
+            other.append(line[2:].strip())
+    return casks, other
+
+
+def cask_info(tokens):
+    out = subprocess.run(["brew", "info", "--cask", "--json=v2", *tokens], capture_output=True, text=True)
+    if out.returncode != 0:
+        # One unknown cask fails the whole call; ask one at a time.
+        if len(tokens) > 1:
+            info = {}
+            for t in tokens:
+                info.update(cask_info([t]))
+            return info
+        return {}
+    return {c["token"]: c for c in json.loads(out.stdout).get("casks", [])}
+
+
+def find_app(name):
+    for d in app_dirs():
+        path = os.path.join(d, name if name.endswith(".app") else name + ".app")
+        if os.path.isdir(path):
+            return path
+    return None
+
+
+def app_version(path):
+    try:
+        with open(os.path.join(path, "Contents", "Info.plist"), "rb") as f:
+            v = plistlib.load(f).get("CFBundleShortVersionString", "")
+    except (OSError, plistlib.InvalidFileException):
+        return ""
+    return "" if "{" in v else str(v)  # some apps ship an unexpanded "{APP_VERSION}"
+
+
+def artifacts(cask, kind):
+    found = []
+    for a in cask.get("artifacts", []):
+        for v in a.get(kind, []) if isinstance(a, dict) else []:
+            found.append(v if isinstance(v, str) else v.get("target", ""))
+    return [f for f in found if f]
+
+
+def version_key(v):
+    """Comparable form of a version: "v2.0.4" < "2.0.12", "1.2.11" < "1.10.21"."""
+    return [int(n) for n in re.findall(r"\d+", v)]
+
+
+def installer_apps(cask):
+    """Apps a pkg or installer cask puts in place, from the paths its uninstall removes."""
+    paths = []
+    for a in cask.get("artifacts", []):
+        for stanza in (a.get("uninstall") or []) + (a.get("zap") or []) if isinstance(a, dict) else []:
+            delete = stanza.get("delete", []) if isinstance(stanza, dict) else []
+            for d in [delete] if isinstance(delete, str) else delete:
+                if d.endswith(".app"):
+                    paths.append(os.path.expanduser(d))
+    return paths
+
+
+def explain(token, cask, brewfile_name):
+    if cask is None:
+        return f"{token}: Homebrew doesn't know this cask. Check its name in {brewfile_name}"
+    cver = str(cask.get("version", "")).split(",")[0]
+    keep = f"To keep yours, remove cask \"{token}\" from {brewfile_name}"
+    for app in artifacts(cask, "app"):
+        path = find_app(os.path.basename(app))
+        if not path:
+            continue
+        have = app_version(path)
+        name = os.path.basename(path)[:-4]
+        was = f"{name} {have}" if have else name
+        if have and cver not in ("", "latest") and version_key(have) > version_key(cver):
+            return (f"{token}: {was} is installed outside Homebrew and is newer than the cask ({cver}), "
+                    f"so Homebrew won't take it over. {keep}, or leave it until the cask catches up")
+        if have and cver not in ("", "latest") and version_key(have) == version_key(cver):
+            return (f"{token}: {was} is installed outside Homebrew. "
+                    f"To let Homebrew manage it: brew install --cask --adopt {token}. {keep}")
+        return (f"{token}: {was} is installed outside Homebrew" + (f" (cask: {cver})" if cver not in ("", "latest") else "")
+                + f". To let Homebrew replace and manage it: brew install --cask --force {token}. {keep}")
+    if artifacts(cask, "app"):
+        return f"{token}: not installed. Install it: brew install --cask {token} (the error says why if it fails)"
+    # pkg and installer casks: find the app from the paths their uninstall removes.
+    paths = installer_apps(cask) + [p for n in cask.get("name", []) for p in [find_app(n)] if p]
+    # The main app first, not its helpers ("Autodesk Fusion", not "... Service Utility").
+    paths.sort(key=lambda p: bool(re.search(r"utility|remove|uninstall|updater|helper", os.path.basename(p), re.I)))
+    for path in paths:
+        if os.path.isdir(path):
+            return (f"{token}: {os.path.basename(path)[:-4]} is installed by its own installer and updates itself; "
+                    f"Homebrew can't take over installer packages. {keep}")
+    return (f"{token}: not installed. Install it in a terminal (installers can ask for your password): "
+            f"brew install --cask {token}")
+
+
+def main(argv):
+    brewfile = None
+    if argv[:1] == ["--brewfile"] and len(argv) > 1:
+        brewfile, argv = argv[1], argv[2:]
+    elif argv[:1] in (["-h"], ["--help"]):
+        print(__doc__.strip())
+        return 0
+    other = []
+    if argv:
+        tokens = argv
+    else:
+        brewfile = brewfile or default_brewfile()
+        tokens, other = missing(brewfile)
+    name = os.path.basename(brewfile) if brewfile else "the Brewfile"
+    info = cask_info(tokens) if tokens else {}
+    for t in tokens:
+        print(explain(t, info.get(t), name))
+    for o in other:
+        if "App Store" in o or "mas" in o.lower():
+            print(f"{o} Sign in to the App Store (open App Store > Sign In), then run brew bundle --file {brewfile}")
+        else:
+            print(o)
+    return 1 if tokens or other else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -35,3 +35,6 @@ jobs:
 
       - name: app-prefs tests (and guard on committed settings)
         run: python3 -I tests/app_prefs_test.py
+
+      - name: brew-why tests
+        run: python3 -I tests/brew_why_test.py
