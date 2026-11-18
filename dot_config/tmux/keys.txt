@@ -1,0 +1,22 @@
+  Press C-a, then the key.
+
+  Panes                         Windows
+    |      split side by side     c      new window
+    -      split top/bottom       1-9    go to window
+    h j k l  move                 n  p   next / previous
+    z      zoom in/out            ,      rename
+    x      close                  &      close
+    q      show numbers           w      pick from list
+
+  Sessions                      Scroll and copy
+    d      detach                 [      scroll mode (q exits)
+    s      pick session           v  y   select / copy
+    $      rename                 ]      paste
+    C-s    save now               drag with the mouse to copy
+    C-r    restore saved
+
+  Other
+    r  reload config   :  command   H  hide hint row
+    Full list: C-a :list-keys
+
+  q or Esc closes this.
