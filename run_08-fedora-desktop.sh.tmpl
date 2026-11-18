@@ -40,6 +40,18 @@ EOF
   fi
 fi
 
+# ---- Google Chrome (desktops only) ----
+if { [[ -n "$DE" ]] || command -v gnome-shell >/dev/null 2>&1; } && ! rpm -q google-chrome-stable >/dev/null 2>&1; then
+  echo "fedora-desktop: installing Google Chrome..."
+  # Fedora ships Google's repo disabled in fedora-workstation-repositories.
+  # dnf5 (Fedora 41+) and dnf4 enable repos with different syntax.
+  $SUDO dnf install -y fedora-workstation-repositories 2>/dev/null || true
+  $SUDO dnf config-manager setopt google-chrome.enabled=1 2>/dev/null ||
+    $SUDO dnf config-manager --set-enabled google-chrome 2>/dev/null || true
+  $SUDO dnf install -y google-chrome-stable ||
+    { todo "Google Chrome: dnf install failed; run 'sudo dnf install google-chrome-stable'"; RETRY_NEXT_APPLY=1; }
+fi
+
 # ---- Deja Dup backup tool ----
 if command -v flatpak >/dev/null 2>&1; then
   if ! flatpak list --app 2>/dev/null | grep -q 'org.gnome.DejaDup'; then
