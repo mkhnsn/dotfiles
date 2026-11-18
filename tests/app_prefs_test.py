@@ -2,7 +2,7 @@
 """Tests for app-prefs, with a fake `defaults` and `lsappinfo`. Standard library only:
     python3 -I tests/app_prefs_test.py
 Also guards the committed macos/prefs: every saved key is allow-listed and nothing in
-them looks like a licence, token or email address (the repo is public)."""
+them looks like a license, token or email address (the repo is public)."""
 import glob
 import os
 import plistlib
@@ -70,21 +70,21 @@ class AppPrefs(unittest.TestCase):
         return subprocess.run([sys.executable, "-I", TOOL, *args], env=e, capture_output=True, text=True)
 
     def test_export_keeps_only_allowlisted_keys(self):
-        self.mac("com.example.app", {"showIcons": True, "layout": {"a": 1}, "licence": "SECRET-123"})
+        self.mac("com.example.app", {"showIcons": True, "layout": {"a": 1}, "license": "SECRET-123"})
         r = self.run_tool("export")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(self.saved("com.example.app"), {"showIcons": True, "layout": {"a": 1}})
         self.assertNotIn("SECRET-123", r.stdout)
         self.assertIn("saved 2 of 3 keys", r.stdout)
 
-    def test_apply_merges_and_keeps_local_licence(self):
+    def test_apply_merges_and_keeps_local_license(self):
         self.mac("com.example.app", {"showIcons": True, "layout": {"a": 1}})
         self.run_tool("export")
-        self.mac("com.example.app", {"licence": "NEW-MAC", "showIcons": False})
+        self.mac("com.example.app", {"license": "NEW-MAC", "showIcons": False})
         r = self.run_tool("apply")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(self.read_mac("com.example.app"),
-                         {"licence": "NEW-MAC", "showIcons": True, "layout": {"a": 1}})
+                         {"license": "NEW-MAC", "showIcons": True, "layout": {"a": 1}})
 
     def test_apply_creates_missing_domain(self):
         self.mac("com.example.app", {"layout": [1, 2]})

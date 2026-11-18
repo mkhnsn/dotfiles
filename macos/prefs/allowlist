@@ -1,5 +1,5 @@
 # App settings carried between Macs by app-prefs: domain<TAB>key pattern (fnmatch).
-# This repo is public. Add a key only after checking it holds no licence, token or
+# This repo is public. Add a key only after checking it holds no license, token or
 # personal data (list names with `app-prefs diff`, never print values).
 
 # com.surteesstudios.Bartender
@@ -26,7 +26,7 @@ com.surteesstudios.Bartender	stored_style
 com.surteesstudios.Bartender	launchAtLogin.isEnabled
 
 # com.naotanhaocan.BetterMouse
-# config left out: it holds the licence email (binary, can't be trimmed)
+# config left out: it holds the license email (binary, can't be trimmed)
 com.naotanhaocan.BetterMouse	mice
 com.naotanhaocan.BetterMouse	keyboards
 com.naotanhaocan.BetterMouse	appitems
