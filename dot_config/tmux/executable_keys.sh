@@ -22,6 +22,7 @@ print -r -- "
 
   Other
     r  reload config   :  command   H  hide hint row
+    m  mouse on/off
     Full list: C-a :list-keys
 
   ${d}Press any key to close.${r}"
