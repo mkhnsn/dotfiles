@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# echo-provision (drive and YubiKey setup) lives in the private
+# unstable-studios/echo-core repo. Install or update ~/.local/bin/echo-provision
+# from its latest echo-provision-v* release. Runs on every apply; skips quietly
+# where gh isn't signed in with access to the repo.
+
+{{ if and (or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux")) .full_setup (not .codespaces) -}}
+{{ template "todo.sh" }}
+
+command -v gh >/dev/null 2>&1 || exit 0
+repo=unstable-studios/echo-core
+tag="$(gh release list -R "$repo" --limit 50 --json tagName \
+  --jq '[.[].tagName | select(startswith("echo-provision-v"))][0] // empty' 2>/dev/null)" || exit 0
+[[ -n $tag ]] || exit 0
+
+bin="$HOME/.local/bin/echo-provision"
+want="${tag#echo-provision-v}"
+[[ "$("$bin" --version 2>/dev/null || true)" == "$want" ]] && exit 0
+
+os={{ .chezmoi.os }}
+case "$(uname -m)" in
+  x86_64 | amd64) arch=amd64 ;;
+  arm64 | aarch64) arch=arm64 ;;
+  *) exit 0 ;;
+esac
+asset="echo-provision-$os-$arch"
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+if gh release download "$tag" -R "$repo" --pattern "$asset" -D "$tmp" 2>/dev/null && [[ -s "$tmp/$asset" ]]; then
+  mkdir -p "${bin%/*}"
+  install -m 0755 "$tmp/$asset" "$bin"
+  echo "echo-provision: installed $want"
+else
+  todo "echo-provision $want: download failed; run 'gh release download $tag -R $repo --pattern $asset' and put it in ~/.local/bin/echo-provision"
+fi
+{{ end -}}
