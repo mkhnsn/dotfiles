@@ -62,6 +62,9 @@ setup() {
   mark_done export_BetterMouse
   mark_done vm
   stub app-prefs 'exit 0'
+  mkdir -p "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/Desktop" "$HOME/Documents"
+  ln -s "$HOME/Desktop" "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Desktop"
+  ln -s "$HOME/Documents" "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
   mkdir -p "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t"
   touch "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 }
@@ -551,6 +554,17 @@ test_new_export_not_covered_by_old_confirmation() {
   rm -f "$XDG_STATE_HOME/mac-setup/export_BetterMouse"
   run "$SCRIPT" --status
   assert_done "Stream Deck export restored"; assert_open "BetterMouse export restored"
+}
+
+test_icloud_docs_needs_both_links() {
+  run "$SCRIPT" --status
+  assert_done "Desktop & Documents in iCloud"
+  rm "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
+  mkdir "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
+  run "$SCRIPT" --status
+  assert_open "Desktop & Documents in iCloud"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Desktop & Documents in iCloud"
 }
 
 # ---- Run -------------------------------------------------------------------------

@@ -301,7 +301,7 @@ branch was deleted, and removes the ones that are merged or squash-merged (asks 
 `mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
 FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
 Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
-the computer name (renamed in SimpleMDM),
+the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool and its preset, workstation apps (Brewfile, vendor
 downloads, gridfinity-studio, licences), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
 backup run, macOS
