@@ -1,5 +1,7 @@
 **/private_*
 !**/private_*.tmpl
+# ~/.ssh: only its templates are tracked (they read keys from 1Password at apply time)
+!private_dot_ssh/
 **/.DS_Store
 **/.zcompdump*
 **/.cache/

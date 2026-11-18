@@ -1,0 +1,10 @@
+{{- /*
+~/.ssh/authorized_keys: who can SSH into this Mac (Remote Login, the mac-setup ssh_server
+step). Read from 1Password at apply time: Unstable Studios > Automation > "Mac SSH
+authorized keys" (a Secure Note, one public key per line): the Echo-Net Admin key (1Password
+SSH agent) and Blink Shell's own keys on the iPad and iPhone (Blink can't use 1Password).
+Automation, so the service-account mode on servers can read it too; see private_dot_ntfy.yml.tmpl.
+*/ -}}
+{{- $svc := and (hasKey . "op_mode") (eq .op_mode "service") -}}
+{{- $ref := "op://Automation/annlcxdqazigcohxta4mzp5jde/notesPlain" -}}
+{{ if $svc }}{{ onepasswordRead $ref | trim }}{{ else }}{{ onepasswordRead $ref "LKHBSHPTMJBQLJ36YPLOP6LVLI" | trim }}{{ end }}

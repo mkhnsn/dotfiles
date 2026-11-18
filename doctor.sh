@@ -47,10 +47,11 @@ else
   warn "pnpm:   MISSING"
 fi
 
+# Node 25+ no longer bundles corepack; on macOS pnpm comes from Homebrew instead.
 if have corepack; then
   ok "corepack: $(corepack --version)"
 else
-  warn "corepack: MISSING"
+  info "corepack: not installed (Node 25+ doesn't bundle it; pnpm comes from Homebrew)"
 fi
 
 # pnpm globals sanity (this is what bit you)

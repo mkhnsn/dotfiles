@@ -36,6 +36,9 @@ macos/
 {{- end -}}
 
 {{- if eq .chezmoi.os "linux" -}}
+# SSH config and authorized_keys are for Macs; Linux hosts get theirs from Ansible.
+.ssh/config
+.ssh/authorized_keys
 # VS Code on Linux uses ~/.config/Code, not ~/Library/Application Support/Code
 Library/Application Support/Code/
 Library/Application Support/Code/**

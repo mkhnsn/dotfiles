@@ -93,10 +93,17 @@ check_user()       { [ "$(id -u)" -ne 0 ] && [ -n "${HOME:-}" ]; }
 check_mdm()        { profiles status -type enrollment 2>/dev/null | grep -q "MDM enrollment: Yes"; }
 # Servers run without FileVault so they recover from restarts unattended (echo-core two-machine plan).
 check_filevault()  { workstation || return 0; fdesetup status 2>/dev/null | grep -q "FileVault is On"; }
-check_profiles()   { local p; p="$(system_profiler SPConfigurationProfileDataType 2>/dev/null)";
-                     printf '%s' "$p" | grep -q "macOS: Firewall" && printf '%s' "$p" | grep -q "macOS: NinjaOne privacy"; }
+PROFILES_WANT="macOS: Firewall|macOS: NinjaOne privacy permissions|macOS: Terminal privacy permissions"
+profiles_missing() { local p n; p="$(system_profiler SPConfigurationProfileDataType 2>/dev/null)"
+                     printf '%s\n' "$PROFILES_WANT" | tr '|' '\n' | while read -r n; do printf '%s' "$p" | grep -qF "$n" || echo "$n"; done; }
+check_profiles()   { [ -z "$(profiles_missing)" ]; }
+# SimpleMDM's rename sets the computer name (and the Bonjour name from it).
+check_hostname()   { [ "$(scutil --get ComputerName 2>/dev/null)" = "$HOSTNAME_WANT" ]; }
 check_ninja()      { pgrep -f NinjaRMMAgent/programfiles/ninjarmm-macagent >/dev/null; }
 check_escrow()     { workstation || return 0; confirmed escrow; }
+# Ninja Backup installs lockhart only once backup is deployed to the device in Ninja.
+LOCKHART="/Applications/NinjaRMMAgent/programfiles/lockhart/bin/lockhart"
+check_ninja_backup(){ workstation || return 0; [ -x "${MAC_SETUP_LOCKHART:-$LOCKHART}" ] && confirmed ninja_backup; }
 # Ask Homebrew's own doctor checks, which are what make it refuse stale tools.
 check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
                      command -v brew >/dev/null 2>&1 || return 0
@@ -107,7 +114,9 @@ check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/nul
 OP_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
 check_op_browser() { workstation || return 0; confirmed op_browser; }
-check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] &&
+# After a dotfiles update changes .chezmoi.toml.tmpl, chezmoi warns until `chezmoi init` runs.
+chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep -q "config file template has changed"; }
+check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] && ! chezmoi_config_stale &&
                      chezmoi verify --exclude=scripts,templates >/dev/null 2>&1; }
 check_brewfile()   { brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile" >/dev/null 2>&1; }
 check_gh()         { gh auth status >/dev/null 2>&1; }
@@ -116,6 +125,11 @@ check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
 check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
 check_ts_tag()     { ts_json | grep -q "\"$TAG_WANT\""; }
+# Remote Login (macOS sshd), limited to you through the com.apple.access_ssh group.
+# Tailscale SSH isn't an option: the Tailscale app build on macOS can't run its SSH server.
+ssh_listening()    { nc -z -G 2 127.0.0.1 22 >/dev/null 2>&1; }
+check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh >/dev/null 2>&1 &&
+                     dsmemberutil checkmembership -U "$(id -un)" -G com.apple.access_ssh 2>/dev/null | grep -q "is a member"; }
 check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null &&
                      osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
@@ -136,21 +150,24 @@ check_browser()    { workstation || return 0; [ "$(default_browser)" = com.googl
 help_user()       { echo "Run this in Terminal as yourself, not as root or from Ninja's terminal (it's root)."; }
 help_mdm()        { echo "Not enrolled. Erase the Mac and set it up again so ADE enrolls it (check the serial is assigned to SimpleMDM - macOS in ABM)."; }
 help_filevault()  { echo "Turn on FileVault: System Settings > Privacy & Security > FileVault. The MDM profile escrows the key."; }
-help_profiles()   { echo "MDM profiles missing. Check the device is in the Terminals group in SimpleMDM and push profiles from its device page."; }
+help_profiles()   { echo "MDM profiles missing: $(profiles_missing | paste -sd, - | sed 's/,/, /g'). Check the device is in its SimpleMDM group (Terminals for workstations) and push profiles from its device page."; }
+help_hostname()   { echo "This Mac should be named $HOSTNAME_WANT. Rename it in SimpleMDM (device page > Rename), which sets the computer name. Replacing a Mac: rename the old one first so the names don't clash."; }
 help_ninja()      { echo "NinjaOne agent not running. SimpleMDM installs it; check the app install on the device page, or reinstall the agent pkg."; }
+help_ninja_backup(){ echo "Ninja Backup: in NinjaOne, Organization > Unstable Studios > Backup > Deployment, enable this Mac (Deploy to stays per device). Ninja installs its backup agent (MDM already grants it Full Disk Access). Then run the 'UnSt - Mac home folder' plan once from the device page and confirm it succeeds."; }
 help_escrow()     { echo "In SimpleMDM, open this Mac ($SERIAL), reveal the FDE Recovery Key and Activation Lock Bypass Code, and save both in 1Password (one item named after the Mac and serial)."; }
 help_clt()        { echo "Command Line Tools missing or stale (Homebrew refuses old ones)."; }
 help_brew()       { echo "Homebrew isn't installed."; }
 help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
-help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI."; }
+help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
 help_op_browser()  { echo "Sign in to your Google profile in Chrome; Chrome Sync installs the 1Password extension. Then in 1Password: Settings > Browser > Connect with 1Password in the browser, and Settings > General > Show Quick Access: Cmd+Shift+Space."; }
-help_chezmoi()    { echo "Dotfiles not applied, or out of date."; }
+help_chezmoi()    { if chezmoi_config_stale; then echo "The dotfiles' config template changed: chezmoi init regenerates ~/.config/chezmoi/chezmoi.toml (it keeps your answers)."; else echo "Dotfiles not applied, or out of date."; fi; }
 help_brewfile()   { echo "Brewfile packages missing."; }
 help_gh()         { echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too."; }
 help_doppler()    { echo "Doppler CLI not signed in."; }
 help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found."; }
-help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WANT"). Rename it: admin console > Machines > ... > Edit machine name (turn off auto-generate)."; }
+help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WANT"). Rename it: admin console > Machines > ... > Edit machine name (turn off auto-generate). Replacing a Mac: rename the old machine first, or the new one gets a -1 suffix."; }
+help_ssh_server() { echo "Turn on Remote Login for your user only, so your other Macs can reach this one (VM copies, rsync). The action turns on sshd and limits it to $(id -un); same as System Settings > General > Sharing > Remote Login with 'Only these users'. Leave 'Allow full disk access for remote users' off."; }
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
 help_btt_preset() { echo "Import the BTT preset from the dotfiles. Start BTT first; it asks for Accessibility once."; }
@@ -160,7 +177,13 @@ help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of u
 help_licences()   { echo "Sign in or activate: Microsoft 365 (Office), Fantastical, PDF Expert, Bartender, BetterDisplay, BetterMouse (set the mouse to standard scrolling; the trackpad stays natural), DaisyDisk, Parallels, LightBurn, HueForge, Fusion, Raycast, Slack, Claude."; }
 help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit these apps first; a running app writes its own settings back:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
 help_app_exports() { echo "Restore the private app exports from OneDrive (Unstable Studios) > Apps > Mac app exports: Stream Deck (Preferences > Profiles > Restore), BetterDisplay (Settings > Application > Import). Make them on the old Mac first."; }
-help_vm()          { echo "Windows VM (VCarve): shut it down on the old Mac (not suspended), copy ~/Parallels/vWindows 11.pvm (86 GB) to ~/Parallels here (external SSD, or rsync over the network), open it in Parallels and choose 'I moved it'. Answer y if there's no VM to move."; }
+help_vm()          { cat <<'EOV'
+Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Parallels: File > Pack ("vWindows 11.pvmp", about half the size) and write its checksum: shasum -a 256 "vWindows 11.pvmp" | cut -d' ' -f1 > "vWindows 11.sha256.txt".
+      Copy both to ~/Parallels here: rsync -a --partial ~/Parallels/vWindows\ 11.* <this-mac>:Parallels/ (needs Remote Login and the dotfiles' authorized_keys here), or an external SSD.
+      Here: shasum -a 256 "vWindows 11.pvmp" must match the .txt. Double-click the .pvmp to unpack, choose "I moved it" (keeps Windows activation and VCarve's licence), start Windows and open VCarve. Then delete the .pvmp on both Macs.
+      Answer y if there's no VM to move.
+EOV
+}
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
@@ -181,8 +204,19 @@ act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1passwo
 act_op_ssh()       { open -a 1Password; }
 act_op_browser()   { open -a "Google Chrome"; open -a 1Password; }
 act_chezmoi() {
+  if chezmoi_config_stale; then chezmoi init; return; fi
   if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update
   else bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkhnsn/dotfiles/main/install.sh)"; fi
+}
+act_ssh_server() {
+  local me; me="$(id -un)"
+  echo "Turning on Remote Login for $me (asks for your password)…"
+  # launchctl, not systemsetup: systemsetup needs Full Disk Access for the terminal.
+  sudo launchctl enable system/com.openssh.sshd
+  sudo launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist 2>/dev/null || true
+  dscl . -read /Groups/com.apple.access_ssh >/dev/null 2>&1 ||
+    sudo dseditgroup -o create -r "SSH Service ACL" com.apple.access_ssh
+  sudo dseditgroup -o edit -a "$me" -t user com.apple.access_ssh
 }
 act_brewfile()    { chezmoi apply; }
 act_gh()          { gh auth login --web --git-protocol https; }
@@ -208,6 +242,7 @@ STEPS="user|Running as your own user|Basics
 mdm|Enrolled in SimpleMDM|MDM
 filevault|FileVault on (workstations)|MDM
 profiles|MDM profiles installed|MDM
+hostname|Computer name is $HOSTNAME_WANT|MDM
 ninja|NinjaOne agent running|MDM
 escrow|FileVault key and Activation Lock code saved to 1Password|MDM
 clt|Command Line Tools current|Tools
@@ -223,6 +258,7 @@ doppler|Doppler signed in|Accounts
 tailscale|Tailscale connected|Network
 ts_name|Tailscale name is $(lower "$HOSTNAME_WANT")|Network
 ts_tag|Tailscale tag $TAG_WANT|Network
+ssh_server|Remote Login on, for you only|Network
 btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
@@ -233,10 +269,11 @@ app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
 app_exports|Private app exports restored (Stream Deck, BetterDisplay)|Apps
 vm|Virtual machines moved|Apps
 remote|Ninja Remote Screen Recording approved|Apps
+ninja_backup|Ninja Backup deployed and a backup run succeeded|Apps
 defaults|macOS settings and Dock|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote licences op_browser app_exports vm "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup licences op_browser app_exports vm "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.

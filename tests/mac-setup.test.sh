@@ -19,6 +19,7 @@ PASS=0 FAIL=0 OUT="" RC=0
 setup() {
   T="$(mktemp -d)"
   export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
+  export MAC_SETUP_LOCKHART="$T/lockhart"
   STUBS="$HOME/.local/bin"
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
   export PATH="$STUBS:/usr/bin:/bin"
@@ -31,7 +32,11 @@ setup() {
   stub sw_vers     'echo 27.2'
   stub profiles    'echo "MDM enrollment: Yes (User Approved)"'
   stub fdesetup    'echo "FileVault is On."'
-  stub system_profiler 'printf "        macOS: Firewall:\n        macOS: NinjaOne privacy permissions:\n"'
+  stub system_profiler 'printf "        macOS: Firewall:\n        macOS: NinjaOne privacy permissions:\n        macOS: Terminal privacy permissions:\n"'
+  stub nc          'exit 0'
+  stub dscl        'exit 0'
+  stub dsmemberutil 'echo "user is a member of the group"'
+  printf '#!/bin/sh\n' > "$MAC_SETUP_LOCKHART"; chmod +x "$MAC_SETUP_LOCKHART"
   stub pgrep       'exit 0'
   stub xcode-select 'echo /Library/Developer/CommandLineTools'
   stub brew        "case \"\$1\" in --prefix) echo $T/brew ;; *) exit 0 ;; esac"
@@ -49,6 +54,7 @@ setup() {
   done
   mark_done escrow
   mark_done remote
+  mark_done ninja_backup
   mark_done licences
   mark_done op_browser
   mark_done app_exports
@@ -245,7 +251,8 @@ test_manual_steps_start_open() {
   assert_open "Apps signed in and activated"
   assert_open "Chrome signed in, 1Password browser integration"
   assert_open "Private app exports restored"; assert_open "Virtual machines moved"
-  assert_open "Ninja Remote Screen Recording approved"; assert_has "6 step(s) left"
+  assert_open "Ninja Remote Screen Recording approved"
+  assert_open "Ninja Backup deployed and a backup run succeeded"; assert_has "7 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -467,6 +474,43 @@ test_guided_quit() {
   printf 'q\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
   assert_rc 1; assert_lacks "Tailscale connected"
+}
+
+test_profiles_lists_missing_terminal_privacy() {
+  stub system_profiler 'printf "        macOS: Firewall:\n        macOS: NinjaOne privacy permissions:\n"'
+  run "$SCRIPT" --status
+  assert_open "MDM profiles installed"
+}
+
+test_hostname_must_match() {
+  stub scutil 'echo Old-Name'
+  run "$SCRIPT" --status
+  assert_open "Computer name is Test-Mac"
+}
+
+test_ssh_server_needs_listener_and_access_group() {
+  run "$SCRIPT" --status
+  assert_done "Remote Login on, for you only"
+  stub nc 'exit 1'
+  run "$SCRIPT" --status
+  assert_open "Remote Login on, for you only"
+  stub nc 'exit 0'; stub dsmemberutil 'echo "user is not a member of the group"'
+  run "$SCRIPT" --status
+  assert_open "Remote Login on, for you only"
+}
+
+test_ninja_backup_needs_lockhart() {
+  rm -f "$MAC_SETUP_LOCKHART"
+  run "$SCRIPT" --status
+  assert_open "Ninja Backup deployed and a backup run succeeded"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Ninja Backup deployed and a backup run succeeded"
+}
+
+test_chezmoi_stale_config_template() {
+  stub chezmoi "case \"\$1\" in source-path) echo $T/src ;; verify) echo 'chezmoi: warning: config file template has changed, run chezmoi init to regenerate config file' >&2 ;; esac; exit 0"
+  run "$SCRIPT" --status
+  assert_open "Dotfiles applied"
 }
 
 # ---- Run -------------------------------------------------------------------------

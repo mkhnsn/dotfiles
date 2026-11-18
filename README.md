@@ -228,6 +228,18 @@ This clears the completion cache and forces regeneration.
 
 No private keys are stored in this repository.
 
+On Macs chezmoi also writes:
+
+- `~/.ssh/config`: the 1Password agent and its per-host keys, short tailnet names
+  (`ssh mikebook-pro`) expanded to MagicDNS, tailnet hosts' keys trusted on first use, and
+  agent forwarding to tailnet hosts only. The tailnet's domain is read from Tailscale at
+  apply time (it isn't in this public repo), so apply again once Tailscale is connected.
+- `~/.ssh/authorized_keys`: from 1Password (Unstable Studios > Automation > "Mac SSH
+  authorized keys"): the Echo-Net Admin key and Blink Shell's keys on the iPad and iPhone.
+
+Incoming SSH needs Remote Login, which `mac-setup` turns on for your user only. Tailscale
+SSH isn't an option on Macs: the Tailscale app build can't run its SSH server.
+
 ### Reclaiming disk space across clones
 
 `git-sweep` (installed to `~/.local/bin`, also runs as `git sweep`) scans every repo under
@@ -251,14 +263,24 @@ branch was deleted, and removes the ones that are merged or squash-merged (asks 
 `mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
 FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
 Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
-Tailscale (name and tag), BetterTouchTool and its preset, workstation apps (Brewfile, vendor
-downloads, gridfinity-studio, licences), Ninja Remote's Screen Recording approval, macOS
+the computer name (renamed in SimpleMDM),
+Tailscale (name and tag), Remote Login, BetterTouchTool and its preset, workstation apps (Brewfile, vendor
+downloads, gridfinity-studio, licences), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
+backup run, macOS
 settings and the Dock, and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`.
 
 Tests: `make test` renders it, runs shellcheck and `tests/mac-setup.test.sh` (stub commands, no
 dependencies), also under bash 3.2 in Docker. CI runs the same on every PR.
+
+Things to know on a FileVault Mac:
+
+- Installers that restart the Mac (3Dconnexion, drivers) leave it at the FileVault unlock
+  screen, offline to Ninja, Tailscale and SimpleMDM until you unlock it in person. Click
+  Later in the installer and restart with `sudo fdesetup authrestart`, which unlocks once.
+- Claude Code may ask for access to other apps' data after each update (it runs from a
+  versioned path). Deny it: nothing in this setup needs it.
 
 The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 `tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
