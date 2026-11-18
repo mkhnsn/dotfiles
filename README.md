@@ -298,6 +298,15 @@ branch was deleted, and removes the ones that are merged or squash-merged (asks 
 
 ---
 
+## echo-provision
+
+On full-setup Macs and Linux machines, `chezmoi apply` installs `echo-provision` (guided setup for
+drives and YubiKeys) into `~/.local/bin` from the latest release in the private
+`unstable-studios/echo-core` repo, and updates it when a new release comes out. It needs `gh`
+signed in with access to that repo, and skips quietly otherwise.
+
+---
+
 ## New Mac checklist
 
 `mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
