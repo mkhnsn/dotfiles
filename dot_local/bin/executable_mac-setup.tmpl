@@ -97,8 +97,9 @@ PROFILES_WANT="macOS: Firewall|macOS: NinjaOne privacy permissions|macOS: Termin
 profiles_missing() { local p n; p="$(system_profiler SPConfigurationProfileDataType 2>/dev/null)"
                      printf '%s\n' "$PROFILES_WANT" | tr '|' '\n' | while read -r n; do printf '%s' "$p" | grep -qF "$n" || echo "$n"; done; }
 check_profiles()   { [ -z "$(profiles_missing)" ]; }
-# SimpleMDM's rename sets the computer name (and the Bonjour name from it).
-check_hostname()   { [ "$(scutil --get ComputerName 2>/dev/null)" = "$HOSTNAME_WANT" ]; }
+# SimpleMDM's rename sets the computer name and, from it, the local hostname ("MikeBook Pro"
+# -> "MikeBook-Pro"); chezmoi's hostname data is the local-hostname form.
+check_hostname()   { [ "$(scutil --get LocalHostName 2>/dev/null)" = "$(printf '%s' "$HOSTNAME_WANT" | tr ' ' '-')" ]; }
 check_ninja()      { pgrep -f NinjaRMMAgent/programfiles/ninjarmm-macagent >/dev/null; }
 check_escrow()     { workstation || return 0; confirmed escrow; }
 # Ninja Backup installs lockhart only once backup is deployed to the device in Ninja.
@@ -170,7 +171,8 @@ help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WA
 help_ssh_server() { echo "Turn on Remote Login for your user only, so your other Macs can reach this one (VM copies, rsync). The action turns on sshd and limits it to $(id -un); same as System Settings > General > Sharing > Remote Login with 'Only these users'. Leave 'Allow full disk access for remote users' off."; }
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
-help_btt_preset() { echo "Import the BTT preset from the dotfiles. Start BTT first; it asks for Accessibility once."; }
+help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import the BTT preset from the dotfiles. It asks for Accessibility once.";
+                    else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."; }
 help_vendor()     { echo "Apps without a Homebrew cask, from their own sites:"; vendor_missing | while IFS='|' read -r n u; do printf '      %s  %s\n' "$n" "$u"; done; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }

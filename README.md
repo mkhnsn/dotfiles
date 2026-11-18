@@ -220,6 +220,44 @@ This clears the completion cache and forces regeneration.
 
 ---
 
+## tmux
+
+Config: `~/.config/tmux/tmux.conf` on every machine. A `~/.tmux.conf` would override it;
+`doctor.sh` warns if one exists.
+
+A server holds sessions, a session holds windows (the tabs in the status bar), and a window
+splits into panes. One session per project works well, with windows for the editor or
+Claude, a shell and logs.
+
+ssh and mosh logins open tmux automatically. The first one attaches to `main`. If `main` is
+already open on another screen, the new login gets a session of its own grouped with `main`:
+the same windows, but you can look at a different one. It closes when you detach. Detaching
+ends the connection. To open a separate session instead, run
+`mosh <host> -- tmux new -A -s <name>`. To skip tmux, run `ssh -t <host> NO_TMUX=1 zsh -l`.
+
+tmux-resurrect and tmux-continuum save sessions every 15 minutes and restore them after a
+reboot.
+
+The prefix is `C-a`; with tmux nested on a Mac, `C-a C-a` reaches the inner one.
+
+| Keys | What it does |
+|---|---|
+| `C-a c` | New window |
+| `C-a 1`…`9` / `n` / `p` | Window by number / next / previous |
+| `C-a ,` | Rename window |
+| `C-a \|` / `C-a -` | Split side by side / top and bottom |
+| `C-a h` `j` `k` `l` | Move between panes (the mouse works too) |
+| `C-a z` | Zoom a pane, and back |
+| `C-a x` / `C-a &` | Close pane / close window |
+| `C-a s` / `C-a w` | Pick a session / pick a window |
+| `C-a $` | Rename session |
+| `C-a d` | Detach |
+| `C-a [` | Copy mode: `v` selects, `y` copies to the local clipboard, `q` quits |
+| `C-a r` | Reload config |
+| `C-a ?` | List every binding |
+
+---
+
 ## Git, SSH, and Signing
 
 - SSH authentication uses the 1Password SSH agent on supported platforms
