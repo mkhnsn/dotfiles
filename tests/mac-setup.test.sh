@@ -482,6 +482,12 @@ test_profiles_lists_missing_terminal_privacy() {
   assert_open "MDM profiles installed"
 }
 
+test_hostname_uses_local_hostname() {
+  stub scutil 'case "$2" in ComputerName) echo "Test Mac" ;; *) echo Test-Mac ;; esac'
+  run "$SCRIPT" --status
+  assert_done "Computer name is Test-Mac"
+}
+
 test_hostname_must_match() {
   stub scutil 'echo Old-Name'
   run "$SCRIPT" --status
