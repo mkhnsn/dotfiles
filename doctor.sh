@@ -156,5 +156,15 @@ if have gh; then
   gh auth status -h github.com 2>/dev/null || info "gh auth status unavailable (not logged in?)"
 fi
 
+hr "tmux config"
+if have tmux; then
+  # tmux loads ~/.tmux.conf instead of ~/.config/tmux/tmux.conf when both exist.
+  if [[ -e "$HOME/.tmux.conf" ]]; then
+    warn "~/.tmux.conf exists and overrides the dotfiles' ~/.config/tmux/tmux.conf. Fold anything worth keeping into the dotfiles, then delete it."
+  else
+    ok "tmux uses ~/.config/tmux/tmux.conf"
+  fi
+fi
+
 hr "Done"
 ok "doctor.sh completed"
