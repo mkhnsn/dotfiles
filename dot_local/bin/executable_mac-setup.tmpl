@@ -65,7 +65,10 @@ ts_bin() {
   [ -x "$APPS/Tailscale.app/Contents/MacOS/Tailscale" ] && echo "$APPS/Tailscale.app/Contents/MacOS/Tailscale"
 }
 ts_json() { local t; t="$(ts_bin)" || return 1; [ -n "$t" ] && "$t" status --json --peers=false 2>/dev/null; }
-confirmed() { [ -f "$STATE_DIR/$1" ]; }
+# Per-item steps are "base:item"; their state file is the id with unsafe characters
+# replaced. A file for the base alone is from when the step wasn't split, and covers all items.
+state_key() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_'; }
+confirmed() { [ -f "$STATE_DIR/$(state_key "$1")" ] || [ -f "$STATE_DIR/${1%%:*}" ]; }
 workstation() { [ "$ROLE" = workstation ]; }
 
 # Apps with no Homebrew cask: app bundle | where to get it.
@@ -76,12 +79,43 @@ HueForge|https://shop.thehueforge.com
 MASSO Link|https://www.masso.com.au
 EXStar Hub|https://www.shining3d.com
 3DconnexionSettings|https://3dconnexion.com/drivers"
-vendor_missing() {
-  local name url
-  while IFS='|' read -r name url; do [ -d "$APPS/$name.app" ] || echo "$name|$url"; done <<EOF
+vendor_steps() { local name
+  while IFS='|' read -r name _; do echo "vendor:$name|$name installed|Apps"; done <<EOF2
 $VENDOR_APPS
-EOF
+EOF2
 }
+vendor_url() { printf '%s\n' "$VENDOR_APPS" | awk -F'|' -v n="$1" '$1==n{print $2}'; }
+# Apps to sign in to or activate: label | app to open | note.
+LICENCES="Microsoft 365 (Office)|Microsoft Word|
+Fantastical|Fantastical|
+PDF Expert|PDF Expert|
+Bartender|Bartender 7|
+BetterDisplay|BetterDisplay|
+BetterMouse|BetterMouse|Set the mouse to standard scrolling; the trackpad stays natural.
+DaisyDisk|DaisyDisk|
+Parallels|Parallels Desktop|
+LightBurn|LightBurn|
+HueForge|HueForge|
+Fusion|Autodesk Fusion|
+Raycast|Raycast|
+Slack|Slack|
+Claude|Claude|"
+licence_field() { printf '%s\n' "$LICENCES" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
+licence_steps() { local l
+  while IFS='|' read -r l _ _; do echo "licence:$l|$l signed in or activated|Apps"; done <<EOF2
+$LICENCES
+EOF2
+}
+# Private app exports: label | app | where to restore | old Mac step name
+EXPORTS="Stream Deck|Elgato Stream Deck|Preferences > Profiles > Restore
+BetterDisplay|BetterDisplay|Settings > Application > Import"
+export_field() { printf '%s\n' "$EXPORTS" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
+export_steps() { local l
+  while IFS='|' read -r l _ _; do echo "export:$l|$l export restored|Apps"; done <<EOF2
+$EXPORTS
+EOF2
+}
+
 default_browser() {
   defaults read "$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure" LSHandlers 2>/dev/null |
     awk 'BEGIN{RS="}"} /LSHandlerURLScheme = http;/ { if (match($0,/LSHandlerRoleAll = "[^"]*"/)) print substr($0,RSTART+20,RLENGTH-21) }'
@@ -101,10 +135,11 @@ check_profiles()   { [ -z "$(profiles_missing)" ]; }
 # -> "MikeBook-Pro"); chezmoi's hostname data is the local-hostname form.
 check_hostname()   { [ "$(scutil --get LocalHostName 2>/dev/null)" = "$(printf '%s' "$HOSTNAME_WANT" | tr ' ' '-')" ]; }
 check_ninja()      { pgrep -f NinjaRMMAgent/programfiles/ninjarmm-macagent >/dev/null; }
-check_escrow()     { workstation || return 0; confirmed escrow; }
+check_escrow()     { workstation || return 0; confirmed "escrow:$1"; }
 # Ninja Backup installs lockhart only once backup is deployed to the device in Ninja.
 LOCKHART="/Applications/NinjaRMMAgent/programfiles/lockhart/bin/lockhart"
-check_ninja_backup(){ workstation || return 0; [ -x "${MAC_SETUP_LOCKHART:-$LOCKHART}" ] && confirmed ninja_backup; }
+check_ninja_backup(){ workstation || return 0; [ -x "${MAC_SETUP_LOCKHART:-$LOCKHART}" ]; }
+check_ninja_backup_run(){ workstation || return 0; check_ninja_backup && confirmed ninja_backup_run; }
 # Ask Homebrew's own doctor checks, which are what make it refuse stale tools.
 check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
                      command -v brew >/dev/null 2>&1 || return 0
@@ -114,7 +149,7 @@ check_rosetta()    { [ "$(uname -m)" != arm64 ] || arch -x86_64 /usr/bin/true 2>
 check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/null | grep -q .; }
 OP_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
-check_op_browser() { workstation || return 0; confirmed op_browser; }
+check_op_browser() { workstation || return 0; confirmed "op_browser:$1"; }
 # After a dotfiles update changes .chezmoi.toml.tmpl, chezmoi warns until `chezmoi init` runs.
 chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep -q "config file template has changed"; }
 check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] && ! chezmoi_config_stale &&
@@ -137,11 +172,11 @@ check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/nul
 check_remote()     { confirmed remote; }
 check_ws_apps()    { workstation || return 0
                      brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
-check_vendor()     { workstation || return 0; [ -z "$(vendor_missing)" ]; }
+check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
-check_licences()   { workstation || return 0; confirmed licences; }
+check_licence()    { workstation || return 0; confirmed "licence:$1" || confirmed licences; }
 check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
-check_app_exports(){ workstation || return 0; confirmed app_exports; }
+check_export()     { workstation || return 0; confirmed "export:$1" || confirmed app_exports; }
 check_vm()         { workstation || return 0; confirmed vm; }
 check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
 check_browser()    { workstation || return 0; [ "$(default_browser)" = com.google.chrome ]; }
@@ -154,14 +189,22 @@ help_filevault()  { echo "Turn on FileVault: System Settings > Privacy & Securit
 help_profiles()   { echo "MDM profiles missing: $(profiles_missing | paste -sd, - | sed 's/,/, /g'). Check the device is in its SimpleMDM group (Terminals for workstations) and push profiles from its device page."; }
 help_hostname()   { echo "This Mac should be named $HOSTNAME_WANT. Rename it in SimpleMDM (device page > Rename), which sets the computer name. Replacing a Mac: rename the old one first so the names don't clash."; }
 help_ninja()      { echo "NinjaOne agent not running. SimpleMDM installs it; check the app install on the device page, or reinstall the agent pkg."; }
-help_ninja_backup(){ echo "Ninja Backup: in NinjaOne, Organization > Unstable Studios > Backup > Deployment, enable this Mac (Deploy to stays per device). Ninja installs its backup agent (MDM already grants it Full Disk Access). Then run the 'UnSt - Mac home folder' plan once from the device page and confirm it succeeds."; }
-help_escrow()     { echo "In SimpleMDM, open this Mac ($SERIAL), reveal the FDE Recovery Key and Activation Lock Bypass Code, and save both in 1Password (one item named after the Mac and serial)."; }
+help_ninja_backup(){ echo "In NinjaOne: Organization > Unstable Studios > Backup > Deployment, enable this Mac (per device; leave All workstations unticked). Ninja then installs its backup agent; MDM already grants it Full Disk Access."; }
+help_ninja_backup_run(){ echo "In NinjaOne, open this Mac and run the 'UnSt - Mac home folder' backup plan once. Confirm it finishes without errors."; }
+help_escrow()     { case "$1" in
+                      filevault) echo "In SimpleMDM, open this Mac ($SERIAL) and reveal the FDE Recovery Key. Save it in 1Password, in one item named after the Mac and serial." ;;
+                      *) echo "In SimpleMDM, open this Mac ($SERIAL) and reveal the Activation Lock Bypass Code. Save it in the same 1Password item as the FileVault key." ;;
+                    esac; }
 help_clt()        { echo "Command Line Tools missing or stale (Homebrew refuses old ones)."; }
 help_brew()       { echo "Homebrew isn't installed."; }
 help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
-help_op_browser()  { echo "Sign in to your Google profile in Chrome; Chrome Sync installs the 1Password extension. Then in 1Password: Settings > Browser > Connect with 1Password in the browser, and Settings > General > Show Quick Access: Cmd+Shift+Space."; }
+help_op_browser()  { case "$1" in
+                       chrome) echo "Sign in to your Google profile in Chrome. Chrome Sync installs the 1Password extension." ;;
+                       connect) echo "In 1Password: Settings > Browser > Connect with 1Password in the browser." ;;
+                       *) echo "In 1Password: Settings > General > Show Quick Access: Cmd+Shift+Space." ;;
+                     esac; }
 help_chezmoi()    { if chezmoi_config_stale; then echo "The dotfiles' config template changed: chezmoi init regenerates ~/.config/chezmoi/chezmoi.toml (it keeps your answers)."; else echo "Dotfiles not applied, or out of date."; fi; }
 help_brewfile()   { echo "Brewfile packages missing."; }
 help_gh()         { echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too."; }
@@ -174,11 +217,11 @@ help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not 
 help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import the BTT preset from the dotfiles. It asks for Accessibility once.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."; }
-help_vendor()     { echo "Apps without a Homebrew cask, from their own sites:"; vendor_missing | while IFS='|' read -r n u; do printf '      %s  %s\n' "$n" "$u"; done; }
+help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1") and install it."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
-help_licences()   { echo "Sign in or activate: Microsoft 365 (Office), Fantastical, PDF Expert, Bartender, BetterDisplay, BetterMouse (set the mouse to standard scrolling; the trackpad stays natural), DaisyDisk, Parallels, LightBurn, HueForge, Fusion, Raycast, Slack, Claude."; }
+help_licence()    { local n; n="$(licence_field "$1" 3)"; echo "Open $1 and sign in or enter its licence.${n:+ $n}"; }
 help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit these apps first; a running app writes its own settings back:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
-help_app_exports() { echo "Restore the private app exports from OneDrive (Unstable Studios) > Apps > Mac app exports: Stream Deck (Preferences > Profiles > Restore), BetterDisplay (Settings > Application > Import). Make them on the old Mac first."; }
+help_export()      { echo "Restore $1 from its export in OneDrive (Unstable Studios) > Apps > Mac app exports: $(export_field "$1" 3). Make the export on the old Mac first."; }
 help_vm()          { cat <<'EOV'
 Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Parallels: File > Pack ("vWindows 11.pvmp", about half the size) and write its checksum: shasum -a 256 "vWindows 11.pvmp" | cut -d' ' -f1 > "vWindows 11.sha256.txt".
       Copy both to ~/Parallels here: rsync -a --partial ~/Parallels/vWindows\ 11.* <this-mac>:Parallels/ (needs Remote Login and the dotfiles' authorized_keys here), or an external SSD.
@@ -204,7 +247,9 @@ act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com
 act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
 act_op_ssh()       { open -a 1Password; }
-act_op_browser()   { open -a "Google Chrome"; open -a 1Password; }
+act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
+act_licence()      { open -a "$(licence_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
+act_export()       { open "$HOME/Library/CloudStorage/OneDrive-UnstableStudios/Apps/Mac app exports" 2>/dev/null; open -a "$(export_field "$1" 2)" 2>/dev/null; }
 act_chezmoi() {
   if chezmoi_config_stale; then chezmoi init; return; fi
   if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update
@@ -226,7 +271,7 @@ act_doppler()     { doppler login; }
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
 act_btt()         { open "https://folivora.ai"; }
 act_ws_apps()     { HOMEBREW_CASK_OPTS="--adopt" brew bundle --file "$(chezmoi source-path)/Brewfile.workstation"; }
-act_vendor()      { vendor_missing | while IFS='|' read -r n u; do open "$u"; done; }
+act_vendor()      { open "$(vendor_url "$1")"; }
 act_gridfinity() {
   local tmp; tmp="$(mktemp -d)"
   gh release download -R unstable-studios/gridfinity-studio --pattern '*arm64-mac.zip' -D "$tmp" &&
@@ -246,13 +291,16 @@ filevault|FileVault on (workstations)|MDM
 profiles|MDM profiles installed|MDM
 hostname|Computer name is $HOSTNAME_WANT|MDM
 ninja|NinjaOne agent running|MDM
-escrow|FileVault key and Activation Lock code saved to 1Password|MDM
+escrow:filevault|FileVault key saved to 1Password|MDM
+escrow:activation_lock|Activation Lock code saved to 1Password|MDM
 clt|Command Line Tools current|Tools
 brew|Homebrew installed|Tools
 rosetta|Rosetta installed|Tools
 onepassword|1Password CLI connected|Tools
 op_ssh|1Password SSH agent on|Tools
-op_browser|Chrome signed in, 1Password browser integration and Quick Access|Tools
+op_browser:chrome|Chrome signed in to your Google profile|Tools
+op_browser:connect|1Password connected to the browser|Tools
+op_browser:quick_access|1Password Quick Access on Cmd+Shift+Space|Tools
 chezmoi|Dotfiles applied|Dotfiles
 brewfile|Brewfile packages installed|Dotfiles
 gh|GitHub CLI signed in|Accounts
@@ -264,44 +312,47 @@ ssh_server|Remote Login on, for you only|Network
 btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
-vendor|Apps without a cask installed|Apps
+$(vendor_steps)
 gridfinity|gridfinity-studio installed|Apps
-licences|Apps signed in and activated|Apps
+$(licence_steps)
 app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
-app_exports|Private app exports restored (Stream Deck, BetterDisplay)|Apps
+$(export_steps)
 vm|Virtual machines moved|Apps
 remote|Ninja Remote Screen Recording approved|Apps
-ninja_backup|Ninja Backup deployed and a backup run succeeded|Apps
+ninja_backup|Ninja Backup deployed to this Mac|Apps
+ninja_backup_run|First Ninja Backup run succeeded|Apps
 defaults|macOS settings and Dock|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote ninja_backup licences op_browser app_exports vm "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup_run licence op_browser export vm "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.
 ask() { printf '%s' "$1" >&2; read -r ans <&3 || ans=q; }
 
 run_step() {
-  local id="$1" title="$2" ans
+  # "base:item" ids run check_base/help_base/act_base with the item as their argument.
+  local id="$1" title="$2" ans base="${1%%:*}" item=""
+  case "$id" in *:*) item="${id#*:}" ;; esac
   while :; do
-    if "check_$id"; then printf '  %s✓%s %s\n' "$G" "$R" "$title"; return 0; fi
+    if "check_$base" "$item"; then printf '  %s✓%s %s\n' "$G" "$R" "$title"; return 0; fi
     if [ "$MODE" = status ]; then printf '  %s○%s %s\n' "$Y" "$R" "$title"; return 1; fi
 
     printf '\n  %s→ %s%s\n' "$B" "$title" "$R"
-    printf '    %s\n' "$("help_$id")"
-    if has_fn "act_$id"; then
+    printf '    %s\n' "$("help_$base" "$item")"
+    if has_fn "act_$base"; then
       ask "    Do it now? [Y/n/s=skip/q=quit] "
       case "$ans" in
         n|N) ;;
         s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;;
         q|Q) exit 1 ;;
-        *) "act_$id" <&3 ;;
+        *) "act_$base" "$item" <&3 ;;
       esac
     fi
     case "$MANUAL" in
-      *" $id "*)
+      *" $base "*)
         ask "    Done? [y/N/q] "
-        case "$ans" in y|Y) touch "$STATE_DIR/$id" ;; q|Q) exit 1 ;; *) return 1 ;; esac ;;
+        case "$ans" in y|Y) touch "$STATE_DIR/$(state_key "$id")" ;; q|Q) exit 1 ;; *) return 1 ;; esac ;;
       *)
         ask "    Enter to re-check, s to skip, q to quit: "
         case "$ans" in s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;; q|Q) exit 1 ;; esac ;;
