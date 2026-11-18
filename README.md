@@ -254,7 +254,9 @@ The prefix is `C-a`; with tmux nested on a Mac, `C-a C-a` reaches the inner one.
 | `C-a d` | Detach |
 | `C-a [` | Copy mode: `v` selects, `y` copies to the local clipboard, `q` quits |
 | `C-a r` | Reload config |
-| `C-a ?` | List every binding |
+| `C-a ?` | Cheat sheet, grouped (`C-a :list-keys` shows every binding) |
+| `C-a H` | Hide or show the key hint row under the status bar |
+| `C-a m` | Turn mouse handling off or on (try off if touch input misbehaves, e.g. on an iPad) |
 
 ---
 
