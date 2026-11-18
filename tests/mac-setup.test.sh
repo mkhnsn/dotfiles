@@ -567,6 +567,16 @@ test_icloud_docs_needs_both_links() {
   assert_done "Desktop & Documents in iCloud"
 }
 
+test_icloud_optimize_storage_must_be_off() {
+  run "$SCRIPT" --status
+  assert_done "iCloud keeps files downloaded"
+  stub defaults 'case "$*" in *com.apple.bird*) echo 1 ;; *) printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n" ;; esac'
+  run "$SCRIPT" --status
+  assert_open "iCloud keeps files downloaded"
+  run "$SCRIPT_SERVER" --status
+  assert_done "iCloud keeps files downloaded"
+}
+
 # ---- Run -------------------------------------------------------------------------
 
 tests="$(grep -oE '^test_[a-z0-9_]+' "$0")"

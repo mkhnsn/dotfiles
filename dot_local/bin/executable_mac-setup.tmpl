@@ -162,6 +162,7 @@ check_gh()         { gh auth status >/dev/null 2>&1; }
 ICLOUD_DRIVE="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 check_icloud_docs(){ workstation || return 0; local d
                      for d in Desktop Documents; do [ "$(readlink "$ICLOUD_DRIVE/$d" 2>/dev/null)" = "$HOME/$d" ] || return 1; done; }
+check_icloud_local(){ workstation || return 0; [ "$(defaults read com.apple.bird optimize-storage 2>/dev/null)" != 1 ]; }
 check_doppler()    { doppler me >/dev/null 2>&1; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
@@ -217,6 +218,7 @@ help_op_browser()  { case "$1" in
 help_chezmoi()    { if chezmoi_config_stale; then echo "The dotfiles' config template changed: chezmoi init regenerates ~/.config/chezmoi/chezmoi.toml (it keeps your answers)."; else echo "Dotfiles not applied, or out of date."; fi; }
 help_brewfile()   { echo "Brewfile packages missing."; }
 help_icloud_docs() { echo "Turn on Desktop & Documents in iCloud: System Settings > your name > iCloud > Drive > Desktop & Documents Folders. MDM can only allow it, not switch it on; Setup Assistant offers it too. Files from your other Macs' Desktop and Documents then appear here."; }
+help_icloud_local(){ echo "Turn off Optimize Mac Storage: System Settings > your name > iCloud. Desktop and Documents then stay downloaded, so Ninja Backup backs up real files (with Optimize on, iCloud swaps older files for placeholders that the backup can't read)."; }
 help_gh()         { echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too."; }
 help_doppler()    { echo "Doppler CLI not signed in."; }
 help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found."; }
@@ -318,6 +320,7 @@ brewfile|Brewfile packages installed|Dotfiles
 gh|GitHub CLI signed in|Accounts
 doppler|Doppler signed in|Accounts
 icloud_docs|Desktop & Documents in iCloud|Accounts
+icloud_local|iCloud keeps files downloaded (Optimize Mac Storage off)|Accounts
 tailscale|Tailscale connected|Network
 ts_name|Tailscale name is $(lower "$HOSTNAME_WANT")|Network
 ts_tag|Tailscale tag $TAG_WANT|Network
