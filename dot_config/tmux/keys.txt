@@ -19,4 +19,4 @@
     r  reload config   :  command   H  hide hint row
     Full list: C-a :list-keys
 
-  q or Esc closes this.
+  Press any key to close.
