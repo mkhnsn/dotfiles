@@ -577,6 +577,13 @@ test_icloud_optimize_storage_must_be_off() {
   assert_done "iCloud keeps files downloaded"
 }
 
+test_license_confirmations_saved_as_licence_still_count() {
+  rm -f "$XDG_STATE_HOME/mac-setup/licences"
+  mark_done licence_Slack
+  run "$SCRIPT" --status
+  assert_done "Slack signed in or activated"; assert_open "Claude signed in or activated"
+}
+
 # ---- Run -------------------------------------------------------------------------
 
 tests="$(grep -oE '^test_[a-z0-9_]+' "$0")"

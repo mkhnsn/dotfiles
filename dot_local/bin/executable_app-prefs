@@ -10,10 +10,10 @@ Exit codes: 0 done, 1 some apps were running and skipped (or check found differe
 2 error.
 
 macos/prefs/allowlist holds `domain<TAB>pattern` lines (fnmatch patterns on key names).
-Only matching keys are exported, so licences, purchase records and app state never reach
+Only matching keys are exported, so licenses, purchase records and app state never reach
 the repo; the repo is public, so add a key only after checking it holds no secret.
 apply merges (defaults export, update, defaults import): keys not in the repo, such as a
-licence on the new Mac, are kept. A running app is skipped, since it would write its own
+license on the new Mac, are kept. A running app is skipped, since it would write its own
 settings back when it quits; quit it and run apply again.
 """
 import fnmatch

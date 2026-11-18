@@ -2,7 +2,7 @@
 # OpenSCAD is a vendor download in mac-setup: its cask was disabled (fails Gatekeeper).
 # Installed by run_install-packages after the base Brewfile, with --adopt so apps
 # already in /Applications are taken over instead of failing. App Store apps need
-# you signed in to the App Store. Apps without a cask (vendor downloads, licences)
+# you signed in to the App Store. Apps without a cask (vendor downloads, licenses)
 # are mac-setup steps.
 
 tap "steipete/tap"

@@ -86,7 +86,7 @@ EOF2
 }
 vendor_url() { printf '%s\n' "$VENDOR_APPS" | awk -F'|' -v n="$1" '$1==n{print $2}'; }
 # Apps to sign in to or activate: label | app to open | note.
-LICENCES="Microsoft 365 (Office)|Microsoft Word|
+LICENSES="Microsoft 365 (Office)|Microsoft Word|
 Fantastical|Fantastical|
 PDF Expert|PDF Expert|
 Bartender|Bartender 7|
@@ -100,10 +100,10 @@ Fusion|Autodesk Fusion|
 Raycast|Raycast|
 Slack|Slack|
 Claude|Claude|"
-licence_field() { printf '%s\n' "$LICENCES" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
-licence_steps() { local l
-  while IFS='|' read -r l _ _; do echo "licence:$l|$l signed in or activated|Apps"; done <<EOF2
-$LICENCES
+license_field() { printf '%s\n' "$LICENSES" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
+license_steps() { local l
+  while IFS='|' read -r l _ _; do echo "license:$l|$l signed in or activated|Apps"; done <<EOF2
+$LICENSES
 EOF2
 }
 # Private app exports: label | app | where to restore | old Mac step name
@@ -181,7 +181,8 @@ check_ws_apps()    { workstation || return 0
                      brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
 check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
-check_licence()    { workstation || return 0; confirmed "licence:$1" || confirmed licences; }
+# Confirmations saved before the US spelling ("licence:<app>", "licences") still count.
+check_license()    { workstation || return 0; confirmed "license:$1" || confirmed "licence:$1" || confirmed licences; }
 check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
 EXPORTS_DIR="${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}/Apps/Mac app exports"
 check_onedrive()   { workstation || return 0; [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}" ]; }
@@ -231,14 +232,14 @@ help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import th
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."; }
 help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1") and install it."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
-help_licence()    { local n; n="$(licence_field "$1" 3)"; echo "Open $1 and sign in or enter its licence.${n:+ $n}"; }
+help_license()    { local n; n="$(license_field "$1" 3)"; echo "Open $1 and sign in or enter its license.${n:+ $n}"; }
 help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit these apps first; a running app writes its own settings back:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
 help_onedrive()    { echo "Sign in to OneDrive with your Unstable Studios account (mike@unstablestudios.com). The private app exports sync through it."; }
 help_export()      { echo "Restore $1 from its export in OneDrive (Unstable Studios) > Apps > Mac app exports: $(export_field "$1" 3). Make the export on the old Mac first."; }
 help_vm()          { cat <<'EOV'
 Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Parallels: File > Pack ("vWindows 11.pvmp", about half the size) and write its checksum: shasum -a 256 "vWindows 11.pvmp" | cut -d' ' -f1 > "vWindows 11.sha256.txt".
       Copy both to ~/Parallels here: rsync -a --partial ~/Parallels/vWindows\ 11.* <this-mac>:Parallels/ (needs Remote Login and the dotfiles' authorized_keys here), or an external SSD.
-      Here: shasum -a 256 "vWindows 11.pvmp" must match the .txt. Double-click the .pvmp to unpack, choose "I moved it" (keeps Windows activation and VCarve's licence), start Windows and open VCarve. Then delete the .pvmp on both Macs.
+      Here: shasum -a 256 "vWindows 11.pvmp" must match the .txt. Double-click the .pvmp to unpack, choose "I moved it" (keeps Windows activation and VCarve's license), start Windows and open VCarve. Then delete the .pvmp on both Macs.
       Answer y if there's no VM to move.
 EOV
 }
@@ -261,7 +262,7 @@ act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
 act_op_ssh()       { open -a 1Password; }
 act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
-act_licence()      { open -a "$(licence_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
+act_license()      { open -a "$(license_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
 act_onedrive()     { open -a OneDrive; }
 act_export()       { open "$EXPORTS_DIR" 2>/dev/null; open -a "$(export_field "$1" 2)" 2>/dev/null; }
 act_chezmoi() {
@@ -330,7 +331,7 @@ btt_preset|BetterTouchTool preset imported|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
 $(vendor_steps)
 gridfinity|gridfinity-studio installed|Apps
-$(licence_steps)
+$(license_steps)
 app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
 onedrive|OneDrive signed in (Unstable Studios)|Apps
 $(export_steps)
@@ -341,7 +342,7 @@ ninja_backup_run|First Ninja Backup run succeeded|Apps
 defaults|macOS settings and Dock|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote ninja_backup_run licence op_browser export vm "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup_run license op_browser export vm "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.

@@ -303,12 +303,12 @@ FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Comm
 Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
 the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool and its preset, workstation apps (Brewfile, vendor
-downloads, gridfinity-studio, licences), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
+downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
 backup run, macOS
 settings and the Dock, and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
-steps are split per item (each app without a cask, each licence, each app export, each
+steps are split per item (each app without a cask, each license, each app export, each
 escrowed secret, the browser pieces), so each gets its own tick and its own "Do it now?"
 (opening the download page, the app, or the exports folder).
 
@@ -332,7 +332,7 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - `Brewfile.workstation`: GUI apps for workstation Macs (casks, plus App Store apps through
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
-  without a cask, licences and sign-ins are `mac-setup` steps.
+  without a cask, licenses and sign-ins are `mac-setup` steps.
 - `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
   (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
@@ -341,10 +341,10 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - Default browser: Chrome, set by `mac-setup` with `defaultbrowser` (macOS asks to confirm).
 - `app-prefs`: chosen app settings (Bartender, BetterMouse, AltTab, Stats, Festivitas,
   OpenSCAD, KeyboardCleanTool) in `macos/prefs/`, allow-list only (`macos/prefs/allowlist`),
-  so licences and app state stay out of this public repo. `app-prefs export` on the Mac
+  so licenses and app state stay out of this public repo. `app-prefs export` on the Mac
   you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply;
   quit the apps first). `check` and `diff` list differing key names, never values. A test
-  fails if a committed setting looks like a licence, token or email address.
+  fails if a committed setting looks like a license, token or email address.
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
