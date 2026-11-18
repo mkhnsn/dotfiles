@@ -159,7 +159,7 @@ help_vendor()     { echo "Apps without a Homebrew cask, from their own sites:"; 
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
 help_licences()   { echo "Sign in or activate: Microsoft 365 (Office), Fantastical, PDF Expert, Bartender, BetterDisplay, BetterMouse (set the mouse to standard scrolling; the trackpad stays natural), DaisyDisk, Parallels, LightBurn, HueForge, Fusion, Raycast, Slack, Claude."; }
 help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit these apps first; a running app writes its own settings back:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
-help_app_exports() { echo "Restore the private app exports saved in 1Password: Stream Deck (Preferences > Profiles > Restore), BetterDisplay (Settings > Application > Import). Make them on the old Mac first."; }
+help_app_exports() { echo "Restore the private app exports from OneDrive (Unstable Studios) > Apps > Mac app exports: Stream Deck (Preferences > Profiles > Restore), BetterDisplay (Settings > Application > Import). Make them on the old Mac first."; }
 help_vm()          { echo "Windows VM (VCarve): shut it down on the old Mac (not suspended), copy ~/Parallels/vWindows 11.pvm (86 GB) to ~/Parallels here (external SSD, or rsync over the network), open it in Parallels and choose 'I moved it'. Answer y if there's no VM to move."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
