@@ -16,6 +16,12 @@ theme = Darkside
 background-opacity = 0.92
 background-blur-radius = 20
 minimum-contrast = 1.3
+
+# SSH: remote hosts don't know Ghostty's terminal type (xterm-ghostty), so ssh warns
+# "missing or unsuitable terminal". ssh-terminfo installs Ghostty's terminfo on the host
+# at connect time; ssh-env falls back to xterm-256color where that isn't possible.
+# The other features keep Ghostty's defaults.
+shell-integration-features = cursor,no-sudo,title,ssh-env,ssh-terminfo,path
 {{- if eq .chezmoi.os "darwin" }}
 
 # macOS
