@@ -35,7 +35,7 @@ setup() {
   stub fdesetup    'echo "FileVault is On."'
   stub system_profiler 'printf "        macOS: Firewall:\n        macOS: NinjaOne privacy permissions:\n        macOS: Terminal privacy permissions:\n"'
   stub nc          'exit 0'
-  stub tmutil      'echo "Name          : backups"'
+  stub tmutil      'case "$1" in isexcluded) echo "[Excluded]  $2" ;; *) echo "Name          : backups" ;; esac'
   stub dscl        'exit 0'
   stub dsmemberutil 'echo "user is a member of the group"'
   printf '#!/bin/sh\n' > "$MAC_SETUP_LOCKHART"; chmod +x "$MAC_SETUP_LOCKHART"
@@ -609,6 +609,17 @@ test_time_machine_needs_a_destination() {
   assert_open "Time Machine backs up to echo-nas"
   run "$SCRIPT_SERVER" --status
   assert_done "Time Machine backs up to echo-nas"
+}
+
+test_vms_must_be_excluded_from_time_machine() {
+  run "$SCRIPT" --status
+  assert_done "Virtual machines kept out of Time Machine"
+  mkdir -p "$HOME/Parallels"
+  stub tmutil 'case "$1" in isexcluded) echo "[Included]  $2" ;; *) echo "Name          : backups" ;; esac'
+  run "$SCRIPT" --status
+  assert_open "Virtual machines kept out of Time Machine"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Virtual machines kept out of Time Machine"
 }
 
 # ---- Run -------------------------------------------------------------------------

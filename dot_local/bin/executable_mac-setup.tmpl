@@ -195,6 +195,10 @@ check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
 # destinationinfo works without Full Disk Access; latestbackup doesn't.
 check_timemachine(){ workstation || return 0; tmutil destinationinfo 2>/dev/null | grep -q '^Name'; }
+# VM disks change constantly, so every hourly backup would re-copy them. The valuable data
+# (VCarve) has its own copy (~/VCarve/Backup); the VM rebuilds from Intune. A sticky
+# exclusion on the folder covers VMs added later.
+check_tm_no_vms()  { workstation || return 0; [ ! -d "$HOME/Parallels" ] || tmutil isexcluded "$HOME/Parallels" 2>/dev/null | grep -q '^\[Excluded\]'; }
 check_browser()    { workstation || return 0; [ "$(default_browser)" = com.google.chrome ]; }
 
 # ---- Help: what to do when a check fails ------------------------------------------
@@ -249,7 +253,8 @@ Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Paral
       Answer y if there's no VM to move.
 EOV
 }
-help_timemachine() { echo "Back up to echo-nas with Time Machine: System Settings > General > Time Machine > Add Backup Disk > 'backups' on echo-nas (NAS account in 1Password). It's the local, whole-Mac restore; Ninja Backup is the off-site one."; }
+help_timemachine() { echo "Back up to echo-nas with Time Machine. echo-nas isn't announced on the local network, so it never shows in Add Backup Disk; add it by address (asks for the NAS account's password, in 1Password): sudo tmutil setdestination -a -p \"smb://<nas-user>@echo-nas/backups\". Then tmutil startbackup. It's the local, whole-Mac restore; Ninja Backup is the off-site one."; }
+help_tm_no_vms()  { echo "Keep virtual machines out of Time Machine: tmutil addexclusion ~/Parallels (no admin needed). VM disks change constantly, so each backup would re-copy them."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
@@ -302,6 +307,7 @@ act_gridfinity() {
 }
 act_app_prefs()    { app-prefs apply; }
 act_timemachine() { open "x-apple.systempreferences:com.apple.Time-Machine-Settings.extension"; }
+act_tm_no_vms()   { tmutil addexclusion "$HOME/Parallels"; }
 act_defaults()    { mac-defaults; }
 act_browser()     { defaultbrowser chrome; }
 act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
@@ -349,6 +355,7 @@ ninja_backup|Ninja Backup deployed to this Mac|Apps
 ninja_backup_run|First Ninja Backup run succeeded|Apps
 defaults|macOS settings and Dock|Settings
 timemachine|Time Machine backs up to echo-nas|Settings
+tm_no_vms|Virtual machines kept out of Time Machine|Settings
 browser|Default browser is Chrome|Settings"
 
 MANUAL=" escrow remote ninja_backup_run license op_browser export vm "   # steps confirmed by hand, remembered in $STATE_DIR
