@@ -622,6 +622,20 @@ test_vms_must_be_excluded_from_time_machine() {
   assert_done "Virtual machines kept out of Time Machine"
 }
 
+test_time_machine_action_uses_1password_and_clipboard() {
+  export MAC_SETUP_CLIP_SECONDS=0
+  stub tmutil "case \"\$1\" in destinationinfo) [ -f $T/tm-set ] && echo 'Name          : backups' || echo 'tmutil: No destinations configured.' ;; isexcluded) echo \"[Excluded]  \$2\" ;; esac; exit 0"
+  stub op 'case "$1 $2" in "account list") echo "[{\"user_uuid\": \"U1\"}]" ;; "item get") case "$*" in *label=username*) echo nasuser ;; *label=password*) echo s3cret ;; esac ;; *) echo "URL ACCOUNT" ;; esac'
+  stub pbcopy "cat >> $T/clipboard"
+  stub sudo "echo \"\$*\" >> $T/sudo-args; touch $T/tm-set"
+  printf 'y\n\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "First backup started."
+  grep -q 's3cret' "$T/clipboard" || fail "password not put on the clipboard"
+  grep -q 'smb://nasuser@echo-nas/backups' "$T/sudo-args" || fail "destination not set with the 1Password user"
+  ! grep -q 's3cret' "$T/sudo-args" || fail "password on the sudo command line"
+}
+
 # ---- Run -------------------------------------------------------------------------
 
 tests="$(grep -oE '^test_[a-z0-9_]+' "$0")"
