@@ -19,7 +19,7 @@ PASS=0 FAIL=0 OUT="" RC=0
 setup() {
   T="$(mktemp -d)"
   export MAC_SETUP_TM_PREFS="$T/tm-prefs"
-  export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
+  export HOME="$T/home" XDG_STATE_HOME="$T/state" XDG_CONFIG_HOME="$T/home/.config" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
   export MAC_SETUP_LOCKHART="$T/lockhart" MAC_SETUP_ONEDRIVE="$T/OneDrive"
   mkdir -p "$T/OneDrive"
   STUBS="$HOME/.local/bin"
