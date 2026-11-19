@@ -365,6 +365,20 @@ command that fixes it. Apps that are already installed in a way Homebrew can't t
 that updates itself, like OneDrive or Fusion, or a newer copy) are skipped on that Mac and still installed on
 the others. Run `brew-why` any time for the same list (`brew-why <cask>` for one app).
 
+## Keyboard shortcuts
+
+`macos/shortcuts.toml` lists every keyboard shortcut once, with the app that owns it. `shortcut-check`
+(also in `make test` and CI) reads the bindings the dotfiles manage — macOS system shortcuts
+(`macos/symbolichotkeys.plist`), the BTT preset, AltTab's settings — and fails on a **conflict**
+(two owners on the same keys), an **undeclared** binding, or a **stale** entry. Raycast's settings
+are encrypted, so its hotkeys are entered by hand (`source = "manual"`) and only checked for
+conflicts. `shortcut-check --list` prints the whole map.
+
+Who owns what: window management is BTT (drag-to-snap and the ⌃⌥ keys), app switching is AltTab
+on ⌘Tab, the menu bar is Bartender, and Raycast is the launcher with no window or switcher
+hotkeys. After changing a shortcut in an app, export it (`btt-sync export`, `app-prefs export`),
+update the registry, and run `shortcut-check`.
+
 ## BetterTouchTool
 
 BTT is installed from [folivora.ai](https://folivora.ai), not Homebrew (BTT warns about

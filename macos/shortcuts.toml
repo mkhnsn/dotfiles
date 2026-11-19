@@ -1,0 +1,169 @@
+# Every keyboard shortcut, in one place, with the app that owns it. Checked by `shortcut-check`
+# (and by `make test`): two owners on the same keys in overlapping scopes is a conflict, a binding
+# in a managed config that isn't listed here is undeclared, and a listed managed binding its
+# config no longer has is stale.
+#
+# owner    btt | macos | alttab        read from their configs in this repo
+#          raycast | macos-default | app-menus | <app>   entered by hand (source = "manual")
+# scope    "global", or an app's bundle ID
+# accepted a known, temporary conflict: the reason. It's reported as a warning, not a failure.
+#
+# Ownership (2026-11-19): window management is BTT (drag-to-snap and the ⌃⌥ keys), app switching
+# is AltTab on ⌘Tab, the menu bar is Bartender, Raycast is the launcher and nothing else.
+
+# ---- macOS system shortcuts set by mac-defaults (macos/symbolichotkeys.plist) ----------------
+# Screenshots are swapped from Apple's defaults: plain = clipboard, ⌃ = file.
+[[shortcut]]
+keys = "⇧⌘3"
+owner = "macos"
+action = "Screenshot: screen to clipboard"
+
+[[shortcut]]
+keys = "⌃⇧⌘3"
+owner = "macos"
+action = "Screenshot: screen to file"
+
+[[shortcut]]
+keys = "⇧⌘4"
+owner = "macos"
+action = "Screenshot: area to clipboard"
+
+[[shortcut]]
+keys = "⌃⇧⌘4"
+owner = "macos"
+action = "Screenshot: area to file"
+
+[[shortcut]]
+keys = "⇧⌘/"
+owner = "macos"
+action = "Show Help menu"
+
+# ---- macOS defaults the shortcuts file leaves alone (entered by hand) -------------------------
+[[shortcut]]
+keys = "⇧⌘5"
+owner = "macos-default"
+action = "Screenshot and recording options"
+
+[[shortcut]]
+keys = "⌃←"
+owner = "macos-default"
+action = "Move left a space"
+
+[[shortcut]]
+keys = "⌃→"
+owner = "macos-default"
+action = "Move right a space"
+
+[[shortcut]]
+keys = "⌃↑"
+owner = "macos-default"
+action = "Mission Control"
+
+[[shortcut]]
+keys = "⌃↓"
+owner = "macos-default"
+action = "Application windows"
+
+[[shortcut]]
+keys = "⌃⌘Q"
+owner = "macos-default"
+action = "Lock screen"
+
+# ---- Standard app menu shortcuts (every app; entered by hand) ---------------------------------
+[[shortcut]]
+keys = "⌘W"
+owner = "app-menus"
+action = "Close tab/window"
+
+[[shortcut]]
+keys = "⇧⌘W"
+owner = "app-menus"
+action = "Close window (Chrome, VS Code, Ghostty, Preview)"
+
+[[shortcut]]
+keys = "⌘Q"
+owner = "app-menus"
+action = "Quit"
+
+# ---- BetterTouchTool (macos/btt/Default.bttpreset) ---------------------------------------------
+# Window management: drag-to-snap (BTT settings) and these keys. They're the keys Raycast used,
+# so the Stream Deck window buttons keep working.
+[[shortcut]]
+keys = "⌃⌥←"
+owner = "btt"
+action = "Window: left half"
+
+[[shortcut]]
+keys = "⌃⌥→"
+owner = "btt"
+action = "Window: right half"
+
+[[shortcut]]
+keys = "⌃⌥↩"
+owner = "btt"
+action = "Window: maximize"
+
+[[shortcut]]
+keys = "⌃⌥D"
+owner = "btt"
+action = "Window: left third"
+
+[[shortcut]]
+keys = "⌃⌥F"
+owner = "btt"
+action = "Window: center third"
+
+[[shortcut]]
+keys = "⌃⌥G"
+owner = "btt"
+action = "Window: right third"
+
+[[shortcut]]
+keys = "⌃⌥E"
+owner = "btt"
+action = "Window: left two thirds"
+
+[[shortcut]]
+keys = "⌃⌥T"
+owner = "btt"
+action = "Window: right two thirds"
+
+[[shortcut]]
+keys = "⌃⌥⇧↩"
+owner = "btt"
+action = "Window: maximize height"
+
+[[shortcut]]
+keys = "⌃⌥⇧←"
+owner = "btt"
+action = "Window: one space left"
+
+[[shortcut]]
+keys = "⌃⌥⇧→"
+owner = "btt"
+action = "Window: one space right"
+
+# ---- AltTab (macos/prefs/com.lwouis.alt-tab-macos.plist) --------------------------------------
+# Shortcut 1 replaces the macOS app switcher; shortcut 2 is AltTab's default.
+[[shortcut]]
+keys = "⌘⇥"
+owner = "alttab"
+action = "Window switcher (replaces the macOS app switcher)"
+
+[[shortcut]]
+keys = "⌥`"
+owner = "alttab"
+action = "Window switcher, current app"
+
+# ---- Raycast (entered by hand; set in Raycast, readable through its MCP server) ---------------
+# Read 2026-11-19 via raycast-settings: only these two are set. Window Management and Switch
+# Windows have no hotkeys (cleared that day): BTT and AltTab own those jobs.
+[[shortcut]]
+keys = "⌘Space"
+owner = "raycast"
+action = "Open Raycast (Spotlight's shortcut is off in macOS)"
+
+[[shortcut]]
+keys = "⌃⌘Space"
+owner = "raycast"
+action = "Emoji picker (replaces the macOS character viewer)"

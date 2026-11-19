@@ -648,6 +648,24 @@ test_time_machine_needs_automatic_backups_on() {
   grep -q '^tmutil enable' "$T/sudo-args" || fail "tmutil enable not run"
 }
 
+test_replaced_apps_must_be_gone() {
+  run "$SCRIPT" --status
+  assert_done "Replaced apps removed"
+  mkdir -p "$MAC_SETUP_APPS/Rectangle.app"
+  run "$SCRIPT" --status
+  assert_open "Replaced apps removed"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Replaced apps removed"
+}
+
+test_btt_window_snapping_must_be_on() {
+  run "$SCRIPT" --status
+  assert_done "BetterTouchTool window snapping on"
+  stub defaults 'case "$*" in *windowSnappingEnabled*) echo 0 ;; *) printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n" ;; esac'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool window snapping on"
+}
+
 # ---- Run -------------------------------------------------------------------------
 
 tests="$(grep -oE '^test_[a-z0-9_]+' "$0")"

@@ -5,3 +5,6 @@
 **/.DS_Store
 **/.zcompdump*
 **/.cache/
+# Python bytecode from running the tools and tests
+__pycache__/
+*.pyc
