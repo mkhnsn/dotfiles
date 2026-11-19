@@ -1,0 +1,11 @@
+#!/bin/sh
+# Home Assistant over MCP for Claude Code (registered by mac-setup as the "homeassistant" server).
+# Read-only by default: HA's config changes go through echo-core's hactl, so git stays the
+# source of truth. READ_ONLY_MODE=false for a session that should control devices.
+# The token is read from 1Password at start; it is never written to disk.
+export HOMEASSISTANT_URL="${HOMEASSISTANT_URL:-http://echo-homeassistant:8123}"
+export READ_ONLY_MODE="${READ_ONLY_MODE:-true}"
+HOMEASSISTANT_TOKEN="$(op read "op://Infrastructure/dvu2zfrku5uwzm2lq35bu3hrbi/credential")" || exit 1
+export HOMEASSISTANT_TOKEN
+# Python 3.13: a dependency (pydantic-monty) has no wheel for newer Pythons yet.
+exec uvx --python 3.13 --from "ha-mcp==${HA_MCP_VERSION:-9.2.0}" ha-mcp

@@ -19,7 +19,7 @@ PASS=0 FAIL=0 OUT="" RC=0
 setup() {
   T="$(mktemp -d)"
   export MAC_SETUP_TM_PREFS="$T/tm-prefs"
-  export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
+  export HOME="$T/home" XDG_STATE_HOME="$T/state" XDG_CONFIG_HOME="$T/home/.config" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
   export MAC_SETUP_LOCKHART="$T/lockhart" MAC_SETUP_ONEDRIVE="$T/OneDrive"
   mkdir -p "$T/OneDrive"
   STUBS="$HOME/.local/bin"
@@ -45,6 +45,8 @@ setup() {
   stub brew        "case \"\$1\" in --prefix) echo $T/brew ;; *) exit 0 ;; esac"
   stub colima      'exit 0'
   stub ollama      'exit 0'
+  mkdir -p "$HOME/.config/claude-ha"; echo http://ha/api/webhook/x > "$HOME/.config/claude-ha/webhook-url"
+  echo '{"mcpServers":{"homeassistant":{}}}' > "$HOME/.claude.json"
   stub op          'echo "URL ACCOUNT"'
   stub chezmoi     "case \"\$1\" in source-path) echo $T/src ;; *) exit 0 ;; esac"
   stub gh          'exit 0'
@@ -671,6 +673,18 @@ test_colima_and_ollama_must_run() {
   assert_open "Ollama server runs at login"
   run "$SCRIPT_SERVER" --status
   assert_done "Docker engine (Colima) runs at login"
+}
+
+test_claude_ha_steps() {
+  run "$SCRIPT" --status
+  assert_done "Claude Code reports sessions to Home Assistant"
+  assert_done "Home Assistant MCP server in Claude Code"
+  rm "$HOME/.config/claude-ha/webhook-url"; echo '{}' > "$HOME/.claude.json"
+  run "$SCRIPT" --status
+  assert_open "Claude Code reports sessions to Home Assistant"
+  assert_open "Home Assistant MCP server in Claude Code"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Claude Code reports sessions to Home Assistant"
 }
 
 test_btt_window_snapping_must_be_on() {
