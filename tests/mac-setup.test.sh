@@ -18,6 +18,7 @@ PASS=0 FAIL=0 OUT="" RC=0
 
 setup() {
   T="$(mktemp -d)"
+  export MAC_SETUP_TM_PREFS="$T/tm-prefs"
   export HOME="$T/home" XDG_STATE_HOME="$T/state" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
   export MAC_SETUP_LOCKHART="$T/lockhart" MAC_SETUP_ONEDRIVE="$T/OneDrive"
   mkdir -p "$T/OneDrive"
@@ -630,10 +631,21 @@ test_time_machine_action_uses_1password_and_clipboard() {
   stub sudo "echo \"\$*\" >> $T/sudo-args; touch $T/tm-set"
   printf 'y\n\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_has "First backup started."
+  assert_has "Automatic backups on; first backup started."
   grep -q 's3cret' "$T/clipboard" || fail "password not put on the clipboard"
   grep -q 'smb://nasuser@echo-nas/backups' "$T/sudo-args" || fail "destination not set with the 1Password user"
   ! grep -q 's3cret' "$T/sudo-args" || fail "password on the sudo command line"
+}
+
+test_time_machine_needs_automatic_backups_on() {
+  stub defaults 'case "$*" in *tm-prefs*AutoBackup*) echo 0 ;; *) printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n" ;; esac'
+  run "$SCRIPT" --status
+  assert_open "Time Machine backs up to echo-nas"
+  stub sudo "echo \"\$*\" >> $T/sudo-args"
+  printf 'y\n\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Automatic backups on."
+  grep -q '^tmutil enable' "$T/sudo-args" || fail "tmutil enable not run"
 }
 
 # ---- Run -------------------------------------------------------------------------
