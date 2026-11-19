@@ -95,6 +95,11 @@ class Fixture(unittest.TestCase):
         _, problems, _ = self.registry('[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\naction = "switcher"\n')
         self.assertEqual([p for p in problems if "macos" in p], ["undeclared: macos binds ⇧⌘3 (Screenshot: screen to file, scope global); add it to the registry"])
 
+    def test_alttab_11_dict_values(self):
+        self.alttab({"holdShortcut": {"string": "⌘", "secureData": b"x"}, "shortcutCount": "1"})
+        _, problems, _ = self.registry('[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\naction = "switcher"\n')
+        self.assertEqual(problems, [])
+
     def test_alttab_defaults_when_unset(self):
         self.alttab({})
         _, problems, _ = self.registry('[[shortcut]]\nkeys = "⌥⇥"\nowner = "alttab"\naction = "switcher"\n'

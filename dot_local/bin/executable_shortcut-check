@@ -117,8 +117,10 @@ def read_alttab(src):
     n = int(p.get("shortcutCount", "2"))
     for i in range(1, n + 1):
         suf = "" if i == 1 else str(i)
-        hold = p.get("holdShortcut" + suf, defaults.get(suf, ("", ""))[0])
-        nxt = p.get("nextWindowShortcut" + suf, defaults.get(suf, ("", ""))[1])
+        # AltTab 11 stores a shortcut as {"string": "⌘", "secureData": <archived shortcut>}.
+        val = lambda v: v.get("string", "") if isinstance(v, dict) else v
+        hold = val(p.get("holdShortcut" + suf, defaults.get(suf, ("", ""))[0]))
+        nxt = val(p.get("nextWindowShortcut" + suf, defaults.get(suf, ("", ""))[1]))
         if hold and nxt:
             out.append({"keys": hold + nxt, "scope": "global", "what": f"AltTab switcher {i}"})
     return out

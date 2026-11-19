@@ -12,12 +12,28 @@
 	<string>true</string>
 	<key>hideWindowlessApps</key>
 	<string>false</string>
+	<key>holdShortcut</key>
+	<dict>
+		<key>secureData</key>
+		<data>
+		YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0b3BYJG9i
+		amVjdHMSAAGGoF8QD05TS2V5ZWRBcmNoaXZlctEICVRyb290gAGlCwwZGhtV
+		JG51bGzWDQ4PEBESExQVFBcUXW1vZGlmaWVyRmxhZ3NfEBtjaGFyYWN0ZXJz
+		SWdub3JpbmdNb2RpZmllcnNWJGNsYXNzWmNoYXJhY3RlcnNXa2V5Q29kZVd2
+		ZXJzaW9ugAOAAIAEgACAAoAAEf//EgAQAADSHB0eH1okY2xhc3NuYW1lWCRj
+		bGFzc2VzWlNSU2hvcnRjdXSiHiBYTlNPYmplY3QIERokKTI3SUxRU1lfbHqY
+		n6qyury+wMLExsnO097n8vUAAAAAAAABAQAAAAAAAAAhAAAAAAAAAAAAAAAA
+		AAAA/g==
+		</data>
+		<key>string</key>
+		<string>⌘</string>
+	</dict>
 	<key>menubarIcon</key>
-	<string>0</string>
+	<string>4</string>
 	<key>mouseHoverEnabled</key>
 	<string>false</string>
 	<key>preferencesVersion</key>
-	<string>11.10.1</string>
+	<string>11.10.2</string>
 	<key>previewFadeInAnimation</key>
 	<string>false</string>
 	<key>previewFocusedWindow</key>

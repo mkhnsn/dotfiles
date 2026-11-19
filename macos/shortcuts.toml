@@ -144,19 +144,20 @@ owner = "btt"
 action = "Window: one space right"
 
 # ---- AltTab (macos/prefs/com.lwouis.alt-tab-macos.plist) --------------------------------------
-# Defaults until the ⌘Tab remap is exported: ⌥⇥ and ⌥`.
+# Shortcut 1 replaces the macOS app switcher; shortcut 2 is AltTab's default.
 [[shortcut]]
-keys = "⌥⇥"
+keys = "⌘⇥"
 owner = "alttab"
-action = "Window switcher (moving to ⌘⇥)"
+action = "Window switcher (replaces the macOS app switcher)"
 
 [[shortcut]]
 keys = "⌥`"
 owner = "alttab"
 action = "Window switcher, current app"
 
-# ---- Raycast (encrypted settings: entered by hand, set in Raycast) ----------------------------
-# Raycast's window management and Switch Windows have no hotkeys: BTT and AltTab own those.
+# ---- Raycast (entered by hand; set in Raycast, readable through its MCP server) ---------------
+# Read 2026-11-19 via raycast-settings: only these two are set. Window Management and Switch
+# Windows have no hotkeys (cleared that day): BTT and AltTab own those jobs.
 [[shortcut]]
 keys = "⌘Space"
 owner = "raycast"
@@ -166,8 +167,3 @@ action = "Open Raycast (Spotlight's shortcut is off in macOS)"
 keys = "⌃⌘Space"
 owner = "raycast"
 action = "Emoji picker (replaces the macOS character viewer)"
-
-[[shortcut]]
-keys = "⇧⌘6"
-owner = "raycast"
-action = "Window capture"
