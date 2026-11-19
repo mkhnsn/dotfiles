@@ -29,6 +29,7 @@ cask "microsoft-excel"
 cask "microsoft-powerpoint"
 cask "microsoft-onenote"
 cask "onedrive"
+cask "microsoft-teams"
 cask "pdf-expert"
 cask "anylist"
 cask "tailscale-app"
@@ -44,13 +45,24 @@ cask "daisydisk"
 cask "keyboardcleantool"
 
 # Dev
-cask "docker-desktop"
+# Containers: Colima runs the Docker engine in a small VM; the docker CLI, compose and buildx
+# use it (replaces Docker Desktop). mac-setup starts it at login.
+brew "colima"
+brew "docker"
+brew "docker-compose"
+brew "docker-buildx"
+brew "docker-credential-helper"
+# Local models; mac-setup runs its server at login.
+brew "ollama"
 cask "utm"
 cask "parallels"
 cask "realvnc-connect-viewer"
 cask "netspot"
 cask "figma"
 cask "handbrake-app"
+
+# Creative
+cask "adobe-creative-cloud"
 
 # CAD and making
 cask "autodesk-fusion"

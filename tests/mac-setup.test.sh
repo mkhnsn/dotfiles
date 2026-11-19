@@ -43,6 +43,8 @@ setup() {
   stub pgrep       'exit 0'
   stub xcode-select 'echo /Library/Developer/CommandLineTools'
   stub brew        "case \"\$1\" in --prefix) echo $T/brew ;; *) exit 0 ;; esac"
+  stub colima      'exit 0'
+  stub ollama      'exit 0'
   stub op          'echo "URL ACCOUNT"'
   stub chezmoi     "case \"\$1\" in source-path) echo $T/src ;; *) exit 0 ;; esac"
   stub gh          'exit 0'
@@ -656,6 +658,19 @@ test_replaced_apps_must_be_gone() {
   assert_open "Replaced apps removed"
   run "$SCRIPT_SERVER" --status
   assert_done "Replaced apps removed"
+}
+
+test_colima_and_ollama_must_run() {
+  run "$SCRIPT" --status
+  assert_done "Docker engine (Colima) runs at login"
+  assert_done "Ollama server runs at login"
+  stub colima 'exit 1'
+  stub ollama 'exit 1'
+  run "$SCRIPT" --status
+  assert_open "Docker engine (Colima) runs at login"
+  assert_open "Ollama server runs at login"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Docker engine (Colima) runs at login"
 }
 
 test_btt_window_snapping_must_be_on() {
