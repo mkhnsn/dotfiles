@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""shortcut-check: one registry of every keyboard shortcut, checked against the configs.
+
+The registry (macos/shortcuts.toml in the dotfiles) lists each shortcut once: its keys, the app
+that owns it, what it does and where it applies. The bindings that live in the dotfiles are read
+straight from their configs:
+
+  macos     macos/symbolichotkeys.plist (enabled system shortcuts, applied by mac-defaults)
+  btt       macos/btt/Default.bttpreset (keyboard-shortcut triggers)
+  alttab    macos/prefs/com.lwouis.alt-tab-macos.plist (switcher shortcuts; AltTab's defaults
+            when unset)
+
+Other owners (Raycast, whose settings are encrypted, or an app's own menus) are entered by hand
+with source = "manual"; they can't be read, so they're only checked for conflicts.
+
+Fails when:
+  conflict    two owners claim the same keys in overlapping scopes (global overlaps everything)
+  undeclared  a config binds keys the registry doesn't list
+  stale       the registry lists a managed binding its config no longer has
+A conflict an entry marks `accepted = "<reason>"` is a warning instead (a known, temporary one).
+
+Usage: shortcut-check [--source DIR] [--list]
+Python 3.11+ standard library only (tomllib).
+"""
+import argparse, json, os, plistlib, subprocess, sys, tomllib
+
+MOD = [(1 << 18, "⌃"), (1 << 19, "⌥"), (1 << 17, "⇧"), (1 << 20, "⌘")]  # canonical order ⌃⌥⇧⌘
+FN = 1 << 23
+# macOS virtual key codes (ANSI layout).
+KEYS = {0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X", 8: "C", 9: "V", 11: "B",
+        12: "Q", 13: "W", 14: "E", 15: "R", 16: "Y", 17: "T", 18: "1", 19: "2", 20: "3", 21: "4",
+        22: "6", 23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8", 29: "0", 30: "]", 31: "O",
+        32: "U", 33: "[", 34: "I", 35: "P", 36: "↩", 37: "L", 38: "J", 39: "'", 40: "K", 41: ";",
+        42: "\\", 43: ",", 44: "/", 45: "N", 46: "M", 47: ".", 48: "⇥", 49: "Space", 50: "`",
+        51: "⌫", 53: "⎋", 96: "F5", 97: "F6", 98: "F7", 99: "F3", 100: "F8", 101: "F9",
+        103: "F11", 109: "F10", 111: "F12", 118: "F4", 120: "F2", 122: "F1", 123: "←",
+        124: "→", 125: "↓", 126: "↑"}
+# The system shortcuts the dotfiles touch, for readable messages (com.apple.symbolichotkeys IDs).
+SYMBOLIC = {27: "Move focus to next window", 28: "Screenshot: screen to file",
+            29: "Screenshot: screen to clipboard", 30: "Screenshot: area to file",
+            31: "Screenshot: area to clipboard", 32: "Mission Control", 33: "Application windows",
+            36: "Show Desktop", 60: "Previous input source", 61: "Next input source",
+            64: "Spotlight", 65: "Finder search", 79: "Move left a space", 80: "Move left a space",
+            81: "Move right a space", 82: "Move right a space", 98: "Show Help menu",
+            118: "Switch to Desktop 1", 163: "Notification Center", 175: "Do Not Disturb",
+            184: "Screenshot and recording options", 190: "Quick Note"}
+MOD_GLYPH = {"⌃": "⌃", "⌥": "⌥", "⇧": "⇧", "⌘": "⌘", "fn": "fn"}
+
+
+def keys_from_code(code, flags):
+    mods = "".join(g for bit, g in MOD if flags & bit)
+    return ("fn" if flags & FN else "") + mods + KEYS.get(code, f"key{code}")
+
+
+def normalize(keys):
+    """Canonical form: fn, then ⌃⌥⇧⌘, then the key (so '⌘⇧W' == '⇧⌘W')."""
+    fn = keys.startswith("fn")
+    rest = keys[2:] if fn else keys
+    mods = [g for _, g in MOD if g in rest]
+    key = rest
+    for g in mods:
+        key = key.replace(g, "", 1)
+    return ("fn" if fn else "") + "".join(mods) + key
+
+
+def read_macos(src):
+    with open(os.path.join(src, "macos/symbolichotkeys.plist"), "rb") as f:
+        p = plistlib.load(f)
+    hk = p.get("AppleSymbolicHotKeys", p)
+    out = []
+    for sid, v in hk.items():
+        params = (v.get("value") or {}).get("parameters")
+        if v.get("enabled") and params and len(params) == 3 and params[1] != 65535:
+            out.append({"keys": keys_from_code(params[1], params[2]), "scope": "global",
+                        "what": SYMBOLIC.get(int(sid), f"system shortcut {sid}")})
+    return out
+
+
+def read_btt(src):
+    with open(os.path.join(src, "macos/btt/Default.bttpreset")) as f:
+        d = json.load(f)
+    out = []
+
+    def walk(o, scope):
+        if isinstance(o, dict):
+            scope = o.get("BTTAppBundleIdentifier") or scope
+            if o.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut" \
+                    and o.get("BTTShortcutKeyCode") is not None and o.get("BTTEnabled2", 1) != 0:
+                out.append({"keys": keys_from_code(o["BTTShortcutKeyCode"], o.get("BTTShortcutModifierKeys") or 0),
+                            "scope": "global" if scope in (None, "BT.G") else scope,
+                            "what": o.get("BTTTriggerName") or o.get("BTTTouchBarButtonName") or "BTT trigger"})
+            for v in o.values():
+                walk(v, scope)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v, scope)
+    walk(d.get("BTTPresetContent", d), None)
+    return out
+
+
+def read_alttab(src):
+    path = os.path.join(src, "macos/prefs/com.lwouis.alt-tab-macos.plist")
+    p = {}
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            p = plistlib.load(f)
+    out = []
+    # AltTab's defaults: shortcut 1 is ⌥ + ⇥; shortcut 2 is ⌥ + ` (the default when unset).
+    defaults = {"": ("⌥", "⇥"), "2": ("⌥", "`")}
+    n = int(p.get("shortcutCount", "2"))
+    for i in range(1, n + 1):
+        suf = "" if i == 1 else str(i)
+        hold = p.get("holdShortcut" + suf, defaults.get(suf, ("", ""))[0])
+        nxt = p.get("nextWindowShortcut" + suf, defaults.get(suf, ("", ""))[1])
+        if hold and nxt:
+            out.append({"keys": hold + nxt, "scope": "global", "what": f"AltTab switcher {i}"})
+    return out
+
+
+READERS = {"macos": read_macos, "btt": read_btt, "alttab": read_alttab}
+
+
+def overlaps(a, b):
+    return a == "global" or b == "global" or a == b
+
+
+def check(src, registry_path):
+    with open(registry_path, "rb") as f:
+        reg = tomllib.load(f).get("shortcut", [])
+    problems = []
+    for e in reg:
+        e["keys"] = normalize(e["keys"])
+        e.setdefault("scope", "global")
+        e.setdefault("source", "managed" if e["owner"] in READERS else "manual")
+    # conflicts inside the registry
+    warnings = []
+    for i, a in enumerate(reg):
+        for b in reg[i + 1:]:
+            if a["keys"] == b["keys"] and a["owner"] != b["owner"] and overlaps(a["scope"], b["scope"]):
+                msg = f"conflict: {a['keys']} — {a['owner']} ({a['action']}) and {b['owner']} ({b['action']})"
+                reason = a.get("accepted") or b.get("accepted")
+                (warnings if reason else problems).append(msg + (f" [accepted: {reason}]" if reason else ""))
+    # each managed config against the registry
+    for owner, reader in READERS.items():
+        found = {(normalize(f["keys"]), f["scope"]): f for f in reader(src)}
+        declared = {(e["keys"], e["scope"]) for e in reg if e["owner"] == owner}
+        for k, f in sorted(found.items()):
+            if k not in declared:
+                problems.append(f"undeclared: {owner} binds {k[0]} ({f['what']}, scope {k[1]}); add it to the registry")
+        for k in sorted(declared - set(found)):
+            problems.append(f"stale: the registry lists {owner} {k[0]} (scope {k[1]}), but its config doesn't bind it")
+    return reg, problems, warnings
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--source", help="dotfiles source dir (default: chezmoi source-path)")
+    ap.add_argument("--list", action="store_true", help="print the registry, sorted by keys")
+    a = ap.parse_args()
+    src = a.source or os.environ.get("CHEZMOI_SOURCE_DIR") or subprocess.run(
+        ["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+    reg, problems, warnings = check(src, os.path.join(src, "macos/shortcuts.toml"))
+    if a.list:
+        for e in sorted(reg, key=lambda e: e["keys"]):
+            print(f"{e['keys']:<12} {e['owner']:<10} {e['scope']:<10} {e['action']}")
+    for w in warnings:
+        print("warning: " + w)
+    for p in problems:
+        print(p)
+    if problems:
+        print(f"{len(problems)} problem(s)")
+        sys.exit(1)
+    print(f"ok: {len(reg)} shortcuts, no conflicts")
+
+
+if __name__ == "__main__":
+    main()

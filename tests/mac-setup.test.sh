@@ -648,6 +648,16 @@ test_time_machine_needs_automatic_backups_on() {
   grep -q '^tmutil enable' "$T/sudo-args" || fail "tmutil enable not run"
 }
 
+test_replaced_apps_must_be_gone() {
+  run "$SCRIPT" --status
+  assert_done "Replaced apps removed"
+  mkdir -p "$MAC_SETUP_APPS/Rectangle.app"
+  run "$SCRIPT" --status
+  assert_open "Replaced apps removed"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Replaced apps removed"
+}
+
 # ---- Run -------------------------------------------------------------------------
 
 tests="$(grep -oE '^test_[a-z0-9_]+' "$0")"

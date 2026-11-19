@@ -182,6 +182,11 @@ ws_skip()          { command -v brew-why >/dev/null 2>&1 && brew-why --skip --br
 check_ws_apps()    { workstation || return 0
                      HOMEBREW_BUNDLE_CASK_SKIP="$(ws_skip)" brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
 check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
+# Apps replaced by an owner in macos/shortcuts.toml: Rectangle (window management is BTT) and
+# Bartender 6 (Bartender 7 shares its settings file).
+REPLACED_APPS="Rectangle|Bartender 6"
+replaced_present() { local IFS='|' a; for a in $REPLACED_APPS; do [ -d "$APPS/$a.app" ] && echo "$a"; done; }
+check_replaced()   { workstation || return 0; [ -z "$(replaced_present)" ]; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
 # Confirmations saved before the US spelling ("licence:<app>", "licences") still count.
 check_license()    { workstation || return 0; confirmed "license:$1" || confirmed "licence:$1" || confirmed licences; }
@@ -245,6 +250,7 @@ help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import th
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
                     command -v brew-why >/dev/null 2>&1 && brew-why --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null | sed 's/^/    /'; true; }
+help_replaced()    { echo "Remove apps that another one now does the job of: $(replaced_present | paste -sd, - | sed 's/,/, /g'). Rectangle's window management is BTT's now; Bartender 6 is replaced by Bartender 7 (same settings file). Drag them to the Trash."; }
 help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1") and install it."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
 help_license()    { local n; n="$(license_field "$1" 3)"; echo "Open $1 and sign in or enter its license.${n:+ $n}"; }
@@ -374,6 +380,7 @@ btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
 $(vendor_steps)
+replaced|Replaced apps removed (Rectangle, Bartender 6)|Apps
 gridfinity|gridfinity-studio installed|Apps
 $(license_steps)
 app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
