@@ -35,6 +35,7 @@ setup() {
   stub fdesetup    'echo "FileVault is On."'
   stub system_profiler 'printf "        macOS: Firewall:\n        macOS: NinjaOne privacy permissions:\n        macOS: Terminal privacy permissions:\n"'
   stub nc          'exit 0'
+  stub tmutil      'echo "Name          : backups"'
   stub dscl        'exit 0'
   stub dsmemberutil 'echo "user is a member of the group"'
   printf '#!/bin/sh\n' > "$MAC_SETUP_LOCKHART"; chmod +x "$MAC_SETUP_LOCKHART"
@@ -598,6 +599,16 @@ test_license_confirmations_saved_as_licence_still_count() {
   mark_done licence_Slack
   run "$SCRIPT" --status
   assert_done "Slack signed in or activated"; assert_open "Claude signed in or activated"
+}
+
+test_time_machine_needs_a_destination() {
+  run "$SCRIPT" --status
+  assert_done "Time Machine backs up to echo-nas"
+  stub tmutil 'echo "tmutil: No destinations configured."'
+  run "$SCRIPT" --status
+  assert_open "Time Machine backs up to echo-nas"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Time Machine backs up to echo-nas"
 }
 
 # ---- Run -------------------------------------------------------------------------
