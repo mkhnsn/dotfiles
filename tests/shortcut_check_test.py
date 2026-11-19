@@ -75,6 +75,14 @@ class Fixture(unittest.TestCase):
         _, problems, _ = self.registry('[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\naction = "switcher"\n')
         self.assertIn("undeclared: btt binds ⇧⌘W", problems[0])
 
+    def test_implicit_fn_on_arrows_is_ignored(self):
+        FN = 1 << 23
+        self.btt([{"BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut", "BTTShortcutKeyCode": 123,
+                   "BTTShortcutModifierKeys": CTRL | OPT | FN, "BTTGestureNotes": "left half"}])
+        _, problems, _ = self.registry('[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\naction = "switcher"\n'
+                                       '[[shortcut]]\nkeys = "⌃⌥←"\nowner = "btt"\naction = "left half"\n')
+        self.assertEqual(problems, [])
+
     def test_stale_registry_entry(self):
         _, problems, _ = self.registry(
             '[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\naction = "switcher"\n'

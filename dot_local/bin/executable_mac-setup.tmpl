@@ -174,6 +174,8 @@ ssh_listening()    { nc -z -G 2 127.0.0.1 22 >/dev/null 2>&1; }
 check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh >/dev/null 2>&1 &&
                      dsmemberutil checkmembership -U "$(id -un)" -G com.apple.access_ssh 2>/dev/null | grep -q "is a member"; }
 check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
+# BTT's master "Enable window snapping" switch isn't part of presets; it's stored only when off.
+check_btt_snapping(){ workstation || return 0; [ "$(defaults read com.hegenberg.BetterTouchTool windowSnappingEnabled 2>/dev/null)" != 0 ]; }
 check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null &&
                      osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
 check_remote()     { confirmed remote; }
@@ -246,6 +248,7 @@ help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WA
 help_ssh_server() { echo "Turn on Remote Login for your user only, so your other Macs can reach this one (VM copies, rsync). The action turns on sshd and limits it to $(id -un); same as System Settings > General > Sharing > Remote Login with 'Only these users'. Leave 'Allow full disk access for remote users' off."; }
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
+help_btt_snapping(){ echo "Turn on BTT's window snapping (drag windows to edges and corners; window management is BTT's): BetterTouchTool > Settings > Window Snapping & Moving > Enable window snapping. The snap areas come from the preset."; }
 help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import the BTT preset from the dotfiles. It asks for Accessibility once.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
@@ -378,6 +381,7 @@ ts_tag|Tailscale tag $TAG_WANT|Network
 ssh_server|Remote Login on, for you only|Network
 btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
+btt_snapping|BetterTouchTool window snapping on|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
 $(vendor_steps)
 replaced|Replaced apps removed (Rectangle, Bartender 6)|Apps

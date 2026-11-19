@@ -79,7 +79,6 @@ action = "Close tab/window"
 keys = "⇧⌘W"
 owner = "app-menus"
 action = "Close window (Chrome, VS Code, Ghostty, Preview)"
-accepted = "BTT's ⇧⌘W display reset is being removed (no longer needed, 2026-11-19); drop this once the BTT preset no longer has it"
 
 [[shortcut]]
 keys = "⌘Q"
@@ -87,10 +86,62 @@ owner = "app-menus"
 action = "Quit"
 
 # ---- BetterTouchTool (macos/btt/Default.bttpreset) ---------------------------------------------
+# Window management: drag-to-snap (BTT settings) and these keys. They're the keys Raycast used,
+# so the Stream Deck window buttons keep working.
 [[shortcut]]
-keys = "⇧⌘W"
+keys = "⌃⌥←"
 owner = "btt"
-action = "Display reset to 5120×1440@120 (displayplacer) — to be removed"
+action = "Window: left half"
+
+[[shortcut]]
+keys = "⌃⌥→"
+owner = "btt"
+action = "Window: right half"
+
+[[shortcut]]
+keys = "⌃⌥↩"
+owner = "btt"
+action = "Window: maximize"
+
+[[shortcut]]
+keys = "⌃⌥D"
+owner = "btt"
+action = "Window: left third"
+
+[[shortcut]]
+keys = "⌃⌥F"
+owner = "btt"
+action = "Window: center third"
+
+[[shortcut]]
+keys = "⌃⌥G"
+owner = "btt"
+action = "Window: right third"
+
+[[shortcut]]
+keys = "⌃⌥E"
+owner = "btt"
+action = "Window: left two thirds"
+
+[[shortcut]]
+keys = "⌃⌥T"
+owner = "btt"
+action = "Window: right two thirds"
+
+[[shortcut]]
+keys = "⌃⌥⇧↩"
+owner = "btt"
+action = "Window: maximize height"
+
+[[shortcut]]
+keys = "⌃⌥⇧←"
+owner = "btt"
+action = "Window: one space left"
+
+[[shortcut]]
+keys = "⌃⌥⇧→"
+owner = "btt"
+action = "Window: one space right"
 
 # ---- AltTab (macos/prefs/com.lwouis.alt-tab-macos.plist) --------------------------------------
 # Defaults until the ⌘Tab remap is exported: ⌥⇥ and ⌥`.

@@ -658,6 +658,14 @@ test_replaced_apps_must_be_gone() {
   assert_done "Replaced apps removed"
 }
 
+test_btt_window_snapping_must_be_on() {
+  run "$SCRIPT" --status
+  assert_done "BetterTouchTool window snapping on"
+  stub defaults 'case "$*" in *windowSnappingEnabled*) echo 0 ;; *) printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n" ;; esac'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool window snapping on"
+}
+
 # ---- Run -------------------------------------------------------------------------
 
 tests="$(grep -oE '^test_[a-z0-9_]+' "$0")"
