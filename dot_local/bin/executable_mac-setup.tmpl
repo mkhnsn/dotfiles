@@ -150,6 +150,12 @@ check_rosetta()    { [ "$(uname -m)" != arm64 ] || arch -x86_64 /usr/bin/true 2>
 check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/null | grep -q .; }
 OP_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
+# Claude Code <-> Home Assistant: session hooks post to a webhook (URL from 1Password), and the
+# homeassistant MCP server (~/.local/bin/ha-mcp, read-only) is registered for every project.
+CLAUDE_HA_URL_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/claude-ha/webhook-url"
+CLAUDE_HA_REF="op://Infrastructure/HA webhook - Claude sessions/credential"
+check_claude_ha()  { workstation || return 0; [ -s "$CLAUDE_HA_URL_FILE" ]; }
+check_ha_mcp()     { workstation || return 0; grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null; }
 check_op_browser() { workstation || return 0; confirmed "op_browser:$1"; }
 # After a dotfiles update changes .chezmoi.toml.tmpl, chezmoi warns until `chezmoi init` runs.
 chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep -q "config file template has changed"; }
@@ -234,6 +240,8 @@ help_brew()       { echo "Homebrew isn't installed."; }
 help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
+help_claude_ha()   { echo "Write the Home Assistant webhook URL that Claude Code's session hooks post to (desk panel, phone alerts), from 1Password: Infrastructure > HA webhook - Claude sessions."; }
+help_ha_mcp()      { echo "Register the homeassistant MCP server in Claude Code (user scope). It runs ~/.local/bin/ha-mcp: read-only, token from 1Password at start."; }
 help_op_browser()  { case "$1" in
                        chrome) echo "Sign in to your Google profile in Chrome. Chrome Sync installs the 1Password extension." ;;
                        connect) echo "In 1Password: Settings > Browser > Connect with 1Password in the browser." ;;
@@ -291,6 +299,12 @@ act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com
 act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
 act_op_ssh()       { open -a 1Password; }
+act_claude_ha()    {
+  local id; id="$(op read "$CLAUDE_HA_REF")" || return 1
+  mkdir -p "$(dirname "$CLAUDE_HA_URL_FILE")"
+  (umask 077; printf 'http://echo-homeassistant:8123/api/webhook/%s\n' "$id" > "$CLAUDE_HA_URL_FILE")
+}
+act_ha_mcp()       { claude mcp add --scope user homeassistant -- "$HOME/.local/bin/ha-mcp"; }
 act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
 act_license()      { open -a "$(license_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
 act_onedrive()     { open -a OneDrive; }
@@ -384,6 +398,8 @@ brew|Homebrew installed|Tools
 rosetta|Rosetta installed|Tools
 onepassword|1Password CLI connected|Tools
 op_ssh|1Password SSH agent on|Tools
+claude_ha|Claude Code reports sessions to Home Assistant|Tools
+ha_mcp|Home Assistant MCP server in Claude Code|Tools
 op_browser:chrome|Chrome signed in to your Google profile|Tools
 op_browser:connect|1Password connected to the browser|Tools
 op_browser:quick_access|1Password Quick Access on Cmd+Shift+Space|Tools

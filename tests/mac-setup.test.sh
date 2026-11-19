@@ -45,6 +45,8 @@ setup() {
   stub brew        "case \"\$1\" in --prefix) echo $T/brew ;; *) exit 0 ;; esac"
   stub colima      'exit 0'
   stub ollama      'exit 0'
+  mkdir -p "$HOME/.config/claude-ha"; echo http://ha/api/webhook/x > "$HOME/.config/claude-ha/webhook-url"
+  echo '{"mcpServers":{"homeassistant":{}}}' > "$HOME/.claude.json"
   stub op          'echo "URL ACCOUNT"'
   stub chezmoi     "case \"\$1\" in source-path) echo $T/src ;; *) exit 0 ;; esac"
   stub gh          'exit 0'
@@ -671,6 +673,18 @@ test_colima_and_ollama_must_run() {
   assert_open "Ollama server runs at login"
   run "$SCRIPT_SERVER" --status
   assert_done "Docker engine (Colima) runs at login"
+}
+
+test_claude_ha_steps() {
+  run "$SCRIPT" --status
+  assert_done "Claude Code reports sessions to Home Assistant"
+  assert_done "Home Assistant MCP server in Claude Code"
+  rm "$HOME/.config/claude-ha/webhook-url"; echo '{}' > "$HOME/.claude.json"
+  run "$SCRIPT" --status
+  assert_open "Claude Code reports sessions to Home Assistant"
+  assert_open "Home Assistant MCP server in Claude Code"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Claude Code reports sessions to Home Assistant"
 }
 
 test_btt_window_snapping_must_be_on() {
