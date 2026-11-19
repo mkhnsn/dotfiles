@@ -253,7 +253,7 @@ Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Paral
       Answer y if there's no VM to move.
 EOV
 }
-help_timemachine() { echo "Back up to echo-nas with Time Machine. echo-nas isn't announced on the local network, so it never shows in Add Backup Disk; add it by address (asks for the NAS account's password, in 1Password): sudo tmutil setdestination -a -p \"smb://<nas-user>@echo-nas/backups\". Then tmutil startbackup. It's the local, whole-Mac restore; Ninja Backup is the off-site one."; }
+help_timemachine() { echo "Back up to echo-nas with Time Machine (the local, whole-Mac restore; Ninja Backup is the off-site one). echo-nas isn't announced on the local network, so it never shows in Add Backup Disk. The action reads the NAS login from 1Password, puts the password on the clipboard for 45 seconds, and runs sudo tmutil setdestination: enter your Mac password, then paste at the NAS password prompt."; }
 help_tm_no_vms()  { echo "Keep virtual machines out of Time Machine: tmutil addexclusion ~/Parallels (no admin needed). VM disks change constantly, so each backup would re-copy them."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
@@ -306,7 +306,25 @@ act_gridfinity() {
   rm -rf "$tmp"
 }
 act_app_prefs()    { app-prefs apply; }
-act_timemachine() { open "x-apple.systempreferences:com.apple.Time-Machine-Settings.extension"; }
+# echo-nas login in 1Password, by item ID (whichever signed-in account holds it).
+NAS_ITEM="2qikhkiio3v4omtmac72nbe64y"
+nas_field() {  # nas_field <field>: the field from the first account that has the item
+  local a v
+  for a in $(op account list --format json 2>/dev/null | sed -n 's/.*"user_uuid": *"\([^"]*\)".*/\1/p'); do
+    v="$(op item get "$NAS_ITEM" --account "$a" --fields "label=$1" --reveal 2>/dev/null)" && [ -n "$v" ] && { printf '%s' "$v"; return 0; }
+  done
+  return 1
+}
+act_timemachine() {
+  local user
+  user="$(nas_field username)" || { echo "    Couldn't read the NAS login from 1Password (item $NAS_ITEM). Unlock 1Password and try again."; return 1; }
+  # tmutil -p reads the password from the keyboard only. The clipboard keeps it out of the
+  # process list and out of sudo's log, which records the whole command line.
+  nas_field password | pbcopy
+  ( sleep "${MAC_SETUP_CLIP_SECONDS:-45}"; pbcopy </dev/null ) &
+  echo "    NAS password is on the clipboard for 45 seconds: paste it at the NAS password prompt."
+  sudo tmutil setdestination -a -p "smb://$user@echo-nas/backups" && tmutil startbackup && echo "    First backup started."
+}
 act_tm_no_vms()   { tmutil addexclusion "$HOME/Parallels"; }
 act_defaults()    { mac-defaults; }
 act_browser()     { defaultbrowser chrome; }
