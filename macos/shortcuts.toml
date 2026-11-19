@@ -143,6 +143,32 @@ keys = "⌃⌥⇧→"
 owner = "btt"
 action = "Window: one space right"
 
+# ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
+# The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut
+# isn't confirmed).
+[[shortcut]]
+keys = "⌃⌥⌘M"
+owner = "btt"
+action = "Mic: toggle mute (all apps)"
+
+[[shortcut]]
+keys = "⌃⌥⌘V"
+owner = "btt"
+scope = "us.zoom.xos"
+action = "Camera: Zoom video (sends ⇧⌘V)"
+
+[[shortcut]]
+keys = "⌃⌥⌘V"
+owner = "btt"
+scope = "com.microsoft.teams2"
+action = "Camera: Teams video (sends ⇧⌘O)"
+
+[[shortcut]]
+keys = "⌃⌥⌘V"
+owner = "btt"
+scope = "com.google.Chrome"
+action = "Camera: Meet video (sends ⌘E)"
+
 # ---- AltTab (macos/prefs/com.lwouis.alt-tab-macos.plist) --------------------------------------
 # Shortcut 1 replaces the macOS app switcher; shortcut 2 is AltTab's default.
 [[shortcut]]
