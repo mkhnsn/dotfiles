@@ -315,7 +315,7 @@ Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles 
 the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool and its preset, workstation apps (Brewfile, vendor
 downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
-backup run, macOS settings and the Dock, Time Machine to echo-nas, and the default browser. It ticks what's done, says what to do next, offers to do it when it
+backup run, macOS settings and the Dock, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
 steps are split per item (each app without a cask, each license, each app export, each
