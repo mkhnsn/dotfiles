@@ -194,7 +194,12 @@ check_vm()         { workstation || return 0; confirmed vm; }
 check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
 # destinationinfo works without Full Disk Access; latestbackup doesn't.
-check_timemachine(){ workstation || return 0; tmutil destinationinfo 2>/dev/null | grep -q '^Name'; }
+# A destination alone isn't enough: tmutil setdestination leaves automatic backups off. The
+# setting needs Full Disk Access to read; when it can't be read, the destination check stands.
+TM_PREFS="${MAC_SETUP_TM_PREFS:-/Library/Preferences/com.apple.TimeMachine}"
+check_timemachine(){ workstation || return 0; tmutil destinationinfo 2>/dev/null | grep -q '^Name' || return 1
+                     local auto; auto="$(defaults read "$TM_PREFS" AutoBackup 2>/dev/null)"
+                     [ "$auto" != 0 ]; }
 # VM disks change constantly, so every hourly backup would re-copy them. The valuable data
 # (VCarve) has its own copy (~/VCarve/Backup); the VM rebuilds from Intune. A sticky
 # exclusion on the folder covers VMs added later.
@@ -253,7 +258,7 @@ Windows VM (VCarve), on the old Mac: shut it down (not suspended), then in Paral
       Answer y if there's no VM to move.
 EOV
 }
-help_timemachine() { echo "Back up to echo-nas with Time Machine (the local, whole-Mac restore; Ninja Backup is the off-site one). echo-nas isn't announced on the local network, so it never shows in Add Backup Disk. The action reads the NAS login from 1Password, puts the password on the clipboard for 45 seconds, and runs sudo tmutil setdestination: enter your Mac password, then paste at the NAS password prompt."; }
+help_timemachine() { echo "Back up to echo-nas with Time Machine (the local, whole-Mac restore; Ninja Backup is the off-site one). echo-nas isn't announced on the local network, so it never shows in Add Backup Disk. The action reads the NAS login from 1Password, puts the password on the clipboard for 45 seconds, and runs sudo tmutil setdestination and turns automatic backups on: enter your Mac password, then paste at the NAS password prompt. If the destination is already there, it only turns automatic backups on."; }
 help_tm_no_vms()  { echo "Keep virtual machines out of Time Machine: tmutil addexclusion ~/Parallels (no admin needed). VM disks change constantly, so each backup would re-copy them."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
@@ -317,13 +322,20 @@ nas_field() {  # nas_field <field>: the field from the first account that has th
 }
 act_timemachine() {
   local user
+  # Destination already there (added by hand, or an earlier run): only automatic backups are off.
+  if tmutil destinationinfo 2>/dev/null | grep -q '^Name'; then
+    echo "    Turning on automatic backups (asks for your Mac password)…"
+    sudo tmutil enable && echo "    Automatic backups on."
+    return
+  fi
   user="$(nas_field username)" || { echo "    Couldn't read the NAS login from 1Password (item $NAS_ITEM). Unlock 1Password and try again."; return 1; }
   # tmutil -p reads the password from the keyboard only. The clipboard keeps it out of the
   # process list and out of sudo's log, which records the whole command line.
   nas_field password | pbcopy
   ( sleep "${MAC_SETUP_CLIP_SECONDS:-45}"; pbcopy </dev/null ) &
   echo "    NAS password is on the clipboard for 45 seconds: paste it at the NAS password prompt."
-  sudo tmutil setdestination -a -p "smb://$user@echo-nas/backups" && tmutil startbackup && echo "    First backup started."
+  sudo tmutil setdestination -a -p "smb://$user@echo-nas/backups" && sudo tmutil enable &&
+    tmutil startbackup && echo "    Automatic backups on; first backup started."
 }
 act_tm_no_vms()   { tmutil addexclusion "$HOME/Parallels"; }
 act_defaults()    { mac-defaults; }
