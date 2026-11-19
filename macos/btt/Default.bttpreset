@@ -157,7 +157,7 @@
     "BTTNotchBarNotchMenubarModeHideRightScrollable" : true,
     "BSTSnapAreaDefaultPictoDistanceFromLeft" : 0.10000000000000001
   },
-  "BTTPresetUUID" : "71EB412A-00B5-4262-8982-F06EE0FC4582",
+  "BTTPresetUUID" : "9783C53A-AE5E-4D55-9D78-5BA708FFBA02",
   "BTTPresetContent" : [
     {
       "BTTAppBundleIdentifier" : "BT.G",
@@ -167,6 +167,34 @@
         "BTTDisableGlobalTriggers" : false
       },
       "BTTTriggers" : [
+        {
+          "BTTLastUpdatedAt" : 1795115400.733804,
+          "BTTTriggerType" : 0,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTUUID" : "B11F2D68-9B37-421F-8A7D-58EA605D6BC8",
+          "BTTShortcutKeyboardType" : 0,
+          "BTTTriggerOnDown" : 1,
+          "BTTShortcutKeyCode" : 46,
+          "BTTShortcutModifierKeys" : 1835008,
+          "BTTOrder" : 0,
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTActionsToExecute" : [
+            {
+              "BTTLastUpdatedAt" : 1795115400.733959,
+              "BTTTriggerParentUUID" : "B11F2D68-9B37-421F-8A7D-58EA605D6BC8",
+              "BTTIsPureAction" : true,
+              "BTTUUID" : "6AD02A94-5EEA-4A3E-8C29-A00F8E652C82",
+              "BTTPredefinedActionType" : 585,
+              "BTTPredefinedActionName" : "Toggle Mute Microphone (Audio Input)",
+              "BTTAdditionalActionData" : {
+                "BTTMicMuteAlsoSetVolume" : false,
+                "BTTMicMuteApplyToAllInputDevices" : true
+              },
+              "BTTOrder" : 0
+            }
+          ],
+          "BTTGestureNotes" : "Mic: toggle mute (all apps)"
+        },
         {
           "BTTLastUpdatedAt" : 1795112711.3273711,
           "BTTTriggerType" : 0,
@@ -449,6 +477,114 @@
       "BTTAppAutoInvertIcon" : 1,
       "BTTTriggers" : [
 
+      ]
+    },
+    {
+      "BTTAppBundleIdentifier" : "com.google.Chrome",
+      "BTTAppName" : "Google Chrome",
+      "BTTAppAutoInvertIcon" : 1,
+      "BTTTriggers" : [
+        {
+          "BTTLastUpdatedAt" : 1795115401.056143,
+          "BTTTriggerType" : 0,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTUUID" : "CDBC0FD4-16E7-4B91-85ED-6B806AA4CC5F",
+          "BTTShortcutKeyboardType" : 0,
+          "BTTTriggerOnDown" : 1,
+          "BTTShortcutKeyCode" : 9,
+          "BTTShortcutModifierKeys" : 1835008,
+          "BTTOrder" : 0,
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTActionsToExecute" : [
+            {
+              "BTTLastUpdatedAt" : 1795115401.056186,
+              "BTTTriggerParentUUID" : "CDBC0FD4-16E7-4B91-85ED-6B806AA4CC5F",
+              "BTTIsPureAction" : true,
+              "BTTUUID" : "489A4E75-3D45-435C-895C-5667D7E96986",
+              "BTTPredefinedActionType" : 128,
+              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
+              "BTTLayoutIndependentActionChar" : "active app",
+              "BTTShortcutApp" : "active app",
+              "BTTShortcutSwitchToAppFirst" : "0",
+              "BTTShortcutAppUnderCursor" : "active app",
+              "BTTShortcutToSend" : "55,14",
+              "BTTOrder" : 0
+            }
+          ],
+          "BTTGestureNotes" : "Camera: Meet video"
+        }
+      ]
+    },
+    {
+      "BTTAppBundleIdentifier" : "com.microsoft.teams2",
+      "BTTAppName" : "com.microsoft.teams2",
+      "BTTAppAutoInvertIcon" : 1,
+      "BTTTriggers" : [
+        {
+          "BTTLastUpdatedAt" : 1795115400.9515681,
+          "BTTTriggerType" : 0,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTUUID" : "2D385925-07EC-4236-B33B-9E94C25BBE61",
+          "BTTShortcutKeyboardType" : 0,
+          "BTTTriggerOnDown" : 1,
+          "BTTShortcutKeyCode" : 9,
+          "BTTShortcutModifierKeys" : 1835008,
+          "BTTOrder" : 0,
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTActionsToExecute" : [
+            {
+              "BTTLastUpdatedAt" : 1795115400.951618,
+              "BTTTriggerParentUUID" : "2D385925-07EC-4236-B33B-9E94C25BBE61",
+              "BTTIsPureAction" : true,
+              "BTTUUID" : "B5FBEB74-82F8-47C5-8471-8B4282BC626F",
+              "BTTPredefinedActionType" : 128,
+              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
+              "BTTLayoutIndependentActionChar" : "active app",
+              "BTTShortcutApp" : "active app",
+              "BTTShortcutSwitchToAppFirst" : "0",
+              "BTTShortcutAppUnderCursor" : "active app",
+              "BTTShortcutToSend" : "55,56,31",
+              "BTTOrder" : 0
+            }
+          ],
+          "BTTGestureNotes" : "Camera: Teams video"
+        }
+      ]
+    },
+    {
+      "BTTAppBundleIdentifier" : "us.zoom.xos",
+      "BTTAppName" : "zoom.us",
+      "BTTAppAutoInvertIcon" : 1,
+      "BTTTriggers" : [
+        {
+          "BTTLastUpdatedAt" : 1795115400.8433208,
+          "BTTTriggerType" : 0,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTUUID" : "4C138EBD-4844-4B86-B8D7-2613612E9B49",
+          "BTTShortcutKeyboardType" : 0,
+          "BTTTriggerOnDown" : 1,
+          "BTTShortcutKeyCode" : 9,
+          "BTTShortcutModifierKeys" : 1835008,
+          "BTTOrder" : 0,
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTActionsToExecute" : [
+            {
+              "BTTLastUpdatedAt" : 1795115400.8433728,
+              "BTTTriggerParentUUID" : "4C138EBD-4844-4B86-B8D7-2613612E9B49",
+              "BTTIsPureAction" : true,
+              "BTTUUID" : "7378F57D-2813-484D-8C71-DB513EF6FF09",
+              "BTTPredefinedActionType" : 128,
+              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
+              "BTTLayoutIndependentActionChar" : "active app",
+              "BTTShortcutApp" : "active app",
+              "BTTShortcutSwitchToAppFirst" : "0",
+              "BTTShortcutAppUnderCursor" : "active app",
+              "BTTShortcutToSend" : "55,56,9",
+              "BTTOrder" : 0
+            }
+          ],
+          "BTTGestureNotes" : "Camera: Zoom video"
+        }
       ]
     }
   ],
