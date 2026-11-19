@@ -66,6 +66,7 @@ cask "elgato-stream-deck"
 cask "insta360-link-controller"
 cask "raspberry-pi-imager"
 cask "balenaetcher"
+brew "wimlib" # echo-provision splits Windows 11 install.wim for FAT32
 # VIA: use the web app at https://usevia.app (its cask was disabled, fails Gatekeeper)
 
 # Personal
