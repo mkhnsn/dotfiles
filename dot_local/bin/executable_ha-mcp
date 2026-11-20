@@ -12,8 +12,11 @@ REF="op://Infrastructure/dvu2zfrku5uwzm2lq35bu3hrbi/credential"
 
 if [ "${1:-}" = --store-token ]; then
   token="$(op read "$REF")" || exit 1
-  security add-generic-password -U -s "$SERVICE" -a "$ACCOUNT" \
-    -l "Home Assistant token (ha-mcp)" -w "$token" || exit 1
+  # The token goes in on stdin (printf is a shell builtin), never as an argument other
+  # processes could see; with -w last and no value, security reads it twice.
+  printf '%s\n%s\n' "$token" "$token" |
+    security add-generic-password -U -s "$SERVICE" -a "$ACCOUNT" \
+      -l "Home Assistant token (ha-mcp)" -w >/dev/null 2>&1 || exit 1
   echo "Stored the Home Assistant token in the Keychain ($SERVICE)."
   exit 0
 fi
