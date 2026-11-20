@@ -44,6 +44,7 @@ setup() {
   stub xcode-select 'echo /Library/Developer/CommandLineTools'
   stub brew        "case \"\$1\" in --prefix) echo $T/brew ;; *) exit 0 ;; esac"
   stub colima      'exit 0'
+  stub security    'exit 0'
   stub ollama      'exit 0'
   mkdir -p "$HOME/.config/claude-ha"; echo http://ha/api/webhook/x > "$HOME/.config/claude-ha/webhook-url"
   echo '{"mcpServers":{"homeassistant":{}}}' > "$HOME/.claude.json"
@@ -679,7 +680,7 @@ test_claude_ha_steps() {
   run "$SCRIPT" --status
   assert_done "Claude Code reports sessions to Home Assistant"
   assert_done "Home Assistant MCP server in Claude Code"
-  rm "$HOME/.config/claude-ha/webhook-url"; echo '{}' > "$HOME/.claude.json"
+  rm "$HOME/.config/claude-ha/webhook-url"; stub security 'exit 44'
   run "$SCRIPT" --status
   assert_open "Claude Code reports sessions to Home Assistant"
   assert_open "Home Assistant MCP server in Claude Code"
