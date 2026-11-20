@@ -2,10 +2,29 @@
 # Home Assistant over MCP for Claude Code (registered by mac-setup as the "homeassistant" server).
 # Read-only by default: HA's config changes go through echo-core's hactl, so git stays the
 # source of truth. READ_ONLY_MODE=false for a session that should control devices.
-# The token is read from 1Password at start; it is never written to disk.
+#
+# The token is read from the macOS Keychain, so starting the server never waits on a 1Password
+# prompt (Claude Code gives a server 30 s). `ha-mcp --store-token` copies it there from
+# 1Password once (mac-setup runs it).
+SERVICE=ha-mcp
+ACCOUNT=echo-homeassistant
+REF="op://Infrastructure/dvu2zfrku5uwzm2lq35bu3hrbi/credential"
+
+if [ "${1:-}" = --store-token ]; then
+  token="$(op read "$REF")" || exit 1
+  security add-generic-password -U -s "$SERVICE" -a "$ACCOUNT" \
+    -l "Home Assistant token (ha-mcp)" -w "$token" || exit 1
+  echo "Stored the Home Assistant token in the Keychain ($SERVICE)."
+  exit 0
+fi
+
+HOMEASSISTANT_TOKEN="$(security find-generic-password -s "$SERVICE" -a "$ACCOUNT" -w 2>/dev/null)"
+if [ -z "$HOMEASSISTANT_TOKEN" ]; then
+  echo "ha-mcp: no Home Assistant token in the Keychain; run: ha-mcp --store-token" >&2
+  exit 1
+fi
+export HOMEASSISTANT_TOKEN
 export HOMEASSISTANT_URL="${HOMEASSISTANT_URL:-http://echo-homeassistant:8123}"
 export READ_ONLY_MODE="${READ_ONLY_MODE:-true}"
-HOMEASSISTANT_TOKEN="$(op read "op://Infrastructure/dvu2zfrku5uwzm2lq35bu3hrbi/credential")" || exit 1
-export HOMEASSISTANT_TOKEN
 # Python 3.13: a dependency (pydantic-monty) has no wheel for newer Pythons yet.
 exec uvx --python 3.13 --from "ha-mcp==${HA_MCP_VERSION:-9.2.0}" ha-mcp
