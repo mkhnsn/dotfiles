@@ -12,11 +12,15 @@ REF="op://Infrastructure/dvu2zfrku5uwzm2lq35bu3hrbi/credential"
 
 if [ "${1:-}" = --store-token ]; then
   token="$(op read "$REF")" || exit 1
-  # The token goes in on stdin (printf is a shell builtin), never as an argument other
-  # processes could see; with -w last and no value, security reads it twice.
-  printf '%s\n%s\n' "$token" "$token" |
-    security add-generic-password -U -s "$SERVICE" -a "$ACCOUNT" \
-      -l "Home Assistant token (ha-mcp)" -w >/dev/null 2>&1 || exit 1
+  # The token reaches security on stdin, never in argv where other processes could see it:
+  # `security -i` reads the whole command from stdin (printf is a shell builtin). Not
+  # `-w` with no value: security's password prompt cuts input at 128 characters, shorter
+  # than an HA token. A JWT is base64url and dots, so it is safe unquoted in the command.
+  case "$token" in *[!A-Za-z0-9._-]*|"") echo "ha-mcp: unexpected token format" >&2; exit 1 ;; esac
+  printf 'add-generic-password -U -s %s -a %s -l "Home Assistant token (ha-mcp)" -w %s\n' \
+    "$SERVICE" "$ACCOUNT" "$token" | security -i >/dev/null 2>&1
+  [ "$(security find-generic-password -s "$SERVICE" -a "$ACCOUNT" -w 2>/dev/null)" = "$token" ] || {
+    echo "ha-mcp: the Keychain item doesn't match the token; nothing usable stored" >&2; exit 1; }
   echo "Stored the Home Assistant token in the Keychain ($SERVICE)."
   exit 0
 fi
