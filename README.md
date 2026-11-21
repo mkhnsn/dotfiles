@@ -394,7 +394,10 @@ Homebrew installs: `brew upgrade` replaces the app under its own updater). Its D
 with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed by chezmoi:
 
 - `btt-sync import` on a new Mac, after installing BTT
-- `btt-sync export` after changing triggers, then review and commit the diff
+- `btt-sync export` after changing triggers, then review and commit the diff. Export sorts the
+  preset, drops machine state (launch counts, lid state) and keeps the pinned settings in
+  `btt-sync`: no Imgur uploads, no usage logging, and BTT off the Stream Deck (Elgato's app
+  owns it; its keys call BTT actions). A test checks the committed preset.
 
 `mac-setup` compares BTT's global keyboard shortcuts with the preset's, so it asks for a
 re-import when the preset gains shortcuts after an earlier import. If BTT then lists two
