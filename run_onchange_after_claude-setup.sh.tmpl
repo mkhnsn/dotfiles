@@ -5,6 +5,9 @@
 # dot_claude/modify_settings.json.
 set -uo pipefail
 {{ template "todo.sh" }}
+{{- if eq .chezmoi.os "darwin" }}
+# Re-runs once the Raycast token is stored: {{ output "sh" "-c" "security find-generic-password -s raycast-mcp -a claude >/dev/null 2>&1 && echo stored || echo missing" | trim }}
+{{- end }}
 
 command -v claude >/dev/null 2>&1 || { todo "Claude Code: install the CLI (brew install --cask claude-code), then chezmoi apply"; exit 0; }
 # claude (Bun) can't use a terminal it didn't open as stdin; nothing here needs input.
@@ -19,7 +22,13 @@ mcp() {  # mcp <name> <json>: (re)register so the definition here wins
 # Local apps' own MCP endpoints; they answer only while the app runs.
 mcp fusion     '{"type":"http","url":"http://127.0.0.1:27182/mcp"}'
 mcp btt        '{"type":"http","url":"http://127.0.0.1:64832/mcp"}'
-mcp raycast    '{"type":"http","url":"http://127.0.0.1:8267/mcp"}'
+# Raycast's server wants the bearer token Raycast shows in its MCP settings; it's kept in
+# the Keychain so it stays out of this public repo (it lands only in ~/.claude.json).
+if raycast_token="$(security find-generic-password -s raycast-mcp -a claude -w 2>/dev/null)" && [ -n "$raycast_token" ]; then
+  mcp raycast "$(printf '{"type":"http","url":"http://127.0.0.1:8267/mcp","headers":{"Authorization":"Bearer %s"}}' "$raycast_token")"
+else
+  todo "Claude Code: copy the MCP token from Raycast's settings into the Keychain (security add-generic-password -U -s raycast-mcp -a claude -w), then chezmoi apply"
+fi
 mcp StreamDeck '{"type":"stdio","command":"/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp","args":[]}'
 # Read-only Home Assistant; its token goes to the Keychain in mac-setup (ha-mcp --store-token).
 mcp homeassistant '{"type":"stdio","command":"{{ .chezmoi.homeDir }}/.local/bin/ha-mcp","args":[]}'
