@@ -42,7 +42,7 @@ setup() {
   printf '#!/bin/sh\n' > "$MAC_SETUP_LOCKHART"; chmod +x "$MAC_SETUP_LOCKHART"
   stub pgrep       'exit 0'
   stub xcode-select 'echo /Library/Developer/CommandLineTools'
-  stub brew        "case \"\$1\" in --prefix) echo $T/brew ;; *) exit 0 ;; esac"
+  stub brew        "case \"\$1 \${2:-}\" in --prefix*) echo $T/brew ;; 'services info') echo '[{\"name\": \"colima\", \"registered\": true}]' ;; *) exit 0 ;; esac"
   stub colima      'exit 0'
   stub security    'exit 0'
   stub ollama      'exit 0'
@@ -53,7 +53,14 @@ setup() {
   stub gh          'exit 0'
   stub doppler     'exit 0'
   stub tailscale   'printf "{\n  \"BackendState\": \"Running\",\n  \"Self\": {\n    \"DNSName\": \"test-mac.example.ts.net.\",\n    \"Tags\": [\"tag:echo-admin\"]\n  }\n}\n"'
-  stub osascript   'echo "Litra On/Off"'
+  # The BTT check reads JSON with python3; the bash:3.2 image has none, so there BTT
+  # looks up to date and the BTT preset tests are skipped (has_python).
+  if command -v python3 >/dev/null 2>&1; then MAC_SETUP_PYTHON="$(command -v python3)"; export MAC_SETUP_PYTHON
+  else stub python3 'echo 0'; export MAC_SETUP_PYTHON="$STUBS/python3"; fi
+  # BTT has the preset's one global shortcut (⌃⌥←); app-specific ones don't count.
+  mkdir -p "$T/src/macos/btt"
+  printf '%s' '{"BTTPresetContent":[{"BTTAppBundleIdentifier":"BT.G","BTTTriggers":[{"BTTTriggerClass":"BTTTriggerTypeKeyboardShortcut","BTTShortcutKeyCode":123,"BTTShortcutModifierKeys":786432}]},{"BTTAppBundleIdentifier":"us.zoom.xos","BTTTriggers":[{"BTTTriggerClass":"BTTTriggerTypeKeyboardShortcut","BTTShortcutKeyCode":9,"BTTShortcutModifierKeys":1835008}]}]}' > "$T/src/macos/btt/Default.bttpreset"
+  stub osascript   'echo "[{\"BTTTriggerClass\": \"BTTTriggerTypeKeyboardShortcut\", \"BTTShortcutKeyCode\": 123, \"BTTShortcutModifierKeys\": 786432}]"'
   stub open        'exit 0'
   stub mac-defaults 'exit 0'
   stub defaults    'printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n"'
@@ -77,6 +84,7 @@ setup() {
 }
 teardown() { rm -rf "$T"; }
 
+has_python() { [ "$MAC_SETUP_PYTHON" != "$STUBS/python3" ]; }
 stub() { printf '#!/bin/sh\n%s\n' "$2" > "$STUBS/$1"; chmod +x "$STUBS/$1"; }
 mark_done() { mkdir -p "$XDG_STATE_HOME/mac-setup"; touch "$XDG_STATE_HOME/mac-setup/$1"; }
 # Run mac-setup with no stdin and a watchdog, so a prompt that escapes the answer
@@ -252,7 +260,16 @@ test_btt_from_homebrew_is_flagged() {
 }
 
 test_btt_preset_missing() {
+  has_python || return 0
   stub osascript 'echo "no triggers"'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool preset imported"
+}
+
+test_btt_preset_import_out_of_date() {
+  has_python || return 0
+  # An import from before the preset gained a shortcut: BTT has other triggers, not that one.
+  stub osascript 'echo "[{\"BTTTriggerClass\": \"BTTTriggerTypeKeyboardShortcut\", \"BTTShortcutKeyCode\": 13, \"BTTShortcutModifierKeys\": 1179648}]"'
   run "$SCRIPT" --status
   assert_open "BetterTouchTool preset imported"
 }
@@ -674,6 +691,13 @@ test_colima_and_ollama_must_run() {
   assert_open "Ollama server runs at login"
   run "$SCRIPT_SERVER" --status
   assert_done "Docker engine (Colima) runs at login"
+}
+
+test_colima_running_but_not_at_login() {
+  # A one-off `colima start` runs, but nothing starts it at login.
+  stub brew "case \"\$1\" in --prefix) echo $T/brew ;; services) echo '[{\"name\": \"colima\", \"registered\": false}]' ;; *) exit 0 ;; esac"
+  run "$SCRIPT" --status
+  assert_open "Docker engine (Colima) runs at login"
 }
 
 test_claude_ha_steps() {

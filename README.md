@@ -339,6 +339,9 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 
 ## Workstation apps and macOS settings
 
+- `Brewfile`: CLI tools for every Mac, including the `claude` CLI (`claude-code` cask). An entry
+  that fails to install (a formula that became a cask, a moved tap) doesn't stop the apply:
+  it's listed in the end-of-apply summary, and the rest of the setup carries on.
 - `Brewfile.workstation`: GUI apps for workstation Macs (casks, plus App Store apps through
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
@@ -387,6 +390,10 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
 
 - `btt-sync import` on a new Mac, after installing BTT
 - `btt-sync export` after changing triggers, then review and commit the diff
+
+`mac-setup` compares BTT's global keyboard shortcuts with the preset's, so it asks for a
+re-import when the preset gains shortcuts after an earlier import. If BTT then lists two
+presets named Default, delete the older one.
 
 This repo is public: keep secrets out of BTT triggers.
 
