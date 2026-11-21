@@ -11,6 +11,9 @@
 # Sync BetterTouchTool's Default preset with the dotfiles repo (macos/btt/).
 #   btt-sync export   BTT -> repo (then review and commit the diff)
 #   btt-sync import   repo -> BTT (on a new Mac, after installing BTT from folivora.ai)
+#   btt-sync normalize   tidy the repo preset (export does this)
+# Export keeps diffs meaningful: keys are sorted, machine state (launch counts, lid state)
+# is dropped, and the settings in PINNED keep their values whatever the Mac had.
 # The preset includes BTT's general settings. It's in a public repo: keep secrets out of triggers.
 
 set -euo pipefail
@@ -28,21 +31,52 @@ fi
 
 preset="${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}/macos/btt/Default.bttpreset"
 
+# Normalize the preset in place: sorted keys, no machine state, pinned settings.
+normalize() {
+  /usr/bin/python3 -I - "$preset" <<'PYEOF2'
+import json, sys
+p = sys.argv[1]
+d = json.load(open(p, encoding="utf-8"))
+# Counters and state BTT keeps in its settings; they change without you changing anything.
+VOLATILE = {"BTTNumberOfStarts", "BTTLastClamshellState", "BTTDidRegisterForUpdateStats",
+            "BTTSelectedKeyboardTabIndex", "BTTForcedHidden"}
+PINNED = {
+    # Screenshots never go to Imgur (public).
+    "BTTUploadToImgur": False, "BTTIMGURDefault": False,
+    "BTTCopyImgurURLToClipboard": False, "BTTScreenshotOpenImgurInBrowser": False,
+    "BTTEnableUsageLogging": False,
+    # The Stream Deck belongs to Elgato's app; its keys call BTT actions, BTT doesn't drive it.
+    "BTTStreamDeckEnabled": False, "BTTStreamDeckPlugin": False, "BTTStreamDeckFullControl": False,
+}
+g = d.setdefault("BTTGeneralSettings", {})
+for k in VOLATILE:
+    g.pop(k, None)
+g.update(PINNED)
+with open(p, "w", encoding="utf-8") as f:
+    json.dump(d, f, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True)
+    f.write("\n")
+PYEOF2
+}
+
 case "${1:-export}" in
   export)
     # BTT can't write to every path; export to Downloads, then move into the repo.
     tmp="$HOME/Downloads/.btt-sync-$$.bttpreset"
     osascript -e "tell application \"BetterTouchTool\" to export_preset \"Default\" outputPath \"$tmp\" compress false includeSettings true" >/dev/null
     mv "$tmp" "$preset"
+    normalize
     echo "Exported to $preset"
     git -C "$(dirname "$preset")" diff --stat -- "$preset" || true
+    ;;
+  normalize)
+    normalize
     ;;
   import)
     osascript -e "tell application \"BetterTouchTool\" to import_preset \"$preset\"" >/dev/null
     echo "Imported $preset. Check BTT > Configuration; activate the preset if it isn't."
     ;;
   *)
-    echo "usage: btt-sync [export|import]"
+    echo "usage: btt-sync [export|import|normalize]"
     exit 1
     ;;
 esac
