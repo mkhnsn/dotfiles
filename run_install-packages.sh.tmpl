@@ -3,7 +3,7 @@ set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # Brewfile.workstation hash: {{ include "Brewfile.workstation" | sha256sum }}
 # cargo-packages: markless
-# uv-tools: specify-cli ntfy
+# uv-tools: specify-cli ntfy copier wireviz
 
 {{ template "todo.sh" }}
 # linux-pkg-v5
@@ -24,6 +24,9 @@ install_uv_tools() {
   command -v uv >/dev/null 2>&1 || return 0
   command -v specify >/dev/null 2>&1 || uv tool install specify-cli || true
   command -v ntfy >/dev/null 2>&1 || uv tool install 'ntfy[pid,emoji]' || true
+  command -v copier >/dev/null 2>&1 || uv tool install copier || true
+  # The unstable-studios fork (--strict, --merge); projects like kz305 pin their own copy.
+  command -v wireviz >/dev/null 2>&1 || uv tool install 'wireviz @ git+https://github.com/unstable-studios/WireViz' || true
 }
 
 want_cmds=(git fzf bat zoxide)
