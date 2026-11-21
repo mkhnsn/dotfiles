@@ -4,8 +4,9 @@
 # things you didn't ask for); this covers the house rule they don't: no work on main.
 set -euo pipefail
 
-command=$(jq -r '.tool_input.command // ""')
-printf '%s\n' "$command" | head -1 | grep -qE '(^|&&|;)[[:space:]]*git[[:space:]]+(commit|push)' || exit 0
+command=$(jq -r '.tool_input.command // ""' 2>/dev/null) || exit 0
+# Any git commit/push in the command, including `git -C dir commit` and `git -c k=v push`.
+printf '%s\n' "$command" | grep -qE '(^|[;&|(]|[[:space:]])git([[:space:]]+-[Cc][[:space:]]+[^[:space:]]+)*[[:space:]]+(commit|push)([[:space:]]|$)' || exit 0
 
 branch=$(git branch --show-current 2>/dev/null || true)
 case "$branch" in

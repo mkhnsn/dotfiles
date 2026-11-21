@@ -30,8 +30,8 @@ cmd_export() {
     cd "$CLAUDE_DIR"
     {
       find projects -type d -name memory -prune -print
-      [ -f history.jsonl ] && echo history.jsonl
-      [ "$transcripts" = 1 ] && find projects -maxdepth 2 -name '*.jsonl'
+      if [ -f history.jsonl ]; then echo history.jsonl; fi
+      if [ "$transcripts" = 1 ]; then find projects -maxdepth 2 -name '*.jsonl'; fi
     } | tar -czf "$out" -T -
   )
   echo "Exported $(memory_count) memory files$([ "$transcripts" = 1 ] && echo " and transcripts") to $out"

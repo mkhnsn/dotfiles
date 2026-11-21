@@ -25,7 +25,7 @@ mcp btt        '{"type":"http","url":"http://127.0.0.1:64832/mcp"}'
 # Raycast's server wants the bearer token Raycast shows in its MCP settings; it's kept in
 # the Keychain so it stays out of this public repo (it lands only in ~/.claude.json).
 if raycast_token="$(security find-generic-password -s raycast-mcp -a claude -w 2>/dev/null)" && [ -n "$raycast_token" ]; then
-  mcp raycast "$(printf '{"type":"http","url":"http://127.0.0.1:8267/mcp","headers":{"Authorization":"Bearer %s"}}' "$raycast_token")"
+  mcp raycast "$(jq -cn --arg t "$raycast_token" '{type:"http",url:"http://127.0.0.1:8267/mcp",headers:{Authorization:("Bearer "+$t)}}')"
 else
   todo "Claude Code: copy the MCP token from Raycast's settings into the Keychain (security add-generic-password -U -s raycast-mcp -a claude -w), then chezmoi apply"
 fi
