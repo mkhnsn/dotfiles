@@ -120,6 +120,52 @@ class AppPrefs(unittest.TestCase):
         self.run_tool("apply")
         self.assertEqual(self.read_mac("com.example.app"), {"showIcons": True})
 
+    # ---- BetterMouse: nested binary plists, flat key/value maps, one entry per device ----
+    BM = "com.naotanhaocan.BetterMouse"
+
+    def bm_mice(self, *mice):
+        return plistlib.dumps({"mice": list(mice)}, fmt=plistlib.FMT_BINARY)
+
+    def mouse(self, product, speed, order=1):
+        tw = [{"HScroll": {}}, speed, {"VScroll": {}}, 1.0]
+        if order < 0:
+            tw = tw[2:] + tw[:2]
+        return {"name": {"product": product, "vendor": "Logitech"}, "twSpeed": tw}
+
+    def bm_setup(self):
+        with open(os.path.join(self.repo, "allowlist"), "a") as f:
+            f.write(f"{self.BM}\tmice\n")
+
+    def test_bettermouse_reordered_maps_and_devices_match(self):
+        self.bm_setup()
+        self.mac(self.BM, {"mice": self.bm_mice(self.mouse("MX", 1.7), self.mouse("MX-BT", 1.0))})
+        self.run_tool("export")
+        # BetterMouse saves the same settings with maps and devices in another order.
+        self.mac(self.BM, {"mice": self.bm_mice(self.mouse("MX-BT", 1.0, -1), self.mouse("MX", 1.7, -1))})
+        self.assertEqual(self.run_tool("check").returncode, 0, self.run_tool("diff").stdout)
+
+    def test_bettermouse_device_only_here_is_ignored_and_kept(self):
+        self.bm_setup()
+        self.mac(self.BM, {"mice": self.bm_mice(self.mouse("MX", 1.7))})
+        self.run_tool("export")
+        # A new connection adds a device here; check passes, apply keeps it.
+        self.mac(self.BM, {"mice": self.bm_mice(self.mouse("MX", 1.7), self.mouse("MX-BT", 3.0))})
+        self.assertEqual(self.run_tool("check").returncode, 0)
+        self.mac(self.BM, {"mice": self.bm_mice(self.mouse("MX", 9.0), self.mouse("MX-BT", 3.0))})
+        self.assertEqual(self.run_tool("check").returncode, 1)
+        self.assertEqual(self.run_tool("apply").returncode, 0)
+        mice = plistlib.loads(self.read_mac(self.BM)["mice"])["mice"]
+        self.assertEqual([m["name"]["product"] for m in mice], ["MX", "MX-BT"])
+        self.assertEqual(mice[0]["twSpeed"][1], 1.7)
+        self.assertEqual(mice[1]["twSpeed"][1], 3.0)
+        self.assertEqual(self.run_tool("check").returncode, 0)
+
+    def test_order_still_matters_for_other_apps(self):
+        self.mac("com.example.app", {"layout": [1, 2, 3, 4]})
+        self.run_tool("export")
+        self.mac("com.example.app", {"layout": [3, 4, 1, 2]})
+        self.assertEqual(self.run_tool("check").returncode, 1)
+
     def test_unknown_domain_is_an_error(self):
         r = self.run_tool("export", "com.not.listed")
         self.assertNotEqual(r.returncode, 0)

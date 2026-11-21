@@ -360,6 +360,9 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply;
   quit the apps first). `check` and `diff` list differing key names, never values. A test
   fails if a committed setting looks like a license, token or email address.
+  BetterMouse is compared by content: it re-saves its maps in a new order on every launch
+  and keeps one entry per mouse per connection (Bolt, Bluetooth), so a reorder or a newly
+  seen connection isn't a difference, and `apply` keeps devices only this Mac has.
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >

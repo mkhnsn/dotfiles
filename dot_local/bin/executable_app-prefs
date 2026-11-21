@@ -15,6 +15,14 @@ the repo; the repo is public, so add a key only after checking it holds no secre
 apply merges (defaults export, update, defaults import): keys not in the repo, such as a
 license on the new Mac, are kept. A running app is skipped, since it would write its own
 settings back when it quits; quit it and run apply again.
+
+Values stored as nested binary plists are compared by content, not bytes. For BetterMouse
+(DEVICE_LISTS):
+- its maps are saved as flat [key, value, key, value, ...] lists in a new order on every
+  save, so they're compared as unordered pairs;
+- it keeps one entry per mouse per connection (Bolt receiver, Bluetooth) and adds them as
+  devices reconnect, so check only asks that each saved device is here with the same
+  settings, and apply updates or adds the saved devices and keeps ones only this Mac has.
 """
 import fnmatch
 import os
@@ -23,6 +31,77 @@ import subprocess
 import sys
 
 DEFAULTS = os.environ.get("APP_PREFS_DEFAULTS", "defaults")  # overridable for tests
+
+# domain -> {key: list field inside the key's nested plist}; list items are matched by "name".
+DEVICE_LISTS = {
+    "com.naotanhaocan.BetterMouse": {"mice": "mice", "keyboards": "keyboards", "logikeys": "logiKeybs"},
+}
+
+
+def decode(value):
+    """A nested binary plist (bytes) as data; anything else as it is."""
+    if isinstance(value, bytes) and value.startswith(b"bplist"):
+        try:
+            return plistlib.loads(value)
+        except Exception:
+            return value
+    return value
+
+
+def canon(value, pairs):
+    """Comparable form of a value; with pairs, flat key/value lists ignore their order."""
+    value = decode(value)
+    if isinstance(value, dict):
+        return {k: canon(v, pairs) for k, v in value.items()}
+    if isinstance(value, list):
+        items = [canon(v, pairs) for v in value]
+        # Lists of records (devices, apps) keep their order; flat maps don't have one.
+        if pairs and items and len(items) % 2 == 0 and not all(isinstance(i, dict) for i in items):
+            return sorted((repr(items[i]), repr(items[i + 1])) for i in range(0, len(items), 2))
+        return items
+    return value
+
+
+def device_id(item):
+    name = item.get("name") if isinstance(item, dict) else None
+    return repr(sorted(name.items())) if isinstance(name, dict) else None
+
+
+def device_field(domain, key):
+    return DEVICE_LISTS.get(domain, {}).get(key)
+
+
+def same(domain, key, saved, live):
+    """Whether this Mac already has the saved value (see the device-list note above)."""
+    pairs = domain in DEVICE_LISTS
+    s, l = decode(saved), decode(live)
+    field = device_field(domain, key)
+    if not (field and isinstance(s, dict) and isinstance(l, dict)):
+        return canon(s, pairs) == canon(l, pairs)
+    rest = lambda d: canon({k: v for k, v in d.items() if k != field}, pairs)
+    if rest(s) != rest(l):
+        return False
+    here = {device_id(i): canon(i, pairs) for i in l.get(field, [])}
+    return all(here.get(device_id(i)) == canon(i, pairs) for i in s.get(field, []))
+
+
+def merged(domain, key, saved, live):
+    """The value to write: saved, with device lists merged into what's here."""
+    field = device_field(domain, key)
+    s, l = decode(saved), decode(live)
+    if not (field and isinstance(s, dict) and isinstance(l, dict) and isinstance(saved, bytes)):
+        return saved
+    items = list(l.get(field, []))
+    index = {device_id(i): n for n, i in enumerate(items)}
+    for item in s.get(field, []):
+        n = index.get(device_id(item))
+        if n is None:
+            items.append(item)
+        else:
+            items[n] = item
+    out = dict(s)
+    out[field] = items
+    return plistlib.dumps(out, fmt=plistlib.FMT_BINARY)
 
 
 def fail(msg):
@@ -124,7 +203,8 @@ def cmd_apply(base, rules, names):
             skipped += 1
             continue
         live = read_domain(domain)
-        live.update(saved)
+        for k, v in saved.items():
+            live[k] = merged(domain, k, v, live.get(k))
         write_domain(domain, live)
         print(f"{domain}: applied {len(saved)} keys")
     return 1 if skipped else 0
@@ -137,7 +217,7 @@ def differences(base, rules):
         if saved is None:
             continue
         live = read_domain(domain)
-        keys = sorted(k for k, v in saved.items() if allowed(k, rules[domain]) and live.get(k) != v)
+        keys = sorted(k for k, v in saved.items() if allowed(k, rules[domain]) and not same(domain, k, v, live.get(k)))
         if keys:
             out.append((domain, keys))
     return out
