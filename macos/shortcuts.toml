@@ -8,9 +8,9 @@
 # scope    "global", or an app's bundle ID
 # accepted a known, temporary conflict: the reason. It's reported as a warning, not a failure.
 #
-# Ownership (2026-11-19): window management is BTT (drag-to-snap and the ⌃⌥ keys), app switching
-# is AltTab on ⌘Tab, the menu bar is Bartender, Raycast is the launcher and clipboard history
-# (BTT's clipboard manager is off).
+# Each job has one owner, the best tool for it; an app can own several jobs. Owners now: window
+# management BTT (drag-to-snap, the ⌃⌥ keys), app switching AltTab (⌘Tab), menu bar Bartender,
+# launcher and clipboard history Raycast. Overlapping features in other apps are turned off.
 
 # ---- macOS system shortcuts set by mac-defaults (macos/symbolichotkeys.plist) ----------------
 # Screenshots are swapped from Apple's defaults: plain = clipboard, ⌃ = file.

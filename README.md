@@ -382,10 +382,12 @@ the others. Run `brew-why` any time for the same list (`brew-why <cask>` for one
 are encrypted, so its hotkeys are entered by hand (`source = "manual"`) and only checked for
 conflicts. `shortcut-check --list` prints the whole map.
 
-Who owns what: window management is BTT (drag-to-snap and the ⌃⌥ keys), app switching is AltTab
-on ⌘Tab, the menu bar is Bartender, and Raycast is the launcher and clipboard history
-(BTT's clipboard manager is pinned off), with no window or switcher hotkeys. After changing a shortcut in an app, export it (`btt-sync export`, `app-prefs export`),
-update the registry, and run `shortcut-check`.
+Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
+same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
+Owners now: window management BTT (drag-to-snap and the ⌃⌥ keys), app switching AltTab (⌘Tab),
+menu bar Bartender, launcher and clipboard history Raycast. After changing a shortcut in an
+app, export it (`btt-sync export`, `app-prefs export`), update the registry, and run
+`shortcut-check`.
 
 ## BetterTouchTool
 
