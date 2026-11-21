@@ -380,7 +380,7 @@ the others. Run `brew-why` any time for the same list (`brew-why <cask>` for one
 (`macos/symbolichotkeys.plist`), the BTT preset, AltTab's settings — and fails on a **conflict**
 (two owners on the same keys), an **undeclared** binding, or a **stale** entry. Raycast's settings
 are encrypted, so its hotkeys are entered by hand (`source = "manual"`) and only checked for
-conflicts. `shortcut-check --list` prints the whole map.
+conflicts, as are app settings changed by hand (Zoom's video shortcut). `shortcut-check --list` prints the whole map.
 
 Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
 same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
@@ -408,6 +408,9 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
 `mac-setup` compares BTT's global keyboard shortcuts with the preset's, so it asks for a
 re-import when the preset gains shortcuts after an earlier import. If BTT then lists two
 presets named Default, delete the older one.
+
+The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
+Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).
 
 This repo is public: keep secrets out of BTT triggers.
 

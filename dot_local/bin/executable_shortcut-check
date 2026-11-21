@@ -6,14 +6,13 @@ that owns it, what it does and where it applies. The bindings that live in the d
 straight from their configs:
 
   macos     macos/symbolichotkeys.plist (enabled system shortcuts, applied by mac-defaults)
-  btt       macos/btt/Default.bttpreset (keyboard-shortcut triggers)
+  btt       macos/btt/Default.bttpreset (keyboard-shortcut triggers, and the move/resize modifier
+            keys as "<mods>Drag")
   alttab    macos/prefs/com.lwouis.alt-tab-macos.plist (switcher shortcuts; AltTab's defaults
             when unset)
 
 Other owners (Raycast, whose settings are encrypted, or an app's own menus) are entered by hand
-with source = "manual"; they can't be read, so they're only checked for conflicts. A managed owner's
-binding that its config doesn't hold as a shortcut (BTT's move/resize modifier keys, say) is
-entered the same way.
+with source = "manual"; they can't be read, so they're only checked for conflicts.
 
 Fails when:
   conflict    two owners claim the same keys in overlapping scopes (global overlaps everything)
@@ -104,6 +103,13 @@ def read_btt(src):
             for v in o:
                 walk(v, scope)
     walk(d.get("BTTPresetContent", d), None)
+    # Hold-and-move-the-pointer modifiers (Window Snapping & Moving › Moving & Resizing Modifier Keys).
+    g = d.get("BTTGeneralSettings") or {}
+    for job in ("Move", "Resize"):
+        mods = "".join(glyph for flag, glyph in (("control", "⌃"), ("opt", "⌥"), ("shift", "⇧"), ("cmd", "⌘"))
+                       if g.get(flag + job))
+        if mods:
+            out.append({"keys": mods + "Drag", "scope": "global", "what": f"window {job.lower()} modifier keys"})
     return out
 
 
@@ -143,6 +149,10 @@ def check(src, registry_path):
         e["keys"] = normalize(e["keys"])
         e.setdefault("scope", "global")
         e.setdefault("source", "managed" if e["owner"] in READERS else "manual")
+        want = "managed" if e["owner"] in READERS else "manual"
+        if e["source"] != want:
+            problems.append(f"source: {e['owner']} {e['keys']} has source = \"{e['source']}\"; "
+                            f"{e['owner']} bindings are {want}")
     # conflicts inside the registry
     warnings = []
     for i, a in enumerate(reg):
@@ -154,7 +164,7 @@ def check(src, registry_path):
     # each managed config against the registry
     for owner, reader in READERS.items():
         found = {(normalize(f["keys"]), f["scope"]): f for f in reader(src)}
-        declared = {(e["keys"], e["scope"]) for e in reg if e["owner"] == owner and e["source"] == "managed"}
+        declared = {(e["keys"], e["scope"]) for e in reg if e["owner"] == owner}
         for k, f in sorted(found.items()):
             if k not in declared:
                 problems.append(f"undeclared: {owner} binds {k[0]} ({f['what']}, scope {k[1]}); add it to the registry")

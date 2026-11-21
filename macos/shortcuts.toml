@@ -146,22 +146,20 @@ owner = "btt"
 action = "Window: one space right"
 
 # Hold the modifiers and move the pointer (BTT › Window Snapping & Moving › Moving & Resizing
-# Modifier Keys). Stored in the preset's general settings, not as triggers, so entered by hand.
+# Modifier Keys; read from the preset's general settings).
 [[shortcut]]
 keys = "⌃⌥⌘Drag"
 owner = "btt"
-source = "manual"
 action = "Window: move (hold and move the pointer)"
 
 [[shortcut]]
 keys = "⌃⌥⇧⌘Drag"
 owner = "btt"
-source = "manual"
 action = "Window: resize (hold and move the pointer)"
 
 # ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
 # The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut
-# isn't confirmed). Zoom's own Start/Stop Video shortcut is set to ⌃⇧⌘V in Zoom's settings, so
+# isn't confirmed). Zoom's Start/Stop Video is moved to ⌃⇧⌘V by hand (see the zoom entry), so
 # ⇧⌘V is free for Raycast.
 [[shortcut]]
 keys = "⌃⌥⌘M"
@@ -185,6 +183,13 @@ keys = "⌃⌥⌘V"
 owner = "btt"
 scope = "com.google.Chrome"
 action = "Camera: Meet video (sends ⌘E)"
+
+# Set by hand in Zoom › Settings › Keyboard Shortcuts › Start/Stop Video (default ⇧⌘V).
+[[shortcut]]
+keys = "⌃⇧⌘V"
+owner = "zoom"
+scope = "us.zoom.xos"
+action = "Start/Stop Video (BTT's camera key sends this)"
 
 # ---- AltTab (macos/prefs/com.lwouis.alt-tab-macos.plist) --------------------------------------
 # Shortcut 1 replaces the macOS app switcher; shortcut 2 is AltTab's default.
