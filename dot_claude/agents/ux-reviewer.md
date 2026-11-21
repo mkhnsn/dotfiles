@@ -2,8 +2,6 @@
 name: ux-reviewer
 description: Frontend and UI audit for accessibility, usability, and consistency. Use when reviewing UI components or frontend code.
 tools: Read, Grep, Glob, Bash, WebSearch
-model: sonnet
-maxTurns: 15
 ---
 
 You are a UX engineer reviewing frontend code for usability and accessibility issues.

@@ -1,6 +1,9 @@
 #!/bin/bash
 # Merge chezmoi-managed settings into Claude Code settings.json.
-# Preserves interactively-set keys (enabledPlugins, project-specific permissions, etc.)
+# Keys set here are replaced on every apply; everything else (/model, /config choices,
+# permissions you add) is kept. Prefer Claude Code's defaults: set a key here only for a
+# real preference, and drop it once a default covers it (old pins quietly override new
+# defaults: model, effort, agent models, experimental flags).
 
 set -euo pipefail
 
@@ -18,7 +21,7 @@ hooks='{
     "matcher": "Bash",
     "hooks": [{
       "type": "command",
-      "command": "bash ~/.claude/scripts/guard-destructive.sh",
+      "command": "bash ~/.claude/scripts/guard-main-branch.sh",
       "timeout": 5
     }]
   },
@@ -57,61 +60,59 @@ statusline='{
   "command": "bash ~/.claude/scripts/statusline.sh"
 }'
 
-# ---- base permissions (merged into existing allow list) ----
-base_permissions='[
-  "Bash(git fetch)",
-  "Bash(git fetch *)",
-  "Bash(git pull)",
-  "Bash(git pull *)",
-  "Bash(git status)",
-  "Bash(git status *)",
-  "Bash(git log)",
-  "Bash(git log *)",
-  "Bash(git diff)",
-  "Bash(git diff *)",
-  "Bash(git branch)",
-  "Bash(git branch *)",
-  "Bash(git stash)",
-  "Bash(git stash *)",
-  "Bash(git remote *)",
-  "Bash(git add *)",
-  "Bash(git commit *)",
-  "Bash(git push *)",
-  "Bash(git push)",
-  "Bash(git checkout *)",
-  "Bash(git switch *)",
-  "Bash(git merge *)",
-  "Bash(git rebase *)",
-  "Bash(gh pr:*)",
-  "Bash(gh issue:*)",
-  "Bash(gh api:*)",
-  "Bash(gh run:*)",
-  "Bash(gh repo:*)",
-  "Bash(gh label:*)",
-  "Bash(gh auth:*)",
-  "Bash(ls:*)",
-  "Bash(tree:*)",
-  "Bash(wc:*)",
-  "Bash(sort:*)",
-  "Bash(mkdir:*)",
-  "Bash(find-repo:*)",
-  "mcp__ide__getDiagnostics",
-  "WebFetch",
-  "WebSearch",
-  "Read(~/src/**)",
-  "Edit(~/src/**)"
-]'
+# ---- auto mode ----
+# Auto mode is the default: a classifier approves routine actions and blocks risky ones
+# (force push, reset --hard, prod deploys, unapproved merges). These rules add to its
+# built-in ones ("$defaults"); autoMode is only read from user settings, so it lives here.
+automode='{
+  "environment": [
+    "$defaults",
+    "Organization: Mike Hansen runs Unstable Studios (unstablestudios.com), an MSP and product studio. GitHub orgs unstable-studios and mkhnsn are his; repos live under ~/src (ghq). The unstable-studios org ruleset blocks direct pushes to main: work on a branch, merge via PR.",
+    "Cloud: Cloudflare (Workers, D1, R2, Access) for most apps; Azure for a few client workloads; DigitalOcean droplets (n8n).",
+    "Secrets: Doppler (per-project configs; dev/local configs are routine, prd/prod configs are production) and 1Password (op CLI). Never print secret values into chat or logs.",
+    "Production: any config, target, namespace, host or file with prod, prd or production as a whole name segment (wrangler.prod.json, the prd make target, Doppler prd configs) is production.",
+    "Sensitive files: .env*, .secrets, terraform.tfstate*; never read into context or share without asking."
+  ],
+  "allow": [
+    "$defaults",
+    "Doppler dev reads: doppler run and read-only doppler secrets/configs against dev or local configs in checkouts under ~/src. Writes, deletes and prd configs still confirm."
+  ],
+  "soft_deny": [
+    "$defaults",
+    "Production deploy wrappers: the prd Makefile/justfile target and deploys using a prod-named wrangler config are production deploys, not local builds."
+  ]
+}'
 
-# Merge everything: hooks and statusLine are replaced; permissions.allow is merged + deduped
+# Plugins from the official marketplace; installed by run_onchange_after_claude-plugins.
+plugins='{
+  "playwright@claude-plugins-official": true,
+  "frontend-design@claude-plugins-official": true,
+  "security-guidance@claude-plugins-official": true
+}'
+
+# The allow list older versions merged in. Read-only commands are built in and auto mode
+# covers the rest, so these are removed (anything else in allow is yours and kept).
+old_base='["Bash(git fetch)","Bash(git fetch *)","Bash(git pull)","Bash(git pull *)","Bash(git status)","Bash(git status *)","Bash(git log)","Bash(git log *)","Bash(git diff)","Bash(git diff *)","Bash(git branch)","Bash(git branch *)","Bash(git stash)","Bash(git stash *)","Bash(git remote *)","Bash(git add *)","Bash(git commit *)","Bash(git push *)","Bash(git push)","Bash(git checkout *)","Bash(git switch *)","Bash(git merge *)","Bash(git rebase *)","Bash(gh pr:*)","Bash(gh issue:*)","Bash(gh api:*)","Bash(gh run:*)","Bash(gh repo:*)","Bash(gh label:*)","Bash(gh auth:*)","Bash(ls:*)","Bash(tree:*)","Bash(wc:*)","Bash(sort:*)","Bash(mkdir:*)","Bash(find-repo:*)","mcp__ide__getDiagnostics","WebFetch","WebSearch","Read(~/src/**)","Edit(~/src/**)"]'
+
+# Merge everything: hooks, statusLine, autoMode and the keys below are replaced.
 echo "$existing" | jq \
   --argjson hooks "$hooks" \
   --argjson statusline "$statusline" \
-  --argjson base "$base_permissions" \
+  --argjson automode "$automode" \
+  --argjson plugins "$plugins" \
+  --argjson oldbase "$old_base" \
   '
     .hooks = $hooks |
     .statusLine = $statusline |
-    .permissions.allow = ((.permissions.allow // []) + $base | unique) |
-    .permissions.defaultMode = "bypassPermissions" |
+    .permissions.defaultMode = "auto" |
+    .permissions.allow = ((.permissions.allow // []) - $oldbase) |
+    (if .permissions.allow == [] then del(.permissions.allow) else . end) |
+    .autoMode = $automode |
+    .skipAutoPermissionPrompt = true |
+    del(.skipDangerousModePermissionPrompt) |
+    .enabledPlugins = ((.enabledPlugins // {}) + $plugins) |
+    .remoteControlAtStartup = true |
     .attribution = {"commit": "", "pr": ""} |
-    .env = ((.env // {}) + {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})
+    (.env // {} | del(.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS)) as $env |
+    (if $env == {} then del(.env) else .env = $env end)
   '

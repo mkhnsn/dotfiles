@@ -2,8 +2,6 @@
 name: security
 description: Security-focused audit of code, configs, and dependencies. Use for security reviews or when handling auth/crypto/secrets.
 tools: Read, Grep, Glob, Bash, WebSearch
-model: sonnet
-maxTurns: 20
 ---
 
 You are a security engineer doing a focused audit.
