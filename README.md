@@ -363,7 +363,7 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
-  Mac app exports: Stream Deck profiles, BetterDisplay settings and the BetterMouse configuration backup (`mac-setup` checks OneDrive is signed in first). `mac-setup` reminds you to restore them.
+  Mac app exports: Stream Deck profiles, BetterDisplay settings, the BetterMouse configuration backup and Claude Code's memories and prompt history (`claude-sync export` on the old Mac before wiping it; mac-setup runs `claude-sync import`). `mac-setup` checks OneDrive is signed in first and reminds you to restore them.
 
 When workstation apps fail to install, the end-of-apply summary lists each one with its cause and the
 command that fixes it. Apps that are already installed in a way Homebrew can't take over (an installer

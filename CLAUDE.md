@@ -73,7 +73,7 @@ Defined in `.chezmoiexternal.toml`:
 
 ## Claude Code Integration
 
-This repo manages Claude Code configuration via `dot_claude/`. User-wide instructions loaded in every session live in `dot_claude/CLAUDE.md` (→ `~/.claude/CLAUDE.md`); keep it short since it adds context everywhere. The repo's own `CLAUDE.md` and `Brewfile` are excluded from `$HOME` via `.chezmoiignore.tmpl`. Settings are merged at apply time by `dot_claude/modify_settings.json` (a chezmoi modify script that preserves interactively-set keys like `enabledPlugins`).
+This repo manages Claude Code configuration via `dot_claude/`. User-wide instructions loaded in every session live in `dot_claude/CLAUDE.md` (→ `~/.claude/CLAUDE.md`); keep it short since it adds context everywhere. The repo's own `CLAUDE.md` and `Brewfile` are excluded from `$HOME` via `.chezmoiignore.tmpl`. Settings are merged at apply time by `dot_claude/modify_settings.json` (a chezmoi modify script: the keys it sets are replaced, everything else is kept). Prefer Claude Code's defaults: set a key only for a real preference, and drop pins once a default covers them. It sets auto mode as the default permission mode, the `autoMode` rules (user scope is the only place they're read), the plugins, Remote Control at startup and no attribution. File-specific rules live in `dot_claude/rules/` (→ `~/.claude/rules/`, `paths:` frontmatter, loaded with matching files). `run_onchange_after_claude-setup.sh.tmpl` registers the user-scope MCP servers (fusion, btt, raycast, StreamDeck, homeassistant on workstation Macs) and installs the plugins with the `claude` CLI, since `~/.claude.json` can't be deployed as a file. Memories and prompt history move between Macs with `claude-sync export`/`import` (OneDrive > Mac app exports > Claude Code); mac-setup runs the import.
 
 ### Hooks
 
@@ -81,7 +81,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 
 | Event | Script | Behavior |
 |-------|--------|----------|
-| `PreToolUse` | `scripts/guard-destructive.sh` | Warns on destructive commands (commit/push to main, force push, reset --hard, rm -rf, etc.). User-overridable via approval prompt. |
+| `PreToolUse` | `scripts/guard-main-branch.sh` | Asks before a commit or push on main/master. Auto mode's own rules cover destructive commands. |
 | `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write, nudges to use spec-kit. Silent if specs exist or `.specifyignore` is present at repo root. Advisory only. |
 | `PreToolUse` | `scripts/nudge-echo-libs.sh` | On Edit/Write of files importing `@unstable-studios/*`, reminds Claude to read those packages' READMEs from `node_modules`. Advisory only. |
 | `PostToolUse` | `scripts/post-edit-lint.sh` | Auto-lints after Edit/Write: eslint (JS/TS), ruff (Python), rustfmt (Rust), gofmt (Go), shfmt (shell). Async, advisory only. |
@@ -90,8 +90,8 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 
 | Skill | File | Usage |
 |-------|------|-------|
-| `/doctor` | `skills/doctor/SKILL.md` | Runs `doctor.sh` diagnostics and interprets the output |
-| `/pr` | `skills/pr/SKILL.md` | Creates a PR following coding-rules conventions |
+| `/dotfiles-doctor` | `skills/dotfiles-doctor/SKILL.md` | Runs `doctor.sh` diagnostics and interprets the output (Claude Code has its own `/doctor`) |
+| `/pr` | `skills/pr/SKILL.md` | Commits pending work, pushes, opens the PR and runs a reviewer agent on it; doesn't merge |
 | `/new-repo` | `skills/new-repo/SKILL.md` | Scaffolds a new GitHub repo with README, license, CLAUDE.md |
 | `/coding-rules` | `skills/coding-rules/SKILL.md` | Git workflow and conventional commit conventions |
 | `/next` | `skills/next/SKILL.md` | Wrap up current work, clean stale branches, plan next task from GitHub issues |
