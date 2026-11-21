@@ -29,6 +29,14 @@ for f in CLAUDE.md Brewfile; do
   fi
 done
 
+# Targets a newer dotfiles version renamed or stopped deploying; chezmoi leaves
+# the old copy behind, so flag it.
+for f in .claude/skills/doctor .local/bin/__pycache__; do
+  if [[ -e "$HOME/$f" ]]; then
+    items+=("Stale ~/$f from an older dotfiles version (renamed or no longer deployed); remove it: rm -r ~/$f")
+  fi
+done
+
 {{- /* Mirrors .chezmoiignore.tmpl: account-mode secrets are skipped over SSH. */}}
 {{ if and .full_setup (ne (dig "op_mode" "account" .) "service") (env "SSH_CONNECTION") -}}
 items+=("1Password-backed files (.ntfy.yml, jfrog-env) were skipped over SSH; run 'chezmoi apply' at the desktop to refresh them")
