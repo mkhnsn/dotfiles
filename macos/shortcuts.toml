@@ -9,8 +9,9 @@
 # accepted a known, temporary conflict: the reason. It's reported as a warning, not a failure.
 #
 # Each job has one owner, the best tool for it; an app can own several jobs. Owners now: window
-# management BTT (drag-to-snap, the ⌃⌥ keys), app switching AltTab (⌘Tab), menu bar Bartender,
-# launcher and clipboard history Raycast. Overlapping features in other apps are turned off.
+# management BTT (drag-to-snap, the ⌃⌥ keys, modifier move/resize), app switching AltTab (⌘Tab),
+# menu bar Bartender, launcher, clipboard history and link cleaning Raycast. Overlapping features in
+# other apps are turned off.
 
 # ---- macOS system shortcuts set by mac-defaults (macos/symbolichotkeys.plist) ----------------
 # Screenshots are swapped from Apple's defaults: plain = clipboard, ⌃ = file.
@@ -144,9 +145,24 @@ keys = "⌃⌥⇧→"
 owner = "btt"
 action = "Window: one space right"
 
+# Hold the modifiers and move the pointer (BTT › Window Snapping & Moving › Moving & Resizing
+# Modifier Keys). Stored in the preset's general settings, not as triggers, so entered by hand.
+[[shortcut]]
+keys = "⌃⌥⌘Drag"
+owner = "btt"
+source = "manual"
+action = "Window: move (hold and move the pointer)"
+
+[[shortcut]]
+keys = "⌃⌥⇧⌘Drag"
+owner = "btt"
+source = "manual"
+action = "Window: resize (hold and move the pointer)"
+
 # ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
 # The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut
-# isn't confirmed).
+# isn't confirmed). Zoom's own Start/Stop Video shortcut is set to ⌃⇧⌘V in Zoom's settings, so
+# ⇧⌘V is free for Raycast.
 [[shortcut]]
 keys = "⌃⌥⌘M"
 owner = "btt"
@@ -156,7 +172,7 @@ action = "Mic: toggle mute (all apps)"
 keys = "⌃⌥⌘V"
 owner = "btt"
 scope = "us.zoom.xos"
-action = "Camera: Zoom video (sends ⇧⌘V)"
+action = "Camera: Zoom video (sends ⌃⇧⌘V)"
 
 [[shortcut]]
 keys = "⌃⌥⌘V"
@@ -183,8 +199,8 @@ owner = "alttab"
 action = "Window switcher, current app"
 
 # ---- Raycast (entered by hand; set in Raycast, readable through its MCP server) ---------------
-# Read 2026-11-19 via raycast-settings: only these two are set. Window Management and Switch
-# Windows have no hotkeys (cleared that day): BTT and AltTab own those jobs.
+# Read 2026-11-21 via raycast-settings. Window Management and Switch Windows have no hotkeys
+# (cleared 2026-11-19): BTT and AltTab own those jobs.
 [[shortcut]]
 keys = "⌘Space"
 owner = "raycast"
@@ -194,3 +210,8 @@ action = "Open Raycast (Spotlight's shortcut is off in macOS)"
 keys = "⌃⌘Space"
 owner = "raycast"
 action = "Emoji picker (replaces the macOS character viewer)"
+
+[[shortcut]]
+keys = "⇧⌘V"
+owner = "raycast"
+action = "Clipboard History (overrides apps' paste-as-plain-text ⇧⌘V)"

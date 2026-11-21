@@ -36,6 +36,9 @@ class Preset(unittest.TestCase):
     def test_no_machine_state(self):
         self.assertFalse(sync_set("VOLATILE") & set(self.general))
 
+    def test_no_update_times(self):
+        self.assertNotIn('"BTTLastUpdatedAt"', self.text, "run btt-sync normalize")
+
     def test_pinned_settings(self):
         for k, v in sync_set("PINNED").items():
             self.assertEqual(self.general.get(k), v, k)

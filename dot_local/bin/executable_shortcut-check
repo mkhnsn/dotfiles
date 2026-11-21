@@ -11,7 +11,9 @@ straight from their configs:
             when unset)
 
 Other owners (Raycast, whose settings are encrypted, or an app's own menus) are entered by hand
-with source = "manual"; they can't be read, so they're only checked for conflicts.
+with source = "manual"; they can't be read, so they're only checked for conflicts. A managed owner's
+binding that its config doesn't hold as a shortcut (BTT's move/resize modifier keys, say) is
+entered the same way.
 
 Fails when:
   conflict    two owners claim the same keys in overlapping scopes (global overlaps everything)
@@ -152,7 +154,7 @@ def check(src, registry_path):
     # each managed config against the registry
     for owner, reader in READERS.items():
         found = {(normalize(f["keys"]), f["scope"]): f for f in reader(src)}
-        declared = {(e["keys"], e["scope"]) for e in reg if e["owner"] == owner}
+        declared = {(e["keys"], e["scope"]) for e in reg if e["owner"] == owner and e["source"] == "managed"}
         for k, f in sorted(found.items()):
             if k not in declared:
                 problems.append(f"undeclared: {owner} binds {k[0]} ({f['what']}, scope {k[1]}); add it to the registry")

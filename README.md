@@ -384,8 +384,10 @@ conflicts. `shortcut-check --list` prints the whole map.
 
 Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
 same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
-Owners now: window management BTT (drag-to-snap and the ⌃⌥ keys), app switching AltTab (⌘Tab),
-menu bar Bartender, launcher and clipboard history Raycast. After changing a shortcut in an
+Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⌥⇧⌘ resize),
+app switching AltTab (⌘Tab), menu bar Bartender, launcher, clipboard history (⇧⌘V) and link
+cleaning Raycast (Link Cleaner, on demand: BTT cleans links only inside its clipboard manager, which
+is off). After changing a shortcut in an
 app, export it (`btt-sync export`, `app-prefs export`), update the registry, and run
 `shortcut-check`.
 
@@ -398,8 +400,10 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
 - `btt-sync import` on a new Mac, after installing BTT
 - `btt-sync export` after changing triggers, then review and commit the diff. Export sorts the
   preset, drops machine state (launch counts, lid state) and keeps the pinned settings in
-  `btt-sync`: no Imgur uploads, no usage logging, and BTT off the Stream Deck (Elgato's app
-  owns it; its keys call BTT actions). A test checks the committed preset.
+  `btt-sync`: no Imgur uploads, no usage logging, BTT off the Stream Deck (Elgato's app
+  owns it; its keys call BTT actions), and BTT's clipboard manager and link cleaning off
+  (Raycast's jobs). Export also drops per-trigger update times, which change on every import.
+  A test checks the committed preset.
 
 `mac-setup` compares BTT's global keyboard shortcuts with the preset's, so it asks for a
 re-import when the preset gains shortcuts after an earlier import. If BTT then lists two
