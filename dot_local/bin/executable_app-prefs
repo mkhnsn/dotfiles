@@ -16,9 +16,8 @@ apply merges (defaults export, update, defaults import): keys not in the repo, s
 license on the new Mac, are kept. A running app is skipped, since it would write its own
 settings back when it quits; quit it and run apply again.
 
-Values stored as nested binary plists are compared by content, not bytes. For BetterMouse
-(DEVICE_LISTS):
-- its maps are saved as flat [key, value, key, value, ...] lists in a new order on every
+BetterMouse (DEVICE_LISTS) is compared by content: its values are nested binary plists, and
+- the maps in PAIR_FIELDS are saved as flat [key, value, ...] lists in a new order on every
   save, so they're compared as unordered pairs;
 - it keeps one entry per mouse per connection (Bolt receiver, Bluetooth) and adds them as
   devices reconnect, so check only asks that each saved device is here with the same
@@ -36,6 +35,8 @@ DEFAULTS = os.environ.get("APP_PREFS_DEFAULTS", "defaults")  # overridable for t
 DEVICE_LISTS = {
     "com.naotanhaocan.BetterMouse": {"mice": "mice", "keyboards": "keyboards", "logikeys": "logiKeybs"},
 }
+# Fields BetterMouse saves as flat [key, value, key, value, ...] maps, in a new order each time.
+PAIR_FIELDS = {"twDirInv", "twSpeed", "quirks", "id1b04List"}
 
 
 def decode(value):
@@ -48,15 +49,13 @@ def decode(value):
     return value
 
 
-def canon(value, pairs):
-    """Comparable form of a value; with pairs, flat key/value lists ignore their order."""
-    value = decode(value)
+def canon(value, field=None):
+    """Comparable form of a decoded value; PAIR_FIELDS lists ignore their pair order."""
     if isinstance(value, dict):
-        return {k: canon(v, pairs) for k, v in value.items()}
+        return {k: canon(v, k) for k, v in value.items()}
     if isinstance(value, list):
-        items = [canon(v, pairs) for v in value]
-        # Lists of records (devices, apps) keep their order; flat maps don't have one.
-        if pairs and items and len(items) % 2 == 0 and not all(isinstance(i, dict) for i in items):
+        items = [canon(v) for v in value]
+        if field in PAIR_FIELDS and len(items) % 2 == 0:
             return sorted((repr(items[i]), repr(items[i + 1])) for i in range(0, len(items), 2))
         return items
     return value
@@ -67,22 +66,39 @@ def device_id(item):
     return repr(sorted(name.items())) if isinstance(name, dict) else None
 
 
+def by_device(items):
+    """Devices grouped by name, in order; entries sharing a name (or with none) stay apart."""
+    groups = {}
+    for item in items:
+        groups.setdefault(device_id(item), []).append(item)
+    return groups
+
+
 def device_field(domain, key):
     return DEVICE_LISTS.get(domain, {}).get(key)
 
 
 def same(domain, key, saved, live):
     """Whether this Mac already has the saved value (see the device-list note above)."""
-    pairs = domain in DEVICE_LISTS
+    if domain not in DEVICE_LISTS:
+        return saved == live
     s, l = decode(saved), decode(live)
     field = device_field(domain, key)
     if not (field and isinstance(s, dict) and isinstance(l, dict)):
-        return canon(s, pairs) == canon(l, pairs)
-    rest = lambda d: canon({k: v for k, v in d.items() if k != field}, pairs)
+        return canon(s) == canon(l)
+    rest = lambda d: canon({k: v for k, v in d.items() if k != field})
     if rest(s) != rest(l):
         return False
-    here = {device_id(i): canon(i, pairs) for i in l.get(field, [])}
-    return all(here.get(device_id(i)) == canon(i, pairs) for i in s.get(field, []))
+    # Each saved device must be here with the same settings; devices only here don't count.
+    here = by_device(l.get(field, []))
+    for dev, items in by_device(s.get(field, [])).items():
+        pool = [canon(i) for i in here.get(dev, [])]
+        for item in items:
+            c = canon(item)
+            if c not in pool:
+                return False
+            pool.remove(c)
+    return True
 
 
 def merged(domain, key, saved, live):
@@ -91,14 +107,20 @@ def merged(domain, key, saved, live):
     s, l = decode(saved), decode(live)
     if not (field and isinstance(s, dict) and isinstance(l, dict) and isinstance(saved, bytes)):
         return saved
-    items = list(l.get(field, []))
-    index = {device_id(i): n for n, i in enumerate(items)}
-    for item in s.get(field, []):
-        n = index.get(device_id(item))
-        if n is None:
-            items.append(item)
-        else:
-            items[n] = item
+    saved_groups = by_device(s.get(field, []))
+    items, placed = [], set()
+    for item in l.get(field, []):
+        dev = device_id(item)
+        if dev is None or dev not in saved_groups:
+            items.append(item)           # only on this Mac (or unnamed): keep it
+        elif dev not in placed:
+            items.extend(saved_groups[dev])  # saved entries for this device replace the Mac's
+            placed.add(dev)
+    for dev, group in saved_groups.items():
+        if dev is None:
+            items.extend(i for i in group if canon(i) not in [canon(x) for x in items])
+        elif dev not in placed:
+            items.extend(group)
     out = dict(s)
     out[field] = items
     return plistlib.dumps(out, fmt=plistlib.FMT_BINARY)
