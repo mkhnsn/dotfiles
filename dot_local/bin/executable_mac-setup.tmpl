@@ -183,8 +183,20 @@ check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh 
 check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 # BTT's master "Enable window snapping" switch isn't part of presets; it's stored only when off.
 check_btt_snapping(){ workstation || return 0; [ "$(defaults read com.hegenberg.BetterTouchTool windowSnappingEnabled 2>/dev/null)" != 0 ]; }
-check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null &&
-                     osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null | grep -qi litra; }
+# The preset's global keyboard shortcuts (keys and modifiers) that BTT doesn't have: none
+# imported yet, or an import from before the preset changed. Prints how many are missing.
+btt_missing()      { osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null |
+                     "${MAC_SETUP_PYTHON:-/usr/bin/python3}" -c '
+import json, sys
+keys = lambda ts: {(t.get("BTTShortcutKeyCode"), t.get("BTTShortcutModifierKeys")) for t in ts
+                   if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"}
+preset = json.load(open(sys.argv[1]))
+want = keys(t for a in preset.get("BTTPresetContent", []) if a.get("BTTAppBundleIdentifier") == "BT.G"
+            for t in a.get("BTTTriggers", []))
+try: have = keys(json.load(sys.stdin))
+except ValueError: have = set()
+print(len(want - have))' "$(chezmoi source-path)/macos/btt/Default.bttpreset" 2>/dev/null || echo 1; }
+check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null && [ "$(btt_missing)" = 0 ]; }
 check_remote()     { confirmed remote; }
 # Casks whose app is already installed in a way Homebrew can't take over (see brew-why).
 ws_skip()          { command -v brew-why >/dev/null 2>&1 && brew-why --skip --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null; }
@@ -196,7 +208,10 @@ check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
 REPLACED_APPS="Rectangle|Bartender 6|Docker"
 replaced_present() { local IFS='|' a; for a in $REPLACED_APPS; do [ -d "$APPS/$a.app" ] && echo "$a"; done; }
 check_replaced()   { workstation || return 0; [ -z "$(replaced_present)" ]; }
-check_containers() { workstation || return 0; colima status >/dev/null 2>&1; }
+# "Runs at login" is Homebrew's launch agent for colima; colima status alone also passes for a
+# one-off `colima start`, and fails for a minute or two while the first start builds the VM.
+colima_at_login()  { brew services info colima --json 2>/dev/null | grep -Eq '"registered": *true'; }
+check_containers() { workstation || return 0; colima_at_login && colima status >/dev/null 2>&1; }
 check_ollama()     { workstation || return 0; ollama list >/dev/null 2>&1; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
 # Confirmations saved before the US spelling ("licence:<app>", "licences") still count.
@@ -242,7 +257,8 @@ help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-o
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
 help_claude_ha()   { echo "Write the Home Assistant webhook URL that Claude Code's session hooks post to (desk panel, phone alerts), from 1Password: Infrastructure > HA webhook - Claude sessions."; }
-help_ha_mcp()      { echo "Register the homeassistant MCP server in Claude Code (user scope) and copy its Home Assistant token from 1Password to the Keychain. The server (~/.local/bin/ha-mcp) is read-only."; }
+help_ha_mcp()      { command -v claude >/dev/null 2>&1 || { echo "The Claude Code CLI isn't installed (cask claude-code in the Brewfile). Run the Brewfile step first, or: brew install --cask claude-code"; return; }
+                     echo "Register the homeassistant MCP server in Claude Code (user scope) and copy its Home Assistant token from 1Password to the Keychain. The server (~/.local/bin/ha-mcp) is read-only."; }
 help_op_browser()  { case "$1" in
                        chrome) echo "Sign in to your Google profile in Chrome. Chrome Sync installs the 1Password extension." ;;
                        connect) echo "In 1Password: Settings > Browser > Connect with 1Password in the browser." ;;
@@ -260,12 +276,13 @@ help_ssh_server() { echo "Turn on Remote Login for your user only, so your other
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
 help_btt_snapping(){ echo "Turn on BTT's window snapping (drag windows to edges and corners; window management is BTT's): BetterTouchTool > Settings > Window Snapping & Moving > Enable window snapping. The snap areas come from the preset."; }
-help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "Import the BTT preset from the dotfiles. It asks for Accessibility once.";
+help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "BTT is missing $(btt_missing) of the preset's global shortcuts (the ⌃⌥ window keys among them). Import the preset from the dotfiles; it asks for Accessibility once. If BTT > Presets then lists an older Default too, delete that one.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
                     command -v brew-why >/dev/null 2>&1 && brew-why --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null | sed 's/^/    /'; true; }
 help_replaced()    { echo "Remove apps that another one now does the job of: $(replaced_present | paste -sd, - | sed 's/,/, /g'). Rectangle's window management is BTT's now; Bartender 6 is replaced by Bartender 7 (same settings file); Docker Desktop by Colima (images and volumes in Docker Desktop are not carried over). Drag them to the Trash."; }
-help_containers()  { echo "Start Colima (the Docker engine) at login. The docker CLI, compose and buildx use it; Docker's config gets Homebrew's CLI plugins and the colima context."; }
+help_containers()  { if colima_at_login; then echo "Colima starts at login but isn't running yet. The first start downloads and builds its VM (a minute or two); log: $(brew --prefix)/var/log/colima.log"
+                     else echo "Start Colima (the Docker engine) at login. The docker CLI, compose and buildx use it; Docker's config gets Homebrew's CLI plugins and the colima context. The first start builds its VM, which takes a minute or two."; fi; }
 help_ollama()      { echo "Run Ollama's server at login (brew services). Models are stored in ~/.ollama."; }
 help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1") and install it."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
@@ -306,9 +323,12 @@ act_claude_ha()    {
   (umask 077; printf 'http://echo-homeassistant:8123/api/webhook/%s\n' "$id" > "$CLAUDE_HA_URL_FILE")
 }
 act_ha_mcp()       {
+  command -v claude >/dev/null 2>&1 || brew install --cask claude-code || return 1
   "$HOME/.local/bin/ha-mcp" --store-token || return 1
+  # Actions get the terminal (/dev/tty) as stdin; claude (Bun) can't watch /dev/tty on macOS
+  # and dies with "EINVAL: invalid argument, kqueue". It needs no input here.
   grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null ||
-    claude mcp add --scope user homeassistant -- "$HOME/.local/bin/ha-mcp"
+    claude mcp add --scope user homeassistant -- "$HOME/.local/bin/ha-mcp" </dev/null
 }
 act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
 act_license()      { open -a "$(license_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
@@ -337,7 +357,7 @@ act_btt()         { open "https://folivora.ai"; }
 act_ws_apps()     { HOMEBREW_CASK_OPTS="--adopt" HOMEBREW_BUNDLE_CASK_SKIP="$(ws_skip)" brew bundle --file "$(chezmoi source-path)/Brewfile.workstation"; }
 act_vendor()      { open "$(vendor_url "$1")"; }
 act_containers()   {
-  brew services start colima
+  colima_at_login || brew services start colima || return 1
   # Docker Desktop set these up; with Homebrew's docker they come from here.
   /usr/bin/python3 - "$(brew --prefix)/lib/docker/cli-plugins" <<'PYEOF'
 import json, os, sys
@@ -348,6 +368,10 @@ if sys.argv[1] not in dirs: dirs.append(sys.argv[1])
 c["currentContext"] = "colima"; c["credsStore"] = "osxkeychain"
 json.dump(c, open(p, "w"), indent=2)
 PYEOF
+  local i=0
+  printf '    Waiting for Colima to start'
+  while ! colima status >/dev/null 2>&1 && [ "$i" -lt "${MAC_SETUP_COLIMA_WAIT:-180}" ]; do printf .; sleep 5; i=$((i+5)); done
+  echo
 }
 act_ollama()       { brew services start ollama; }
 act_gridfinity() {

@@ -60,6 +60,7 @@ brew "hf"
 brew "powershell"
 
 # Dev tools. Python is uv only (uv python, uv venv, uv pip, uv tool); Node is the node formula.
+cask "claude-code" # the claude CLI; ~/.claude settings come from dot_claude
 brew "act"
 brew "actionlint"
 brew "go"

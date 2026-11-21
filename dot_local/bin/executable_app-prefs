@@ -15,6 +15,13 @@ the repo; the repo is public, so add a key only after checking it holds no secre
 apply merges (defaults export, update, defaults import): keys not in the repo, such as a
 license on the new Mac, are kept. A running app is skipped, since it would write its own
 settings back when it quits; quit it and run apply again.
+
+BetterMouse (DEVICE_LISTS) is compared by content: its values are nested binary plists, and
+- the maps in PAIR_FIELDS are saved as flat [key, value, ...] lists in a new order on every
+  save, so they're compared as unordered pairs;
+- it keeps one entry per mouse per connection (Bolt receiver, Bluetooth) and adds them as
+  devices reconnect, so check only asks that each saved device is here with the same
+  settings, and apply updates or adds the saved devices and keeps ones only this Mac has.
 """
 import fnmatch
 import os
@@ -23,6 +30,100 @@ import subprocess
 import sys
 
 DEFAULTS = os.environ.get("APP_PREFS_DEFAULTS", "defaults")  # overridable for tests
+
+# domain -> {key: list field inside the key's nested plist}; list items are matched by "name".
+DEVICE_LISTS = {
+    "com.naotanhaocan.BetterMouse": {"mice": "mice", "keyboards": "keyboards", "logikeys": "logiKeybs"},
+}
+# Fields BetterMouse saves as flat [key, value, key, value, ...] maps, in a new order each time.
+PAIR_FIELDS = {"twDirInv", "twSpeed", "quirks", "id1b04List"}
+
+
+def decode(value):
+    """A nested binary plist (bytes) as data; anything else as it is."""
+    if isinstance(value, bytes) and value.startswith(b"bplist"):
+        try:
+            return plistlib.loads(value)
+        except Exception:
+            return value
+    return value
+
+
+def canon(value, field=None):
+    """Comparable form of a decoded value; PAIR_FIELDS lists ignore their pair order."""
+    if isinstance(value, dict):
+        return {k: canon(v, k) for k, v in value.items()}
+    if isinstance(value, list):
+        items = [canon(v) for v in value]
+        if field in PAIR_FIELDS and len(items) % 2 == 0:
+            return sorted((repr(items[i]), repr(items[i + 1])) for i in range(0, len(items), 2))
+        return items
+    return value
+
+
+def device_id(item):
+    name = item.get("name") if isinstance(item, dict) else None
+    return repr(sorted(name.items())) if isinstance(name, dict) else None
+
+
+def by_device(items):
+    """Devices grouped by name, in order; entries sharing a name (or with none) stay apart."""
+    groups = {}
+    for item in items:
+        groups.setdefault(device_id(item), []).append(item)
+    return groups
+
+
+def device_field(domain, key):
+    return DEVICE_LISTS.get(domain, {}).get(key)
+
+
+def same(domain, key, saved, live):
+    """Whether this Mac already has the saved value (see the device-list note above)."""
+    if domain not in DEVICE_LISTS:
+        return saved == live
+    s, l = decode(saved), decode(live)
+    field = device_field(domain, key)
+    if not (field and isinstance(s, dict) and isinstance(l, dict)):
+        return canon(s) == canon(l)
+    rest = lambda d: canon({k: v for k, v in d.items() if k != field})
+    if rest(s) != rest(l):
+        return False
+    # Each saved device must be here with the same settings; devices only here don't count.
+    here = by_device(l.get(field, []))
+    for dev, items in by_device(s.get(field, [])).items():
+        pool = [canon(i) for i in here.get(dev, [])]
+        for item in items:
+            c = canon(item)
+            if c not in pool:
+                return False
+            pool.remove(c)
+    return True
+
+
+def merged(domain, key, saved, live):
+    """The value to write: saved, with device lists merged into what's here."""
+    field = device_field(domain, key)
+    s, l = decode(saved), decode(live)
+    if not (field and isinstance(s, dict) and isinstance(l, dict) and isinstance(saved, bytes)):
+        return saved
+    saved_groups = by_device(s.get(field, []))
+    items, placed = [], set()
+    for item in l.get(field, []):
+        dev = device_id(item)
+        if dev is None or dev not in saved_groups:
+            items.append(item)           # only on this Mac (or unnamed): keep it
+        elif dev not in placed:
+            items.extend(saved_groups[dev])  # saved entries for this device replace the Mac's
+            placed.add(dev)
+    for dev, group in saved_groups.items():
+        if dev is None:
+            items.extend(i for i in group if canon(i) not in [canon(x) for x in items])
+        elif dev not in placed:
+            items.extend(group)
+    out = dict(s)
+    out[field] = items
+    return plistlib.dumps(out, fmt=plistlib.FMT_BINARY)
 
 
 def fail(msg):
@@ -124,7 +225,8 @@ def cmd_apply(base, rules, names):
             skipped += 1
             continue
         live = read_domain(domain)
-        live.update(saved)
+        for k, v in saved.items():
+            live[k] = merged(domain, k, v, live.get(k))
         write_domain(domain, live)
         print(f"{domain}: applied {len(saved)} keys")
     return 1 if skipped else 0
@@ -137,7 +239,7 @@ def differences(base, rules):
         if saved is None:
             continue
         live = read_domain(domain)
-        keys = sorted(k for k, v in saved.items() if allowed(k, rules[domain]) and live.get(k) != v)
+        keys = sorted(k for k, v in saved.items() if allowed(k, rules[domain]) and not same(domain, k, v, live.get(k)))
         if keys:
             out.append((domain, keys))
     return out

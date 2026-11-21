@@ -339,6 +339,11 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 
 ## Workstation apps and macOS settings
 
+- `Brewfile`: CLI tools for every Mac, including the `claude` CLI (`claude-code` cask). An entry
+  that fails to install (a formula that became a cask, a moved tap) doesn't stop the apply:
+  it's listed in the end-of-apply summary, and the rest of the setup carries on.
+  `make test` (and CI) checks each entry exists in Homebrew as the type it's listed as
+  (`tests/brewfile_check.py`), so a `brew` line for a cask fails in the repo first.
 - `Brewfile.workstation`: GUI apps for workstation Macs (casks, plus App Store apps through
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
@@ -355,6 +360,9 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply;
   quit the apps first). `check` and `diff` list differing key names, never values. A test
   fails if a committed setting looks like a license, token or email address.
+  BetterMouse is compared by content: it re-saves its maps in a new order on every launch
+  and keeps one entry per mouse per connection (Bolt, Bluetooth), so a reorder or a newly
+  seen connection isn't a difference, and `apply` keeps devices only this Mac has.
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
@@ -374,10 +382,12 @@ the others. Run `brew-why` any time for the same list (`brew-why <cask>` for one
 are encrypted, so its hotkeys are entered by hand (`source = "manual"`) and only checked for
 conflicts. `shortcut-check --list` prints the whole map.
 
-Who owns what: window management is BTT (drag-to-snap and the ⌃⌥ keys), app switching is AltTab
-on ⌘Tab, the menu bar is Bartender, and Raycast is the launcher with no window or switcher
-hotkeys. After changing a shortcut in an app, export it (`btt-sync export`, `app-prefs export`),
-update the registry, and run `shortcut-check`.
+Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
+same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
+Owners now: window management BTT (drag-to-snap and the ⌃⌥ keys), app switching AltTab (⌘Tab),
+menu bar Bartender, launcher and clipboard history Raycast. After changing a shortcut in an
+app, export it (`btt-sync export`, `app-prefs export`), update the registry, and run
+`shortcut-check`.
 
 ## BetterTouchTool
 
@@ -386,7 +396,14 @@ Homebrew installs: `brew upgrade` replaces the app under its own updater). Its D
 with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed by chezmoi:
 
 - `btt-sync import` on a new Mac, after installing BTT
-- `btt-sync export` after changing triggers, then review and commit the diff
+- `btt-sync export` after changing triggers, then review and commit the diff. Export sorts the
+  preset, drops machine state (launch counts, lid state) and keeps the pinned settings in
+  `btt-sync`: no Imgur uploads, no usage logging, and BTT off the Stream Deck (Elgato's app
+  owns it; its keys call BTT actions). A test checks the committed preset.
+
+`mac-setup` compares BTT's global keyboard shortcuts with the preset's, so it asks for a
+re-import when the preset gains shortcuts after an earlier import. If BTT then lists two
+presets named Default, delete the older one.
 
 This repo is public: keep secrets out of BTT triggers.
 
