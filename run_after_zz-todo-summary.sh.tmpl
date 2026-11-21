@@ -26,7 +26,7 @@ fi
 # rebuilt from GitHub's list, so check against it.
 fallback_pub="$HOME/.ssh/id_ed25519_remote.pub"
 if [[ -f "$fallback_pub" ]] && ! grep -qF "$(awk '{print $2}' "$fallback_pub")" "$HOME/.config/git/allowed_signers" 2>/dev/null; then
-  items+=("Git signing: add this machine's fallback key to GitHub as a signing key: gh auth refresh -h github.com -s admin:ssh_signing_key && gh ssh-key add $fallback_pub --type signing --title \"$(hostname -s) fallback\", then chezmoi apply")
+  items+=("Git signing: add this machine's fallback key to GitHub as a signing key: gh auth refresh -h github.com -s admin:ssh_signing_key && gh ssh-key add $fallback_pub --type signing --title \"${HOSTNAME%%.*} fallback\", then chezmoi apply")
 fi
 {{ end -}}
 

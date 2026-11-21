@@ -5,13 +5,15 @@
 set -uo pipefail
 
 existing=$(cat)
-email=$(git config --global user.email 2>/dev/null || true)
+# Same address as user.email in dot_gitconfig.tmpl (~/.gitconfig may not exist yet on a
+# first apply: it sorts after .config).
+email="mike@unstablestudios.com"
 
 keys=$(curl -fsS --max-time 5 -H 'Accept: application/vnd.github+json' \
-  https://api.github.com/users/mkhnsn/ssh_signing_keys 2>/dev/null |
+  https://api.github.com/users/mkhnsn/ssh_signing_keys?per_page=100 2>/dev/null |
   jq -r '.[].key' 2>/dev/null) || keys=""
 
-if [ -z "$keys" ] || [ -z "$email" ]; then
+if [ -z "$keys" ]; then
   printf '%s\n' "$existing"
   exit 0
 fi
