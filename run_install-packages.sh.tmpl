@@ -73,8 +73,18 @@ if [[ "$os" == "darwin" ]]; then
     brew trust --tap "$tap" >/dev/null 2>&1 || true
   done < <(sed -n 's/^tap "\([^"]*\)".*/\1/p' "$BREWFILE")
 
-  # Ensure Brewfile state is satisfied (covers formulae that don't add a command, like zsh-completions)
-  brew bundle check --file "$BREWFILE" >/dev/null 2>&1 || brew bundle --file "$BREWFILE"
+  # Ensure Brewfile state is satisfied (covers formulae that don't add a command, like zsh-completions).
+  # brew bundle installs what it can and exits non-zero if any entry fails (a formula that
+  # became a cask, a tap that moved). One bad line mustn't stop the apply: what's still
+  # missing becomes a todo and the rest of the setup carries on.
+  if ! brew bundle check --file "$BREWFILE" >/dev/null 2>&1 && ! brew bundle --file "$BREWFILE"; then
+    left="$(brew bundle check --no-upgrade --verbose --file "$BREWFILE" 2>&1 | sed -n 's/^→ //p' || true)"
+    if [[ -n $left ]]; then
+      while IFS= read -r line; do todo "Brewfile: $line (fix the line in Brewfile, then chezmoi apply)"; done <<<"$left"
+    else
+      todo "Brewfile: some entries failed to install; run brew bundle --file \"$BREWFILE\" to see which"
+    fi
+  fi
 
 {{ if not (dig "is_server" false .) -}}
   # Rosetta first: some apps (Parallels' setup, Intel-only vendor apps) need it.
