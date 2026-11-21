@@ -2,6 +2,8 @@
 !**/private_*.tmpl
 # ~/.ssh: only its templates are tracked (they read keys from 1Password at apply time)
 !private_dot_ssh/
+# Claude Desktop's folder is private (0700); its modify script holds no secrets
+!Library/Application Support/private_Claude/
 **/.DS_Store
 **/.zcompdump*
 **/.cache/

@@ -1,0 +1,18 @@
+#!/bin/bash
+# ~/.config/git/allowed_signers (gpg.ssh.allowedSignersFile): the SSH signing keys on the
+# mkhnsn GitHub account, so `git log --show-signature` trusts what GitHub trusts. Read from
+# GitHub's public API on each apply; if that fails (offline, rate limit), the file is kept.
+set -uo pipefail
+
+existing=$(cat)
+email=$(git config --global user.email 2>/dev/null || true)
+
+keys=$(curl -fsS --max-time 5 -H 'Accept: application/vnd.github+json' \
+  https://api.github.com/users/mkhnsn/ssh_signing_keys 2>/dev/null |
+  jq -r '.[].key' 2>/dev/null) || keys=""
+
+if [ -z "$keys" ] || [ -z "$email" ]; then
+  printf '%s\n' "$existing"
+  exit 0
+fi
+printf '%s\n' "$keys" | sort -u | sed "s|^|$email |"
