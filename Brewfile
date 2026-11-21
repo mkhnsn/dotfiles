@@ -52,7 +52,7 @@ brew "node"
 brew "pnpm"
 
 # Cloud and SaaS CLIs
-brew "azure-cli"
+cask "azure-cli"
 brew "auth0/auth0-cli/auth0"
 brew "doctl"
 brew "stripe/stripe-cli/stripe"
