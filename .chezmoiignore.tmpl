@@ -19,7 +19,8 @@ doctor.sh
 **/__pycache__
 **/__pycache__/**
 
-# Automations
+# Automations and repo docs
+docs/
 scripts/
 Makefile
 tests/
@@ -46,6 +47,9 @@ Library/Application Support/Code/
 Library/Application Support/Code/**
 Library/Application Support/Code - Insiders/
 Library/Application Support/Code - Insiders/**
+# Claude Desktop is macOS-only here
+Library/Application Support/Claude/
+Library/Application Support/Claude/**
 # PrusaSlicer presets live under macOS's Application Support; Linux uses ~/.config/PrusaSlicer
 Library/Application Support/PrusaSlicer/
 Library/Application Support/PrusaSlicer/**
@@ -54,7 +58,13 @@ Library/Application Support/PrusaSlicer/**
 .config/iterm2/**
 {{- end -}}
 
-{{- if env "CODESPACES" -}}
+{{- if dig "is_server" false . }}
+# Servers don't run the Claude Desktop app
+Library/Application Support/Claude/
+Library/Application Support/Claude/**
+{{- end }}
+
+{{- if env "CODESPACES" }}
 # GUI terminals are irrelevant in Codespaces
 .config/ghostty/
 .config/ghostty/**

@@ -1,0 +1,24 @@
+#!/bin/bash
+# Claude Desktop's local MCP servers (chat and Cowork). The Code tab loads them too,
+# alongside ~/.claude.json, and connects once when both define the same server, so the
+# stdio servers registered for the CLI in run_onchange_after_claude-setup are mirrored
+# here. Only the names below are set or removed; the rest of the file (preferences, window
+# state, servers added by hand) is kept. Claude Desktop reads this file at launch: quit
+# and reopen it after a change. btt and fusion stay CLI and Code tab only: they're http
+# servers, and this file is documented for stdio ones.
+set -euo pipefail
+
+existing=$(cat)
+[ -n "$existing" ] || existing='{}'
+
+sd_mcp="/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"
+
+servers=$(jq -n \
+  --arg ha "{{ .chezmoi.homeDir }}/.local/bin/ha-mcp" \
+  --arg sd "$sd_mcp" \
+  --argjson has_sd "$([ -x "$sd_mcp" ] && echo true || echo false)" '
+  {homeassistant: {command: $ha, args: []}}
+  + (if $has_sd then {StreamDeck: {command: $sd, args: []}} else {} end)')
+
+printf '%s' "$existing" | jq --argjson s "$servers" '
+  .mcpServers = ((.mcpServers // {}) | del(.homeassistant, .StreamDeck)) + $s'
