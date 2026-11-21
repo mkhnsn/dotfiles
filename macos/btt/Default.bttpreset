@@ -38,6 +38,7 @@
     "BTTDaysToKeepHistory" : 14,
     "BTTDefaultTBIconHeight" : 22,
     "BTTDefaultTBIconWidth" : 22,
+    "BTTDisableClipboardManager" : true,
     "BTTDismissIfNothingToShow" : true,
     "BTTDontRestartAfterSleep" : true,
     "BTTDrawingAreaHeight" : 626,

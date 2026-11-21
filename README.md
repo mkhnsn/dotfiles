@@ -383,8 +383,8 @@ are encrypted, so its hotkeys are entered by hand (`source = "manual"`) and only
 conflicts. `shortcut-check --list` prints the whole map.
 
 Who owns what: window management is BTT (drag-to-snap and the ⌃⌥ keys), app switching is AltTab
-on ⌘Tab, the menu bar is Bartender, and Raycast is the launcher with no window or switcher
-hotkeys. After changing a shortcut in an app, export it (`btt-sync export`, `app-prefs export`),
+on ⌘Tab, the menu bar is Bartender, and Raycast is the launcher and clipboard history
+(BTT's clipboard manager is pinned off), with no window or switcher hotkeys. After changing a shortcut in an app, export it (`btt-sync export`, `app-prefs export`),
 update the registry, and run `shortcut-check`.
 
 ## BetterTouchTool
