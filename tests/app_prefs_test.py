@@ -160,6 +160,41 @@ class AppPrefs(unittest.TestCase):
         self.assertEqual(mice[1]["twSpeed"][1], 3.0)
         self.assertEqual(self.run_tool("check").returncode, 0)
 
+    def bm_check_after(self, saved_mice, here_mice):
+        self.bm_setup()
+        self.mac(self.BM, {"mice": self.bm_mice(*saved_mice)})
+        self.run_tool("export")
+        self.mac(self.BM, {"mice": self.bm_mice(*here_mice)})
+        return self.run_tool("check").returncode
+
+    def test_bettermouse_other_lists_keep_their_order(self):
+        a = {"name": {"product": "MX"}, "pattern": [1, 2, 3, 4]}
+        b = {"name": {"product": "MX"}, "pattern": [3, 4, 1, 2]}
+        self.assertEqual(self.bm_check_after([a], [b]), 1)
+
+    def test_bettermouse_same_name_entries_match_themselves(self):
+        bolt = {"name": {"product": "MX"}, "via": "bolt"}
+        bt = {"name": {"product": "MX"}, "via": "bt"}
+        self.assertEqual(self.bm_check_after([bolt, bt], [bt, bolt]), 0)
+        self.assertEqual(self.bm_check_after([bolt, bt], [bolt, {"name": {"product": "MX"}, "via": "usb"}]), 1)
+
+    def test_bettermouse_unnamed_devices_are_kept(self):
+        self.bm_setup()
+        self.mac(self.BM, {"mice": self.bm_mice({"v": 1}, {"v": 2})})
+        self.run_tool("export")
+        self.mac(self.BM, {"mice": self.bm_mice({"v": 3})})
+        self.assertEqual(self.run_tool("check").returncode, 1)
+        self.run_tool("apply")
+        mice = plistlib.loads(self.read_mac(self.BM)["mice"])["mice"]
+        self.assertEqual(mice, [{"v": 3}, {"v": 1}, {"v": 2}])
+        self.assertEqual(self.run_tool("check").returncode, 0)
+
+    def test_other_apps_compare_nested_data_as_bytes(self):
+        self.mac("com.example.app", {"layout": plistlib.dumps({"a": 1}, fmt=plistlib.FMT_BINARY)})
+        self.run_tool("export")
+        self.mac("com.example.app", {"layout": plistlib.dumps({"a": 1.0}, fmt=plistlib.FMT_BINARY)})
+        self.assertEqual(self.run_tool("check").returncode, 1)
+
     def test_order_still_matters_for_other_apps(self):
         self.mac("com.example.app", {"layout": [1, 2, 3, 4]})
         self.run_tool("export")
