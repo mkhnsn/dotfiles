@@ -38,3 +38,6 @@ jobs:
 
       - name: brew-why tests
         run: python3 -I tests/brew_why_test.py
+
+      - name: Brewfile entries exist in Homebrew (formula vs cask)
+        run: python3 -I tests/brewfile_check.py

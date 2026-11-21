@@ -342,6 +342,8 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - `Brewfile`: CLI tools for every Mac, including the `claude` CLI (`claude-code` cask). An entry
   that fails to install (a formula that became a cask, a moved tap) doesn't stop the apply:
   it's listed in the end-of-apply summary, and the rest of the setup carries on.
+  `make test` (and CI) checks each entry exists in Homebrew as the type it's listed as
+  (`tests/brewfile_check.py`), so a `brew` line for a cask fails in the repo first.
 - `Brewfile.workstation`: GUI apps for workstation Macs (casks, plus App Store apps through
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
