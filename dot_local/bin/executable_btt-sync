@@ -31,10 +31,11 @@ fi
 
 preset="${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}/macos/btt/Default.bttpreset"
 
-# Normalize the preset in place: sorted keys, no machine state, pinned settings.
+# Normalize a preset file in place (default: the repo's): sorted keys, no machine state,
+# pinned settings. Written to a temp file first, so a failure leaves the file as it was.
 normalize() {
-  /usr/bin/python3 -I - "$preset" <<'PYEOF2'
-import json, sys
+  /usr/bin/python3 -I - "${1:-$preset}" <<'PYEOF2'
+import json, os, sys
 p = sys.argv[1]
 d = json.load(open(p, encoding="utf-8"))
 # Counters and state BTT keeps in its settings; they change without you changing anything.
@@ -48,13 +49,16 @@ PINNED = {
     # The Stream Deck belongs to Elgato's app; its keys call BTT actions, BTT doesn't drive it.
     "BTTStreamDeckEnabled": False, "BTTStreamDeckPlugin": False, "BTTStreamDeckFullControl": False,
 }
-g = d.setdefault("BTTGeneralSettings", {})
+g = d.get("BTTGeneralSettings")
+if not isinstance(g, dict):
+    sys.exit(f"btt-sync: {p} has no general settings (export with includeSettings true)")
 for k in VOLATILE:
     g.pop(k, None)
 g.update(PINNED)
-with open(p, "w", encoding="utf-8") as f:
-    json.dump(d, f, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True)
-    f.write("\n")
+out = (json.dumps(d, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
+with open(p + ".tmp", "wb") as f:
+    f.write(out)
+os.replace(p + ".tmp", p)
 PYEOF2
 }
 
@@ -63,8 +67,9 @@ case "${1:-export}" in
     # BTT can't write to every path; export to Downloads, then move into the repo.
     tmp="$HOME/Downloads/.btt-sync-$$.bttpreset"
     osascript -e "tell application \"BetterTouchTool\" to export_preset \"Default\" outputPath \"$tmp\" compress false includeSettings true" >/dev/null
+    # Normalize the export before it replaces the repo's preset.
+    normalize "$tmp" || { rm -f "$tmp" "$tmp.tmp"; exit 1; }
     mv "$tmp" "$preset"
-    normalize
     echo "Exported to $preset"
     git -C "$(dirname "$preset")" diff --stat -- "$preset" || true
     ;;
