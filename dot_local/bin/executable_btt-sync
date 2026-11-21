@@ -48,6 +48,8 @@ PINNED = {
     "BTTEnableUsageLogging": False,
     # The Stream Deck belongs to Elgato's app; its keys call BTT actions, BTT doesn't drive it.
     "BTTStreamDeckEnabled": False, "BTTStreamDeckPlugin": False, "BTTStreamDeckFullControl": False,
+    # Clipboard history is Raycast's.
+    "BTTDisableClipboardManager": True,
 }
 g = d.get("BTTGeneralSettings")
 if not isinstance(g, dict):
