@@ -1,6 +1,11 @@
-# /doctor — Dotfiles Diagnostics
+---
+name: dotfiles-doctor
+description: Run the dotfiles diagnostics (doctor.sh) and explain what is healthy, what warns and what to fix. Use when asked to check the dotfiles, chezmoi or this machine's setup.
+---
 
-This is a user-invokable skill. Run it as `/doctor`.
+# /dotfiles-doctor — Dotfiles Diagnostics
+
+This is a user-invokable skill. Run it as `/dotfiles-doctor` (Claude Code has its own `/doctor`).
 
 ## What To Do
 

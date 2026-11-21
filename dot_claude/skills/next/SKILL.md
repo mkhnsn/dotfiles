@@ -1,3 +1,8 @@
+---
+name: next
+description: Wrap up the current work (commit, PR, clean merged branches) and plan the next task from open GitHub issues. Use when asked what's next or to wrap up.
+---
+
 # /next — Wrap Up and Plan Next
 
 This is a user-invokable skill. Run it as `/next`.
