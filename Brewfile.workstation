@@ -12,6 +12,7 @@ brew "dockutil"
 brew "defaultbrowser"
 
 # Everyday
+cask "1password-cli" # op needs the 1Password desktop app (account mode)
 cask "google-chrome"
 cask "raycast"
 cask "ghostty"
@@ -79,6 +80,13 @@ cask "insta360-link-controller"
 cask "raspberry-pi-imager"
 cask "balenaetcher"
 brew "wimlib" # echo-provision splits Windows 11 install.wim for FAT32
+brew "ykman"
+brew "avrdude"
+brew "minicom"
+brew "lsusb"
+cask "qflipper"
+cask "ledger-wallet"
+cask "geekbench"
 # VIA: use the web app at https://usevia.app (its cask was disabled, fails Gatekeeper)
 
 # Personal
@@ -93,3 +101,5 @@ mas "Xcode", id: 497799835
 mas "Shapr3D", id: 1091675654
 mas "Vivid", id: 6443470555
 mas "Equinox", id: 1591510203
+mas "Raycast Companion", id: 6738274497
+mas "1Password for Safari", id: 1569813296

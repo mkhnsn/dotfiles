@@ -1,5 +1,7 @@
 tap "hashicorp/tap"
 tap "timrogers/tap"
+tap "auth0/auth0-cli"
+tap "stripe/stripe-cli"
 
 brew "zsh-completions"
 brew "zsh-autosuggestions"
@@ -48,6 +50,44 @@ brew "hashicorp/tap/terraform"
 brew "doppler"
 brew "node"
 brew "pnpm"
+
+# Cloud and SaaS CLIs
+brew "azure-cli"
+brew "auth0/auth0-cli/auth0"
+brew "doctl"
+brew "stripe/stripe-cli/stripe"
+brew "hf"
+brew "powershell"
+
+# Dev tools. Python is uv only (uv python, uv venv, uv pip, uv tool); Node is the node formula.
+brew "act"
+brew "actionlint"
+brew "go"
+brew "rustup"
+brew "llvm"
+brew "cmake"
+brew "automake"
+brew "bison"
+brew "cppcheck"
+brew "cunit"
+brew "git-filter-repo"
+brew "helix"
+brew "code-server"
+brew "mkcert"
+brew "chruby"
+brew "ruby-install"
+
+# Ops and network
+brew "ansible"
+brew "sshpass"
+brew "nmap"
+brew "mtr"
+brew "wget"
+
+# Documents. graphviz renders WireViz harness diagrams (kz305 pins the unstable-studios fork).
+brew "pandoc"
+brew "ocrmypdf"
+brew "graphviz"
 
 cask "windows-app"
 cask "visual-studio-code@insiders"
