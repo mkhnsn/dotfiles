@@ -26,10 +26,15 @@ mcp btt        '{"type":"http","url":"http://127.0.0.1:64832/mcp"}'
 # the Keychain so it stays out of this public repo (it lands only in ~/.claude.json).
 if raycast_token="$(security find-generic-password -s raycast-mcp -a claude -w 2>/dev/null)" && [ -n "$raycast_token" ]; then
   mcp raycast "$(jq -cn --arg t "$raycast_token" '{type:"http",url:"http://127.0.0.1:8267/mcp",headers:{Authorization:("Bearer "+$t)}}')"
+fi  # no token yet: the end-of-apply summary says so on every apply
+# Stream Deck's MCP helper ships with Stream Deck 8 (beta from Elgato; Homebrew has 7.x).
+# Re-runs once it's installed: {{ if stat "/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp" }}present{{ else }}missing{{ end }}
+sd_mcp="/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"
+if [ -x "$sd_mcp" ]; then
+  mcp StreamDeck "$(jq -cn --arg c "$sd_mcp" '{type:"stdio",command:$c,args:[]}')"
 else
-  todo "Claude Code: copy the MCP token from Raycast's settings into the Keychain (security add-generic-password -U -s raycast-mcp -a claude -w), then chezmoi apply"
+  claude mcp remove --scope user StreamDeck >/dev/null 2>&1 || true  # summary flags it
 fi
-mcp StreamDeck '{"type":"stdio","command":"/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp","args":[]}'
 # Read-only Home Assistant; its token goes to the Keychain in mac-setup (ha-mcp --store-token).
 mcp homeassistant '{"type":"stdio","command":"{{ .chezmoi.homeDir }}/.local/bin/ha-mcp","args":[]}'
 {{ end -}}

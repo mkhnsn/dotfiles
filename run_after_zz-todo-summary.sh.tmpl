@@ -20,12 +20,31 @@ if command -v tailscale >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; t
   fi
 fi
 
+{{ if and (eq .chezmoi.os "darwin") (not (dig "is_server" false .)) -}}
+# Claude Code MCP servers that wait on something done by hand
+# (run_onchange_after_claude-setup registers them once it's there).
+if ! security find-generic-password -s raycast-mcp -a claude >/dev/null 2>&1; then
+  items+=("Claude Code: copy the MCP token from Raycast's settings into the Keychain (security add-generic-password -U -s raycast-mcp -a claude -w), then chezmoi apply")
+fi
+if [[ ! -x "/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp" ]]; then
+  items+=("Claude Code: the Stream Deck MCP server needs Stream Deck 8 (beta, from elgato.com); install it, then chezmoi apply")
+fi
+{{ end -}}
+
 # Repo-only files that older versions deployed to $HOME. chezmoi doesn't delete
 # a target once it's ignored, so flag leftovers (keep in sync with the
 # "Repo-only documentation" block in .chezmoiignore.tmpl).
 for f in CLAUDE.md Brewfile; do
   if [[ -e "$HOME/$f" ]]; then
     items+=("Stale ~/$f from an older dotfiles version (now repo-only); remove it: rm ~/$f")
+  fi
+done
+
+# Targets a newer dotfiles version renamed or stopped deploying; chezmoi leaves
+# the old copy behind, so flag it.
+for f in .claude/skills/doctor .local/bin/__pycache__; do
+  if [[ -e "$HOME/$f" ]]; then
+    items+=("Stale ~/$f from an older dotfiles version (renamed or no longer deployed); remove it: rm -r ~/$f")
   fi
 done
 

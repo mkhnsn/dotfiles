@@ -75,7 +75,7 @@ cask "xtool-studio"
 cask "openrocket"
 
 # Hardware and devices
-cask "elgato-stream-deck"
+cask "elgato-stream-deck" # 7.x; its MCP server needs Stream Deck 8 (beta from elgato.com) on top
 cask "insta360-link-controller"
 cask "raspberry-pi-imager"
 cask "balenaetcher"
