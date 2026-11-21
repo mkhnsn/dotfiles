@@ -74,6 +74,7 @@ setup() {
   mark_done op_browser
   mark_done app_exports
   mark_done export_BetterMouse
+  mkdir -p "$HOME/.claude/projects/-Users-x-src/memory"; touch "$HOME/.claude/projects/-Users-x-src/memory/user.md"
   mark_done vm
   stub app-prefs 'exit 0'
   mkdir -p "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/Desktop" "$HOME/Documents"
@@ -710,6 +711,17 @@ test_claude_ha_steps() {
   assert_open "Home Assistant MCP server in Claude Code"
   run "$SCRIPT_SERVER" --status
   assert_done "Claude Code reports sessions to Home Assistant"
+}
+
+test_claude_code_memories_restored() {
+  run "$SCRIPT" --status
+  assert_done "Claude Code export restored"
+  rm -rf "$HOME/.claude/projects"
+  run "$SCRIPT" --status
+  assert_open "Claude Code export restored"
+  mark_done "export_Claude_Code"
+  run "$SCRIPT" --status
+  assert_done "Claude Code export restored"
 }
 
 test_btt_window_snapping_must_be_on() {

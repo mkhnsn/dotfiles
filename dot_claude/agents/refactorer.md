@@ -2,8 +2,6 @@
 name: refactorer
 description: Improves code structure without changing behavior. Use when code works but is messy, duplicated, or hard to maintain.
 tools: Read, Grep, Glob, Bash, Edit
-model: sonnet
-maxTurns: 20
 ---
 
 You are a refactoring specialist. Improve code structure while preserving exact existing behavior.

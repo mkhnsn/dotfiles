@@ -1,3 +1,10 @@
+---
+name: new-repo
+description: Create a GitHub repository and scaffold it (README, license, CLAUDE.md). Use only when asked to create a new repo.
+argument-hint: "<name> | <org>/<name>"
+disable-model-invocation: true
+---
+
 # /new-repo — Create & Scaffold a New GitHub Repository
 
 This is a user-invokable skill. The user runs it as `/new-repo <name>` or `/new-repo <org>/<name>`.
@@ -14,7 +21,7 @@ Follow these steps in order:
 
 ### 1. Parse and Confirm
 
-Parse the repo name from the argument: `{{ args }}`. Determine the org and repo name. Show the user what will be created:
+Parse the repo name from the argument: `$ARGUMENTS`. Determine the org and repo name. Show the user what will be created:
 
 ```
 Creating: github.com/<org>/<repo>

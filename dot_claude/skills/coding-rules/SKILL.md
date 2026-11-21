@@ -1,3 +1,8 @@
+---
+name: coding-rules
+description: Git and commit conventions: feature branches, conventional commits, atomic commits, PRs, docs alongside changes. Use when branching, committing, writing commit messages or preparing a PR.
+---
+
 # Coding Ground Rules
 
 This skill defines the standard coding conventions for all projects. These rules apply automatically whenever you are writing code, making commits, or working with git.
@@ -78,4 +83,4 @@ When the user asks you to make changes:
 3. Commit with conventional commit format
 4. If the user asks to commit/push/PR, follow the PR workflow
 
-These rules complement the `commit-commands:commit` plugin. When using that plugin, ensure the commit message follows conventional commit format.
+To commit, push and open the PR in one go, use `/pr`.

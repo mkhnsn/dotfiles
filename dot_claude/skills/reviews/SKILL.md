@@ -1,3 +1,9 @@
+---
+name: reviews
+description: Check open PRs you authored for review comments, requested changes and approvals. Use when asked about PR reviews or feedback.
+argument-hint: "[repo]"
+---
+
 # /reviews — Check PR Review Comments
 
 This is a user-invokable skill. Run it as `/reviews` or `/reviews <repo>`.
@@ -8,7 +14,7 @@ Checks all open PRs you authored for review comments, requested changes, and app
 
 - If an argument is provided (e.g., `/reviews my-repo`), scope to that repo
 - If no argument is provided, check the current repo
-- The argument string is: `{{ args }}`
+- The argument string is: `$ARGUMENTS`
 
 ## Workflow
 

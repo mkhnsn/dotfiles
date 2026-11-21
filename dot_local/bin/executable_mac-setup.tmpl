@@ -109,7 +109,8 @@ EOF2
 # Private app exports: label | app | where to restore | old Mac step name
 EXPORTS="Stream Deck|Elgato Stream Deck|Preferences > Profiles > Restore
 BetterDisplay|BetterDisplay|Settings > Application > Import
-BetterMouse|BetterMouse|its settings, restore the configuration backup"
+BetterMouse|BetterMouse|its settings, restore the configuration backup
+Claude Code|Claude|claude-sync import (memories and prompt history; claude-sync export on the old Mac)"
 export_field() { printf '%s\n' "$EXPORTS" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
 export_steps() { local l
   while IFS='|' read -r l _ _; do echo "export:$l|$l export restored|Apps"; done <<EOF2
@@ -220,7 +221,13 @@ check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
 EXPORTS_DIR="${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}/Apps/Mac app exports"
 check_onedrive()   { workstation || return 0; [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}" ]; }
 # BetterMouse wasn't in the combined step, so the old confirmation doesn't cover it.
-check_export()     { workstation || return 0; confirmed "export:$1" || { [ "$1" != BetterMouse ] && confirmed app_exports; }; }
+# Claude Code counts as restored once any project memory is here (or you confirmed there was none).
+check_export()     { workstation || return 0; confirmed "export:$1" && return 0
+                     case "$1" in
+                       BetterMouse) return 1 ;;
+                       "Claude Code") [ -n "$(find "$HOME/.claude/projects" -path '*/memory/*.md' 2>/dev/null | head -1)" ] ;;
+                       *) confirmed app_exports ;;
+                     esac; }
 check_vm()         { workstation || return 0; confirmed vm; }
 check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
@@ -333,7 +340,8 @@ act_ha_mcp()       {
 act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
 act_license()      { open -a "$(license_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
 act_onedrive()     { open -a OneDrive; }
-act_export()       { open "$EXPORTS_DIR" 2>/dev/null; open -a "$(export_field "$1" 2)" 2>/dev/null; }
+act_export()       { [ "$1" = "Claude Code" ] && { claude-sync import; return; }
+                     open "$EXPORTS_DIR" 2>/dev/null; open -a "$(export_field "$1" 2)" 2>/dev/null; }
 act_chezmoi() {
   if chezmoi_config_stale; then chezmoi init; return; fi
   if [ -d "$(chezmoi source-path 2>/dev/null)/.git" ]; then chezmoi update

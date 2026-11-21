@@ -1,3 +1,9 @@
+---
+name: pr
+description: Commit pending work, push the branch and open a pull request with a summary and test plan. Use when asked to open, create or raise a PR, or to commit and push for review.
+argument-hint: "[base-branch]"
+---
+
 # /pr — Create a Pull Request
 
 This is a user-invokable skill. Run it as `/pr` or `/pr <base-branch>`.
@@ -6,17 +12,16 @@ This is a user-invokable skill. Run it as `/pr` or `/pr <base-branch>`.
 
 - If an argument is provided (e.g., `/pr develop`), use it as the base branch
 - If no argument is provided, default to `main`
-- The argument string is: `{{ args }}`
+- The argument string is: `$ARGUMENTS`
 
 ## Workflow
 
-### 1. Preflight
+### 1. Branch and commit
 
-Check the current state:
-
-- Ensure you're NOT on main/master (if so, ask the user to create a branch first)
-- Run `git status` to check for uncommitted changes — offer to commit them first
-- Run `git log main..HEAD --oneline` to see what commits will be in the PR
+- On main/master, create a branch first: `<type>/<short-description>` (see coding-rules).
+- Run `git status`. Commit pending changes as atomic conventional commits, staging explicit
+  paths (never `git add -A`/`git add .`, which sweeps in build output).
+- Run `git log <base>..HEAD --oneline` to see what the PR will contain.
 
 ### 2. Push
 
@@ -54,6 +59,11 @@ Use `gh pr create` with:
 
 If the org is `unstable-studios` and `link-unstable` is available, run it.
 
-### 6. Done
+### 6. Review
 
-Print the PR URL.
+Run a reviewer subagent (the `reviewer` agent) over the PR's diff, giving it the code, not
+your conclusions. Fix what it confirms, push, and note anything left in the PR.
+
+### 7. Done
+
+Print the PR URL. Don't merge: leave that to the user unless they asked for it.

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Claude Code: user-scope MCP servers and plugins. MCP servers live in ~/.claude.json,
+# which Claude Code rewrites constantly, so they're registered with the CLI instead of
+# deployed as a file. Runs when this script changes; enabledPlugins comes from
+# dot_claude/modify_settings.json.
+set -uo pipefail
+{{ template "todo.sh" }}
+{{- if eq .chezmoi.os "darwin" }}
+# Re-runs once the Raycast token is stored: {{ output "sh" "-c" "security find-generic-password -s raycast-mcp -a claude >/dev/null 2>&1 && echo stored || echo missing" | trim }}
+{{- end }}
+
+command -v claude >/dev/null 2>&1 || { todo "Claude Code: install the CLI (brew install --cask claude-code), then chezmoi apply"; exit 0; }
+# claude (Bun) can't use a terminal it didn't open as stdin; nothing here needs input.
+exec </dev/null
+
+# ---- MCP servers (user scope) ----
+mcp() {  # mcp <name> <json>: (re)register so the definition here wins
+  claude mcp remove --scope user "$1" >/dev/null 2>&1 || true
+  claude mcp add-json --scope user "$1" "$2" >/dev/null || todo "Claude Code: couldn't register the $1 MCP server"
+}
+{{ if and (eq .chezmoi.os "darwin") (not (dig "is_server" false .)) -}}
+# Local apps' own MCP endpoints; they answer only while the app runs.
+mcp fusion     '{"type":"http","url":"http://127.0.0.1:27182/mcp"}'
+mcp btt        '{"type":"http","url":"http://127.0.0.1:64832/mcp"}'
+# Raycast's server wants the bearer token Raycast shows in its MCP settings; it's kept in
+# the Keychain so it stays out of this public repo (it lands only in ~/.claude.json).
+if raycast_token="$(security find-generic-password -s raycast-mcp -a claude -w 2>/dev/null)" && [ -n "$raycast_token" ]; then
+  mcp raycast "$(jq -cn --arg t "$raycast_token" '{type:"http",url:"http://127.0.0.1:8267/mcp",headers:{Authorization:("Bearer "+$t)}}')"
+else
+  todo "Claude Code: copy the MCP token from Raycast's settings into the Keychain (security add-generic-password -U -s raycast-mcp -a claude -w), then chezmoi apply"
+fi
+mcp StreamDeck '{"type":"stdio","command":"/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp","args":[]}'
+# Read-only Home Assistant; its token goes to the Keychain in mac-setup (ha-mcp --store-token).
+mcp homeassistant '{"type":"stdio","command":"{{ .chezmoi.homeDir }}/.local/bin/ha-mcp","args":[]}'
+{{ end -}}
+
+# ---- Plugins (official marketplace) ----
+claude plugin marketplace list 2>/dev/null | grep -q claude-plugins-official ||
+  claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 ||
+  todo "Claude Code: couldn't add the official plugin marketplace"
+for p in playwright frontend-design security-guidance; do
+  claude plugin list 2>/dev/null | grep -q "$p@claude-plugins-official" ||
+    claude plugin install --scope user "$p@claude-plugins-official" >/dev/null 2>&1 ||
+    todo "Claude Code: couldn't install the $p plugin (claude plugin install $p@claude-plugins-official)"
+done
+exit 0

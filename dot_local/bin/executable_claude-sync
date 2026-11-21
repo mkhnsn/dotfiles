@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# claude-sync — carry Claude Code's memories and prompt history between Macs.
+#
+#   claude-sync export [--transcripts]   save them to OneDrive (Mac app exports > Claude Code)
+#   claude-sync import [archive]         merge the newest export (or the one given) into ~/.claude
+#   claude-sync status                   what's here, and the newest export
+#
+# What's carried: each project's memory folder (~/.claude/projects/*/memory) and the prompt
+# history (~/.claude/history.jsonl). --transcripts adds session transcripts, for the record;
+# they're large and not needed to carry on. Everything else in ~/.claude comes from the
+# dotfiles or is cache. Import never overwrites: a memory file that differs is saved next to
+# the existing one as <name>.imported.md for you to merge.
+# Run export on the old Mac before wiping it; mac-setup runs import on the new one.
+
+set -euo pipefail
+
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+SYNC_DIR="${CLAUDE_SYNC_DIR:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios/Apps/Mac app exports/Claude Code}"
+
+newest() { find "$SYNC_DIR" -maxdepth 1 -name 'claude-*.tar.gz' 2>/dev/null | sort | tail -1; }
+memory_count() { find "$CLAUDE_DIR/projects" -path '*/memory/*.md' 2>/dev/null | wc -l | tr -d ' '; }
+
+cmd_export() {
+  local transcripts=0 out
+  [ "${1:-}" = --transcripts ] && transcripts=1
+  [ -d "$CLAUDE_DIR/projects" ] || { echo "claude-sync: nothing to export ($CLAUDE_DIR/projects is missing)"; exit 1; }
+  mkdir -p "$SYNC_DIR"
+  out="$SYNC_DIR/claude-$(hostname -s)-$(date +%Y%m%d-%H%M%S).tar.gz"
+  (
+    cd "$CLAUDE_DIR"
+    {
+      find projects -type d -name memory -prune -print
+      if [ -f history.jsonl ]; then echo history.jsonl; fi
+      if [ "$transcripts" = 1 ]; then find projects -maxdepth 2 -name '*.jsonl'; fi
+    } | tar -czf "$out" -T -
+  )
+  echo "Exported $(memory_count) memory files$([ "$transcripts" = 1 ] && echo " and transcripts") to $out"
+}
+
+cmd_import() {
+  local archive="${1:-$(newest)}" added=0 kept=0 conflicts=0 f rel dest
+  [ -n "$archive" ] && [ -f "$archive" ] || { echo "claude-sync: no export found in $SYNC_DIR (run claude-sync export on the old Mac)"; exit 1; }
+  tmp="$(mktemp -d)"; trap 'rm -rf "${tmp:-}"' EXIT
+  tar -xzf "$archive" -C "$tmp"
+  while IFS= read -r f; do
+    rel="${f#"$tmp"/}"; dest="$CLAUDE_DIR/$rel"
+    mkdir -p "$(dirname "$dest")"
+    if [ ! -e "$dest" ]; then cp -p "$f" "$dest"; added=$((added+1))
+    elif cmp -s "$f" "$dest"; then kept=$((kept+1))
+    else cp -p "$f" "${dest%.md}.imported.md"; conflicts=$((conflicts+1)); echo "  differs: $rel (saved as ${rel%.md}.imported.md)"
+    fi
+  done < <(find "$tmp/projects" -type f 2>/dev/null)
+  if [ -f "$tmp/history.jsonl" ]; then
+    touch "$CLAUDE_DIR/history.jsonl"
+    # Append entries not already here; history is one JSON object per line.
+    grep -vxF -f "$CLAUDE_DIR/history.jsonl" "$tmp/history.jsonl" > "$tmp/new-history" || true
+    cat "$tmp/new-history" >> "$CLAUDE_DIR/history.jsonl"
+  fi
+  echo "Imported $(basename "$archive"): $added added, $kept already here, $conflicts differ."
+  [ "$conflicts" -eq 0 ] || echo "Merge each .imported.md into its original, then delete it."
+}
+
+cmd_status() {
+  echo "Memory files here: $(memory_count)"
+  local n; n="$(newest)"; echo "Newest export: ${n:-none in $SYNC_DIR}"
+}
+
+case "${1:-}" in
+  export) shift; cmd_export "$@" ;;
+  import) shift; cmd_import "$@" ;;
+  status) cmd_status ;;
+  -h|--help|"") sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "usage: claude-sync export [--transcripts] | import [archive] | status"; exit 1 ;;
+esac
