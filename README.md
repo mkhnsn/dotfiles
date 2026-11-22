@@ -57,6 +57,7 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin init --apply mkhnsn/dotf
 ```
 
 This installs chezmoi to `~/.local/bin` and applies dotfiles without interactive secret setup.
+Files read from 1Password (`~/.ssh/authorized_keys`, `~/.ntfy.yml`) are skipped and left as they are.
 For the full experience (Homebrew packages, 1Password, etc.), use option 2 instead.
 
 ---

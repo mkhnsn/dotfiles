@@ -85,6 +85,12 @@ Library/Application Support/Claude/**
 .ntfy.yml
 {{- end -}}
 
+{{- /* authorized_keys comes from 1Password too: same gating. A lite setup (servers, borrowed
+       Macs) keeps whatever file is there instead of failing the apply on op read. */ -}}
+{{- if or (not .full_setup) $noOp }}
+.ssh/authorized_keys
+{{- end -}}
+
 {{- /* JFrog credentials: same 1Password gating as .ntfy.yml, and only on machines
        with the OpenShift toolchain, since the PL2/PL3 bundle builds are the only
        thing that uses them. */ -}}
