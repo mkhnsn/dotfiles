@@ -343,6 +343,12 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 `tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
 (`docs/devices/README.md`).
 
+On servers, `gh` and Doppler mustn't carry your personal logins (an always-on Mac has no
+FileVault): `mac-setup` flags a GitHub web login or classic token and any Doppler login
+that isn't a service token, and offers to sign them out. Use a fine-grained GitHub token or a Doppler service
+token scoped to what runs there, or none. Secrets in the dotfiles come from a 1Password
+service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
+
 ## Workstation apps and macOS settings
 
 - `Brewfile`: CLI tools for every Mac, including the `claude` CLI (`claude-code` cask). An entry
@@ -363,7 +369,7 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 - `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
   (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
-  changes. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
+  changes, on workstations only. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
   `mac-defaults --export-shortcuts` and commit.
 - Desktop widgets: `mac-defaults` shows them on the desktop and in Stage Manager. Which
   widgets, where they sit and their settings are kept in containers macOS protects
