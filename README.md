@@ -285,6 +285,14 @@ Incoming SSH needs Remote Login, which `mac-setup` turns on for your user only. 
 SSH isn't used: the app build on workstations can't run its SSH server, and servers
 (`tailscaled`, which could) keep Remote Login until it's been tried there.
 
+### Finding and cloning repos
+
+Repos are cloned with ghq under `~/src` (`gget owner/repo` clones and changes into it). `c`
+fuzzy-finds a repo and changes into it: the ones you've cloned, plus every repo of yours and
+your GitHub organizations' that you haven't (archived ones left out), marked `clone`. Picking
+one of those clones it first. The GitHub list is cached in `~/.cache/cproj/remote` and
+refreshed in the background once a day; `cproj-refresh` updates it now.
+
 ### Reclaiming disk space across clones
 
 `git-sweep` (installed to `~/.local/bin`, also runs as `git sweep`) scans every repo under
