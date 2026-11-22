@@ -441,6 +441,41 @@
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
           "BTTUUID" : "60337335-050D-460A-BF6B-C94AB174B5C6"
+        },
+        {
+          "BTTActionCategoryKeyReleaseAfterLongPress" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Toggle Caps Lock On/Off",
+              "BTTPredefinedActionType" : 194,
+              "BTTTriggerParentUUID" : "E0058B86-70EB-44E7-BE8B-FB39B1A89F9F",
+              "BTTUUID" : "A5641C57-A907-4B8C-9D42-6547AEBDB585"
+            }
+          ],
+          "BTTActionsToExecute" : [
+            {
+              "BTTAdditionalActionData" : {
+                "BTTActionHyperkeyExcludeShift" : false
+              },
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Act as Hyper Key",
+              "BTTPredefinedActionType" : 293,
+              "BTTTriggerParentUUID" : "E0058B86-70EB-44E7-BE8B-FB39B1A89F9F",
+              "BTTUUID" : "2E8B86EA-5DD8-4ACD-A212-5309B6D0BF9A"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Hyper key (⌃⌥⇧⌘); hold alone for Caps Lock",
+          "BTTOrder" : 11,
+          "BTTShortcutKeyCode" : 1004,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 0,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "E0058B86-70EB-44E7-BE8B-FB39B1A89F9F"
         }
       ]
     },

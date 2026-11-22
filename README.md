@@ -420,7 +420,8 @@ conflicts, as are app settings changed by hand (Zoom's video shortcut). `shortcu
 
 Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
 same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
-Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⇧⌘ resize),
+Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⇧⌘ resize), the
+Caps Lock Hyper key and Hyper+key shortcuts BTT,
 app switching AltTab (⌘Tab), menu bar Bartender, launcher, clipboard history (⇧⌘V) and link
 cleaning Raycast (Link Cleaner, on demand: BTT cleans links only inside its clipboard manager, which
 is off). After changing a shortcut in an
@@ -444,6 +445,11 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
 `mac-setup` compares BTT's global keyboard shortcuts and move/resize modifier keys with the
 preset's, so it asks for a re-import when they differ after an earlier import. If BTT then lists two
 presets named Default, delete the older one.
+
+Caps Lock is the Hyper key (⌃⌥⇧⌘) on every keyboard, set in the preset; holding it alone for
+0.65 s and releasing toggles Caps Lock. Hyper+key shortcuts belong to BTT (see
+`macos/shortcuts.toml`). BTT only sees Caps Lock while System Settings › Keyboard › Modifier
+Keys leaves it as Caps Lock.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
 Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).
