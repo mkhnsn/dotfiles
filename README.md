@@ -319,7 +319,7 @@ the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
 Sync, weekly exports, the settings that stay on each Mac), Zoom's video shortcut, workstation apps (Brewfile, vendor
 downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
-backup run, macOS settings and the Dock, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
+backup run, macOS settings and the Dock, desktop widgets, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
 steps are split per item (each app without a cask, each license, each app export, each
@@ -357,6 +357,10 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
   changes. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
   `mac-defaults --export-shortcuts` and commit.
+- Desktop widgets: `mac-defaults` shows them on the desktop and in Stage Manager. Which
+  widgets, where they sit and their settings are kept in containers macOS protects
+  (per display, with personal data like Home accessories and contacts), so `mac-setup` has a
+  manual step to place them (right-click the desktop > Edit Widgets).
 - Default browser: Chrome, set by `mac-setup` with `defaultbrowser` (macOS asks to confirm).
 - `app-prefs`: chosen app settings (Bartender, BetterMouse, AltTab, Stats, Festivitas,
   OpenSCAD, KeyboardCleanTool) in `macos/prefs/`, allow-list only (`macos/prefs/allowlist`),
