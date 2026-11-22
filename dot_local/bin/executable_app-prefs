@@ -24,6 +24,7 @@ BetterMouse (DEVICE_LISTS) is compared by content: its values are nested binary 
   settings, and apply updates or adds the saved devices and keeps ones only this Mac has.
 """
 import fnmatch
+import json
 import os
 import plistlib
 import subprocess
@@ -36,7 +37,9 @@ DEVICE_LISTS = {
     "com.naotanhaocan.BetterMouse": {"mice": "mice", "keyboards": "keyboards", "logikeys": "logiKeybs"},
 }
 # Fields BetterMouse saves as flat [key, value, key, value, ...] maps, in a new order each time.
-PAIR_FIELDS = {"twDirInv", "twSpeed", "quirks", "id1b04List"}
+# btn (an app's button mappings, in appitems) has the same shape; one mapping can't show a
+# reorder yet, so it's listed on that shape alone.
+PAIR_FIELDS = {"twDirInv", "twSpeed", "quirks", "id1b04List", "btn"}
 
 
 def decode(value):
@@ -56,7 +59,8 @@ def canon(value, field=None):
     if isinstance(value, list):
         items = [canon(v) for v in value]
         if field in PAIR_FIELDS and len(items) % 2 == 0:
-            return sorted((repr(items[i]), repr(items[i + 1])) for i in range(0, len(items), 2))
+            # JSON with sorted keys, so dicts inside a pair compare by content, not key order.
+            return sorted(json.dumps(items[i:i + 2], sort_keys=True, default=repr) for i in range(0, len(items), 2))
         return items
     return value
 
