@@ -32,7 +32,8 @@ https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing.
 4. **No slogan formulas.** No "Not X, it's Y", "X, not Y" taglines, "It's not
    just A. It's B.", "Less X, more Y", or three-beat lists written for rhythm.
    State the claim directly. A contrast stays only when the audience actually
-   holds the other belief, and then it's a plain sentence.
+   holds the other belief, and then it's a plain sentence. A concrete analogy
+   that names two real things is fine (see `references/investor-decks.md`).
 5. **No importance words.** Cut "the differentiator", "game-changer",
    "unlock", "landscape", "ecosystem", "journey", "the future of",
    "revolutionize", "at the intersection of". Say what the thing does and
@@ -95,10 +96,12 @@ Load these when the task needs them:
 - `references/tells.md`: words, phrases and structures that read as
   generated, with what to write instead.
 - `references/examples.md`: before and after rewrites, by pattern.
+- `references/investor-decks.md`: slide order, the ask, traction, team and
+  competition slides for decks that raise money.
 
 ## Extending
 
 Add a topic as `references/<topic>.md` and list it under References with one
-line on when to load it. Candidates: chart titles and captions, investor deck
-order, conference talk decks, internal review decks. Keep the rules above
+line on when to load it. Candidates: chart titles and captions, conference
+talk decks, internal review decks. Keep the rules above
 short and general.
