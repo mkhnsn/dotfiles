@@ -24,7 +24,7 @@ jobs:
 
       - name: shellcheck
         run: |
-          shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults
+          shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults dot_local/bin/executable_3dx-sync
           shellcheck -S warning -s bash tests/*.sh install.sh
 
       - name: mac-setup tests (bash 3.2, as on macOS)

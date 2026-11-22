@@ -37,7 +37,7 @@ mcp homeassistant '{"type":"stdio","command":"{{ .chezmoi.homeDir }}/.local/bin/
 claude plugin marketplace list 2>/dev/null | grep -q claude-plugins-official ||
   claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 ||
   todo "Claude Code: couldn't add the official plugin marketplace"
-for p in playwright frontend-design security-guidance; do
+for p in playwright frontend-design security-guidance context7 microsoft-docs; do
   claude plugin list 2>/dev/null | grep -q "$p@claude-plugins-official" ||
     claude plugin install --scope user "$p@claude-plugins-official" >/dev/null 2>&1 ||
     todo "Claude Code: couldn't install the $p plugin (claude plugin install $p@claude-plugins-official)"

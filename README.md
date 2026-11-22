@@ -375,6 +375,9 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
   widgets, where they sit and their settings are kept in containers macOS protects
   (per display, with personal data like Home accessories and contacts), so `mac-setup` has a
   manual step to place them (right-click the desktop > Edit Widgets).
+- `3dx-sync`: SpaceMouse settings (per-app navigation in `navlib/*.user.config`, button
+  assignments in `Cfg/*.xml`) in `macos/3dconnexion/`. `3dx-sync export` after changing them
+  in 3DxWare, review and commit; `mac-setup` imports them (`3dx-sync import`).
 - Default browser: Chrome, set by `mac-setup` with `defaultbrowser` (macOS asks to confirm).
 - `app-prefs`: chosen app settings (Bartender, BetterMouse, AltTab, Stats, Festivitas,
   OpenSCAD, KeyboardCleanTool) in `macos/prefs/`, allow-list only (`macos/prefs/allowlist`),
@@ -406,7 +409,7 @@ conflicts, as are app settings changed by hand (Zoom's video shortcut). `shortcu
 
 Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
 same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
-Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⌥⇧⌘ resize),
+Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⇧⌘ resize),
 app switching AltTab (⌘Tab), menu bar Bartender, launcher, clipboard history (⇧⌘V) and link
 cleaning Raycast (Link Cleaner, on demand: BTT cleans links only inside its clipboard manager, which
 is off). After changing a shortcut in an
@@ -428,7 +431,7 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
   A test checks the committed preset.
 
 `mac-setup` compares BTT's global keyboard shortcuts and move/resize modifier keys with the
-preset's, so it asks for a re-import when the preset gains either after an earlier import. If BTT then lists two
+preset's, so it asks for a re-import when they differ after an earlier import. If BTT then lists two
 presets named Default, delete the older one.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard

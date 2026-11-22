@@ -153,7 +153,7 @@ owner = "btt"
 action = "Window: move (hold and move the pointer)"
 
 [[shortcut]]
-keys = "⌃⌥⇧⌘Drag"
+keys = "⌃⇧⌘Drag"
 owner = "btt"
 action = "Window: resize (hold and move the pointer)"
 
