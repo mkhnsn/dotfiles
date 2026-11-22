@@ -25,6 +25,7 @@ test:
 	@shellcheck -S warning -s bash tests/*.sh install.sh
 	@/bin/bash tests/mac-setup.test.sh
 	@/bin/bash tests/chezmoiignore.test.sh
+	@/bin/bash tests/claude-sync.test.sh
 	@python3 -I tests/app_prefs_test.py
 	@python3 -I tests/shortcut_check_test.py
 	@python3 -I tests/brew_why_test.py
