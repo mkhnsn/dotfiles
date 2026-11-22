@@ -72,10 +72,13 @@ def variant(path):
     return {"path": path, "app": app, "style": style, "device": dev, "platform": platform_of(parts[:-1])}
 
 
-def variants(file):
+def variants(file, before=()):
+    """The profile variants in a pack, in the order the index had them, new ones after."""
     with zipfile.ZipFile(file) as z:
         names = sorted(n for n in z.namelist()
                        if n.endswith(".streamDeckProfile") and not n.startswith("__MACOSX/"))
+    order = {v["path"]: i for i, v in enumerate(before)}
+    names.sort(key=lambda n: (order.get(n, len(order)), n))
     return [variant(n) for n in names]
 
 
@@ -121,13 +124,18 @@ def build(root, index):
             print(f"new: {rel} (fill in its title, requires and installed in library.json)")
         e["sha256"], e["bytes"] = sha256(path), os.path.getsize(path)
         if key == "packs":
-            e["variants"] = variants(path)
+            try:
+                e["variants"] = variants(path, e.get("variants", []))
+            except zipfile.BadZipFile:
+                print(f"not a zip: {rel} (no variants listed)")
+                e["variants"] = []
         out[key].append(e)
     for rel in sorted(set(old) - seen):
         print(f"gone: {rel} (dropped from library.json)")
+    # Keep the index's order; new files go after, by name.
+    rank = {f: i for i, f in enumerate(old)}
     for key in SECTIONS.values():
-        out[key].sort(key=lambda e: [x["file"] for x in index.get(key, [])].index(e["file"])
-                      if e["file"] in old else 1 << 30)
+        out[key].sort(key=lambda e: (rank.get(e["file"], len(rank)), e["file"]))
     return out
 
 
@@ -151,6 +159,8 @@ def main():
     index_file = os.path.join(a.dir, "library.json")
     if not os.path.isdir(a.dir):
         sys.exit(f"streamdeck-library: no library at {a.dir}")
+    if a.command == "check" and not os.path.exists(index_file):
+        sys.exit(f"streamdeck-library: no library.json in {a.dir} (run streamdeck-library build)")
     index = json.load(open(index_file, encoding="utf-8")) if os.path.exists(index_file) else {}
     if a.command == "check":
         bad = check(a.dir, index)

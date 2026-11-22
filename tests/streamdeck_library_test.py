@@ -83,6 +83,22 @@ class Library(unittest.TestCase):
         self.assertEqual((d["packs"][0]["title"], d["packs"][0]["installed"]), ("Office pack", "XL: Outlook"))
         self.assertEqual(d["plugins"], [])
 
+    def test_rebuild_keeps_variant_order_and_skips_non_zips(self):
+        self.run_tool("build")
+        d = self.index()
+        d["packs"][0]["variants"].reverse()
+        with open(os.path.join(self.dir, "library.json"), "w") as f:
+            json.dump(d, f)
+        with open(os.path.join(self.dir, "packs", "adx", "notes-1.txt"), "w") as f:
+            f.write("not a zip")
+        r = self.run_tool("build")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("not a zip: packs/adx/notes-1.txt", r.stdout)
+        self.assertEqual(self.index()["packs"][0]["variants"], d["packs"][0]["variants"])
+
+    def test_check_without_index_fails(self):
+        self.assertNotEqual(self.run_tool("check").returncode, 0)
+
     def test_check_finds_changed_and_missing_files(self):
         self.run_tool("build")
         self.assertEqual(self.run_tool("check").returncode, 0)
