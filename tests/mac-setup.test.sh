@@ -267,6 +267,18 @@ test_btt_from_homebrew_is_flagged() {
   assert_open "BetterTouchTool installed from folivora.ai"
 }
 
+test_btt_in_user_applications_is_moved() {
+  rm -rf "$MAC_SETUP_APPS/BetterTouchTool.app"; mkdir -p "$HOME/Applications/BetterTouchTool.app"
+  stub osascript 'exit 0'; stub pkill 'exit 0'; stub open 'exit 0'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool installed from folivora.ai"
+  printf 'y\n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "is in ~/Applications"
+  assert_done "BetterTouchTool installed from folivora.ai"
+  [ -d "$MAC_SETUP_APPS/BetterTouchTool.app" ] && [ ! -d "$HOME/Applications/BetterTouchTool.app" ] || fail "not moved"
+}
+
 test_btt_preset_missing() {
   has_python || return 0
   stub osascript 'echo "no triggers"'
