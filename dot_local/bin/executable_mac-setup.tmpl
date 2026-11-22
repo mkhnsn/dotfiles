@@ -91,7 +91,7 @@ Fantastical|Fantastical|
 PDF Expert|PDF Expert|
 Bartender|Bartender 7|
 BetterDisplay|BetterDisplay|
-BetterMouse|BetterMouse|Set the mouse to standard scrolling; the trackpad stays natural.
+BetterMouse|BetterMouse|
 DaisyDisk|DaisyDisk|
 Parallels|Parallels Desktop|
 LightBurn|LightBurn|
@@ -109,7 +109,6 @@ EOF2
 # Private app exports: label | app | where to restore | old Mac step name
 EXPORTS="Stream Deck|Elgato Stream Deck|Preferences > Profiles > Restore
 BetterDisplay|BetterDisplay|Settings > Application > Import
-BetterMouse|BetterMouse|its settings, restore the configuration backup
 Claude Code|Claude|claude-sync import (memories and prompt history; claude-sync export on the old Mac)"
 export_field() { printf '%s\n' "$EXPORTS" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
 export_steps() { local l
@@ -239,15 +238,17 @@ check_onedrive()   { workstation || return 0; [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/
 # backups don't count for another and auto-delete doesn't prune another Mac's files.
 RAYCAST_EXPORTS="$EXPORTS_DIR/Raycast/$HOSTNAME_WANT"
 check_raycast_backup(){ workstation || return 0; [ -n "$(find "$RAYCAST_EXPORTS" -name '*.rayconfig' -mtime -8 2>/dev/null | head -1)" ]; }
-# BetterMouse wasn't in the combined step, so the old confirmation doesn't cover it.
 # Claude Code counts as restored once any project memory is here (or you confirmed there was none).
 check_export()     { workstation || return 0; confirmed "export:$1" && return 0
                      case "$1" in
-                       BetterMouse) return 1 ;;
                        "Claude Code") [ -n "$(find "$HOME/.claude/projects" -path '*/memory/*.md' 2>/dev/null | head -1)" ] ;;
                        *) confirmed app_exports ;;
                      esac; }
 check_vm()         { workstation || return 0; confirmed vm; }
+# Homebrew's cask is Stream Deck 7.x; its MCP server (Claude Code's StreamDeck) needs 8, a beta
+# installed over it from elgato.com. The major version is read from the app's Info.plist (XML).
+streamdeck_major() { sed -n '/CFBundleShortVersionString/{n;s/.*<string>\([0-9]*\).*/\1/p;}' "$APPS/Elgato Stream Deck.app/Contents/Info.plist" 2>/dev/null; }
+check_streamdeck() { workstation || return 0; [ "$(streamdeck_major)" -ge 8 ] 2>/dev/null; }
 # Dock and Finder for daily use; dockutil comes from Brewfile.workstation, which servers skip.
 check_defaults()   { workstation || return 0; mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
@@ -340,6 +341,7 @@ help_timemachine() { echo "Back up to echo-nas with Time Machine (the local, who
 help_tm_no_vms()  { echo "Keep virtual machines out of Time Machine: tmutil addexclusion ~/Parallels (no admin needed). VM disks change constantly, so each backup would re-copy them."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
+help_streamdeck() { echo "Stream Deck is $(streamdeck_major || echo '?').x; Claude Code's StreamDeck MCP server needs 8. Install the Stream Deck 8 beta from elgato.com (Downloads > Stream Deck) over it; it keeps your profiles."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
 
 # ---- Actions: what this script can do itself (optional) --------------------------
@@ -393,6 +395,7 @@ act_brewfile()    { chezmoi apply; }
 act_gh()          { gh auth login --web --git-protocol https; }
 act_doppler()     { doppler login; }
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
+act_streamdeck()  { open "https://www.elgato.com/downloads"; }
 act_btt() {
   if btt_user_copy; then
     osascript -e 'quit app "BetterTouchTool"' 2>/dev/null; pkill -f BTTRelaunch 2>/dev/null; sleep 2
@@ -502,6 +505,7 @@ btt_preset|BetterTouchTool preset imported|Apps
 btt_snapping|BetterTouchTool window snapping on|Apps
 btt_mcp|BetterTouchTool MCP server on|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
+streamdeck|Stream Deck 8 installed (for its MCP server)|Apps
 $(vendor_steps)
 replaced|Replaced apps removed (Rectangle, Bartender 6, Docker Desktop)|Apps
 containers|Docker engine (Colima) runs at login|Apps
