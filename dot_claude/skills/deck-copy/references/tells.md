@@ -12,7 +12,7 @@ decks.
 | Negative parallelism                   | "Premium sells the library, not the lights."    | "Everything needed to build and run a show is free." |
 | "Not just X, it's Y"                   | "It's not just a controller. It's a platform."  | Say what it does: "Drives pixels, servos and audio."      |
 | Tagline headline                       | "Cues, not frames"                              | "Pucks send cues and draw their own lights"               |
-| Rule of three for rhythm               | "Simple. Sealed. Synced."                       | The one that matters, with its fact                       |
+| Rule of three for rhythm               | "Simple. Sealed. Synced."                       | The one that matters, with its fact (a product deck's hero tagline is the one exception: `product-decks.md`) |
 | Trailing -ing clause                   | "…, highlighting the need for a sealed box."    | Cut it, or make it its own sentence with evidence         |
 | Colon reveal                           | "The closest analogs aren't in cosplay: they're in car mods." | "The closest analogs are car-lighting and offroad-power controllers."  |
 | Rhetorical question headline           | "What if your costume could think?"             | The claim the question was hinting at                     |
