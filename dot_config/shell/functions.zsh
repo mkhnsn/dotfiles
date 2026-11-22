@@ -82,7 +82,24 @@ link-unstable() {
   done
 }
 
-# cd into any ghq repo using fzf
+# Every GitHub repo you can push to: yours and your organizations' (not archived), as
+# github.com/owner/name lines. Cached for cproj; refreshed in the background once a day.
+CPROJ_REMOTE="${XDG_CACHE_HOME:-$HOME/.cache}/cproj/remote"
+cproj-refresh() {
+  emulate -L zsh
+  setopt nounset pipefail
+  command -v gh >/dev/null 2>&1 || { print -u2 "gh not installed"; return 1; }
+  local -a owners
+  owners=(${(f)"$(gh api user --jq .login)"} ${(f)"$(gh api user/orgs --paginate --jq '.[].login')"}) || return 1
+  mkdir -p "${CPROJ_REMOTE:h}"
+  local tmp="$CPROJ_REMOTE.$$" o
+  for o in $owners; do
+    gh repo list "$o" --limit 2000 --no-archived --json nameWithOwner --jq '.[].nameWithOwner' || { rm -f "$tmp"; return 1; }
+  done | sed 's|^|github.com/|' | sort -u > "$tmp" && mv "$tmp" "$CPROJ_REMOTE"
+}
+
+# cd into any repo with fzf: cloned ones, plus repos on GitHub you haven't cloned yet
+# (marked "clone"), which are cloned with ghq first. `cproj-refresh` updates that list now.
 cproj() {
   emulate -L zsh
   setopt nounset pipefail
@@ -90,7 +107,25 @@ cproj() {
   command -v ghq >/dev/null 2>&1 || { print -u2 "ghq not installed"; return 1; }
   command -v fzf >/dev/null 2>&1 || { print -u2 "fzf not installed"; return 1; }
 
-  cd "$(ghq list --full-path | fzf)" || return
+  if [[ ! -s "$CPROJ_REMOTE" ]]; then
+    print -u2 "Listing your GitHub repos (once; then daily in the background)..."
+    cproj-refresh || print -u2 "Couldn't list GitHub repos; showing cloned ones only."
+  elif [[ -n "$(find "$CPROJ_REMOTE" -mmin +1440 2>/dev/null)" ]]; then
+    ( cproj-refresh >/dev/null 2>&1 & )
+  fi
+
+  local -a cloned remote
+  cloned=(${(f)"$(ghq list)"})
+  [[ -s "$CPROJ_REMOTE" ]] && remote=(${(f)"$(<"$CPROJ_REMOTE")"})
+  remote=(${remote:|cloned})   # drop the ones already cloned
+
+  local pick
+  pick="$(print -rl -- $cloned ${^remote}$'\tclone' | fzf --prompt='repo> ' --delimiter=$'\t')" || return
+  if [[ "$pick" == *$'\t'clone ]]; then
+    gget "${${pick%$'\t'clone}#github.com/}"
+  else
+    cd "$(ghq root)/$pick"
+  fi
 }
 
 corg() {
