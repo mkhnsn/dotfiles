@@ -5,6 +5,10 @@
                                          inside every pack; new files are added, missing ones
                                          dropped
   streamdeck-library check [--dir DIR]   exit 0 if every listed file is there with its checksum
+  streamdeck-library extract PACK [--app A] [--style S] [--device D] [--out DIR]
+                                         copy a pack's matching Mac profile files out (default
+                                         device xl, into the current folder) to import and take
+                                         apart while building our own
 
 The library is OneDrive (Unstable Studios) > Apps > Stream Deck library (STREAMDECK_LIBRARY
 overrides it): purchased and sideloaded content kept out of the public dotfiles. Files are named
@@ -151,17 +155,47 @@ def check(root, index):
     return bad
 
 
+def extract(root, index, a):
+    pack = next((p for p in index.get("packs", []) if p.get("id") == a.pack), None)
+    if not pack:
+        sys.exit(f"streamdeck-library: no pack {a.pack!r} (ids: "
+                 + ", ".join(p.get("id", "?") for p in index.get("packs", [])) + ")")
+    want = [v for v in pack.get("variants", [])
+            if v["platform"] == "mac" and v["device"] == a.device
+            and (a.app is None or v["app"].lower() == a.app.lower())
+            and (a.style is None or (v["style"] or "") == a.style)]
+    if not want:
+        sys.exit(f"streamdeck-library: nothing in {a.pack} for device {a.device}"
+                 + (f", app {a.app}" if a.app else "") + (f", style {a.style}" if a.style else ""))
+    os.makedirs(a.out, exist_ok=True)
+    with zipfile.ZipFile(os.path.join(root, pack["file"])) as z:
+        for v in want:
+            dest = os.path.join(a.out, os.path.basename(v["path"]))
+            with z.open(v["path"]) as src, open(dest, "wb") as out:
+                out.write(src.read())
+            print(dest)
+
+
 def main():
     ap = argparse.ArgumentParser(prog="streamdeck-library", description=__doc__.split("\n\n")[0])
-    ap.add_argument("command", choices=["build", "check"])
+    ap.add_argument("command", choices=["build", "check", "extract"])
+    ap.add_argument("pack", nargs="?", help="extract: the pack id (library.json)")
+    ap.add_argument("--app")
+    ap.add_argument("--style")
+    ap.add_argument("--device", default="xl")
+    ap.add_argument("--out", default=".")
     ap.add_argument("--dir", default=os.environ.get("STREAMDECK_LIBRARY", DEFAULT))
     a = ap.parse_args()
     index_file = os.path.join(a.dir, "library.json")
     if not os.path.isdir(a.dir):
         sys.exit(f"streamdeck-library: no library at {a.dir}")
-    if a.command == "check" and not os.path.exists(index_file):
+    if a.command in ("check", "extract") and not os.path.exists(index_file):
         sys.exit(f"streamdeck-library: no library.json in {a.dir} (run streamdeck-library build)")
     index = json.load(open(index_file, encoding="utf-8")) if os.path.exists(index_file) else {}
+    if a.command == "extract":
+        if not a.pack:
+            sys.exit("usage: streamdeck-library extract PACK [--app A] [--style S] [--device D] [--out DIR]")
+        return extract(a.dir, index, a)
     if a.command == "check":
         bad = check(a.dir, index)
         print("ok" if not bad else f"{bad} problem(s)")

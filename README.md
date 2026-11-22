@@ -394,8 +394,9 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 - `streamdeck-library`: indexes the Stream Deck library (OneDrive (Unstable Studios) > Apps >
   Stream Deck library: purchased profile packs and sideloaded plugins, kept out of this repo).
   `build` after adding or replacing a file rewrites its `library.json` (checksums and the profile
-  variants in each pack); `check` verifies the files. `streamdeck-apply`, which installs profiles
-  from it, is designed in [docs/streamdeck.md](docs/streamdeck.md).
+  variants in each pack); `check` verifies the files; `extract <pack> --app <app>` copies a pack's
+  profile out, as a starting point for our own. `streamdeck-apply`, which installs our own
+  profiles from this repo, is designed in [docs/streamdeck.md](docs/streamdeck.md).
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >

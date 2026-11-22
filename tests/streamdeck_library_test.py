@@ -96,6 +96,16 @@ class Library(unittest.TestCase):
         self.assertIn("not a zip: packs/adx/notes-1.txt", r.stdout)
         self.assertEqual(self.index()["packs"][0]["variants"], d["packs"][0]["variants"])
 
+    def test_extract_copies_matching_mac_variants(self):
+        self.run_tool("build")
+        out = os.path.join(self.dir, "out")
+        r = self.run_tool("extract", "office", "--app", "outlook new", "--out", out)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(os.listdir(out), ["Outlook New Plain, Stream Deck XL.streamDeckProfile"])
+        r = self.run_tool("extract", "office", "--device", "mini", "--out", out)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nothing in office", r.stderr)
+
     def test_check_without_index_fails(self):
         self.assertNotEqual(self.run_tool("check").returncode, 0)
 

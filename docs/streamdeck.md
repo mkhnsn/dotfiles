@@ -1,7 +1,7 @@
 # Stream Deck from the dotfiles (#122)
 
-Status: the library builder is in (`streamdeck-library`); `streamdeck-apply` is designed here and
-waits on the decisions at the end.
+Status: the library builder is in (`streamdeck-library`); `streamdeck-apply` is designed here
+(decisions made 2026-11-22) and gets built with the first custom profile.
 
 Goal: a fresh Mac gets its Stream Deck profiles from `chezmoi apply` plus one command, instead of
 restoring an app backup (`Preferences > Profiles > Restore`).
@@ -36,77 +36,83 @@ is a rewrite that reproduces its `library.json`).
   (apart from the date), and its variant parser gives the stored app, style, device and platform
   for all 678 variants. A rebuild keeps the index's order, so its diff shows only real changes.
 
+## How Stream Deck profile files work
+
+Checked on this Mac (Stream Deck 8):
+
+- A `.streamDeckProfile` is a zip of one `<uuid>.sdProfile` folder: a `manifest.json` with the
+  profile's `Name` and `Device.Model`, and one folder per page with its own `manifest.json` and
+  key images. `Device.Model` is the device type (`20GAT9902` is the XL) and `Device.UUID` is
+  empty, so **one file is for one device type**, and fits any device of that type. Packs ship one
+  file per device type for that reason.
+- Stream Deck registers itself as the viewer for `.streamDeckProfile`, `.streamDeckPlugin` and
+  `.streamDeckIconPack` files. Opening one (`open <file>` or a double-click) hands it to the app,
+  which shows its import dialog; you confirm there. That step can't be scripted, so applying is
+  one click per profile.
+
 ## `streamdeck-apply` (proposed)
 
-One command, run by `mac-setup` after Stream Deck 8 is installed:
+Decided 2026-11-22:
+
+- **Packs are a jumpstart, not installed state.** They're where the custom profiles start:
+  layouts, icons, the shortcuts and scripts people have worked out. `streamdeck-apply` doesn't
+  install them. `streamdeck-library extract <pack> [--app A] [--device xl]` pulls a variant out
+  of the library for you to import and take apart while building your own.
+- **Our own profiles live in this repo**, unpacked, so diffs are readable:
+  `macos/streamdeck/profiles/<name>.sdProfile/` (the manifests and key images). It's a public
+  repo, so the same rule as the BTT preset applies: no hostnames, addresses, tokens or client
+  names in actions. A key that touches a host calls a BTT named trigger or a script in
+  `~/.local/bin`. A test scans the committed manifests for hostnames, IP addresses, email
+  addresses and token-like strings.
+
+Commands:
 
 ```
-streamdeck-apply           install what macos/streamdeck/profiles.toml lists that isn't there
-streamdeck-apply --check   exit 0 if every listed profile and plugin is installed
+streamdeck-apply              import the repo's profiles this Mac doesn't have, and the plugins they need
+streamdeck-apply --check      exit 0 if every profile and plugin is installed
+streamdeck-apply export NAME  copy a profile from Stream Deck into the repo, after building or changing it
 ```
 
-`macos/streamdeck/profiles.toml`, in the repo (names only, nothing purchased):
+`macos/streamdeck/profiles.toml` lists what to install:
 
 ```toml
-device = "xl"            # which variant to pick from each pack
+[[profile]]
+name = "Ghostty"                 # macos/streamdeck/profiles/Ghostty.sdProfile
+app = "com.mitchellh.ghostty"    # switch to it when this app is in front
 
-[[pack]]                 # from the library, by library.json fields
-id = "mac-essentials"
-style = "plain"
-apps = ["macOS", "Mail", "Safari", "Finder", "Preview", "Photos"]
-
-[[pack]]
-id = "iterm2"
-style = "plain"
-rename = "Terminal"      # then linked to Ghostty
-
-[[plugin]]
+[[plugin]]                       # plugins the profiles need, from the library
 file = "plugins/pathfinder/com.pathfinder.kicad-macos-studio-deck-1.0.0.1-mac.streamDeckPlugin"
-
-[[profile]]              # our own, exported from the app into the repo
-file = "macos/streamdeck/profiles/Ghostty.streamDeckProfile"
 ```
 
-How it installs:
+How it works:
 
-- **Packs**: find the variant in `library.json` (pack id, app, style, device, platform mac),
-  verify the zip's checksum, extract that one `.streamDeckProfile` to a temp folder, and `open` it:
-  Stream Deck imports a profile file it's handed. Profile names on disk don't follow the variant
-  data ("Google Chrome - XL Mac", "Blender Pro SD XL V5") and change on rename, so matching by name
-  won't work. Instead `streamdeck-apply` notes which `ProfilesV3/<uuid>.sdProfile` folder each
-  import created (the new folder after the import) in `~/.local/state/streamdeck-apply.json`; a
-  spec entry is installed while its folder exists. Re-runs skip it, renames don't matter, and a
-  profile deleted in the app is imported again.
-- **Plugins** (`.streamDeckPlugin`): `open` them too; installed when `Plugins/<uuid>.sdPlugin`
-  exists. **Icon packs** (`.streamDeckIconPack`): installed when `IconPacks/<id>` exists.
-- **Our own profiles**: the design from 2026-11-19 builds them from scratch (global top row, Find /
-  Command / Close slots, gold power keys; Ghostty, VS Code, Chrome, Fusion first). They're built
-  once, with the StreamDeck MCP server or by hand, then exported from the app
-  (right-click > Export) into `macos/streamdeck/profiles/` and opened like pack variants.
-- Renames and app links (Terminal → Ghostty) go through the MCP server's `profile_rename` and
-  `profile_set_app` after the import, so they're in the spec, not in the imported file.
+- **Import**: zip the profile folder into a temp `.streamDeckProfile`, `open` it, and wait (up to
+  two minutes) for a new `ProfilesV3/<uuid>.sdProfile` folder to appear: that's the sign you
+  confirmed the import. Then the next one. The folder each import created is recorded in
+  `~/.local/state/streamdeck-apply.json`; a profile is installed while its folder exists, so
+  re-runs skip it and renames in the app don't matter.
+- **Device type**: a profile's `Device.Model` says which device it's for; on a Mac without that
+  device, it's skipped and listed. A second device type gets its own profile.
+- **Export**: finds the profile in `ProfilesV3` by name, copies its folder into the repo, drops
+  machine state (the current page), and runs the scan.
+- **App links**: set after the import with the StreamDeck MCP server's `profile_set_app` (from
+  `app` in the spec), so they don't depend on what the file had.
+- **Plugins** (`.streamDeckPlugin`) and **icon packs**: opened the same way; installed when
+  `Plugins/<uuid>.sdPlugin` or `IconPacks/<id>` exists.
 
 What it doesn't do: delete profiles that aren't listed (it reports them), or change a profile that
-already exists (delete it in the app and re-run to get the spec's version). On a Mac whose
-profiles came from the old backup, the state file is empty, so the first run would import
-duplicates: `streamdeck-apply --adopt` records the existing profiles for spec entries instead,
-matched once by hand.
+already exists (delete it in the app and re-run to get the repo's version). The pack profiles on
+the XL today stay as they are until custom ones replace them.
 
-## Decisions needed
-
-1. **Own profiles as exported files in the public repo.** A `.streamDeckProfile` holds key images
-   and actions (URLs, hotkeys, BTT named-trigger names); anything private would have to stay out
-   of it, like the BTT preset. The alternative is the library (private), which makes the repo
-   depend on OneDrive for our own work too. Recommended: the repo.
-2. **Does `open` import silently?** Stream Deck may ask which device to import a profile to, or
-   show its profile window. Test once on the Mac with one pack variant; if it prompts, the
-   command says so and waits.
-3. **Pack variants vs from scratch.** The 2026-11-19 design says packs are reference only. If
-   that holds, the `[[pack]]` part matters only for the apps the own profiles don't cover yet
-   (Apple apps, Microsoft, Slack, CAD) and shrinks as they're replaced.
+Next: build the first custom profile (Ghostty), export it, then write `streamdeck-apply` against
+it, so the import and export are tested on a real file.
 
 ## Not chosen
 
+- **Installing pack profiles as they are**: they're a starting point; the custom profiles
+  replace them.
+- **Own profiles in the private library**: safer by default, but no history or review; the scan
+  and the BTT-trigger rule keep private details out of the repo instead.
 - **Restoring the app's backup** (today's way): a snapshot, not a spec; it carries whatever the
   old Mac had, including leftovers.
 - **Writing `ProfilesV3` directly**: undocumented format, and Stream Deck rewrites it while
