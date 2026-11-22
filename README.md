@@ -317,7 +317,8 @@ FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Comm
 Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
 the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
-Sync, weekly exports, the settings that stay on each Mac), Zoom's video shortcut, workstation apps (Brewfile, vendor
+Sync, weekly exports, the settings that stay on each Mac, and the echo-m365 sign-in its Generate TAP command needs: the
+`AdminAccount` from that repo's `tenant.psd1`), Zoom's video shortcut, workstation apps (Brewfile, vendor
 downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
 backup run, macOS settings and the Dock, desktop widgets, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
