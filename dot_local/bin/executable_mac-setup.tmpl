@@ -32,9 +32,13 @@ HOSTNAME_WANT="{{ .hostname }}"
 {{- if dig "is_server" false . }}
 TAG_WANT="tag:echo-core"
 ROLE="server"
+GH_TITLE="GitHub CLI without your personal login"
+DOPPLER_TITLE="Doppler without your personal login"
 {{- else }}
 TAG_WANT="tag:echo-admin"
 ROLE="workstation"
+GH_TITLE="GitHub CLI signed in"
+DOPPLER_TITLE="Doppler signed in"
 {{- end }}
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/mac-setup"
@@ -163,14 +167,20 @@ chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep 
 check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] && ! chezmoi_config_stale &&
                      chezmoi verify --exclude=scripts,templates >/dev/null 2>&1; }
 check_brewfile()   { brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile" >/dev/null 2>&1; }
-check_gh()         { gh auth status >/dev/null 2>&1; }
+# Servers don't carry your personal logins (the Mac has no FileVault): no GitHub login, or a
+# fine-grained token scoped to what runs there. `gh auth status` masks the token but keeps its
+# prefix: gho_ is a web login, ghp_ a classic token, github_pat_ a fine-grained one.
+gh_personal()      { gh auth status 2>&1 | grep -Eq 'Token: gh[op]_'; }
+check_gh()         { if workstation; then gh auth status >/dev/null 2>&1; else ! gh_personal; fi; }
 # With Desktop & Documents in iCloud on, iCloud Drive's Desktop and Documents are links to the
 # home folders; off, they're plain folders (or missing) and the home folders stay local.
 ICLOUD_DRIVE="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 check_icloud_docs(){ workstation || return 0; local d
                      for d in Desktop Documents; do [ "$(readlink "$ICLOUD_DRIVE/$d" 2>/dev/null)" = "$HOME/$d" ] || return 1; done; }
 check_icloud_local(){ workstation || return 0; [ "$(defaults read com.apple.bird optimize-storage 2>/dev/null)" != 1 ]; }
-check_doppler()    { doppler me >/dev/null 2>&1; }
+# Servers: no personal Doppler login ("type": "cli"); a service token scoped to what runs there.
+doppler_personal() { doppler me --json 2>/dev/null | grep -Eq '"type": *"cli"'; }
+check_doppler()    { if workstation; then doppler me >/dev/null 2>&1; else ! doppler_personal; fi; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
 check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
@@ -310,8 +320,10 @@ help_chezmoi()    { if chezmoi_config_stale; then echo "The dotfiles' config tem
 help_brewfile()   { echo "Brewfile packages missing."; }
 help_icloud_docs() { echo "Turn on Desktop & Documents in iCloud: System Settings > your name > iCloud > Drive > Desktop & Documents Folders. MDM can only allow it, not switch it on; Setup Assistant offers it too. Files from your other Macs' Desktop and Documents then appear here."; }
 help_icloud_local(){ echo "Turn off Optimize Mac Storage: System Settings > your name > iCloud. Desktop and Documents then stay downloaded, so Ninja Backup backs up real files (with Optimize on, iCloud swaps older files for placeholders that the backup can't read)."; }
-help_gh()         { echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too."; }
-help_doppler()    { echo "Doppler CLI not signed in."; }
+help_gh()         { if workstation; then echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too.";
+                    else echo "gh is signed in with your own GitHub login, which this server shouldn't keep (no FileVault). The action signs it out. If something here needs GitHub, use a fine-grained token limited to those repos: gh auth login --with-token."; fi; }
+help_doppler()    { if workstation; then echo "Doppler CLI not signed in.";
+                    else echo "Doppler is signed in with your own login, which this server shouldn't keep (no FileVault). The action signs it out. For what runs here, use a service token for that project and config: doppler configure set token <dp.st...> --scope <dir>."; fi; }
 help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found."; }
 help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WANT"). Rename it: admin console > Machines > ... > Edit machine name (turn off auto-generate). Replacing a Mac: rename the old machine first, or the new one gets a -1 suffix."; }
 help_ssh_server() { echo "Turn on Remote Login for your user only, so your other Macs can reach this one (VM copies, rsync). The action turns on sshd and limits it to $(id -un); same as System Settings > General > Sharing > Remote Login with 'Only these users'. Leave 'Allow full disk access for remote users' off."; }
@@ -409,8 +421,8 @@ act_ssh_server() {
   sudo dseditgroup -o edit -a "$me" -t user com.apple.access_ssh
 }
 act_brewfile()    { chezmoi apply; }
-act_gh()          { gh auth login --web --git-protocol https; }
-act_doppler()     { doppler login; }
+act_gh()          { if workstation; then gh auth login --web --git-protocol https; else gh auth logout --hostname github.com; fi; }
+act_doppler()     { if workstation; then doppler login; else doppler logout --yes; fi; }
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
 act_streamdeck()  { open "https://www.elgato.com/downloads"; }
 act_btt() {
@@ -514,8 +526,8 @@ op_browser:quick_access|1Password Quick Access on Cmd+Shift+Space|Tools
 op_browser:autofill|AutoFill from 1Password only (Apple Passwords off)|Tools
 chezmoi|Dotfiles applied|Dotfiles
 brewfile|Brewfile packages installed|Dotfiles
-gh|GitHub CLI signed in|Accounts
-doppler|Doppler signed in|Accounts
+gh|$GH_TITLE|Accounts
+doppler|$DOPPLER_TITLE|Accounts
 icloud_docs|Desktop & Documents in iCloud|Accounts
 icloud_local|iCloud keeps files downloaded (Optimize Mac Storage off)|Accounts
 tailscale|Tailscale connected|Network

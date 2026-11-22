@@ -237,6 +237,25 @@ test_gh_and_doppler_signed_out() {
   assert_open "GitHub CLI signed in"; assert_open "Doppler signed in"
 }
 
+test_server_flags_personal_logins() {
+  stub gh 'echo "  - Token: gho_************************************" >&2; exit 0'
+  stub doppler 'echo "{\"type\":\"cli\",\"name\":\"x\"}"'
+  run "$SCRIPT_SERVER" --status
+  assert_open "GitHub CLI without your personal login"; assert_open "Doppler without your personal login"
+  run "$SCRIPT" --status
+  assert_done "GitHub CLI signed in"; assert_done "Doppler signed in"
+}
+
+test_server_accepts_scoped_tokens_or_none() {
+  stub gh 'echo "  - Token: github_pat_*************************" >&2; exit 0'
+  stub doppler 'echo "{\"type\":\"service_token\"}"'
+  run "$SCRIPT_SERVER" --status
+  assert_done "GitHub CLI without your personal login"; assert_done "Doppler without your personal login"
+  stub gh 'exit 1'; stub doppler 'exit 1'
+  run "$SCRIPT_SERVER" --status
+  assert_done "GitHub CLI without your personal login"; assert_done "Doppler without your personal login"
+}
+
 test_tailscale_stopped() {
   stub tailscale 'echo "{ \"BackendState\": \"Stopped\" }"'
   run "$SCRIPT" --status
