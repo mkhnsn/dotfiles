@@ -66,6 +66,8 @@ if [ -t 1 ]; then G=$'\e[32m'; Y=$'\e[33m'; D=$'\e[2m'; B=$'\e[1m'; R=$'\e[0m'; 
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 ts_bin() {
   command -v tailscale 2>/dev/null && return 0
+  # Servers: the root-owned copy the echo-core playbook runs tailscaled from.
+  [ -x /usr/local/libexec/tailscale/tailscale ] && echo /usr/local/libexec/tailscale/tailscale && return 0
   [ -x "$APPS/Tailscale.app/Contents/MacOS/Tailscale" ] && echo "$APPS/Tailscale.app/Contents/MacOS/Tailscale"
 }
 ts_json() { local t; t="$(ts_bin)" || return 1; [ -n "$t" ] && "$t" status --json --peers=false 2>/dev/null; }
@@ -184,11 +186,15 @@ doppler_personal() { local t; t="$(doppler me --json --scope / 2>/dev/null | sed
                      case "$t" in ""|service_token|service_account) return 1 ;; *) return 0 ;; esac; }
 check_doppler()    { if workstation; then doppler me >/dev/null 2>&1; else ! doppler_personal; fi; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
+# Servers run the open-source tailscaled from the echo-core playbook (decision 0006); the app
+# only connects after someone signs in, and the two variants can't run side by side.
+check_ts_app()     { workstation || [ ! -d "$APPS/Tailscale.app" ]; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
 check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
 check_ts_tag()     { ts_json | grep -q "\"$TAG_WANT\""; }
 # Remote Login (macOS sshd), limited to you through the com.apple.access_ssh group.
-# Tailscale SSH isn't an option: the Tailscale app build on macOS can't run its SSH server.
+# Tailscale SSH isn't used: the app build on workstations can't run its SSH server, and
+# servers (tailscaled) keep Remote Login until Tailscale SSH has been tried there.
 ssh_listening()    { nc -z -G 2 127.0.0.1 22 >/dev/null 2>&1; }
 check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh >/dev/null 2>&1 &&
                      dsmemberutil checkmembership -U "$(id -un)" -G com.apple.access_ssh 2>/dev/null | grep -q "is a member"; }
@@ -332,7 +338,9 @@ help_gh()         { if workstation; then echo "GitHub CLI not signed in. The act
                     else echo "gh is signed in with your own GitHub login, which this server shouldn't keep (no FileVault). The action signs it out; that doesn't revoke the token, so revoke it at https://github.com/settings/applications too. If something here needs GitHub, use a fine-grained token limited to those repos: gh auth login --with-token."; fi; }
 help_doppler()    { if workstation; then echo "Doppler CLI not signed in.";
                     else echo "Doppler is signed in with your own login, which this server shouldn't keep (no FileVault). The action signs it out. For what runs here, use a service token for that project and config: doppler configure set token <dp.st...> --scope <dir>."; fi; }
-help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found."; }
+help_tailscale()  { if workstation; then echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found.";
+                    else echo "Tailscale isn't connected. Servers run tailscaled from the echo-core playbook (echo-macaroni-base.yml, decision 0006): run it from your Mac over the LAN with a single-use auth key tagged $TAG_WANT."; fi; }
+help_ts_app()     { echo "The Tailscale app is installed. Servers use tailscaled, set up by the echo-core playbook. Uninstall the app (not --zap, which deletes tailscaled's state), restart, then run the playbook again so tailscaled is up."; }
 help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WANT"). Rename it: admin console > Machines > ... > Edit machine name (turn off auto-generate). Replacing a Mac: rename the old machine first, or the new one gets a -1 suffix."; }
 help_ssh_server() { echo "Turn on Remote Login for your user only, so your other Macs can reach this one (VM copies, rsync). The action turns on sshd and limits it to $(id -un); same as System Settings > General > Sharing > Remote Login with 'Only these users'. Leave 'Allow full disk access for remote users' off."; }
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
@@ -436,7 +444,12 @@ act_gh()          { if workstation; then gh auth login --web --git-protocol http
                     elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "    Unset GH_TOKEN/GITHUB_TOKEN first (see above)."
                     else gh auth logout --hostname github.com; fi; }
 act_doppler()     { if workstation; then doppler login; else doppler logout --yes --scope /; fi; }
+{{- if not (dig "is_server" false .) }}
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
+{{- end }}
+act_ts_app()      { if brew list --cask tailscale-app >/dev/null 2>&1; then brew uninstall --cask tailscale-app
+                    else echo "    Not from Homebrew: quit Tailscale, move it from /Applications to the Trash and approve removing its system extension."; return 0; fi &&
+                    echo "    Restart now, then run the echo-core playbook from your Mac."; }
 act_streamdeck()  { open "https://www.elgato.com/downloads"; }
 act_btt() {
   if btt_user_copy; then
@@ -544,6 +557,7 @@ gh|$GH_TITLE|Accounts
 doppler|$DOPPLER_TITLE|Accounts
 icloud_docs|Desktop & Documents in iCloud|Accounts
 icloud_local|iCloud keeps files downloaded (Optimize Mac Storage off)|Accounts
+ts_app|No Tailscale app (servers use tailscaled)|Network
 tailscale|Tailscale connected|Network
 ts_name|Tailscale name is $(lower "$HOSTNAME_WANT")|Network
 ts_tag|Tailscale tag $TAG_WANT|Network

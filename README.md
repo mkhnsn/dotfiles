@@ -282,7 +282,8 @@ On Macs chezmoi also writes:
   authorized keys"): the Echo-Net Admin key and Blink Shell's keys on the iPad and iPhone.
 
 Incoming SSH needs Remote Login, which `mac-setup` turns on for your user only. Tailscale
-SSH isn't an option on Macs: the Tailscale app build can't run its SSH server.
+SSH isn't used: the app build on workstations can't run its SSH server, and servers
+(`tailscaled`, which could) keep Remote Login until it's been tried there.
 
 ### Reclaiming disk space across clones
 
@@ -340,7 +341,9 @@ Things to know on a FileVault Mac:
   versioned path). Deny it: nothing in this setup needs it.
 
 The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
-`tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
+`tag:echo-admin` otherwise. Servers run the open-source `tailscaled` set up by
+echo-core's playbook (decision 0006), so `mac-setup` flags the Tailscale app there instead
+of installing it, and `run_once_02-tailscale` leaves Tailscale to the playbook. The full runbook is in `unstable-studios/echo-core`
 (`docs/devices/README.md`).
 
 On servers, `gh` and Doppler mustn't carry your personal logins (an always-on Mac has no
