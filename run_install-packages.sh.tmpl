@@ -4,6 +4,7 @@ set -euo pipefail
 # Brewfile.workstation hash: {{ include "Brewfile.workstation" | sha256sum }}
 # cargo-packages: markless
 # uv-tools: specify-cli ntfy copier wireviz
+# pwsh-modules: Microsoft.Graph.Authentication
 
 {{ template "todo.sh" }}
 # linux-pkg-v5
@@ -27,6 +28,24 @@ install_uv_tools() {
   command -v copier >/dev/null 2>&1 || uv tool install copier || true
   # The unstable-studios fork (--strict, --merge); projects like kz305 pin their own copy.
   command -v wireviz >/dev/null 2>&1 || uv tool install 'wireviz @ git+https://github.com/unstable-studios/WireViz' || true
+}
+
+# ---- PowerShell modules (macOS; pwsh comes from the Brewfile) ----
+# Microsoft.Graph.Authentication: the echo-m365 and mclean-iac tenant scripts call Graph
+# through Invoke-MgGraphRequest and need only this module. CurrentUser scope installs to
+# ~/.local/share/powershell/Modules/<name>/<version>; checking for a version folder keeps
+# pwsh from starting on every apply.
+PWSH_MODULES=(Microsoft.Graph.Authentication)
+
+install_pwsh_modules() {
+  command -v pwsh >/dev/null 2>&1 || return 0
+  local mod
+  for mod in "${PWSH_MODULES[@]}"; do
+    ls -d "$HOME/.local/share/powershell/Modules/$mod"/*/ >/dev/null 2>&1 && continue
+    pwsh -NoProfile -NonInteractive -Command \
+      "Install-PSResource -Name $mod -Scope CurrentUser -TrustRepository -AcceptLicense -Quiet" ||
+      todo "PowerShell: install $mod by hand: pwsh -c 'Install-PSResource $mod -Scope CurrentUser -TrustRepository'"
+  done
 }
 
 want_cmds=(git fzf bat zoxide)
@@ -123,6 +142,7 @@ if [[ "$os" == "darwin" ]]; then
   [[ -r "$HOME/.fzf.zsh" ]] || "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
   install_cargo_packages
   install_uv_tools
+  install_pwsh_modules
 {{ if .full_setup }}
   brew install code-server 2>/dev/null || true
 {{ end }}
