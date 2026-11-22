@@ -78,14 +78,15 @@ confirmed() { [ -f "$STATE_DIR/$(state_key "$1")" ] || [ -f "$STATE_DIR/${1%%:*}
 workstation() { [ "$ROLE" = workstation ]; }
 
 # Apps with no Homebrew cask: app bundle | where to get it | download file name (extended
-# regex, case-insensitive) that act_vendor looks for in ~/Downloads to install from.
+# regex, case-insensitive, no "|": it's the field separator) that act_vendor looks for in
+# ~/Downloads to install from.
 VENDOR_APPS="OpenSCAD|https://openscad.org/downloads.html|openscad
 Festivitas|https://festivitas.app|festivitas
 Cursorful|https://cursorful.com|cursorful
 HueForge|https://shop.thehueforge.com/apps/download|^hueforge_macos
 MASSO Link|https://docs.masso.com.au/getting-started-guides/machining-with-masso/wi-fi-connectivity/masso_link|masso_link
 EXStar Hub|https://www.einstar.com/pages/download-center-einstar-rockit|exstar.?hub
-3DconnexionSettings|https://3dconnexion.com/drivers|3dxware|3dconnexion"
+3DconnexionSettings|https://3dconnexion.com/drivers|3d[xc]"
 vendor_steps() { local name
   while IFS='|' read -r name _; do echo "vendor:$name|$name installed|Apps"; done <<EOF2
 $VENDOR_APPS
@@ -106,22 +107,30 @@ vendor_download() { local p f best=""; p="$(vendor_pattern "$1")"; [ -n "$p" ] |
   [ -n "$best" ] && echo "$best"; }
 # Install an app from a download: copy its .app into /Applications, or run its .pkg.
 # Anything else (an installer app, several apps) is opened in Finder to finish by hand.
-install_download() { local f="$1" app="$2" dir tmp mnt="" found
+install_download() { local f="$1" app="$2" dir="" tmp="" mnt="" found rc=0
   case "$f" in
-    *.pkg|*.PKG) echo "    Installing $(basename "$f") (asks for your password)..."; sudo installer -pkg "$f" -target / ; return ;;
-    *.zip|*.ZIP) tmp="$(mktemp -d)"; ditto -x -k "$f" "$tmp" || return 1; dir="$tmp" ;;
-    *.dmg|*.DMG) mnt="$(mktemp -d)"; hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$f" >/dev/null || return 1; dir="$mnt" ;;
+    *.pkg|*.PKG) echo "    Installing $(basename "$f") (asks for your password)..."; sudo installer -pkg "$f" -target /; return ;;
+    *.zip|*.ZIP) tmp="$(mktemp -d)"; ditto -x -k "$f" "$tmp" || { rm -rf "$tmp"; return 1; }; dir="$tmp" ;;
+    *.dmg|*.DMG) mnt="$(mktemp -d)"
+                 # No stdin: a DMG with a license agreement fails here instead of waiting unseen.
+                 hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$mnt" "$f" </dev/null >/dev/null ||
+                   { rmdir "$mnt"; echo "    Couldn't mount $(basename "$f") (it may show a license first); opening it."; open "$f"; return 1; }
+                 dir="$mnt" ;;
   esac
   found="$(find "$dir" -maxdepth 2 -name "$app.app" -prune 2>/dev/null | head -1)"
   if [ -n "$found" ]; then
-    echo "    Copying $app.app to $APPS..."; ditto "$found" "$APPS/$app.app"
+    echo "    Copying $app.app to $APPS..."; ditto "$found" "$APPS/$app.app" || rc=$?
   elif found="$(find "$dir" -maxdepth 2 -name '*.pkg' 2>/dev/null | head -1)"; [ -n "$found" ]; then
-    echo "    Installing $(basename "$found") (asks for your password)..."; sudo installer -pkg "$found" -target /
+    echo "    Installing $(basename "$found") (asks for your password)..."; sudo installer -pkg "$found" -target / || rc=$?
   else
-    echo "    No $app.app in $(basename "$f"); opening it so you can finish the install."; open "$dir"; return 0
+    echo "    No $app.app in $(basename "$f"); opening it so you can finish the install."
+    [ -n "$mnt" ] && echo "    Eject it afterwards (hdiutil detach \"$mnt\")."
+    open "$dir"; return 0
   fi
-  [ -n "$mnt" ] && hdiutil detach -quiet "$mnt"
-  return 0
+  [ -n "$mnt" ] && { hdiutil detach -quiet "$mnt"; rmdir "$mnt" 2>/dev/null; }
+  [ -n "$tmp" ] && rm -rf "$tmp"
+  [ "$rc" = 0 ] || echo "    Install failed ($rc)."
+  return "$rc"
 }
 # Apps to sign in to or activate: label | app to open | note.
 LICENSES="Microsoft 365 (Office)|Microsoft Word|
@@ -405,7 +414,8 @@ help_containers()  { if colima_at_login; then echo "Colima starts at login but i
 help_ollama()      { echo "Run Ollama's server at login (brew services). Models are stored in ~/.ollama."; }
 help_vendor()     { local f; f="$(vendor_download "$1")"
                     if [ -n "$f" ]; then echo "$1 has no Homebrew cask. Found $(basename "$f") in Downloads; install from it."
-                    else echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1"); mac-setup then installs it from Downloads."; fi; }
+                    else echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1"); mac-setup then installs it from Downloads."; fi
+                    echo "    If macOS blocks it on first open, allow it in System Settings > Privacy & Security > Open Anyway."; }
 help_hueforge_plugins() { echo "Install your HueForge plugins ($HUEFORGE_PLUGINS): Plugins > Install Plugin in HueForge, pick each plugin's zip (from the same download page), then accept its signature. HueForge itself has no license to enter: the download from your account is the license."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
 help_license()    { local n; n="$(license_field "$1" 3)"; echo "Open $1 and sign in or enter its license.${n:+ $n}"; }
@@ -505,7 +515,8 @@ act_vendor()      { local f; f="$(vendor_download "$1")"
                       while [ -z "$f" ]; do read -r -t 3 _; [ $? -le 128 ] && return 0; f="$(vendor_download "$1")"; done
                     fi
                     install_download "$f" "$1"; }
-act_hueforge_plugins() { local z; for z in "$DOWNLOADS"/*Plugin_MacOS*.zip; do [ -f "$z" ] && open -a HueForge "$z"; done
+act_hueforge_plugins() { local z; [ -d "$APPS/HueForge.app" ] || { echo "    Install HueForge first."; return 0; }
+                    for z in "$DOWNLOADS"/*Plugin_MacOS*.zip; do [ -f "$z" ] && open -a HueForge "$z"; done
                     echo "    If HueForge didn't offer to install them, use Plugins > Install Plugin."; }
 act_containers()   {
   colima_at_login || brew services start colima || return 1

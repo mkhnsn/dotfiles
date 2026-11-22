@@ -184,7 +184,12 @@ QUIT_WAIT = int(os.environ.get("APP_PREFS_QUIT_WAIT", "20"))  # seconds; overrid
 
 def quit_app(domain, wait=QUIT_WAIT):
     """Ask the app to quit (it saves its own settings first); True once it's gone."""
-    subprocess.run(["osascript", "-e", f'tell application id "{domain}" to quit'], capture_output=True)
+    r = subprocess.run(["osascript", "-e", f'tell application id "{domain}" to quit'], capture_output=True, text=True)
+    if r.returncode != 0:
+        # Most often -1743: this terminal isn't allowed to control the app
+        # (System Settings > Privacy & Security > Automation).
+        print(f"{domain}: couldn't ask it to quit: {r.stderr.strip()}")
+        return False
     for _ in range(wait * 2):
         if not running(domain):
             return True

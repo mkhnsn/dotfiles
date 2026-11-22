@@ -514,6 +514,34 @@ test_vendor_app_installs_from_download() {
   [ -d "$MAC_SETUP_APPS/HueForge.app" ] || fail "HueForge.app wasn't installed"
 }
 
+test_vendor_downloads_match_their_apps() {
+  # The real download names; each app must find its own file and nothing else.
+  for f in Cursorful-Mac-1.2.0-Installer.dmg "EXStar Hub_v2.1.0-11_Release.pkg" Festivitas-1.9.4.zip \
+           FlatForgePlugin_MacOS_1.2.1.zip HueForge_MacOS_v0.9.4.4.zip HugeForgePlugin_MacOS_1.2.0.zip \
+           MASSO_Link-2.15.0-macOS-AppleSilicon.dmg OpenSCAD-2026.11-RC0.dmg 3DxWare10-10-9-1.dmg "file 3d.zip"; do
+    touch "$MAC_SETUP_DOWNLOADS/$f"
+  done
+  for a in OpenSCAD Festivitas Cursorful HueForge "MASSO Link" "EXStar Hub" 3DconnexionSettings; do rm -rf "$MAC_SETUP_APPS/$a.app"; done
+  printf 'n\ns\nn\ns\nn\ns\nn\ns\nn\ns\nn\ns\nn\ns\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Found OpenSCAD-2026.11-RC0.dmg"; assert_has "Found Festivitas-1.9.4.zip"
+  assert_has "Found Cursorful-Mac-1.2.0-Installer.dmg"; assert_has "Found HueForge_MacOS_v0.9.4.4.zip"
+  assert_has "Found MASSO_Link-2.15.0-macOS-AppleSilicon.dmg"; assert_has "Found EXStar Hub_v2.1.0-11_Release.pkg"
+  assert_has "Found 3DxWare10-10-9-1.dmg"
+}
+
+test_vendor_dmg_copies_app_and_ejects() {
+  rm -rf "$MAC_SETUP_APPS/OpenSCAD.app"
+  touch "$MAC_SETUP_DOWNLOADS/OpenSCAD-2026.11-RC0.dmg"
+  # hdiutil attach puts OpenSCAD.app at the mountpoint; detach is logged.
+  stub hdiutil "case \"\$1\" in attach) shift; while [ \"\$1\" != -mountpoint ]; do shift; done; mkdir -p \"\$2/OpenSCAD.app\" ;; detach) echo detach >> \"$T/hdiutil.log\" ;; esac"
+  stub ditto 'cp -R "$1" "$2"'
+  printf 'y\n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  [ -d "$MAC_SETUP_APPS/OpenSCAD.app" ] || fail "OpenSCAD.app wasn't installed"
+  grep -q detach "$T/hdiutil.log" || fail "the DMG wasn't ejected"
+}
+
 test_vendor_pkg_download_uses_installer() {
   rm -rf "$MAC_SETUP_APPS/EXStar Hub.app"
   touch "$MAC_SETUP_DOWNLOADS/EXStar Hub_v2.1.0-11_Release.pkg"

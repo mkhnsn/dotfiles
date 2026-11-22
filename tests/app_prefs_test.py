@@ -33,6 +33,8 @@ case " $run " in *" $id "*) echo "ASN:0x0-0x1-\\"$id\\":" ;; esac
 """
 # fake osascript: "quit" empties $FAKE_RUN_FILE unless $FAKE_STUBBORN is set
 FAKE_OSASCRIPT = """#!/bin/sh
+echo "$2" >> "$FAKE_OPENED.osascript"
+[ -n "${FAKE_DENIED:-}" ] && { echo "Not authorized to send Apple events (-1743)" >&2; exit 1; }
 [ -n "${FAKE_STUBBORN:-}" ] || : > "$FAKE_RUN_FILE"
 """
 # fake open: records the bundle id it was asked to open
@@ -128,6 +130,29 @@ class AppPrefs(unittest.TestCase):
         self.assertEqual(self.read_mac("com.example.app"), {"showIcons": True})
         with open(opened) as f:
             self.assertIn("com.example.app", f.read())
+        with open(opened + ".osascript") as f:
+            self.assertIn('tell application id "com.example.app" to quit', f.read())
+
+    def test_apply_restart_leaves_stopped_app_closed(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        self.mac("com.example.app", {"showIcons": False})
+        opened = os.path.join(self.t, "opened")
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file(""), FAKE_OPENED=opened)
+        self.assertEqual(r.returncode, 0)
+        self.assertEqual(self.read_mac("com.example.app"), {"showIcons": True})
+        self.assertFalse(os.path.exists(opened))
+        self.assertFalse(os.path.exists(opened + ".osascript"))
+
+    def test_apply_restart_reports_denied_automation(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        self.mac("com.example.app", {"showIcons": False})
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file("com.example.app"),
+                          FAKE_DENIED="1", FAKE_OPENED=os.path.join(self.t, "opened"))
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("-1743", r.stdout)
+        self.assertEqual(self.read_mac("com.example.app"), {"showIcons": False})
 
     def test_apply_restart_leaves_matching_app_running(self):
         self.mac("com.example.app", {"showIcons": True})
