@@ -24,6 +24,10 @@ setup() {
   mkdir -p "$T/OneDrive"
   STUBS="$HOME/.local/bin"
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
+  mkdir -p "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents"
+  printf '<dict>\n\t<key>CFBundleShortVersionString</key>\n\t<string>8.0.1</string>\n</dict>\n' > "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Info.plist"
+  mkdir -p "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers"
+  printf '#!/bin/sh\n' > "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"; chmod +x "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"
   export PATH="$STUBS:/usr/bin:/bin"
   # Everything passes by default; tests break one thing at a time.
   stub uname       '[ "${1:-}" = -m ] && echo arm64 || echo Darwin'
@@ -75,7 +79,6 @@ setup() {
   mark_done licences
   mark_done op_browser
   mark_done app_exports
-  mark_done export_BetterMouse
   mkdir -p "$HOME/.claude/projects/-Users-x-src/memory"; touch "$HOME/.claude/projects/-Users-x-src/memory/user.md"
   mark_done vm
   mark_done raycast_sync
@@ -298,6 +301,18 @@ test_btt_move_fails_reopens_old_copy() {
   [ -d "$HOME/Applications/BetterTouchTool.app" ] || fail "old copy gone"
 }
 
+test_streamdeck_7_is_flagged() {
+  sed -i.bak 's/8\.0\.1/7.6.1/' "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Info.plist"
+  rm "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"
+  run "$SCRIPT" --status
+  assert_open "Stream Deck 8 installed (for its MCP server)"
+  printf 'n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Stream Deck is 7.x"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Stream Deck 8 installed (for its MCP server)"
+}
+
 test_btt_preset_missing() {
   has_python || return 0
   stub osascript 'echo "no triggers"'
@@ -348,9 +363,9 @@ test_manual_steps_start_open() {
   assert_open "FileVault key saved to 1Password"; assert_open "Activation Lock code saved to 1Password"
   assert_open "Fusion signed in or activated"; assert_open "Claude signed in or activated"
   assert_open "Chrome signed in to your Google profile"; assert_open "1Password connected to the browser"
-  assert_open "1Password Quick Access on Cmd+Shift+Space"
+  assert_open "1Password Quick Access on Cmd+Shift+Space"; assert_open "AutoFill from 1Password only (Apple Passwords off)"
   assert_open "Stream Deck export restored"; assert_open "BetterDisplay export restored"
-  assert_open "BetterMouse export restored"
+  assert_lacks "BetterMouse export restored"
   assert_open "Virtual machines moved"; assert_open "Ninja Remote Screen Recording approved"
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
   assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
@@ -660,12 +675,6 @@ test_onedrive_must_be_signed_in() {
   rm -rf "$T/OneDrive"
   run "$SCRIPT" --status
   assert_open "OneDrive signed in (Unstable Studios)"
-}
-
-test_new_export_not_covered_by_old_confirmation() {
-  rm -f "$XDG_STATE_HOME/mac-setup/export_BetterMouse"
-  run "$SCRIPT" --status
-  assert_done "Stream Deck export restored"; assert_open "BetterMouse export restored"
 }
 
 test_icloud_docs_needs_both_links() {
