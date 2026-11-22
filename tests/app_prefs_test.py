@@ -177,7 +177,12 @@ class AppPrefs(unittest.TestCase):
         self.run_tool("export")
         self.mac(self.BM, items([11, back, 10, click]))
         self.assertEqual(self.run_tool("check").returncode, 0, self.run_tool("diff").stdout)
-        self.mac(self.BM, items([11, click, 10, back]))
+        # The same mapping saved with its dict keys in another order still matches.
+        self.mac(self.BM, items([10, [0, [{"x": 1, "y": 2}, 1]], 11, back]))
+        self.run_tool("export")
+        self.mac(self.BM, items([11, back, 10, [0, [{"y": 2, "x": 1}, 1]]]))
+        self.assertEqual(self.run_tool("check").returncode, 0, self.run_tool("diff").stdout)
+        self.mac(self.BM, items([11, click, 10, [0, [{"y": 2, "x": 1}, 1]]]))
         self.assertEqual(self.run_tool("check").returncode, 1)
 
     def test_bettermouse_other_lists_keep_their_order(self):
