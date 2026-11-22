@@ -33,6 +33,9 @@ jobs:
       - name: mac-setup tests (bash 5)
         run: bash tests/mac-setup.test.sh
 
+      - name: chezmoiignore tests (1Password files skipped when secrets can't be read)
+        run: bash tests/chezmoiignore.test.sh
+
       - name: app-prefs tests (and guard on committed settings)
         run: python3 -I tests/app_prefs_test.py
 
