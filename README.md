@@ -431,7 +431,7 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
   A test checks the committed preset.
 
 `mac-setup` compares BTT's global keyboard shortcuts and move/resize modifier keys with the
-preset's, so it asks for a re-import when the preset gains either after an earlier import. If BTT then lists two
+preset's, so it asks for a re-import when they differ after an earlier import. If BTT then lists two
 presets named Default, delete the older one.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard

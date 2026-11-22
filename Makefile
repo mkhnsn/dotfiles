@@ -21,7 +21,7 @@ bootstrap-scripts:
 
 test:
 	@tests/render.sh
-	@shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults
+	@shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults dot_local/bin/executable_3dx-sync
 	@shellcheck -S warning -s bash tests/*.sh install.sh
 	@/bin/bash tests/mac-setup.test.sh
 	@/bin/bash tests/chezmoiignore.test.sh

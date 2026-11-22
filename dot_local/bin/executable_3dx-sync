@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sync the 3Dconnexion (SpaceMouse) settings with the dotfiles repo (macos/3dconnexion/).
 #   3dx-sync export   this Mac -> repo (then review and commit the diff)
-#   3dx-sync import   repo -> this Mac (after installing 3DxWare from 3dconnexion.com)
+#   3dx-sync import   repo -> this Mac (after installing 3DxWare; quit apps that use the SpaceMouse first)
 #   3dx-sync check    exit 0 if every saved file matches this Mac's
 # Carries per-app navigation settings (navlib/*.user.config) and button assignments
 # (Cfg/*.xml). Other files there are driver state. The repo is public; these files hold
@@ -31,11 +31,14 @@ files() {
 case "${1:-}" in
   export)
     [[ -d "$live" ]] || { echo "3dx-sync: no $live; install 3DxWare and open its settings once"; exit 1; }
+    list="$(files "$live")"
+    [[ -n "$list" ]] || { echo "3dx-sync: no settings in $live yet; change one in 3DxWare first (import restores saved ones)"; exit 1; }
     rm -rf "$repo"
     while IFS= read -r f; do
       mkdir -p "$repo/${f%/*}"
       cp "$live/$f" "$repo/$f"
-    done < <(files "$live")
+      chmod 644 "$repo/$f"
+    done <<<"$list"
     echo "Exported to $repo"
     git -C "${repo%/*}" status --short -- "$repo" || true
     ;;
@@ -45,7 +48,7 @@ case "${1:-}" in
       mkdir -p "$live/${f%/*}"
       cp "$repo/$f" "$live/$f"
     done < <(files "$repo")
-    echo "Imported into $live. Quit and reopen apps that use the SpaceMouse."
+    echo "Imported into $live. Open apps that use the SpaceMouse again to load it."
     ;;
   check)
     [[ -d "$repo" ]] || exit 0
