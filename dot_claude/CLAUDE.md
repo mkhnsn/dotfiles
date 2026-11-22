@@ -12,6 +12,7 @@ rules (frontend, Node, Cloudflare, CI) live in `~/.claude/rules/` and load with 
 - US English everywhere: license, color, behavior, meter.
 - Deliver files, not Claude Docs: xlsx or csv for anything with numbers, Markdown in the repo for designs. Summaries for clients are paste-ready Slack text in a code block, written as me.
 - User-facing text (labels, help, errors, confirmations) follows the `ui-copy` skill: say what something is or what to do, briefly; no commentary.
+- Slide decks follow the `deck-copy` skill: headlines are claims, facts instead of adjectives, no slogan formulas.
 
 ## Working
 - Fetch live docs for any API, spec or datasheet the work depends on; don't rely on recollection. Cite the URL.
