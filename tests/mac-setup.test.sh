@@ -84,6 +84,7 @@ setup() {
   mark_done raycast_sync
   mark_done raycast_local
   mark_done zoom
+  mark_done widgets
   mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac"
   touch "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/Raycast.rayconfig"
   stub app-prefs 'exit 0'
@@ -369,8 +370,8 @@ test_manual_steps_start_open() {
   assert_open "Virtual machines moved"; assert_open "Ninja Remote Screen Recording approved"
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
   assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
-  assert_open "Zoom video shortcut is ⌃⇧⌘V"
-  assert_has "28 step(s) left"
+  assert_open "Zoom video shortcut is ⌃⇧⌘V"; assert_open "Desktop widgets placed"
+  assert_has "29 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -444,8 +445,18 @@ test_default_browser_safari() {
   assert_open "Default browser is Chrome"
 }
 
+test_widgets_step_opens_desktop_settings() {
+  rm -f "$XDG_STATE_HOME/mac-setup/widgets"
+  stub open "echo \"open \$*\" >> '$T/opened'"
+  printf 'y\ny\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Edit Widgets"; assert_has "All done."
+  grep -q 'com.apple.Desktop-Settings.extension' "$T/opened" || fail "Desktop & Dock settings not opened"
+  [ -f "$XDG_STATE_HOME/mac-setup/widgets" ] || fail "widgets not remembered"
+}
+
 test_server_skips_workstation_steps() {
-  rm -rf "$MAC_SETUP_APPS"/*.app "$XDG_STATE_HOME/mac-setup/licences"
+  rm -rf "$MAC_SETUP_APPS"/*.app "$XDG_STATE_HOME/mac-setup/licences" "$XDG_STATE_HOME/mac-setup/widgets"
   stub defaults 'exit 1'
   stub mac-defaults 'echo "  Dock: dockutil not installed"; exit 1'
   stub brew "case \"\$*\" in *Brewfile.workstation*) exit 1 ;; --prefix) echo $T/brew ;; esac; exit 0"
@@ -454,7 +465,7 @@ test_server_skips_workstation_steps() {
   assert_done "gridfinity-studio installed"; assert_done "Slack signed in or activated"
   assert_done "Default browser is Chrome"
   assert_done "BetterTouchTool installed from folivora.ai"
-  assert_done "macOS settings and Dock"
+  assert_done "macOS settings and Dock"; assert_done "Desktop widgets placed"
 }
 
 # ---- mac-defaults ------------------------------------------------------------------

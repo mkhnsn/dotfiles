@@ -40,7 +40,9 @@ NSGlobalDomain|NSAutomaticSpellingCorrectionEnabled|bool|false
 NSGlobalDomain|AppleKeyboardUIMode|int|2
 NSGlobalDomain|com.apple.swipescrolldirection|bool|true
 com.apple.screencapture|show-thumbnail|bool|true
-com.apple.WindowManager|EnableStandardClickToShowDesktop|bool|false"
+com.apple.WindowManager|EnableStandardClickToShowDesktop|bool|false
+com.apple.WindowManager|StandardHideWidgets|bool|false
+com.apple.WindowManager|StageManagerHideWidgets|bool|false"
 
 # Dock apps in order. System apps live in /System/Applications.
 DOCK_APPS="Google Chrome
