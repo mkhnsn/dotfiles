@@ -212,6 +212,7 @@ check_btt_mcp()    { workstation || return 0; nc -z -G 2 127.0.0.1 64832 >/dev/n
 check_raycast_sync(){ workstation || return 0; confirmed raycast_sync; }
 check_raycast_local(){ workstation || return 0; confirmed raycast_local; }
 check_zoom()       { workstation || return 0; confirmed zoom; }
+check_widgets()    { workstation || return 0; confirmed widgets; }
 check_remote()     { confirmed remote; }
 # Casks whose app is already installed in a way Homebrew can't take over (see brew-why).
 ws_skip()          { command -v brew-why >/dev/null 2>&1 && brew-why --skip --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null; }
@@ -342,6 +343,7 @@ help_tm_no_vms()  { echo "Keep virtual machines out of Time Machine: tmutil adde
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
 help_streamdeck() { echo "Stream Deck is $(streamdeck_major || echo '?').x; Claude Code's StreamDeck MCP server needs 8. Install the Stream Deck 8 beta from elgato.com (Downloads > Stream Deck) over it; it keeps your profiles."; }
+help_widgets()     { echo "Add the desktop widgets by hand: right-click the desktop > Edit Widgets, and match your other Mac. Their layout and settings are in protected containers that can't be exported. Widget style, Dim widgets and iPhone widgets are in System Settings > Desktop & Dock > Widgets; showing widgets on the desktop and in Stage Manager is set by the macOS settings step."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
 
 # ---- Actions: what this script can do itself (optional) --------------------------
@@ -469,6 +471,7 @@ act_raycast_backup(){ check_onedrive || { echo "    Sign in to OneDrive first.";
                      mkdir -p "$RAYCAST_EXPORTS"; open -a Raycast; }
 act_raycast_local(){ open -a Raycast; }
 act_zoom()        { open -a zoom.us; }
+act_widgets()     { open "x-apple.systempreferences:com.apple.Desktop-Settings.extension"; }
 
 # ---- Steps, in order: id | title | phase -------------------------------------------
 
@@ -524,11 +527,12 @@ remote|Ninja Remote Screen Recording approved|Apps
 ninja_backup|Ninja Backup deployed to this Mac|Apps
 ninja_backup_run|First Ninja Backup run succeeded|Apps
 defaults|macOS settings and Dock|Settings
+widgets|Desktop widgets placed|Settings
 timemachine|Time Machine backs up to echo-nas|Settings
 tm_no_vms|Virtual machines kept out of Time Machine|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote ninja_backup_run license op_browser export vm raycast_sync raycast_local zoom "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup_run license op_browser export vm raycast_sync raycast_local zoom widgets "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.
