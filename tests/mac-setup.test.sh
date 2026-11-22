@@ -305,6 +305,22 @@ test_server_expects_core_tag() {
   assert_open "Tailscale tag tag:echo-core"
 }
 
+test_server_flags_tailscale_app() {
+  mkdir -p "$MAC_SETUP_APPS/Tailscale.app"
+  run "$SCRIPT_SERVER" --status
+  assert_open "No Tailscale app (servers use tailscaled)"
+  run "$SCRIPT" --status
+  assert_done "No Tailscale app (servers use tailscaled)"
+}
+
+test_server_tailscale_points_to_playbook() {
+  stub tailscale 'echo "{ \"BackendState\": \"Stopped\" }"'
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT_SERVER"
+  assert_has "echo-core playbook"
+  assert_lacks "Install the app, open it"
+}
+
 test_btt_from_homebrew_is_flagged() {
   mkdir -p "$T/brew/Caskroom/bettertouchtool"
   run "$SCRIPT" --status

@@ -340,7 +340,8 @@ Things to know on a FileVault Mac:
   versioned path). Deny it: nothing in this setup needs it.
 
 The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
-`tag:echo-admin` otherwise. The full runbook is in `unstable-studios/echo-core`
+`tag:echo-admin` otherwise. Servers run the open-source `tailscaled` set up by echo-core's
+playbook (decision 0006), so `mac-setup` flags the Tailscale app there instead of installing it. The full runbook is in `unstable-studios/echo-core`
 (`docs/devices/README.md`).
 
 On servers, `gh` and Doppler mustn't carry your personal logins (an always-on Mac has no
