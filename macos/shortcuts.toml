@@ -157,6 +157,16 @@ keys = "⌃⇧⌘Drag"
 owner = "btt"
 action = "Window: resize (hold and move the pointer)"
 
+# ---- Hyper: Caps Lock (BTT, every keyboard) ---------------------------------------------------
+# Caps Lock acts as ⌃⌥⇧⌘ while held, so a "⌃⌥⇧⌘<key>" entry here is a Hyper key. Hold Caps Lock
+# alone (0.65 s) and release to toggle Caps Lock. Planned split (#121): Hyper+1–5 work modes,
+# Hyper+letters BTT named triggers and menus (Space: ops menu), Hyper+B and Hyper+/ Bartender.
+# Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it.
+[[shortcut]]
+keys = "⇪"
+owner = "btt"
+action = "Hyper key (⌃⌥⇧⌘); hold alone for Caps Lock"
+
 # ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
 # The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut
 # isn't confirmed). Zoom's Start/Stop Video is moved to ⌃⇧⌘V by hand (see the zoom entry), so
