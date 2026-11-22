@@ -16,4 +16,6 @@ if [ "$(uname -s)" = Darwin ]; then expect '{"full_setup":true,"op_mode":"accoun
 expect '{"full_setup":true,"op_mode":"service"}'  .ssh/authorized_keys ignored   # no token in the env
 expect '{"full_setup":false,"op_mode":"account"}' .ntfy.yml ignored
 SSH=1 expect '{"full_setup":true,"op_mode":"account"}' .ssh/authorized_keys ignored   # desktop app unreachable
+expect '{"full_setup":true,"op_mode":"account","is_server":true}'  .duti ignored
+expect '{"full_setup":true,"op_mode":"account","is_server":false}' .duti kept
 exit "$FAIL"

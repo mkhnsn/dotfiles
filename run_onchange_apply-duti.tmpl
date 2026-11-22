@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "$(uname -s)" == "Darwin" ]] && command -v duti >/dev/null 2>&1; then
+# Default apps for dev files (VS Code Insiders): workstations only. On a server they'd
+# point file types (and macOS's "change default?" prompts) at an editor nobody uses there.
+{{ if not (dig "is_server" false .) -}}
+if [[ "$(uname -s)" == "Darwin" ]] && command -v duti >/dev/null 2>&1 && [[ -f "$HOME/.duti" ]]; then
   duti "$HOME/.duti"
 fi
+{{- end }}
