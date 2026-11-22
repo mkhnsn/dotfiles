@@ -11,7 +11,8 @@ expect() { # data, path, want (ignored|kept)
   if [ "$got" = "$3" ]; then echo "ok   $2 $3 with $1"; else echo "FAIL $2: $got, want $3, with $1"; FAIL=1; fi
 }
 expect '{"full_setup":false,"op_mode":"account"}' .ssh/authorized_keys ignored
-expect '{"full_setup":true,"op_mode":"account"}'  .ssh/authorized_keys kept
+# Linux never deploys authorized_keys (Tailscale SSH there), so "kept" only holds on macOS.
+if [ "$(uname -s)" = Darwin ]; then expect '{"full_setup":true,"op_mode":"account"}' .ssh/authorized_keys kept; fi
 expect '{"full_setup":true,"op_mode":"service"}'  .ssh/authorized_keys ignored   # no token in the env
 expect '{"full_setup":false,"op_mode":"account"}' .ntfy.yml ignored
 SSH=1 expect '{"full_setup":true,"op_mode":"account"}' .ssh/authorized_keys ignored   # desktop app unreachable
