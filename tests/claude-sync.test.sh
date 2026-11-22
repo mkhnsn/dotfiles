@@ -1,6 +1,6 @@
 #!/bin/bash
 # claude-sync import: a file that differs is saved as .imported.md, then .imported-2.md, and
-# importing the same archive again adds nothing.
+# importing the same archive again adds nothing; a transcript that differs is left alone.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FAIL=0
@@ -26,4 +26,12 @@ check "original kept"            grep -qx local "$D/note.md"
 check "first import saved"       grep -qx first "$D/note.imported.md"
 check "second import numbered"   grep -qx second "$D/note.imported-2.md"
 check "re-import adds nothing"   test ! -e "$D/note.imported-3.md"
+rm "$D/note.imported.md"; bash "$SYNC" import "$CLAUDE_SYNC_DIR/b.tar.gz" >/dev/null
+check "re-import after a merge adds nothing" test ! -e "$D/note.imported.md"
+# Transcripts (projects/<p>/<id>.jsonl) aren't merged: this Mac's copy stays, no copy is saved.
+echo old > "$T/src/b/projects/-p/s.jsonl"; tar -czf "$CLAUDE_SYNC_DIR/c.tar.gz" -C "$T/src/b" projects
+echo new > "$CLAUDE_CONFIG_DIR/projects/-p/s.jsonl"
+bash "$SYNC" import "$CLAUDE_SYNC_DIR/c.tar.gz" >/dev/null
+check "transcript kept"          grep -qx new "$CLAUDE_CONFIG_DIR/projects/-p/s.jsonl"
+check "no transcript copy"       test -z "$(find "$CLAUDE_CONFIG_DIR/projects/-p" -maxdepth 1 -name '*imported*')"
 exit "$FAIL"

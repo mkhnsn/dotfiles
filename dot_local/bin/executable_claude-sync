@@ -9,7 +9,8 @@
 # history (~/.claude/history.jsonl). --transcripts adds session transcripts, for the record;
 # they're large and not needed to carry on. Everything else in ~/.claude comes from the
 # dotfiles or is cache. Import never overwrites: a memory file that differs is saved next to
-# the existing one as <name>.imported.md (then .imported-2.md, ...) for you to merge.
+# the existing one as <name>.imported.md (then .imported-2.md, ...) for you to merge; a
+# transcript that differs keeps this Mac's copy.
 # Run export on the old Mac before wiping it; mac-setup runs import on the new one.
 
 set -euo pipefail
@@ -18,15 +19,15 @@ CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 SYNC_DIR="${CLAUDE_SYNC_DIR:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios/Apps/Mac app exports/Claude Code}"
 
 newest() { find "$SYNC_DIR" -maxdepth 1 -name 'claude-*.tar.gz' 2>/dev/null | sort | tail -1; }
-# The first free <name>.imported[-N].<ext> next to $1, or nothing when $2 is already saved there.
+# Where to save memory file $2 that differs from $1: the first free <name>.imported[-N].md,
+# or nothing when any existing copy already holds it.
 imported_path() {
-  local dest="$1" src="$2" base="$1" ext="" n=1 cand
-  case "${dest##*/}" in *.*) base="${dest%.*}"; ext=".${dest##*.}" ;; esac
-  cand="$base.imported$ext"
-  while [ -e "$cand" ]; do
-    cmp -s "$src" "$cand" && return 0
-    n=$((n+1)); cand="$base.imported-$n$ext"
+  local base="${1%.md}" src="$2" n=2 copy cand
+  for copy in "$base".imported.md "$base".imported-*.md; do
+    if [ -e "$copy" ] && cmp -s "$src" "$copy"; then return 0; fi
   done
+  cand="$base.imported.md"
+  while [ -e "$cand" ]; do cand="$base.imported-$n.md"; n=$((n+1)); done
   echo "$cand"
 }
 memory_count() { find "$CLAUDE_DIR/projects" -path '*/memory/*.md' 2>/dev/null | wc -l | tr -d ' '; }
@@ -49,7 +50,7 @@ cmd_export() {
 }
 
 cmd_import() {
-  local archive="${1:-$(newest)}" added=0 kept=0 conflicts=0 f rel dest copy
+  local archive="${1:-$(newest)}" added=0 kept=0 conflicts=0 skipped=0 f rel dest copy
   [ -n "$archive" ] && [ -f "$archive" ] || { echo "claude-sync: no export found in $SYNC_DIR (run claude-sync export on the old Mac)"; exit 1; }
   tmp="$(mktemp -d)"; trap 'rm -rf "${tmp:-}"' EXIT
   tar -xzf "$archive" -C "$tmp"
@@ -58,6 +59,7 @@ cmd_import() {
     mkdir -p "$(dirname "$dest")"
     if [ ! -e "$dest" ]; then cp -p "$f" "$dest"; added=$((added+1))
     elif cmp -s "$f" "$dest"; then kept=$((kept+1))
+    elif [[ "$rel" != */memory/*.md ]]; then skipped=$((skipped+1)); echo "  differs: $rel (kept this Mac's copy)"
     else
       copy="$(imported_path "$dest" "$f")"
       if [ -z "$copy" ]; then kept=$((kept+1)); continue; fi
@@ -70,7 +72,7 @@ cmd_import() {
     grep -vxF -f "$CLAUDE_DIR/history.jsonl" "$tmp/history.jsonl" > "$tmp/new-history" || true
     cat "$tmp/new-history" >> "$CLAUDE_DIR/history.jsonl"
   fi
-  echo "Imported $(basename "$archive"): $added added, $kept already here, $conflicts differ."
+  echo "Imported $(basename "$archive"): $added added, $kept already here, $conflicts differ$([ "$skipped" -eq 0 ] || echo ", $skipped transcripts kept as they are")."
   [ "$conflicts" -eq 0 ] || echo "Merge each .imported*.md into its original, then delete it."
 }
 
