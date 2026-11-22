@@ -82,7 +82,27 @@ link-unstable() {
   done
 }
 
-# cd into any ghq repo using fzf
+# Every GitHub repo you can see under your account and your organizations (not archived),
+# as github.com/owner/name lines. Cached for cproj; refreshed in the background once a day.
+CPROJ_REMOTE="${XDG_CACHE_HOME:-$HOME/.cache}/cproj/remote"
+cproj-refresh() {
+  emulate -L zsh
+  setopt nounset pipefail
+  command -v gh >/dev/null 2>&1 || { print -u2 "gh not installed"; return 1; }
+  local me o tmp
+  local -a owners
+  me="$(gh api user --jq .login)" || return 1
+  # Orgs need the read:org scope; without it, list your own repos only.
+  owners=($me ${(f)"$(gh api user/orgs --paginate --jq '.[].login' 2>/dev/null)"})
+  mkdir -p "${CPROJ_REMOTE:h}"
+  tmp="$(mktemp "$CPROJ_REMOTE.XXXXXX")" || return 1
+  for o in $owners; do
+    gh repo list "$o" --limit 5000 --no-archived --json nameWithOwner --jq '.[].nameWithOwner' || exit 1
+  done | sed 's|^|github.com/|' | sort -u > "$tmp" && mv "$tmp" "$CPROJ_REMOTE" || { rm -f "$tmp"; return 1; }
+}
+
+# cd into any repo with fzf: cloned ones, plus repos on GitHub you haven't cloned yet
+# (marked "clone"), which are cloned with ghq first. `cproj-refresh` updates that list now.
 cproj() {
   emulate -L zsh
   setopt nounset pipefail
@@ -90,7 +110,38 @@ cproj() {
   command -v ghq >/dev/null 2>&1 || { print -u2 "ghq not installed"; return 1; }
   command -v fzf >/dev/null 2>&1 || { print -u2 "fzf not installed"; return 1; }
 
-  cd "$(ghq list --full-path | fzf)" || return
+  # First use: list in the foreground. A failure still leaves an (empty) cache, so it's
+  # retried in a day, not on every call. Later: refresh in the background once a day,
+  # touching the cache first so repeated calls don't start more refreshes.
+  if [[ ! -e "$CPROJ_REMOTE" ]]; then
+    print -u2 "Listing your GitHub repos (once; then daily in the background)..."
+    cproj-refresh || { print -u2 "Couldn't list GitHub repos (cproj-refresh to retry); showing cloned ones only."
+                       mkdir -p "${CPROJ_REMOTE:h}"; touch "$CPROJ_REMOTE"; }
+  elif [[ -n "$(find "$CPROJ_REMOTE" -mmin +1440 2>/dev/null)" ]]; then
+    touch "$CPROJ_REMOTE"
+    ( cproj-refresh >/dev/null 2>&1 & )
+  fi
+
+  # host/owner/name only: ghq also lists the top-level links that link-unstable makes.
+  local -a cloned remote
+  cloned=(${(M)${(f)"$(ghq list)"}:#*/*/*})
+  [[ -s "$CPROJ_REMOTE" ]] && remote=(${(f)"$(<"$CPROJ_REMOTE")"})
+  # Drop the ones already cloned, ignoring case (GitHub names aren't case-sensitive).
+  local -A have
+  local r
+  for r in $cloned; do have[${(L)r}]=1; done
+  remote=(${remote:#(${(j:|:)${(@kq)have}})})
+  local -a fresh
+  for r in $remote; do (( ${+have[${(L)r}]} )) || fresh+=("$r"); done
+
+  local pick
+  pick="$(print -rl -- $cloned ${^fresh}$'\tclone' | fzf --prompt='repo> ' --delimiter=$'\t' --nth=1)" || return
+  [[ -n "$pick" ]] || return 0
+  if [[ "$pick" == *$'\t'clone ]]; then
+    gget "${${pick%$'\t'clone}#github.com/}"
+  else
+    cd "$(ghq root)/$pick"
+  fi
 }
 
 corg() {

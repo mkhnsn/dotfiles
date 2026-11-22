@@ -26,9 +26,20 @@ case "$1" in
 esac
 """
 FAKE_LSAPPINFO = """#!/bin/sh
-# fake lsappinfo: apps listed in $FAKE_RUNNING are running
+# fake lsappinfo: apps listed in $FAKE_RUNNING (or the file $FAKE_RUN_FILE) are running
 id="${2#bundleid=}"
-case " ${FAKE_RUNNING:-} " in *" $id "*) echo "ASN:0x0-0x1-\\"$id\\":" ;; esac
+run="${FAKE_RUNNING:-}"; [ -n "${FAKE_RUN_FILE:-}" ] && run="$(cat "$FAKE_RUN_FILE")"
+case " $run " in *" $id "*) echo "ASN:0x0-0x1-\\"$id\\":" ;; esac
+"""
+# fake osascript: "quit" empties $FAKE_RUN_FILE unless $FAKE_STUBBORN is set
+FAKE_OSASCRIPT = """#!/bin/sh
+echo "$2" >> "$FAKE_OPENED.osascript"
+[ -n "${FAKE_DENIED:-}" ] && { echo "Not authorized to send Apple events (-1743)" >&2; exit 1; }
+[ -n "${FAKE_STUBBORN:-}" ] || : > "$FAKE_RUN_FILE"
+"""
+# fake open: records the bundle id it was asked to open
+FAKE_OPEN = """#!/bin/sh
+echo "$@" >> "$FAKE_OPENED"
 """
 
 
@@ -40,7 +51,8 @@ class AppPrefs(unittest.TestCase):
         self.bin = os.path.join(self.t, "bin")
         for d in (self.prefs, self.repo, self.bin):
             os.makedirs(d)
-        for name, body in (("defaults", FAKE_DEFAULTS), ("lsappinfo", FAKE_LSAPPINFO)):
+        for name, body in (("defaults", FAKE_DEFAULTS), ("lsappinfo", FAKE_LSAPPINFO),
+                           ("osascript", FAKE_OSASCRIPT), ("open", FAKE_OPEN)):
             p = os.path.join(self.bin, name)
             with open(p, "w") as f:
                 f.write(body)
@@ -100,6 +112,65 @@ class AppPrefs(unittest.TestCase):
         r = self.run_tool("apply", FAKE_RUNNING="com.example.app")
         self.assertEqual(r.returncode, 1)
         self.assertIn("app is running", r.stdout)
+        self.assertEqual(self.read_mac("com.example.app"), {"showIcons": False})
+
+    def running_file(self, ids):
+        p = os.path.join(self.t, "running")
+        with open(p, "w") as f:
+            f.write(ids)
+        return p
+
+    def test_apply_restart_quits_applies_and_reopens(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        self.mac("com.example.app", {"showIcons": False})
+        opened = os.path.join(self.t, "opened")
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file("com.example.app"), FAKE_OPENED=opened)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.read_mac("com.example.app"), {"showIcons": True})
+        with open(opened) as f:
+            self.assertIn("com.example.app", f.read())
+        with open(opened + ".osascript") as f:
+            self.assertIn('tell application id "com.example.app" to quit', f.read())
+
+    def test_apply_restart_leaves_stopped_app_closed(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        self.mac("com.example.app", {"showIcons": False})
+        opened = os.path.join(self.t, "opened")
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file(""), FAKE_OPENED=opened)
+        self.assertEqual(r.returncode, 0)
+        self.assertEqual(self.read_mac("com.example.app"), {"showIcons": True})
+        self.assertFalse(os.path.exists(opened))
+        self.assertFalse(os.path.exists(opened + ".osascript"))
+
+    def test_apply_restart_reports_denied_automation(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        self.mac("com.example.app", {"showIcons": False})
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file("com.example.app"),
+                          FAKE_DENIED="1", FAKE_OPENED=os.path.join(self.t, "opened"))
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("-1743", r.stdout)
+        self.assertEqual(self.read_mac("com.example.app"), {"showIcons": False})
+
+    def test_apply_restart_leaves_matching_app_running(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        opened = os.path.join(self.t, "opened")
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file("com.example.app"), FAKE_OPENED=opened)
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("already matches", r.stdout)
+        self.assertFalse(os.path.exists(opened))
+
+    def test_apply_restart_skips_app_that_wont_quit(self):
+        self.mac("com.example.app", {"showIcons": True})
+        self.run_tool("export")
+        self.mac("com.example.app", {"showIcons": False})
+        r = self.run_tool("apply", "--restart", FAKE_RUN_FILE=self.running_file("com.example.app"),
+                          FAKE_STUBBORN="1", APP_PREFS_QUIT_WAIT="1", FAKE_OPENED=os.path.join(self.t, "opened"))
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("didn't quit", r.stdout)
         self.assertEqual(self.read_mac("com.example.app"), {"showIcons": False})
 
     def test_check_and_diff_name_keys_not_values(self):
@@ -166,6 +237,24 @@ class AppPrefs(unittest.TestCase):
         self.run_tool("export")
         self.mac(self.BM, {"mice": self.bm_mice(*here_mice)})
         return self.run_tool("check").returncode
+
+    def test_bettermouse_reordered_button_map_matches(self):
+        def items(btn):
+            return {"appitems": plistlib.dumps({"apps": [{"btn": btn}]}, fmt=plistlib.FMT_BINARY)}
+        with open(os.path.join(self.repo, "allowlist"), "a") as f:
+            f.write(f"{self.BM}\tappitems\n")
+        click, back = [0, [{"Click": {}}, 1]], [0, [{"Back": {}}, 2]]
+        self.mac(self.BM, items([10, click, 11, back]))
+        self.run_tool("export")
+        self.mac(self.BM, items([11, back, 10, click]))
+        self.assertEqual(self.run_tool("check").returncode, 0, self.run_tool("diff").stdout)
+        # The same mapping saved with its dict keys in another order still matches.
+        self.mac(self.BM, items([10, [0, [{"x": 1, "y": 2}, 1]], 11, back]))
+        self.run_tool("export")
+        self.mac(self.BM, items([11, back, 10, [0, [{"y": 2, "x": 1}, 1]]]))
+        self.assertEqual(self.run_tool("check").returncode, 0, self.run_tool("diff").stdout)
+        self.mac(self.BM, items([11, click, 10, [0, [{"y": 2, "x": 1}, 1]]]))
+        self.assertEqual(self.run_tool("check").returncode, 1)
 
     def test_bettermouse_other_lists_keep_their_order(self):
         a = {"name": {"product": "MX"}, "pattern": [1, 2, 3, 4]}

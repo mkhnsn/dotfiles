@@ -77,6 +77,8 @@ setup() {
   mark_done remote
   mark_done ninja_backup_run
   mark_done licences
+  mark_done hueforge_plugins
+  export MAC_SETUP_DOWNLOADS="$T/downloads"; mkdir -p "$MAC_SETUP_DOWNLOADS"
   mark_done op_browser
   mark_done app_exports
   mkdir -p "$HOME/.claude/projects/-Users-x-src/memory"; touch "$HOME/.claude/projects/-Users-x-src/memory/user.md"
@@ -467,7 +469,7 @@ test_manual_steps_start_open() {
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
   assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
   assert_open "Zoom video shortcut is ⌃⇧⌘V"; assert_open "Desktop widgets placed"
-  assert_has "29 step(s) left"
+  assert_has "30 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -498,7 +500,63 @@ test_vendor_app_missing_lists_its_site() {
   assert_open "HueForge installed"; assert_done "Festivitas installed"
   printf 'n\nq\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_has "Download it from https://shop.thehueforge.com"
+  assert_has "Download it from https://shop.thehueforge.com/apps/download"
+}
+
+test_vendor_app_installs_from_download() {
+  rm -rf "$MAC_SETUP_APPS/HueForge.app"
+  touch "$MAC_SETUP_DOWNLOADS/HueForge_MacOS_v0.9.4.4.zip" "$MAC_SETUP_DOWNLOADS/HugeForgePlugin_MacOS_1.2.0.zip"
+  # ditto: unzipping makes the app; copying copies it.
+  stub ditto 'if [ "$1" = -x ]; then mkdir -p "$4/HueForge.app"; else cp -R "$1" "$2"; fi'
+  printf 'y\n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Found HueForge_MacOS_v0.9.4.4.zip in Downloads"
+  [ -d "$MAC_SETUP_APPS/HueForge.app" ] || fail "HueForge.app wasn't installed"
+}
+
+test_vendor_downloads_match_their_apps() {
+  # The real download names; each app must find its own file and nothing else.
+  for f in Cursorful-Mac-1.2.0-Installer.dmg "EXStar Hub_v2.1.0-11_Release.pkg" Festivitas-1.9.4.zip \
+           FlatForgePlugin_MacOS_1.2.1.zip HueForge_MacOS_v0.9.4.4.zip HugeForgePlugin_MacOS_1.2.0.zip \
+           MASSO_Link-2.15.0-macOS-AppleSilicon.dmg OpenSCAD-2026.11-RC0.dmg 3DxWare10-10-9-1.dmg "file 3d.zip"; do
+    touch "$MAC_SETUP_DOWNLOADS/$f"
+  done
+  for a in OpenSCAD Festivitas Cursorful HueForge "MASSO Link" "EXStar Hub" 3DconnexionSettings; do rm -rf "$MAC_SETUP_APPS/$a.app"; done
+  printf 'n\ns\nn\ns\nn\ns\nn\ns\nn\ns\nn\ns\nn\ns\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Found OpenSCAD-2026.11-RC0.dmg"; assert_has "Found Festivitas-1.9.4.zip"
+  assert_has "Found Cursorful-Mac-1.2.0-Installer.dmg"; assert_has "Found HueForge_MacOS_v0.9.4.4.zip"
+  assert_has "Found MASSO_Link-2.15.0-macOS-AppleSilicon.dmg"; assert_has "Found EXStar Hub_v2.1.0-11_Release.pkg"
+  assert_has "Found 3DxWare10-10-9-1.dmg"
+}
+
+test_vendor_dmg_copies_app_and_ejects() {
+  rm -rf "$MAC_SETUP_APPS/OpenSCAD.app"
+  touch "$MAC_SETUP_DOWNLOADS/OpenSCAD-2026.11-RC0.dmg"
+  # hdiutil attach puts OpenSCAD.app at the mountpoint; detach is logged.
+  stub hdiutil "case \"\$1\" in attach) shift; while [ \"\$1\" != -mountpoint ]; do shift; done; mkdir -p \"\$2/OpenSCAD.app\" ;; detach) echo detach >> \"$T/hdiutil.log\" ;; esac"
+  stub ditto 'cp -R "$1" "$2"'
+  printf 'y\n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  [ -d "$MAC_SETUP_APPS/OpenSCAD.app" ] || fail "OpenSCAD.app wasn't installed"
+  grep -q detach "$T/hdiutil.log" || fail "the DMG wasn't ejected"
+}
+
+test_vendor_pkg_download_uses_installer() {
+  rm -rf "$MAC_SETUP_APPS/EXStar Hub.app"
+  touch "$MAC_SETUP_DOWNLOADS/EXStar Hub_v2.1.0-11_Release.pkg"
+  stub sudo "echo \"sudo \$*\" >> \"$T/sudo.log\""
+  printf 'y\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  grep -q "installer -pkg $MAC_SETUP_DOWNLOADS/EXStar Hub_v2.1.0-11_Release.pkg" "$T/sudo.log" || fail "installer wasn't run on the pkg"
+}
+
+test_hueforge_plugins_step() {
+  rm -f "$XDG_STATE_HOME/mac-setup/hueforge_plugins"
+  run "$SCRIPT" --status
+  assert_open "HueForge plugins installed (FlatForge, HugeForge)"
+  run "$SCRIPT_SERVER" --status
+  assert_lacks "○ HueForge plugins"
 }
 
 test_op_ssh_agent_off() {
@@ -588,11 +646,15 @@ fake_prefs() {
   stub killall 'exit 0'
   : > "$T/dock"
   stub dockutil "case \"\$1\" in
-    --list) while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentApps\tplist\tid\n' \"\$n\"; done < $T/dock ;;
-    --remove) : > $T/dock ;;
-    --add) basename \"\$2\" .app >> $T/dock ;;
+    --list) while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentApps\tplist\tid\n' \"\$n\"; done < $T/dock
+            while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentOthers\tplist\tid\n' \"\$n\"; done < $T/dock-others ;;
+    --remove) : > $T/dock; : > $T/dock-others ;;
+    --add) case \"\$2\" in *.app) basename \"\$2\" .app >> $T/dock ;; *) basename \"\$2\" >> $T/dock-others ;; esac ;;
   esac"
+  : > "$T/dock-others"
   for a in "Google Chrome" Mail Ghostty; do mkdir -p "$MAC_SETUP_APPS/$a.app"; done
+  mkdir -p "$T/Downloads"
+  export MAC_DEFAULTS_DOCK_FOLDERS="$T/Downloads"
   echo "shortcuts-v1" > "$T/shortcuts.plist"
   export MAC_DEFAULTS_SHORTCUTS="$T/shortcuts.plist"
 }
@@ -652,6 +714,16 @@ test_defaults_export_shortcuts() {
   echo mine > "$T/prefs/com.apple.symbolichotkeys."
   run "$DEFAULTS_SCRIPT" --export-shortcuts
   assert_rc 0; [ "$(cat "$T/shortcuts.plist")" = mine ] || fail "not exported"
+}
+
+test_defaults_dock_adds_downloads_stack() {
+  # Regression: --remove all also removed the Downloads stack, and nothing added it back.
+  fake_prefs
+  run "$DEFAULTS_SCRIPT"
+  [ "$(cat "$T/dock-others")" = Downloads ] || fail "dock folders: $(paste -sd, - < "$T/dock-others")"
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 0
+  : > "$T/dock-others"
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 1
 }
 
 test_defaults_new_app_breaks_dock_check() {

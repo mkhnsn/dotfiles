@@ -9,7 +9,9 @@
 # accepted a known, temporary conflict: the reason. It's reported as a warning, not a failure.
 #
 # Each job has one owner, the best tool for it; an app can own several jobs. Owners now: window
-# management BTT (drag-to-snap, the ⌃⌥ keys, modifier move/resize), app switching AltTab (⌘Tab),
+# management BTT (drag-to-snap, the ⌃⌥ keys, modifier move/resize), the Caps Lock Hyper key and
+# Hyper+key shortcuts BTT (avoid Hyper+. and Hyper+,: macOS uses them for sysdiagnose), app
+# switching AltTab (⌘Tab),
 # menu bar Bartender, launcher, clipboard history and link cleaning Raycast. Overlapping features in
 # other apps are turned off.
 
@@ -156,6 +158,16 @@ action = "Window: move (hold and move the pointer)"
 keys = "⌃⇧⌘Drag"
 owner = "btt"
 action = "Window: resize (hold and move the pointer)"
+
+# ---- Hyper: Caps Lock (BTT, every keyboard) ---------------------------------------------------
+# Caps Lock acts as ⌃⌥⇧⌘ while held, so a "⌃⌥⇧⌘<key>" entry here is a Hyper key. Hold Caps Lock
+# alone (0.65 s) and release to toggle Caps Lock. Planned split (#121): Hyper+1–5 work modes,
+# Hyper+letters BTT named triggers and menus (Space: ops menu), Hyper+B and Hyper+/ Bartender.
+# Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it.
+[[shortcut]]
+keys = "⇪"
+owner = "btt"
+action = "Hyper key (⌃⌥⇧⌘); hold alone for Caps Lock"
 
 # ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
 # The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut
