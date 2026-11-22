@@ -9,7 +9,9 @@
 # accepted a known, temporary conflict: the reason. It's reported as a warning, not a failure.
 #
 # Each job has one owner, the best tool for it; an app can own several jobs. Owners now: window
-# management BTT (drag-to-snap, the ⌃⌥ keys, modifier move/resize), app switching AltTab (⌘Tab),
+# management BTT (drag-to-snap, the ⌃⌥ keys, modifier move/resize), the Caps Lock Hyper key and
+# Hyper+key shortcuts BTT (avoid Hyper+. and Hyper+,: macOS uses them for sysdiagnose), app
+# switching AltTab (⌘Tab),
 # menu bar Bartender, launcher, clipboard history and link cleaning Raycast. Overlapping features in
 # other apps are turned off.
 
