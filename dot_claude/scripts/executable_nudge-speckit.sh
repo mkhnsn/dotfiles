@@ -25,10 +25,9 @@ git_root=$(cd "$dir" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null) |
 
 specify_dir="$git_root/.specify"
 
-# Check if any spec documents exist in .specify/memory/
+# Features live in specs/<NNN-name>/ (.specify/memory only holds the constitution).
 if [[ -d "$specify_dir" ]]; then
-  memory_dir="$specify_dir/memory"
-  if [[ -d "$memory_dir" ]] && [[ -n "$(ls -A "$memory_dir" 2>/dev/null)" ]]; then
+  if [[ -n "$(ls -A "$git_root/specs" 2>/dev/null)" ]]; then
     # Specs exist — no nudge needed
     exit 0
   fi
