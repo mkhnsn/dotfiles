@@ -63,6 +63,8 @@ setup() {
   stub osascript   'echo "[{\"BTTTriggerClass\": \"BTTTriggerTypeKeyboardShortcut\", \"BTTShortcutKeyCode\": 123, \"BTTShortcutModifierKeys\": 786432}]"'
   stub open        'exit 0'
   stub mac-defaults 'exit 0'
+  # Prints the LaunchServices handlers for any key: a preset with move/resize keys would see
+  # them all as missing, so the BTT tests stub defaults themselves.
   stub defaults    'printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n"'
   for a in OpenSCAD Festivitas Cursorful HueForge "MASSO Link" "EXStar Hub" 3DconnexionSettings gridfinity-studio; do
     mkdir -p "$MAC_SETUP_APPS/$a.app"
@@ -76,6 +78,11 @@ setup() {
   mark_done export_BetterMouse
   mkdir -p "$HOME/.claude/projects/-Users-x-src/memory"; touch "$HOME/.claude/projects/-Users-x-src/memory/user.md"
   mark_done vm
+  mark_done raycast_sync
+  mark_done raycast_local
+  mark_done zoom
+  mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac"
+  touch "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/Raycast.rayconfig"
   stub app-prefs 'exit 0'
   mkdir -p "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/Desktop" "$HOME/Documents"
   ln -s "$HOME/Desktop" "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Desktop"
@@ -275,6 +282,35 @@ test_btt_preset_import_out_of_date() {
   assert_open "BetterTouchTool preset imported"
 }
 
+test_btt_move_resize_keys_missing() {
+  has_python || return 0
+  # shiftMove is off in the preset, so BTT not storing it is fine; optMove stored as 0 is missing.
+  printf '%s' '{"BTTGeneralSettings":{"cmdMove":true,"optMove":true,"shiftMove":false},"BTTPresetContent":[]}' > "$T/src/macos/btt/Default.bttpreset"
+  stub defaults 'case "$*" in *BetterTouchTool\ cmdMove*) echo 1 ;; *BetterTouchTool\ optMove*) echo 0 ;; *) exit 1 ;; esac'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool preset imported"
+  stub defaults 'case "$*" in *BetterTouchTool*) echo 1 ;; *) exit 1 ;; esac'
+  run "$SCRIPT" --status
+  assert_done "BetterTouchTool preset imported"
+}
+
+test_btt_mcp_off() {
+  stub nc 'case "$*" in *64832*) exit 1 ;; *) exit 0 ;; esac'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool MCP server on"
+}
+
+test_raycast_backup_missing() {
+  # Another Mac's export doesn't count; nor does one from this Mac older than a week.
+  mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Other-Mac"
+  mv "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/Raycast.rayconfig" "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Other-Mac/"
+  run "$SCRIPT" --status
+  assert_open "Raycast exports weekly to OneDrive"
+  touch -t 202001010000 "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/old.rayconfig"
+  run "$SCRIPT" --status
+  assert_open "Raycast exports weekly to OneDrive"
+}
+
 test_manual_steps_start_open() {
   rm -rf "$XDG_STATE_HOME/mac-setup"
   run "$SCRIPT" --status
@@ -286,7 +322,9 @@ test_manual_steps_start_open() {
   assert_open "BetterMouse export restored"
   assert_open "Virtual machines moved"; assert_open "Ninja Remote Screen Recording approved"
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
-  assert_has "25 step(s) left"
+  assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
+  assert_open "Zoom video shortcut is ⌃⇧⌘V"
+  assert_has "28 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -586,7 +624,7 @@ test_combined_confirmation_still_counts() {
 }
 
 test_onedrive_must_be_signed_in() {
-  rmdir "$T/OneDrive"
+  rm -rf "$T/OneDrive"
   run "$SCRIPT" --status
   assert_open "OneDrive signed in (Unstable Studios)"
 }
