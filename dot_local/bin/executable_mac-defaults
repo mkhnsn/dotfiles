@@ -173,6 +173,8 @@ EOF
   killall Dock >/dev/null 2>&1 || true
   missing="$(printf '%s\n' "$DOCK_APPS" | while IFS= read -r n; do app_path "$n" >/dev/null || echo "$n"; done)"
   [ -n "$missing" ] && printf 'Not installed yet, left out of the Dock: %s\n' "$(echo "$missing" | paste -sd, -)"
+  missing="$(printf '%s\n' "$DOCK_FOLDERS" | while IFS= read -r d; do [ -z "$d" ] || [ -d "$d" ] || echo "$d"; done)"
+  [ -n "$missing" ] && printf 'Folder not found, left out of the Dock: %s\n' "$(echo "$missing" | paste -sd, -)"
   return 0
 }
 
