@@ -34,10 +34,10 @@ if [[ -d "$specify_dir" ]]; then
   fi
 
   # .specify/ exists but no specs written yet — nudge to write specs
-  echo "spec-kit: .specify/ found but no specs yet. Consider running \`specify\` to draft a spec before writing code." >&2
+  echo "spec-kit: .specify/ found but no specs yet. Run /speckit-specify to draft a spec before writing code." >&2
   exit 0
 fi
 
 # No .specify/ at all — nudge to try spec-kit
-echo "spec-kit: Consider trying spec-kit for this project. Run \`specify init\` to get started. Add .specifyignore to silence this." >&2
+echo "spec-kit: Consider trying spec-kit for this project. Run \`specify init --here --integration claude\` to start (commands are /speckit-<name>, e.g. /speckit-plan). Add .specifyignore to silence this." >&2
 exit 0

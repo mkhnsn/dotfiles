@@ -82,7 +82,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | Event | Script | Behavior |
 |-------|--------|----------|
 | `PreToolUse` | `scripts/guard-main-branch.sh` | Asks before a commit or push on main/master. Auto mode's own rules cover destructive commands. |
-| `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write, nudges to use spec-kit. Silent if specs exist or `.specifyignore` is present at repo root. Advisory only. |
+| `PreToolUse` | `scripts/nudge-speckit.sh` | On Edit/Write, nudges to use spec-kit. Silent if specs exist or `.specifyignore` is present at repo root. Advisory only. Spec-kit commands are spelled `/speckit-<name>` (1.4 skills); repos still on `.claude/commands/speckit.*.md` move with `specify integration upgrade claude --force`. |
 | `PreToolUse` | `scripts/nudge-echo-libs.sh` | On Edit/Write of files importing `@unstable-studios/*`, reminds Claude to read those packages' READMEs from `node_modules`. Advisory only. |
 | `PostToolUse` | `scripts/post-edit-lint.sh` | Auto-lints after Edit/Write: eslint (JS/TS), ruff (Python), rustfmt (Rust), gofmt (Go), shfmt (shell). Async, advisory only. |
 
