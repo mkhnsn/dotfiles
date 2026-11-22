@@ -380,7 +380,8 @@ test_btt_move_resize_keys_differ() {
   stub defaults 'case "$*" in *BetterTouchTool*) echo 1 ;; *) exit 1 ;; esac'
   run "$SCRIPT" --status
   assert_open "BetterTouchTool preset imported"
-  stub defaults 'case "$*" in *BetterTouchTool\ shiftMove*) exit 1 ;; *BetterTouchTool*) echo 1 ;; *) exit 1 ;; esac'
+  # Modifiers the preset doesn't list count as off.
+  stub defaults 'case "$*" in *BetterTouchTool\ cmdMove*|*BetterTouchTool\ optMove*) echo 1 ;; *) exit 1 ;; esac'
   run "$SCRIPT" --status
   assert_done "BetterTouchTool preset imported"
 }
