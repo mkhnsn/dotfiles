@@ -9,12 +9,12 @@ decks.
 
 | Tell                                   | Example                                         | Instead                                                  |
 | -------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- |
-| Negative parallelism                   | "Premium sells the library, not the lights."    | "Premium is the cloud library. Every feature stays free." |
+| Negative parallelism                   | "Premium sells the library, not the lights."    | "Everything needed to build and run a show is free." |
 | "Not just X, it's Y"                   | "It's not just a controller. It's a platform."  | Say what it does: "Drives pixels, servos and audio."      |
 | Tagline headline                       | "Cues, not frames"                              | "Pucks send cues and draw their own lights"               |
 | Rule of three for rhythm               | "Simple. Sealed. Synced."                       | The one that matters, with its fact                       |
 | Trailing -ing clause                   | "…, highlighting the need for a sealed box."    | Cut it, or make it its own sentence with evidence         |
-| Colon reveal                           | "The closest analogs aren't in cosplay: they're in car mods." | "The closest analogs are car-lighting controllers."  |
+| Colon reveal                           | "The closest analogs aren't in cosplay: they're in car mods." | "The closest analogs are car-lighting and offroad-power controllers."  |
 | Rhetorical question headline           | "What if your costume could think?"             | The claim the question was hinting at                     |
 | Summary slide restating every slide    | "In summary: …"                                 | Cut it. End on the ask                                    |
 | Outline conclusion                     | "Challenges and opportunities ahead"            | Name the risks and what you'll do about each              |
@@ -42,5 +42,5 @@ Cut these or replace them with the fact they stand in for.
 - Emoji as bullets or in headings.
 - Title Case Headlines.
 - Exclamation marks.
-- Spaced em dashes as the default punctuation.
+- Em dashes.
 - Every slide with exactly three bullets or three cards.

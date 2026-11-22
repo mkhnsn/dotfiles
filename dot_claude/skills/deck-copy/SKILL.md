@@ -1,6 +1,6 @@
 ---
 name: deck-copy
-description: Rules for writing slide decks (pitch decks, reviews, talks, proposals) so they read as written by a person who knows the subject, not generated. Use when drafting, editing or reviewing slide text, headlines or speaker notes, in any format (Slides artifacts, pptx, HTML, Markdown).
+description: Rules for writing slide decks and presentations (pitch decks, reviews, talks, proposals) so they read as written by a person who knows the subject, not generated. Use when drafting, editing or reviewing slide text, headlines or speaker notes, in any format (Claude Slides artifacts, Keynote, Google Slides, Figma Slides, pptx, HTML, Markdown).
 ---
 
 # Deck copy
@@ -20,11 +20,12 @@ https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing.
 
 ## Rules
 
-1. **Headlines are claims, in a sentence.** "Car builders already pay $110–130
-   for this box", not "Market validation". A reader who sees only the
+1. **Headlines are claims, in a sentence.** "Car builders already pay $110–132
+   for an app-set light controller", not "Market validation". A reader who sees only the
    headlines should get the whole argument.
-2. **One claim per slide.** If a slide needs "and" in its headline, it's two
-   slides, or one of the claims goes in the notes.
+2. **One claim per slide.** If the headline joins two claims (with "and", a
+   semicolon or a second sentence), split the slide or move one claim to the
+   body or the notes.
 3. **Evidence, not adjectives.** Replace every "powerful", "seamless",
    "robust", "proven" or "unique" with the fact behind it: the spec, the
    price, the count, the source. If there's no fact, cut the word.
@@ -38,8 +39,8 @@ https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing.
    let the audience judge.
 6. **Plain verbs.** "Is", "has", "costs", "sells", "drives". Not "serves as",
    "boasts", "leverages", "empowers", "delivers".
-7. **Name things.** Products, companies, prices, people, places, dates. "Two
-   retrofit shops sell it pre-wired" beats "a strong installer channel".
+7. **Name things.** Products, companies, prices, people, places, dates. "Four
+   retrofit shops, RGB Halo Kits among them, sell it pre-wired" beats "a strong installer channel".
    Vague attribution ("experts say", "studies show") gets a name and a link,
    or goes.
 8. **Bullets are fragments, parallel, few.** Three to five per slide, each
