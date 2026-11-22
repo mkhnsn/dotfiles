@@ -344,8 +344,8 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
 (`docs/devices/README.md`).
 
 On servers, `gh` and Doppler mustn't carry your personal logins (an always-on Mac has no
-FileVault): `mac-setup` flags a GitHub web login or classic token and a personal Doppler
-login, and offers to sign them out. Use a fine-grained GitHub token or a Doppler service
+FileVault): `mac-setup` flags a GitHub web login or classic token and any Doppler login
+that isn't a service token, and offers to sign them out. Use a fine-grained GitHub token or a Doppler service
 token scoped to what runs there, or none. Secrets in the dotfiles come from a 1Password
 service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 

@@ -246,9 +246,25 @@ test_server_flags_personal_logins() {
   assert_done "GitHub CLI signed in"; assert_done "Doppler signed in"
 }
 
+test_server_flags_doppler_personal_token() {
+  stub doppler 'echo "{\"type\":\"personal\"}"'
+  run "$SCRIPT_SERVER" --status
+  assert_open "Doppler without your personal login"
+}
+
+test_server_gh_env_token_explained() {
+  stub gh 'echo "  - Token: ghp_************************************" >&2; exit 0'
+  printf 'y\nq\n' > "$T/answers"
+  GH_TOKEN=x MAC_SETUP_TTY="$T/answers" run "$SCRIPT_SERVER"
+  assert_has "GH_TOKEN or GITHUB_TOKEN"; assert_has "Unset GH_TOKEN/GITHUB_TOKEN first"
+}
+
 test_server_accepts_scoped_tokens_or_none() {
   stub gh 'echo "  - Token: github_pat_*************************" >&2; exit 0'
   stub doppler 'echo "{\"type\":\"service_token\"}"'
+  run "$SCRIPT_SERVER" --status
+  assert_done "GitHub CLI without your personal login"; assert_done "Doppler without your personal login"
+  stub doppler 'echo "{\"type\":\"service_account\"}"'
   run "$SCRIPT_SERVER" --status
   assert_done "GitHub CLI without your personal login"; assert_done "Doppler without your personal login"
   stub gh 'exit 1'; stub doppler 'exit 1'

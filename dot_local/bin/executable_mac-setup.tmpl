@@ -178,8 +178,10 @@ ICLOUD_DRIVE="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 check_icloud_docs(){ workstation || return 0; local d
                      for d in Desktop Documents; do [ "$(readlink "$ICLOUD_DRIVE/$d" 2>/dev/null)" = "$HOME/$d" ] || return 1; done; }
 check_icloud_local(){ workstation || return 0; [ "$(defaults read com.apple.bird optimize-storage 2>/dev/null)" != 1 ]; }
-# Servers: no personal Doppler login ("type": "cli"); a service token scoped to what runs there.
-doppler_personal() { doppler me --json 2>/dev/null | grep -Eq '"type": *"cli"'; }
+# Servers: no personal Doppler login or personal token; only service tokens/accounts. Scope "/"
+# both here and in act_doppler, so the check and the sign-out see the same token.
+doppler_personal() { local t; t="$(doppler me --json --scope / 2>/dev/null | sed -n 's/.*"type": *"\([^"]*\)".*/\1/p' | head -1)"
+                     case "$t" in ""|service_token|service_account) return 1 ;; *) return 0 ;; esac; }
 check_doppler()    { if workstation; then doppler me >/dev/null 2>&1; else ! doppler_personal; fi; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
@@ -321,7 +323,8 @@ help_brewfile()   { echo "Brewfile packages missing."; }
 help_icloud_docs() { echo "Turn on Desktop & Documents in iCloud: System Settings > your name > iCloud > Drive > Desktop & Documents Folders. MDM can only allow it, not switch it on; Setup Assistant offers it too. Files from your other Macs' Desktop and Documents then appear here."; }
 help_icloud_local(){ echo "Turn off Optimize Mac Storage: System Settings > your name > iCloud. Desktop and Documents then stay downloaded, so Ninja Backup backs up real files (with Optimize on, iCloud swaps older files for placeholders that the backup can't read)."; }
 help_gh()         { if workstation; then echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too.";
-                    else echo "gh is signed in with your own GitHub login, which this server shouldn't keep (no FileVault). The action signs it out. If something here needs GitHub, use a fine-grained token limited to those repos: gh auth login --with-token."; fi; }
+                    elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "A personal GitHub token is set in GH_TOKEN or GITHUB_TOKEN. Remove it from your shell config and open a new terminal; gh can't sign out a token set in the environment.";
+                    else echo "gh is signed in with your own GitHub login, which this server shouldn't keep (no FileVault). The action signs it out; that doesn't revoke the token, so revoke it at https://github.com/settings/applications too. If something here needs GitHub, use a fine-grained token limited to those repos: gh auth login --with-token."; fi; }
 help_doppler()    { if workstation; then echo "Doppler CLI not signed in.";
                     else echo "Doppler is signed in with your own login, which this server shouldn't keep (no FileVault). The action signs it out. For what runs here, use a service token for that project and config: doppler configure set token <dp.st...> --scope <dir>."; fi; }
 help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found."; }
@@ -421,8 +424,10 @@ act_ssh_server() {
   sudo dseditgroup -o edit -a "$me" -t user com.apple.access_ssh
 }
 act_brewfile()    { chezmoi apply; }
-act_gh()          { if workstation; then gh auth login --web --git-protocol https; else gh auth logout --hostname github.com; fi; }
-act_doppler()     { if workstation; then doppler login; else doppler logout --yes; fi; }
+act_gh()          { if workstation; then gh auth login --web --git-protocol https
+                    elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "    Unset GH_TOKEN/GITHUB_TOKEN first (see above)."
+                    else gh auth logout --hostname github.com; fi; }
+act_doppler()     { if workstation; then doppler login; else doppler logout --yes --scope /; fi; }
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
 act_streamdeck()  { open "https://www.elgato.com/downloads"; }
 act_btt() {
