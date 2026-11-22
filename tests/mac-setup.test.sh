@@ -77,6 +77,8 @@ setup() {
   mark_done remote
   mark_done ninja_backup_run
   mark_done licences
+  mark_done hueforge_plugins
+  export MAC_SETUP_DOWNLOADS="$T/downloads"; mkdir -p "$MAC_SETUP_DOWNLOADS"
   mark_done op_browser
   mark_done app_exports
   mkdir -p "$HOME/.claude/projects/-Users-x-src/memory"; touch "$HOME/.claude/projects/-Users-x-src/memory/user.md"
@@ -467,7 +469,7 @@ test_manual_steps_start_open() {
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
   assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
   assert_open "Zoom video shortcut is ⌃⇧⌘V"; assert_open "Desktop widgets placed"
-  assert_has "29 step(s) left"
+  assert_has "30 step(s) left"
 }
 
 test_workstation_apps_missing() {
@@ -498,7 +500,35 @@ test_vendor_app_missing_lists_its_site() {
   assert_open "HueForge installed"; assert_done "Festivitas installed"
   printf 'n\nq\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_has "Download it from https://shop.thehueforge.com"
+  assert_has "Download it from https://shop.thehueforge.com/apps/download"
+}
+
+test_vendor_app_installs_from_download() {
+  rm -rf "$MAC_SETUP_APPS/HueForge.app"
+  touch "$MAC_SETUP_DOWNLOADS/HueForge_MacOS_v0.9.4.4.zip" "$MAC_SETUP_DOWNLOADS/HugeForgePlugin_MacOS_1.2.0.zip"
+  # ditto: unzipping makes the app; copying copies it.
+  stub ditto 'if [ "$1" = -x ]; then mkdir -p "$4/HueForge.app"; else cp -R "$1" "$2"; fi'
+  printf 'y\n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Found HueForge_MacOS_v0.9.4.4.zip in Downloads"
+  [ -d "$MAC_SETUP_APPS/HueForge.app" ] || fail "HueForge.app wasn't installed"
+}
+
+test_vendor_pkg_download_uses_installer() {
+  rm -rf "$MAC_SETUP_APPS/EXStar Hub.app"
+  touch "$MAC_SETUP_DOWNLOADS/EXStar Hub_v2.1.0-11_Release.pkg"
+  stub sudo "echo \"sudo \$*\" >> \"$T/sudo.log\""
+  printf 'y\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  grep -q "installer -pkg $MAC_SETUP_DOWNLOADS/EXStar Hub_v2.1.0-11_Release.pkg" "$T/sudo.log" || fail "installer wasn't run on the pkg"
+}
+
+test_hueforge_plugins_step() {
+  rm -f "$XDG_STATE_HOME/mac-setup/hueforge_plugins"
+  run "$SCRIPT" --status
+  assert_open "HueForge plugins installed (FlatForge, HugeForge)"
+  run "$SCRIPT_SERVER" --status
+  assert_lacks "○ HueForge plugins"
 }
 
 test_op_ssh_agent_off() {
