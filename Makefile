@@ -24,6 +24,7 @@ test:
 	@shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults
 	@shellcheck -S warning -s bash tests/*.sh install.sh
 	@/bin/bash tests/mac-setup.test.sh
+	@/bin/bash tests/chezmoiignore.test.sh
 	@python3 -I tests/app_prefs_test.py
 	@python3 -I tests/shortcut_check_test.py
 	@python3 -I tests/brew_why_test.py

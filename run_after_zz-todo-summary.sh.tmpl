@@ -60,7 +60,7 @@ done
 
 {{- /* Mirrors .chezmoiignore.tmpl: account-mode secrets are skipped over SSH. */}}
 {{ if and .full_setup (ne (dig "op_mode" "account" .) "service") (env "SSH_CONNECTION") -}}
-items+=("1Password-backed files (.ntfy.yml, jfrog-env) were skipped over SSH; run 'chezmoi apply' at the desktop to refresh them")
+items+=("1Password-backed files (.ntfy.yml, jfrog-env, .ssh/authorized_keys) were skipped over SSH; run 'chezmoi apply' at the desktop to refresh them")
 {{ end -}}
 
 [[ ${#items[@]} -gt 0 ]] || exit 0
