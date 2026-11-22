@@ -363,12 +363,14 @@ test_default_browser_safari() {
 test_server_skips_workstation_steps() {
   rm -rf "$MAC_SETUP_APPS"/*.app "$XDG_STATE_HOME/mac-setup/licences"
   stub defaults 'exit 1'
+  stub mac-defaults 'echo "  Dock: dockutil not installed"; exit 1'
   stub brew "case \"\$*\" in *Brewfile.workstation*) exit 1 ;; --prefix) echo $T/brew ;; esac; exit 0"
   run "$SCRIPT_SERVER" --status
   assert_done "Workstation apps installed"; assert_done "HueForge installed"
   assert_done "gridfinity-studio installed"; assert_done "Slack signed in or activated"
   assert_done "Default browser is Chrome"
   assert_done "BetterTouchTool installed from folivora.ai"
+  assert_done "macOS settings and Dock"
 }
 
 # ---- mac-defaults ------------------------------------------------------------------
