@@ -229,7 +229,8 @@ check_export()     { workstation || return 0; confirmed "export:$1" && return 0
                        *) confirmed app_exports ;;
                      esac; }
 check_vm()         { workstation || return 0; confirmed vm; }
-check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
+# Dock and Finder for daily use; dockutil comes from Brewfile.workstation, which servers skip.
+check_defaults()   { workstation || return 0; mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
 # destinationinfo works without Full Disk Access; latestbackup doesn't.
 # A destination alone isn't enough: tmutil setdestination leaves automatic backups off. The
