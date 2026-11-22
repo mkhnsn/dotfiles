@@ -16,9 +16,21 @@ mcp() {  # mcp <name> <json>: (re)register so the definition here wins
   claude mcp add-json --scope user "$1" "$2" >/dev/null || todo "Claude Code: couldn't register the $1 MCP server"
 }
 {{ if and (eq .chezmoi.os "darwin") (not (dig "is_server" false .)) -}}
-# Local apps' own MCP endpoints; they answer only while the app runs.
-mcp fusion     '{"type":"http","url":"http://127.0.0.1:27182/mcp"}'
-mcp btt        '{"type":"http","url":"http://127.0.0.1:64832/mcp"}'
+# fusion and btt are local apps' own MCP endpoints (they answer only while the app runs);
+# homeassistant is read-only, its token in the Keychain from mac-setup (ha-mcp --store-token).
+# This script runs only when its rendered text changes, so a failed registration would stay
+# missing. The line below lists the servers missing from ~/.claude.json at render time, plus
+# a timestamp while any are: the script then re-runs on every apply until they're all there.
+{{- $names := list }}
+{{- range splitList "\n" (includeTemplate "claude-mcp-servers" .) }}{{ with regexFind "^\\S+" . }}{{ $names = append $names . }}{{ end }}{{ end }}
+{{- if stat "/Applications/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp" }}{{ $names = append $names "StreamDeck" }}{{ end }}
+{{- $missing := output "sh" "-c" (printf "command -v jq >/dev/null || exit 0; for n in %s; do jq -e --arg n \"$n\" '.mcpServers[$n]' \"$HOME/.claude.json\" >/dev/null 2>&1 || printf '%%s ' \"$n\"; done; true" (join " " $names)) | trim }}
+# Not registered: {{ $missing | default "none" }}{{ if $missing }} (retry {{ now | unixEpoch }}){{ end }}
+while read -r name json; do
+  [ -n "$name" ] && mcp "$name" "$json"
+done <<'SERVERS'
+{{ template "claude-mcp-servers" . }}
+SERVERS
 # Raycast registers its own server ("raycast", with a per-app token) from Raycast's
 # settings: MCP Server > Connect App > Claude Code. The end-of-apply summary checks it.
 # Stream Deck's MCP helper ships with Stream Deck 8 (beta from Elgato; Homebrew has 7.x).
@@ -29,8 +41,6 @@ if [ -x "$sd_mcp" ]; then
 else
   claude mcp remove --scope user StreamDeck >/dev/null 2>&1 || true  # summary flags it
 fi
-# Read-only Home Assistant; its token goes to the Keychain in mac-setup (ha-mcp --store-token).
-mcp homeassistant '{"type":"stdio","command":"{{ .chezmoi.homeDir }}/.local/bin/ha-mcp","args":[]}'
 {{ end -}}
 
 # ---- Plugins (official marketplace) ----
