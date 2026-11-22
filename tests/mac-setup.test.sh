@@ -563,11 +563,15 @@ fake_prefs() {
   stub killall 'exit 0'
   : > "$T/dock"
   stub dockutil "case \"\$1\" in
-    --list) while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentApps\tplist\tid\n' \"\$n\"; done < $T/dock ;;
-    --remove) : > $T/dock ;;
-    --add) basename \"\$2\" .app >> $T/dock ;;
+    --list) while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentApps\tplist\tid\n' \"\$n\"; done < $T/dock
+            while IFS= read -r n; do printf '%s\tfile:///x/\tpersistentOthers\tplist\tid\n' \"\$n\"; done < $T/dock-others ;;
+    --remove) : > $T/dock; : > $T/dock-others ;;
+    --add) case \"\$2\" in *.app) basename \"\$2\" .app >> $T/dock ;; *) basename \"\$2\" >> $T/dock-others ;; esac ;;
   esac"
+  : > "$T/dock-others"
   for a in "Google Chrome" Mail Ghostty; do mkdir -p "$MAC_SETUP_APPS/$a.app"; done
+  mkdir -p "$T/Downloads"
+  export MAC_DEFAULTS_DOCK_FOLDERS="$T/Downloads"
   echo "shortcuts-v1" > "$T/shortcuts.plist"
   export MAC_DEFAULTS_SHORTCUTS="$T/shortcuts.plist"
 }
@@ -627,6 +631,16 @@ test_defaults_export_shortcuts() {
   echo mine > "$T/prefs/com.apple.symbolichotkeys."
   run "$DEFAULTS_SCRIPT" --export-shortcuts
   assert_rc 0; [ "$(cat "$T/shortcuts.plist")" = mine ] || fail "not exported"
+}
+
+test_defaults_dock_adds_downloads_stack() {
+  # Regression: --remove all also removed the Downloads stack, and nothing added it back.
+  fake_prefs
+  run "$DEFAULTS_SCRIPT"
+  [ "$(cat "$T/dock-others")" = Downloads ] || fail "dock folders: $(paste -sd, - < "$T/dock-others")"
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 0
+  : > "$T/dock-others"
+  run "$DEFAULTS_SCRIPT" --check; assert_rc 1
 }
 
 test_defaults_new_app_breaks_dock_check() {
