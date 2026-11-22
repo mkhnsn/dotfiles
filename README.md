@@ -329,9 +329,12 @@ the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
 Sync, weekly exports, the settings that stay on each Mac, and the echo-m365 sign-in its Generate TAP command needs: the
 `AdminAccount` from that repo's `tenant.psd1`), Zoom's video shortcut, workstation apps (Brewfile, vendor
-downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
+downloads, gridfinity-studio, licenses, HueForge plugins), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
 backup run, macOS settings and the Dock, desktop widgets, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
+For apps with no Homebrew cask it opens the download page, waits for the file in `~/Downloads`
+(or uses one already there) and installs it: the `.app` from a `.zip` or `.dmg` goes to
+`/Applications`, a `.pkg` runs through `installer`, and anything else opens in Finder.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
 steps are split per item (each app without a cask, each license, each app export, each
 escrowed secret, the browser pieces), so each gets its own tick and its own "Do it now?"
@@ -393,8 +396,9 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 - `app-prefs`: chosen app settings (Bartender, BetterMouse, AltTab, Stats, Festivitas,
   OpenSCAD, KeyboardCleanTool) in `macos/prefs/`, allow-list only (`macos/prefs/allowlist`),
   so licenses and app state stay out of this public repo. `app-prefs export` on the Mac
-  you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply;
-  quit the apps first). `check` and `diff` list differing key names, never values. A test
+  you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply,
+  skipping running apps; `app-prefs apply --restart`, which `mac-setup` uses, quits a running
+  app that differs, applies and opens it again). `check` and `diff` list differing key names, never values. A test
   fails if a committed setting looks like a license, token or email address.
   BetterMouse is compared by content: it re-saves its maps in a new order on every launch
   and keeps one entry per mouse per connection (Bolt, Bluetooth), so a reorder or a newly

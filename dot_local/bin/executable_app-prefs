@@ -3,6 +3,7 @@
 
   app-prefs export [domain...]   save allow-listed keys from this Mac into the repo
   app-prefs apply  [domain...]   merge the saved keys into this Mac's settings
+  app-prefs apply --restart [domain...]   same, but quit running apps that differ and reopen them
   app-prefs check                exit 0 if every saved key matches this Mac
   app-prefs diff                 list domains and key names that differ (never values)
 
@@ -29,6 +30,7 @@ import os
 import plistlib
 import subprocess
 import sys
+import time
 
 DEFAULTS = os.environ.get("APP_PREFS_DEFAULTS", "defaults")  # overridable for tests
 
@@ -181,6 +183,24 @@ def running(domain):
     return bool(r.stdout.strip())
 
 
+QUIT_WAIT = int(os.environ.get("APP_PREFS_QUIT_WAIT", "20"))  # seconds; overridable for tests
+
+
+def quit_app(domain, wait=QUIT_WAIT):
+    """Ask the app to quit (it saves its own settings first); True once it's gone."""
+    r = subprocess.run(["osascript", "-e", f'tell application id "{domain}" to quit'], capture_output=True, text=True)
+    if r.returncode != 0:
+        # Most often -1743: this terminal isn't allowed to control the app
+        # (System Settings > Privacy & Security > Automation).
+        print(f"{domain}: couldn't ask it to quit: {r.stderr.strip()}")
+        return False
+    for _ in range(wait * 2):
+        if not running(domain):
+            return True
+        time.sleep(0.5)
+    return False
+
+
 def allowed(key, patterns):
     return any(fnmatch.fnmatchcase(key, p) for p in patterns)
 
@@ -216,7 +236,7 @@ def cmd_export(base, rules, names):
         print(f"{domain}: saved {len(kept)} of {len(live)} keys")
 
 
-def cmd_apply(base, rules, names):
+def cmd_apply(base, rules, names, restart=False):
     skipped = 0
     for domain in pick(rules, names):
         saved = load_saved(base, domain)
@@ -224,15 +244,27 @@ def cmd_apply(base, rules, names):
             continue
         # Never apply a key the allowlist no longer covers.
         saved = {k: v for k, v in saved.items() if allowed(k, rules[domain])}
+        reopen = False
         if running(domain):
-            print(f"{domain}: app is running, skipped (quit it, then run app-prefs apply)")
-            skipped += 1
-            continue
+            if not restart:
+                print(f"{domain}: app is running, skipped (quit it, then run app-prefs apply)")
+                skipped += 1
+                continue
+            if all(same(domain, k, v, read_domain(domain).get(k)) for k, v in saved.items()):
+                print(f"{domain}: already matches")
+                continue
+            if not quit_app(domain):
+                print(f"{domain}: app didn't quit, skipped (quit it, then run app-prefs apply)")
+                skipped += 1
+                continue
+            reopen = True
         live = read_domain(domain)
         for k, v in saved.items():
             live[k] = merged(domain, k, v, live.get(k))
         write_domain(domain, live)
-        print(f"{domain}: applied {len(saved)} keys")
+        print(f"{domain}: applied {len(saved)} keys" + (", reopening the app" if reopen else ""))
+        if reopen:
+            subprocess.run(["open", "-g", "-b", domain], capture_output=True)
     return 1 if skipped else 0
 
 
@@ -260,7 +292,8 @@ def main(argv):
         cmd_export(base, rules, names)
         return 0
     if cmd == "apply":
-        return cmd_apply(base, rules, names)
+        restart = "--restart" in names
+        return cmd_apply(base, rules, [n for n in names if n != "--restart"], restart)
     if cmd == "check":
         return 1 if differences(base, rules) else 0
     if cmd == "diff":

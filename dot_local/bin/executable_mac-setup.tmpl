@@ -77,20 +77,61 @@ state_key() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_'; }
 confirmed() { [ -f "$STATE_DIR/$(state_key "$1")" ] || [ -f "$STATE_DIR/${1%%:*}" ]; }
 workstation() { [ "$ROLE" = workstation ]; }
 
-# Apps with no Homebrew cask: app bundle | where to get it.
-VENDOR_APPS="OpenSCAD|https://openscad.org/downloads.html
-Festivitas|https://festivitas.app
-Cursorful|https://cursorful.com
-HueForge|https://shop.thehueforge.com
-MASSO Link|https://www.masso.com.au
-EXStar Hub|https://www.shining3d.com
-3DconnexionSettings|https://3dconnexion.com/drivers"
+# Apps with no Homebrew cask: app bundle | where to get it | download file name (extended
+# regex, case-insensitive, no "|": it's the field separator) that act_vendor looks for in
+# ~/Downloads to install from.
+VENDOR_APPS="OpenSCAD|https://openscad.org/downloads.html|openscad
+Festivitas|https://festivitas.app|festivitas
+Cursorful|https://cursorful.com|cursorful
+HueForge|https://shop.thehueforge.com/apps/download|^hueforge_macos
+MASSO Link|https://docs.masso.com.au/getting-started-guides/machining-with-masso/wi-fi-connectivity/masso_link|masso_link
+EXStar Hub|https://www.einstar.com/pages/download-center-einstar-rockit|exstar.?hub
+3DconnexionSettings|https://3dconnexion.com/drivers|3d[xc]"
 vendor_steps() { local name
   while IFS='|' read -r name _; do echo "vendor:$name|$name installed|Apps"; done <<EOF2
 $VENDOR_APPS
 EOF2
 }
 vendor_url() { printf '%s\n' "$VENDOR_APPS" | awk -F'|' -v n="$1" '$1==n{print $2}'; }
+vendor_pattern() { printf '%s\n' "$VENDOR_APPS" | awk -F'|' -v n="$1" '$1==n{print $3}'; }
+DOWNLOADS="${MAC_SETUP_DOWNLOADS:-$HOME/Downloads}"
+# HueForge plugins you have licenses for (installed by hand inside HueForge).
+HUEFORGE_PLUGINS="FlatForge, HugeForge"
+# The newest finished download (.dmg, .zip or .pkg) in ~/Downloads matching the app's pattern.
+vendor_download() { local p f best=""; p="$(vendor_pattern "$1")"; [ -n "$p" ] || return 1
+  for f in "$DOWNLOADS"/*; do
+    [ -f "$f" ] || continue
+    printf '%s\n' "${f##*/}" | grep -iE '\.(dmg|zip|pkg)$' | grep -qiE -- "$p" || continue
+    { [ -z "$best" ] || [ "$f" -nt "$best" ]; } && best="$f"
+  done
+  [ -n "$best" ] && echo "$best"; }
+# Install an app from a download: copy its .app into /Applications, or run its .pkg.
+# Anything else (an installer app, several apps) is opened in Finder to finish by hand.
+install_download() { local f="$1" app="$2" dir="" tmp="" mnt="" found rc=0
+  case "$f" in
+    *.pkg|*.PKG) echo "    Installing $(basename "$f") (asks for your password)..."; sudo installer -pkg "$f" -target /; return ;;
+    *.zip|*.ZIP) tmp="$(mktemp -d)"; ditto -x -k "$f" "$tmp" || { rm -rf "$tmp"; return 1; }; dir="$tmp" ;;
+    *.dmg|*.DMG) mnt="$(mktemp -d)"
+                 # No stdin: a DMG with a license agreement fails here instead of waiting unseen.
+                 hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$mnt" "$f" </dev/null >/dev/null ||
+                   { rmdir "$mnt"; echo "    Couldn't mount $(basename "$f") (it may show a license first); opening it."; open "$f"; return 1; }
+                 dir="$mnt" ;;
+  esac
+  found="$(find "$dir" -maxdepth 2 -name "$app.app" -prune 2>/dev/null | head -1)"
+  if [ -n "$found" ]; then
+    echo "    Copying $app.app to $APPS..."; ditto "$found" "$APPS/$app.app" || rc=$?
+  elif found="$(find "$dir" -maxdepth 2 -name '*.pkg' 2>/dev/null | head -1)"; [ -n "$found" ]; then
+    echo "    Installing $(basename "$found") (asks for your password)..."; sudo installer -pkg "$found" -target / || rc=$?
+  else
+    echo "    No $app.app in $(basename "$f"); opening it so you can finish the install."
+    [ -n "$mnt" ] && echo "    Eject it afterwards (hdiutil detach \"$mnt\")."
+    open "$dir"; return 0
+  fi
+  [ -n "$mnt" ] && { hdiutil detach -quiet "$mnt"; rmdir "$mnt" 2>/dev/null; }
+  [ -n "$tmp" ] && rm -rf "$tmp"
+  [ "$rc" = 0 ] || echo "    Install failed ($rc)."
+  return "$rc"
+}
 # Apps to sign in to or activate: label | app to open | note.
 LICENSES="Microsoft 365 (Office)|Microsoft Word|
 Fantastical|Fantastical|
@@ -101,7 +142,6 @@ BetterMouse|BetterMouse|
 DaisyDisk|DaisyDisk|
 Parallels|Parallels Desktop|
 LightBurn|LightBurn|
-HueForge|HueForge|
 Fusion|Autodesk Fusion|
 Raycast|Raycast|
 Slack|Slack|
@@ -115,6 +155,7 @@ EOF2
 # Private app exports: label | app | where to restore | old Mac step name
 EXPORTS="Stream Deck|Elgato Stream Deck|Preferences > Profiles > Restore
 BetterDisplay|BetterDisplay|Settings > Application > Import
+HueForge|HueForge|its configuration import (the export from the old Mac's HueForge)
 Claude Code|Claude|claude-sync import (memories and prompt history; claude-sync export on the old Mac)"
 export_field() { printf '%s\n' "$EXPORTS" | awk -F'|' -v n="$1" -v f="$2" '$1==n{print $f}'; }
 export_steps() { local l
@@ -264,6 +305,7 @@ check_containers() { workstation || return 0; colima_at_login && colima status >
 check_ollama()     { workstation || return 0; ollama list >/dev/null 2>&1; }
 check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
 # Confirmations saved before the US spelling ("licence:<app>", "licences") still count.
+check_hueforge_plugins() { workstation || return 0; confirmed hueforge_plugins; }
 check_license()    { workstation || return 0; confirmed "license:$1" || confirmed "licence:$1" || confirmed licences; }
 check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
 check_spacemouse() { workstation || return 0; 3dx-sync check >/dev/null 2>&1; }
@@ -370,10 +412,14 @@ help_replaced()    { local a c pre=""; a=$(replaced_present | paste -sd, - | sed
 help_containers()  { if colima_at_login; then echo "Colima starts at login but isn't running yet. The first start downloads and builds its VM (a minute or two); log: $(brew --prefix)/var/log/colima.log"
                      else echo "Start Colima (the Docker engine) at login. The docker CLI, compose and buildx use it; Docker's config gets Homebrew's CLI plugins and the colima context. The first start builds its VM, which takes a minute or two."; fi; }
 help_ollama()      { echo "Run Ollama's server at login (brew services). Models are stored in ~/.ollama."; }
-help_vendor()     { echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1") and install it."; }
+help_vendor()     { local f; f="$(vendor_download "$1")"
+                    if [ -n "$f" ]; then echo "$1 has no Homebrew cask. Found $(basename "$f") in Downloads; install from it."
+                    else echo "$1 has no Homebrew cask. Download it from $(vendor_url "$1"); mac-setup then installs it from Downloads."; fi
+                    echo "    If macOS blocks it on first open, allow it in System Settings > Privacy & Security > Open Anyway."; }
+help_hueforge_plugins() { echo "Install your HueForge plugins ($HUEFORGE_PLUGINS): Plugins > Install Plugin in HueForge, pick each plugin's zip (from the same download page), then accept its signature. HueForge itself has no license to enter: the download from your account is the license."; }
 help_gridfinity() { echo "gridfinity-studio, from the latest GitHub release of unstable-studios/gridfinity-studio."; }
 help_license()    { local n; n="$(license_field "$1" 3)"; echo "Open $1 and sign in or enter its license.${n:+ $n}"; }
-help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Quit these apps first; a running app writes its own settings back:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
+help_app_prefs()   { echo "Saved app settings (macos/prefs) differ here. Running apps are quit, updated and opened again:"; app-prefs diff 2>/dev/null | sed 's/^/    /'; }
 help_spacemouse()  { echo "The saved SpaceMouse settings (macos/3dconnexion) differ here. Quit apps that use the SpaceMouse (Fusion, PrusaSlicer, OpenSCAD) first; one that's running writes its own settings back."; }
 help_onedrive()    { echo "Sign in to OneDrive with your Unstable Studios account (mike@unstablestudios.com). The private app exports sync through it."; }
 help_export()      { echo "Restore $1 from its export in OneDrive (Unstable Studios) > Apps > Mac app exports: $(export_field "$1" 3). Make the export on the old Mac first."; }
@@ -462,7 +508,16 @@ act_btt() {
   fi
 }
 act_ws_apps()     { HOMEBREW_CASK_OPTS="--adopt" HOMEBREW_BUNDLE_CASK_SKIP="$(ws_skip)" brew bundle --file "$(chezmoi source-path)/Brewfile.workstation"; }
-act_vendor()      { open "$(vendor_url "$1")"; }
+act_vendor()      { local f; f="$(vendor_download "$1")"
+                    if [ -z "$f" ]; then
+                      open "$(vendor_url "$1")"
+                      echo "    Waiting for the download in $DOWNLOADS (Enter to stop waiting)..."
+                      while [ -z "$f" ]; do read -r -t 3 _; [ $? -le 128 ] && return 0; f="$(vendor_download "$1")"; done
+                    fi
+                    install_download "$f" "$1"; }
+act_hueforge_plugins() { local z; [ -d "$APPS/HueForge.app" ] || { echo "    Install HueForge first."; return 0; }
+                    for z in "$DOWNLOADS"/*Plugin_MacOS*.zip; do [ -f "$z" ] && open -a HueForge "$z"; done
+                    echo "    If HueForge didn't offer to install them, use Plugins > Install Plugin."; }
 act_containers()   {
   colima_at_login || brew services start colima || return 1
   # Docker Desktop set these up; with Homebrew's docker they come from here.
@@ -487,7 +542,7 @@ act_gridfinity() {
     ditto -x -k "$tmp"/*arm64-mac.zip "$APPS" && echo "Installed gridfinity-studio"
   rm -rf "$tmp"
 }
-act_app_prefs()    { app-prefs apply; }
+act_app_prefs()    { app-prefs apply --restart; }
 act_spacemouse()   { 3dx-sync import; }
 # echo-nas login in 1Password, by item ID (whichever signed-in account holds it).
 NAS_ITEM="2qikhkiio3v4omtmac72nbe64y"
@@ -575,6 +630,7 @@ ollama|Ollama server runs at login|Apps
 gridfinity|gridfinity-studio installed|Apps
 $(license_steps)
 app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
+hueforge_plugins|HueForge plugins installed ($HUEFORGE_PLUGINS)|Apps
 spacemouse|SpaceMouse settings applied (macos/3dconnexion)|Apps
 onedrive|OneDrive signed in (Unstable Studios)|Apps
 $(export_steps)
@@ -593,7 +649,7 @@ timemachine|Time Machine backs up to echo-nas|Settings
 tm_no_vms|Virtual machines kept out of Time Machine|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote ninja_backup_run license op_browser export vm raycast_sync raycast_local zoom widgets "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup_run license hueforge_plugins op_browser export vm raycast_sync raycast_local zoom widgets "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.
