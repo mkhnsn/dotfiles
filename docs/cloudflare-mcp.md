@@ -1,6 +1,7 @@
 # Cloudflare API MCP server, read-only (#119)
 
-Status: design. Waiting on one read-only API token (below). Nothing with write access is added.
+Status: trial. The read-only token exists and `cf-mcp-headers` serves it; `unstable-studios/dashboard`
+has the server in its `.mcp.json`. Nothing with write access is added.
 
 ## What it is
 
@@ -29,9 +30,16 @@ Read** so the server can find the account; tokens with client IP filtering aren'
    name `claude-mcp-readonly`; only **Read** permissions: Account Resources (required), then
    Workers scripts, KV, R2, D1, analytics, Access apps and policies, and Zone and DNS for the
    Unstable Studios zones, picked from the dashboard's permission list. No Edit permission. Stored in 1Password
-   (Unstable Studios vault, item `Cloudflare MCP read-only`, field `credential`).
+   at `op://Automation/Cloudflare MCP read-only Token/credential`.
+
+   The token made on 2026-11-22 has every account-level Read permission (checked with
+   `GET /accounts/{id}/tokens/{id}`: 150-odd groups, all named `… Read` or `… Read-Only`) and
+   no zone permissions, so DNS records and zone settings aren't visible. That includes Billing,
+   Audit Logs and the Zero Trust PII reads; narrow it in the dashboard if that's more than
+   Claude should see. Adding zone Read for DNS is a dashboard change, not a code one.
 2. **Header helper** in the dotfiles, built like `ha-mcp`: `cf-mcp-headers --store-token` copies
-   the token from 1Password into the macOS Keychain once (a `mac-setup` step), and at runtime
+   the token from 1Password into the macOS Keychain once (`mac-setup` step `cf_mcp`; Keychain
+   service `cf-mcp`, account `cloudflare-readonly`), and at runtime
    `~/.local/bin/cf-mcp-headers` reads it with `security find-generic-password` and prints
    `{"Authorization": "Bearer <token>"}`. Not `op read` at runtime: Claude Code gives a
    `headersHelper` 10 seconds, runs it on every connect and reconnect (and again when a tool call
@@ -71,7 +79,7 @@ of this.
   works when Claude Code inherits `~/.local/bin` on its `PATH` (the shell and the desktop app do);
   if a launch doesn't, the fallback is a user-scope entry with the absolute path, written by
   `claude-setup`.
-- The token's zone list: all zones, or only the ones the Workers repos use.
+- Zone Read (DNS, zone settings): none today; all zones, or only the ones the Workers repos use.
 
 ## Not chosen
 

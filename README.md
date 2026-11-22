@@ -324,7 +324,7 @@ signed in with access to that repo, and skips quietly otherwise.
 
 `mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
 FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
-Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
+Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, the Claude Code MCP tokens (Home Assistant, Cloudflare read-only), dotfiles and Brewfile, `gh` and Doppler sign-in,
 the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
 Sync, weekly exports, the settings that stay on each Mac, and the echo-m365 sign-in its Generate TAP command needs: the
