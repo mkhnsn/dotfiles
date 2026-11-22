@@ -316,7 +316,8 @@ signed in with access to that repo, and skips quietly otherwise.
 FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
 Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, dotfiles and Brewfile, `gh` and Doppler sign-in,
 the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
-Tailscale (name and tag), Remote Login, BetterTouchTool and its preset, workstation apps (Brewfile, vendor
+Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
+Sync, weekly exports, the settings that stay on each Mac), Zoom's video shortcut, workstation apps (Brewfile, vendor
 downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
 backup run, macOS settings and the Dock, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
@@ -383,12 +384,14 @@ the others. Run `brew-why` any time for the same list (`brew-why <cask>` for one
 (`macos/symbolichotkeys.plist`), the BTT preset, AltTab's settings — and fails on a **conflict**
 (two owners on the same keys), an **undeclared** binding, or a **stale** entry. Raycast's settings
 are encrypted, so its hotkeys are entered by hand (`source = "manual"`) and only checked for
-conflicts. `shortcut-check --list` prints the whole map.
+conflicts, as are app settings changed by hand (Zoom's video shortcut). `shortcut-check --list` prints the whole map.
 
 Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
 same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
-Owners now: window management BTT (drag-to-snap and the ⌃⌥ keys), app switching AltTab (⌘Tab),
-menu bar Bartender, launcher and clipboard history Raycast. After changing a shortcut in an
+Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⌥⇧⌘ resize),
+app switching AltTab (⌘Tab), menu bar Bartender, launcher, clipboard history (⇧⌘V) and link
+cleaning Raycast (Link Cleaner, on demand: BTT cleans links only inside its clipboard manager, which
+is off). After changing a shortcut in an
 app, export it (`btt-sync export`, `app-prefs export`), update the registry, and run
 `shortcut-check`.
 
@@ -401,14 +404,41 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
 - `btt-sync import` on a new Mac, after installing BTT
 - `btt-sync export` after changing triggers, then review and commit the diff. Export sorts the
   preset, drops machine state (launch counts, lid state) and keeps the pinned settings in
-  `btt-sync`: no Imgur uploads, no usage logging, and BTT off the Stream Deck (Elgato's app
-  owns it; its keys call BTT actions). A test checks the committed preset.
+  `btt-sync`: no Imgur uploads, no usage logging, BTT off the Stream Deck (Elgato's app
+  owns it; its keys call BTT actions), and BTT's clipboard manager and link cleaning off
+  (Raycast's jobs). Export also drops per-trigger update times, which change on every import.
+  A test checks the committed preset.
 
-`mac-setup` compares BTT's global keyboard shortcuts with the preset's, so it asks for a
-re-import when the preset gains shortcuts after an earlier import. If BTT then lists two
+`mac-setup` compares BTT's global keyboard shortcuts and move/resize modifier keys with the
+preset's, so it asks for a re-import when the preset gains either after an earlier import. If BTT then lists two
 presets named Default, delete the older one.
 
+The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
+Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).
+`mac-setup` asks for it.
+
+BTT's MCP server (port 64832, turned on in BTT's settings) lets Claude Code read and change
+triggers; `mac-setup` checks it's on.
+
 This repo is public: keep secrets out of BTT triggers.
+
+## Raycast
+
+Raycast's settings live in an encrypted database, so the dotfiles don't hold them. Instead:
+
+- **Cloud Sync** (Pro) carries quicklinks, snippets, extensions (turned on per Mac), AI
+  commands, MCP servers and hotkeys between Macs. A new Mac can reset some hotkeys when it first joins: check them
+  against `shortcut-check --list`.
+- **Weekly exports** (Settings › Advanced › Export, set on each Mac) go to OneDrive › Apps ›
+  Mac app exports › Raycast › <computer name>, last 5 kept. The `.rayconfig` is encrypted; its passphrase is in 1Password. Import
+  Settings & Data restores it, category by category.
+- **Per-Mac settings** don't sync and are set by hand: Script Folders (`~/.local/bin`, whose
+  scripts carry Raycast headers), MCP Server › Connect App › Claude Code with Store off under
+  Shared Extensions, and the Windows apps from Parallels unticked in Settings › Extensions ›
+  Applications. Raycast's MCP server can change most settings by ID, so Claude Code can do the
+  app list.
+
+`mac-setup` walks through all three.
 
 ## 1Password Integration
 

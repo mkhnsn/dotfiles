@@ -126,16 +126,23 @@
     "BTTTpFourFingerSwipeSensitivity" : 0.4,
     "BTTTpThreeFingerSwipeSensitivity" : 0.3,
     "BTTTwoFingerTipTapMinSpread" : 0.03,
-    "BTTURLCleanerAutoClean" : true,
+    "BTTURLCleanerAutoClean" : false,
     "BTTUploadToImgur" : false,
     "BTTUseNewUI" : true,
     "SIRIMouseSpeed" : 1,
     "SIRIScrollSpeed" : 1,
     "batteryWarning" : false,
+    "cmdMove" : true,
+    "cmdResize" : true,
+    "controlMove" : true,
+    "controlResize" : true,
     "cornerSnap" : true,
     "disableScrollingIf2" : true,
     "disableScrollingIf3" : true,
     "mmZoomRepeatDelay" : 0.1,
+    "optMove" : true,
+    "optResize" : true,
+    "shiftResize" : true,
     "showBTTRemoteTab" : true,
     "showDrawingsTab" : true,
     "showKeyboardTab" : true,
@@ -173,7 +180,6 @@
                 "BTTMicMuteApplyToAllInputDevices" : true
               },
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795115400.733959,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Toggle Mute Microphone (Audio Input)",
               "BTTPredefinedActionType" : 585,
@@ -183,7 +189,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Mic: toggle mute (all apps)",
-          "BTTLastUpdatedAt" : 1795115400.733804,
           "BTTOrder" : 0,
           "BTTShortcutKeyCode" : 46,
           "BTTShortcutKeyboardType" : 0,
@@ -197,7 +202,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.340142,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Maximize Window Left Half",
               "BTTPredefinedActionType" : 19,
@@ -207,7 +211,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: left half",
-          "BTTLastUpdatedAt" : 1795112711.3273711,
           "BTTOrder" : 0,
           "BTTShortcutKeyCode" : 123,
           "BTTShortcutKeyboardType" : 0,
@@ -221,7 +224,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.340395,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Maximize Window Right Half",
               "BTTPredefinedActionType" : 20,
@@ -231,7 +233,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: right half",
-          "BTTLastUpdatedAt" : 1795112711.340343,
           "BTTOrder" : 1,
           "BTTShortcutKeyCode" : 124,
           "BTTShortcutKeyboardType" : 0,
@@ -245,7 +246,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.340479,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Maximize Window",
               "BTTPredefinedActionType" : 21,
@@ -255,7 +255,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: maximize",
-          "BTTLastUpdatedAt" : 1795112711.3404531,
           "BTTOrder" : 2,
           "BTTShortcutKeyCode" : 36,
           "BTTShortcutKeyboardType" : 0,
@@ -269,7 +268,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.3405461,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Resize window to Left Third",
               "BTTPredefinedActionType" : 108,
@@ -279,7 +277,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: left third",
-          "BTTLastUpdatedAt" : 1795112711.340522,
           "BTTOrder" : 3,
           "BTTShortcutKeyCode" : 2,
           "BTTShortcutKeyboardType" : 0,
@@ -293,7 +290,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.340613,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Resize window to Middle Third",
               "BTTPredefinedActionType" : 109,
@@ -303,7 +299,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: center third",
-          "BTTLastUpdatedAt" : 1795112711.340586,
           "BTTOrder" : 4,
           "BTTShortcutKeyCode" : 3,
           "BTTShortcutKeyboardType" : 0,
@@ -317,7 +312,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.340672,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Resize window to Right Third",
               "BTTPredefinedActionType" : 110,
@@ -327,7 +321,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: right third",
-          "BTTLastUpdatedAt" : 1795112711.34065,
           "BTTOrder" : 5,
           "BTTShortcutKeyCode" : 5,
           "BTTShortcutKeyboardType" : 0,
@@ -341,7 +334,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.3407311,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Resize window to Left Two Thirds",
               "BTTPredefinedActionType" : 174,
@@ -351,7 +343,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: left two thirds",
-          "BTTLastUpdatedAt" : 1795112711.3407102,
           "BTTOrder" : 6,
           "BTTShortcutKeyCode" : 14,
           "BTTShortcutKeyboardType" : 0,
@@ -365,7 +356,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.340797,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Resize window to Right Two Thirds",
               "BTTPredefinedActionType" : 175,
@@ -375,7 +365,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: right two thirds",
-          "BTTLastUpdatedAt" : 1795112711.34077,
           "BTTOrder" : 7,
           "BTTShortcutKeyCode" : 17,
           "BTTShortcutKeyboardType" : 0,
@@ -391,7 +380,6 @@
               "BTTActionMoveResizeConfig" : "{\"BTTMoveResizeVersion\":3,\"BTTActiveOrHoveredWindow\":0,\"BTTScreensToMove\":0,\"BTTOriginDisplay\":1,\"BTTDirectionToMove\":0,\"BTTChangeXOrigin\":0,\"BTTChangeYOrigin\":1,\"BTTOriginToUse\":1,\"BTTScreenOrigin\":1,\"BTTChangeYOriginRelative\":0,\"BTTNewYAbsolute\":0,\"BTTChangeWindowWidth\":0,\"BTTChangeWindowHeight\":1,\"BTTChangeHeightRelative\":1,\"BTTNewWindowHeightRelative\":100,\"BTTNewWindowHeightAbsoluteAddition\":0,\"BTTUseVisibleFrame\":1,\"BTTCareForStageManager\":0}",
               "BTTActionMoveResizeName" : "Maximize height",
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.3408551,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Move  or  Resize Window to Custom Position and Size",
               "BTTPredefinedActionType" : 251,
@@ -401,7 +389,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: maximize height",
-          "BTTLastUpdatedAt" : 1795112711.3408341,
           "BTTOrder" : 8,
           "BTTShortcutKeyCode" : 36,
           "BTTShortcutKeyboardType" : 0,
@@ -415,7 +402,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.3409472,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Move Window One Space or Desktop Left",
               "BTTPredefinedActionType" : 151,
@@ -425,7 +411,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: one space left",
-          "BTTLastUpdatedAt" : 1795112711.3409228,
           "BTTOrder" : 9,
           "BTTShortcutKeyCode" : 123,
           "BTTShortcutKeyboardType" : 0,
@@ -439,7 +424,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795112711.3410048,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Move Window One Space or Desktop Right",
               "BTTPredefinedActionType" : 152,
@@ -449,7 +433,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Window: one space right",
-          "BTTLastUpdatedAt" : 1795112711.3409839,
           "BTTOrder" : 10,
           "BTTShortcutKeyCode" : 124,
           "BTTShortcutKeyboardType" : 0,
@@ -482,7 +465,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795115401.056186,
               "BTTLayoutIndependentActionChar" : "active app",
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Send Shortcut to Specific App",
@@ -497,7 +479,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Camera: Meet video",
-          "BTTLastUpdatedAt" : 1795115401.056143,
           "BTTOrder" : 0,
           "BTTShortcutKeyCode" : 9,
           "BTTShortcutKeyboardType" : 0,
@@ -518,7 +499,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795115400.951618,
               "BTTLayoutIndependentActionChar" : "active app",
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Send Shortcut to Specific App",
@@ -533,7 +513,6 @@
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Camera: Teams video",
-          "BTTLastUpdatedAt" : 1795115400.9515681,
           "BTTOrder" : 0,
           "BTTShortcutKeyCode" : 9,
           "BTTShortcutKeyboardType" : 0,
@@ -554,7 +533,6 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLastUpdatedAt" : 1795115400.8433728,
               "BTTLayoutIndependentActionChar" : "active app",
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Send Shortcut to Specific App",
@@ -562,14 +540,13 @@
               "BTTShortcutApp" : "active app",
               "BTTShortcutAppUnderCursor" : "active app",
               "BTTShortcutSwitchToAppFirst" : "0",
-              "BTTShortcutToSend" : "55,56,9",
+              "BTTShortcutToSend" : "59,55,56,9",
               "BTTTriggerParentUUID" : "4C138EBD-4844-4B86-B8D7-2613612E9B49",
               "BTTUUID" : "7378F57D-2813-484D-8C71-DB513EF6FF09"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
           "BTTGestureNotes" : "Camera: Zoom video",
-          "BTTLastUpdatedAt" : 1795115400.8433208,
           "BTTOrder" : 0,
           "BTTShortcutKeyCode" : 9,
           "BTTShortcutKeyboardType" : 0,
@@ -584,5 +561,5 @@
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "9783C53A-AE5E-4D55-9D78-5BA708FFBA02"
+  "BTTPresetUUID" : "01E82978-F549-45D3-AAAF-014D6B4479AA"
 }

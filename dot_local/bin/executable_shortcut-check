@@ -6,7 +6,8 @@ that owns it, what it does and where it applies. The bindings that live in the d
 straight from their configs:
 
   macos     macos/symbolichotkeys.plist (enabled system shortcuts, applied by mac-defaults)
-  btt       macos/btt/Default.bttpreset (keyboard-shortcut triggers)
+  btt       macos/btt/Default.bttpreset (keyboard-shortcut triggers, and the move/resize modifier
+            keys as "<mods>Drag")
   alttab    macos/prefs/com.lwouis.alt-tab-macos.plist (switcher shortcuts; AltTab's defaults
             when unset)
 
@@ -102,6 +103,13 @@ def read_btt(src):
             for v in o:
                 walk(v, scope)
     walk(d.get("BTTPresetContent", d), None)
+    # Hold-and-move-the-pointer modifiers (Window Snapping & Moving › Moving & Resizing Modifier Keys).
+    g = d.get("BTTGeneralSettings") or {}
+    for job in ("Move", "Resize"):
+        mods = "".join(glyph for flag, glyph in (("control", "⌃"), ("opt", "⌥"), ("shift", "⇧"), ("cmd", "⌘"))
+                       if g.get(flag + job))
+        if mods:
+            out.append({"keys": mods + "Drag", "scope": "global", "what": f"window {job.lower()} modifier keys"})
     return out
 
 
@@ -141,6 +149,10 @@ def check(src, registry_path):
         e["keys"] = normalize(e["keys"])
         e.setdefault("scope", "global")
         e.setdefault("source", "managed" if e["owner"] in READERS else "manual")
+        want = "managed" if e["owner"] in READERS else "manual"
+        if e["source"] != want:
+            problems.append(f"source: {e['owner']} {e['keys']} has source = \"{e['source']}\"; "
+                            f"{e['owner']} bindings are {want}")
     # conflicts inside the registry
     warnings = []
     for i, a in enumerate(reg):

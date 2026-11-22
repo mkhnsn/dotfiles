@@ -13,7 +13,7 @@
 #   btt-sync import   repo -> BTT (on a new Mac, after installing BTT from folivora.ai)
 #   btt-sync normalize   tidy the repo preset (export does this)
 # Export keeps diffs meaningful: keys are sorted, machine state (launch counts, lid state)
-# is dropped, and the settings in PINNED keep their values whatever the Mac had.
+# and per-trigger update times are dropped, and the settings in PINNED keep their values whatever the Mac had.
 # The preset includes BTT's general settings. It's in a public repo: keep secrets out of triggers.
 
 set -euo pipefail
@@ -48,8 +48,9 @@ PINNED = {
     "BTTEnableUsageLogging": False,
     # The Stream Deck belongs to Elgato's app; its keys call BTT actions, BTT doesn't drive it.
     "BTTStreamDeckEnabled": False, "BTTStreamDeckPlugin": False, "BTTStreamDeckFullControl": False,
-    # Clipboard history is Raycast's.
-    "BTTDisableClipboardManager": True,
+    # Clipboard history is Raycast's. BTT cleans copied links only inside its clipboard manager,
+    # so link cleaning is Raycast's too (Link Cleaner, on demand).
+    "BTTDisableClipboardManager": True, "BTTURLCleanerAutoClean": False,
 }
 g = d.get("BTTGeneralSettings")
 if not isinstance(g, dict):
@@ -57,6 +58,16 @@ if not isinstance(g, dict):
 for k in VOLATILE:
     g.pop(k, None)
 g.update(PINNED)
+# Every import stamps each trigger and action with a new BTTLastUpdatedAt; drop it.
+def strip(o):
+    if isinstance(o, dict):
+        o.pop("BTTLastUpdatedAt", None)
+        for v in o.values():
+            strip(v)
+    elif isinstance(o, list):
+        for v in o:
+            strip(v)
+strip(d)
 out = (json.dumps(d, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
 with open(p + ".tmp", "wb") as f:
     f.write(out)

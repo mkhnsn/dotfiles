@@ -89,6 +89,19 @@ class Fixture(unittest.TestCase):
             '[[shortcut]]\nkeys = "⌃⌥←"\nowner = "btt"\naction = "left half"\n')
         self.assertTrue(any(p.startswith("stale: the registry lists btt ⌃⌥←") for p in problems))
 
+    def test_move_resize_modifiers_are_read(self):
+        with open(os.path.join(self.d, "macos/btt/Default.bttpreset"), "w") as f:
+            json.dump({"BTTGeneralSettings": {"controlMove": True, "cmdMove": True, "shiftResize": True,
+                                              "cmdResize": True}, "BTTPresetContent": []}, f)
+        _, problems, _ = self.registry('[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\naction = "switcher"\n')
+        self.assertTrue(any(p.startswith("undeclared: btt binds ⌃⌘Drag (window move") for p in problems))
+        self.assertTrue(any(p.startswith("undeclared: btt binds ⇧⌘Drag (window resize") for p in problems))
+
+    def test_wrong_source_is_a_problem(self):
+        _, problems, _ = self.registry(
+            '[[shortcut]]\nkeys = "⌘⇥"\nowner = "alttab"\nsource = "manged"\naction = "switcher"\n')
+        self.assertTrue(any(p.startswith("source: alttab ⌘⇥") for p in problems))
+
     def test_enabled_system_shortcut_is_read(self):
         self.symbolic({"28": {"enabled": True, "value": {"type": "standard", "parameters": [51, 20, SHIFT | CMD]}},
                        "29": {"enabled": False, "value": {"type": "standard", "parameters": [51, 20, CTRL | SHIFT | CMD]}}})

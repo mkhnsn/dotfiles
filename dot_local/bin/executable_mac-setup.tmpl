@@ -184,8 +184,9 @@ check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh 
 check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 # BTT's master "Enable window snapping" switch isn't part of presets; it's stored only when off.
 check_btt_snapping(){ workstation || return 0; [ "$(defaults read com.hegenberg.BetterTouchTool windowSnappingEnabled 2>/dev/null)" != 0 ]; }
-# The preset's global keyboard shortcuts (keys and modifiers) that BTT doesn't have: none
-# imported yet, or an import from before the preset changed. Prints how many are missing.
+# The preset's global keyboard shortcuts (keys and modifiers) and move/resize modifier keys that
+# BTT doesn't have: none imported yet, or an import from before the preset changed. Prints how
+# many are missing.
 btt_missing()      { osascript -e 'tell application "BetterTouchTool" to get_triggers' 2>/dev/null |
                      "${MAC_SETUP_PYTHON:-/usr/bin/python3}" -c '
 import json, sys
@@ -196,8 +197,18 @@ want = keys(t for a in preset.get("BTTPresetContent", []) if a.get("BTTAppBundle
             for t in a.get("BTTTriggers", []))
 try: have = keys(json.load(sys.stdin))
 except ValueError: have = set()
-print(len(want - have))' "$(chezmoi source-path)/macos/btt/Default.bttpreset" 2>/dev/null || echo 1; }
+import re, subprocess
+def flag(k):
+    r = subprocess.run(["defaults", "read", "com.hegenberg.BetterTouchTool", k], capture_output=True, text=True)
+    return r.stdout.strip() == "1"
+mods = [k for k, v in preset.get("BTTGeneralSettings", {}).items()
+        if v in (True, 1) and re.fullmatch(r"(control|opt|shift|cmd)(Move|Resize)", k)]
+print(len(want - have) + sum(not flag(k) for k in mods))' "$(chezmoi source-path)/macos/btt/Default.bttpreset" 2>/dev/null || echo 1; }
 check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null && [ "$(btt_missing)" = 0 ]; }
+check_btt_mcp()    { workstation || return 0; nc -z -G 2 127.0.0.1 64832 >/dev/null 2>&1; }
+check_raycast_sync(){ workstation || return 0; confirmed raycast_sync; }
+check_raycast_local(){ workstation || return 0; confirmed raycast_local; }
+check_zoom()       { workstation || return 0; confirmed zoom; }
 check_remote()     { confirmed remote; }
 # Casks whose app is already installed in a way Homebrew can't take over (see brew-why).
 ws_skip()          { command -v brew-why >/dev/null 2>&1 && brew-why --skip --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null; }
@@ -220,6 +231,10 @@ check_license()    { workstation || return 0; confirmed "license:$1" || confirme
 check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
 EXPORTS_DIR="${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}/Apps/Mac app exports"
 check_onedrive()   { workstation || return 0; [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}" ]; }
+# Each Mac schedules its own exports (the schedule doesn't sync) into its own folder, so one Mac's
+# backups don't count for another and auto-delete doesn't prune another Mac's files.
+RAYCAST_EXPORTS="$EXPORTS_DIR/Raycast/$HOSTNAME_WANT"
+check_raycast_backup(){ workstation || return 0; [ -n "$(find "$RAYCAST_EXPORTS" -name '*.rayconfig' -mtime -8 2>/dev/null | head -1)" ]; }
 # BetterMouse wasn't in the combined step, so the old confirmation doesn't cover it.
 # Claude Code counts as restored once any project memory is here (or you confirmed there was none).
 check_export()     { workstation || return 0; confirmed "export:$1" && return 0
@@ -284,8 +299,19 @@ help_ssh_server() { echo "Turn on Remote Login for your user only, so your other
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
 help_btt()        { echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) and activate the license."; }
 help_btt_snapping(){ echo "Turn on BTT's window snapping (drag windows to edges and corners; window management is BTT's): BetterTouchTool > Settings > Window Snapping & Moving > Enable window snapping. The snap areas come from the preset."; }
-help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "BTT is missing $(btt_missing) of the preset's global shortcuts (the ⌃⌥ window keys among them). Import the preset from the dotfiles; it asks for Accessibility once. If BTT > Presets then lists an older Default too, delete that one.";
+help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "BTT is missing $(btt_missing) of the preset's global shortcuts and move/resize modifier keys (the ⌃⌥ window keys, ⌃⌥⌘ move, ⌃⌥⇧⌘ resize). Import the preset from the dotfiles; it asks for Accessibility once. If BTT > Presets then lists an older Default too, delete that one.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
+help_btt_mcp()    { echo "Turn on BetterTouchTool's MCP server (port 64832) in BTT's settings; search them for MCP. Claude Code uses it to read and change BTT's triggers."; }
+help_raycast_sync(){ echo "Turn on Raycast Cloud Sync: Raycast > Settings > Cloud Sync, all categories. It brings quicklinks, snippets, extensions and hotkeys; turn on the synced extensions here (Link Cleaner among them). Then check the hotkeys in shortcut-check --list (Raycast: ⌘Space, ⌃⌘Space, ⇧⌘V): a new Mac can reset some when it first joins. No Cloud Sync data yet: run Import Settings & Data with the latest .rayconfig from OneDrive > Apps > Mac app exports > Raycast (passphrase in 1Password)."; }
+help_raycast_backup(){ echo "No Raycast export from this Mac in the last week. Raycast > Settings > Advanced > Export: set the export passphrase (it's in 1Password), Weekly, location OneDrive > Apps > Mac app exports > Raycast > $HOSTNAME_WANT, keep the last 5. Then run Export Settings & Data once."; }
+help_raycast_local(){ cat <<'EOR'
+Raycast settings that stay on each Mac:
+      Settings > Extensions > Script Commands > Script Folders: add ~/.local/bin.
+      Settings > MCP Server > Connect App > Claude Code; under Shared Extensions, Store off.
+      Settings > Extensions > Applications: untick the Windows apps from Parallels you don't launch from the Mac (Claude Code can do this through Raycast's MCP server).
+EOR
+}
+help_zoom()        { echo "Zoom > Settings > Keyboard Shortcuts > Start/Stop Video: set it to ⌃⇧⌘V. The Stream Deck camera key sends that through BTT, and ⇧⌘V is Raycast's Clipboard History."; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
                     command -v brew-why >/dev/null 2>&1 && brew-why --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null | sed 's/^/    /'; true; }
 help_replaced()    { echo "Remove apps that another one now does the job of: $(replaced_present | paste -sd, - | sed 's/,/, /g'). Rectangle's window management is BTT's now; Bartender 6 is replaced by Bartender 7 (same settings file); Docker Desktop by Colima (images and volumes in Docker Desktop are not carried over). Drag them to the Trash."; }
@@ -420,6 +446,12 @@ act_tm_no_vms()   { tmutil addexclusion "$HOME/Parallels"; }
 act_defaults()    { mac-defaults; }
 act_browser()     { defaultbrowser chrome; }
 act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
+act_btt_mcp()     { open -a BetterTouchTool; }
+act_raycast_sync(){ open -a Raycast; }
+act_raycast_backup(){ check_onedrive || { echo "    Sign in to OneDrive first."; return 1; }
+                     mkdir -p "$RAYCAST_EXPORTS"; open -a Raycast; }
+act_raycast_local(){ open -a Raycast; }
+act_zoom()        { open -a zoom.us; }
 
 # ---- Steps, in order: id | title | phase -------------------------------------------
 
@@ -454,6 +486,7 @@ ssh_server|Remote Login on, for you only|Network
 btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
 btt_snapping|BetterTouchTool window snapping on|Apps
+btt_mcp|BetterTouchTool MCP server on|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
 $(vendor_steps)
 replaced|Replaced apps removed (Rectangle, Bartender 6, Docker Desktop)|Apps
@@ -465,6 +498,10 @@ app_prefs|Saved app settings applied (Bartender, BetterMouse, AltTab, ...)|Apps
 onedrive|OneDrive signed in (Unstable Studios)|Apps
 $(export_steps)
 vm|Virtual machines moved|Apps
+raycast_sync|Raycast Cloud Sync on|Apps
+raycast_backup|Raycast exports weekly to OneDrive|Apps
+raycast_local|Raycast script folder, MCP server and app list set|Apps
+zoom|Zoom video shortcut is ⌃⇧⌘V|Apps
 remote|Ninja Remote Screen Recording approved|Apps
 ninja_backup|Ninja Backup deployed to this Mac|Apps
 ninja_backup_run|First Ninja Backup run succeeded|Apps
@@ -473,7 +510,7 @@ timemachine|Time Machine backs up to echo-nas|Settings
 tm_no_vms|Virtual machines kept out of Time Machine|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote ninja_backup_run license op_browser export vm "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup_run license op_browser export vm raycast_sync raycast_local zoom "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.
