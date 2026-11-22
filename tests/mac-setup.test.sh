@@ -26,6 +26,8 @@ setup() {
   mkdir -p "$STUBS" "$MAC_SETUP_APPS/BetterTouchTool.app" "$T/src/.git" "$T/brew"
   mkdir -p "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents"
   printf '<dict>\n\t<key>CFBundleShortVersionString</key>\n\t<string>8.0.1</string>\n</dict>\n' > "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Info.plist"
+  mkdir -p "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers"
+  printf '#!/bin/sh\n' > "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"; chmod +x "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"
   export PATH="$STUBS:/usr/bin:/bin"
   # Everything passes by default; tests break one thing at a time.
   stub uname       '[ "${1:-}" = -m ] && echo arm64 || echo Darwin'
@@ -301,8 +303,12 @@ test_btt_move_fails_reopens_old_copy() {
 
 test_streamdeck_7_is_flagged() {
   sed -i.bak 's/8\.0\.1/7.6.1/' "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Info.plist"
+  rm "$MAC_SETUP_APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp"
   run "$SCRIPT" --status
   assert_open "Stream Deck 8 installed (for its MCP server)"
+  printf 'n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Stream Deck is 7.x"
   run "$SCRIPT_SERVER" --status
   assert_done "Stream Deck 8 installed (for its MCP server)"
 }

@@ -246,9 +246,10 @@ check_export()     { workstation || return 0; confirmed "export:$1" && return 0
                      esac; }
 check_vm()         { workstation || return 0; confirmed vm; }
 # Homebrew's cask is Stream Deck 7.x; its MCP server (Claude Code's StreamDeck) needs 8, a beta
-# installed over it from elgato.com. The major version is read from the app's Info.plist (XML).
+# installed over it from elgato.com. Same signal as the apply summary: the MCP helper exists.
+# The major version (from the app's Info.plist, XML) is only for the help text.
 streamdeck_major() { sed -n '/CFBundleShortVersionString/{n;s/.*<string>\([0-9]*\).*/\1/p;}' "$APPS/Elgato Stream Deck.app/Contents/Info.plist" 2>/dev/null; }
-check_streamdeck() { workstation || return 0; [ "$(streamdeck_major)" -ge 8 ] 2>/dev/null; }
+check_streamdeck() { workstation || return 0; [ -x "$APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp" ]; }
 # Dock and Finder for daily use; dockutil comes from Brewfile.workstation, which servers skip.
 check_defaults()   { workstation || return 0; mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
@@ -341,7 +342,7 @@ help_timemachine() { echo "Back up to echo-nas with Time Machine (the local, who
 help_tm_no_vms()  { echo "Keep virtual machines out of Time Machine: tmutil addexclusion ~/Parallels (no admin needed). VM disks change constantly, so each backup would re-copy them."; }
 help_defaults()   { echo "macOS settings or the Dock differ from the dotfiles:"; mac-defaults --diff 2>/dev/null | sed 's/^/    /'; }
 help_browser()    { echo "Make Google Chrome the default browser. macOS shows a dialog: choose Use Chrome, then press Enter here."; }
-help_streamdeck() { echo "Stream Deck is $(streamdeck_major || echo '?').x; Claude Code's StreamDeck MCP server needs 8. Install the Stream Deck 8 beta from elgato.com (Downloads > Stream Deck) over it; it keeps your profiles."; }
+help_streamdeck() { local v; v="$(streamdeck_major)"; echo "Stream Deck is ${v:-not installed}${v:+.x}; Claude Code's StreamDeck MCP server needs 8. Install the Stream Deck 8 beta from elgato.com (Downloads > Stream Deck) over it; it keeps your profiles."; }
 help_remote()     { echo "Start a Ninja Remote session to this Mac and approve Screen Recording for ncstreamer (MDM can't grant it)."; }
 
 # ---- Actions: what this script can do itself (optional) --------------------------
