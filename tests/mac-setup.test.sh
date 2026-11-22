@@ -369,8 +369,16 @@ test_m365_admin_signed_in() {
   echo '{"username":"daily@example.com","tenantId":"tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
   run "$SCRIPT" --status
   assert_open "Generate TAP: echo-m365 signed in as its admin account"
+  # MSAL's spacing and UPN case don't matter; tabs and double quotes in tenant.psd1 are read.
+  printf '{"username": "Admin@Example.com", "tenantId": "tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
+  printf '@{\n\tTenantId = "tid-1"\n\tAdminAccount = "admin@example.com"\n}\n' > "$MAC_SETUP_ECHO_M365/tenant.psd1"
+  run "$SCRIPT" --status
+  assert_done "Generate TAP: echo-m365 signed in as its admin account"
   rm -f "$HOME/.mg/mg.authrecord.tid-1.json"
   run "$SCRIPT" --status
+  assert_open "Generate TAP: echo-m365 signed in as its admin account"
+  rm -f "$MAC_SETUP_ECHO_M365/tenant.psd1"
+  run "$SCRIPT" "--status"
   assert_open "Generate TAP: echo-m365 signed in as its admin account"
 }
 
