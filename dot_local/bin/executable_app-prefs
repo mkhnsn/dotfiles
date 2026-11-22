@@ -36,7 +36,9 @@ DEVICE_LISTS = {
     "com.naotanhaocan.BetterMouse": {"mice": "mice", "keyboards": "keyboards", "logikeys": "logiKeybs"},
 }
 # Fields BetterMouse saves as flat [key, value, key, value, ...] maps, in a new order each time.
-PAIR_FIELDS = {"twDirInv", "twSpeed", "quirks", "id1b04List"}
+# btn (an app's button mappings, in appitems) has the same shape; one mapping can't show a
+# reorder yet, so it's listed on that shape alone.
+PAIR_FIELDS = {"twDirInv", "twSpeed", "quirks", "id1b04List", "btn"}
 
 
 def decode(value):

@@ -167,6 +167,19 @@ class AppPrefs(unittest.TestCase):
         self.mac(self.BM, {"mice": self.bm_mice(*here_mice)})
         return self.run_tool("check").returncode
 
+    def test_bettermouse_reordered_button_map_matches(self):
+        def items(btn):
+            return {"appitems": plistlib.dumps({"apps": [{"btn": btn}]}, fmt=plistlib.FMT_BINARY)}
+        with open(os.path.join(self.repo, "allowlist"), "a") as f:
+            f.write(f"{self.BM}\tappitems\n")
+        click, back = [0, [{"Click": {}}, 1]], [0, [{"Back": {}}, 2]]
+        self.mac(self.BM, items([10, click, 11, back]))
+        self.run_tool("export")
+        self.mac(self.BM, items([11, back, 10, click]))
+        self.assertEqual(self.run_tool("check").returncode, 0, self.run_tool("diff").stdout)
+        self.mac(self.BM, items([11, click, 10, back]))
+        self.assertEqual(self.run_tool("check").returncode, 1)
+
     def test_bettermouse_other_lists_keep_their_order(self):
         a = {"name": {"product": "MX"}, "pattern": [1, 2, 3, 4]}
         b = {"name": {"product": "MX"}, "pattern": [3, 4, 1, 2]}
