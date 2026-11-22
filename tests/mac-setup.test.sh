@@ -88,6 +88,10 @@ setup() {
   mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac"
   touch "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/Raycast.rayconfig"
   stub app-prefs 'exit 0'
+  export MAC_SETUP_ECHO_M365="$T/echo-m365"
+  mkdir -p "$MAC_SETUP_ECHO_M365" "$HOME/.mg"
+  printf "@{\n    TenantId = 'tid-1'\n    AdminAccount = 'admin@example.com'\n}\n" > "$MAC_SETUP_ECHO_M365/tenant.psd1"
+  echo '{"username":"admin@example.com","tenantId":"tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
   mkdir -p "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/Desktop" "$HOME/Documents"
   ln -s "$HOME/Desktop" "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Desktop"
   ln -s "$HOME/Documents" "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
@@ -356,6 +360,24 @@ test_raycast_backup_missing() {
   touch -t 202001010000 "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/old.rayconfig"
   run "$SCRIPT" --status
   assert_open "Raycast exports weekly to OneDrive"
+}
+
+test_m365_admin_signed_in() {
+  run "$SCRIPT" --status
+  assert_done "Generate TAP: echo-m365 signed in as its admin account"
+  # Signed in as the daily account: New-Tap would ask Graph for a TAP for itself.
+  echo '{"username":"daily@example.com","tenantId":"tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
+  run "$SCRIPT" --status
+  assert_open "Generate TAP: echo-m365 signed in as its admin account"
+  rm -f "$HOME/.mg/mg.authrecord.tid-1.json"
+  run "$SCRIPT" --status
+  assert_open "Generate TAP: echo-m365 signed in as its admin account"
+}
+
+test_m365_admin_not_on_servers() {
+  echo '{"username":"daily@example.com","tenantId":"tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Generate TAP: echo-m365 signed in as its admin account"
 }
 
 test_manual_steps_start_open() {
