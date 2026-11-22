@@ -7,42 +7,54 @@ what order.
 Drawn from a November 2026 read of public decks: LinkedIn (2004 Series B),
 YouTube (2005), Coinbase (2012 seed), Mixpanel (2014 Series B), Buffer
 (2011 seed), Intercom (2011 pre-seed), Front (2016 Series A), Uber (2008,
-headlines only) and Airbnb (2008–09, a reproduction), plus Sequoia's
-outline at https://www.sequoiacap.com/article/writing-a-business-plan.
+headlines only, via TechCrunch) and Airbnb (2008–09, a reproduction), plus
+Sequoia's outline at
+https://www.sequoiacap.com/article/writing-a-business-plan.
 
 ## Order
 
-Investors expect roughly Sequoia's order and jump between sections by name:
+Start from Sequoia's outline: purpose, problem, solution, why now, market,
+competition, business model, team, financials. This guide adds three slides
+and drops one:
 
 1. Purpose: one sentence on what the company does
 2. Problem
-3. Solution: the product, briefly
+3. Solution
 4. Why now: what changed that makes this possible or needed today
-5. Market: size and the evidence people already pay
+5. Market: size, and evidence that people already pay
 6. Competition
-7. Product: how it works, in more depth
+7. Product: how it works, in more depth (added)
 8. Business model
-9. Traction, or the nearest proof you have
+9. Traction, or the nearest proof you have (added)
 10. Team
-11. Financials and the ask
+11. Financials and the ask (the ask is added)
 
-Move traction earlier when you have it. Buffer put it on slide 5. Uber's
-2008 deck put it last, and it's the usual example of a disorganized deck.
-Deep technical slides (internals, variants, architecture) go in an
-appendix after the ask, unless the technology is the pitch.
+Sequoia ends on Vision. This guide ends on the ask instead, and puts the
+vision in the purpose slide's notes.
 
-## Label over claim
+Move traction earlier when you have it. Buffer's deck shows it on slide 5.
+Uber's 2008 deck (headlines only) had its proof slides last. Deep technical
+slides (internals, variants, architecture) go in an appendix after the ask,
+unless the technology is the pitch.
 
-Investors navigate by topic, and rule 1 wants claims. Do both: a short
-topic label as the eyebrow ("Market", "Team") and the claim as the
-headline. Mixpanel's 2014 deck works this way.
+## Topic label above the claim
+
+Rule 1 wants a claim in every headline, and a topic label tells the reader
+which part of the deck they're in. Use both: a short label as the eyebrow
+("Market", "Team") and the claim as the headline. Mixpanel's 2014 deck
+pairs a label with a claim this way.
 
 ## Analogies
 
-A concrete analogy is allowed despite rule 4, because it carries
-information: "Coinbase is to Bitcoin what iTunes was to MP3", "AdWords for
-professionals". It must name two real things. "The Uber of X" with nothing
-else on the slide doesn't count.
+Rule 4 allows one analogy per deck, when all of these hold:
+
+- It names a real product the audience knows and the specific market it's
+  applied to, such as a deck framing an exchange as iTunes for a new kind
+  of media.
+- It sits on the purpose or solution slide, not as a headline.
+- The plain statement of what the company does comes right after it.
+
+"The Uber of X" alone doesn't qualify.
 
 ## Competition
 
@@ -72,15 +84,15 @@ The last content slide. It states:
 - the milestones it reaches
 - the runway in months
 
-Intercom (2011: a $600k note, 18 months) and Airbnb (2008–09: $500k, 12
-months) did this. Most famous decks didn't, and ended on traction, the team
-or "Thanks". End on the ask, then the appendix.
+Intercom (2011: a $600k note, 18 months) and Airbnb (2008–09, reproduction:
+$500k, 12 months) stated the amount and the runway. Most of the other decks
+ended on traction, the team or "Thanks". End on the ask, then the appendix.
 
 ## Sources for numbers
 
-Every market or third-party figure gets its source on the slide. Most
-public decks cite their own numbers and leave market figures unsourced.
-That's the weakness to avoid.
+Every market or third-party figure gets its source on the slide. Most of
+the public decks show their own metrics and give no source for market
+figures.
 
 ## Sent ahead or presented
 
@@ -89,8 +101,7 @@ A deck sent ahead must stand alone: claim headlines, a sentence or two of
 evidence, and sources. If both, write for sent-ahead and keep the spoken
 detail in the notes.
 
-## Conventions that aren't rules
+## Older conventions
 
 Title Case and all-caps headlines were normal in decks before about 2014.
-Use sentence case anyway (rule 13). The older style isn't a reason to copy
-it.
+Use sentence case anyway (rule 13).
