@@ -60,6 +60,9 @@ Visual Studio Code - Insiders
 Ghostty
 System Settings"
 
+# Dock folders, after the apps (right of the divider), as stacks sorted by date added.
+DOCK_FOLDERS="${MAC_DEFAULTS_DOCK_FOLDERS:-$HOME/Downloads}"
+
 want() { case "$1" in true) echo 1 ;; false) echo 0 ;; *) echo "$1" ;; esac; }
 
 settings_ok() {
@@ -117,14 +120,35 @@ app_path() {
 }
 
 # The Dock apps that are installed, in order.
-dock_wanted() {
+dock_apps() {
   local name
   while IFS= read -r name; do app_path "$name" >/dev/null && echo "$name"; done <<EOF
 $DOCK_APPS
 EOF
 }
 
-dock_current() { dockutil --list 2>/dev/null | awk -F'\t' '$3 == "persistentApps" { print $1 }'; }
+# The Dock folders that exist, in order.
+dock_folders() {
+  local dir
+  while IFS= read -r dir; do [ -n "$dir" ] && [ -d "$dir" ] && echo "$dir"; done <<EOF
+$DOCK_FOLDERS
+EOF
+}
+
+# What the Dock should list: the apps, then the folders by name.
+dock_wanted() {
+  local dir
+  dock_apps
+  dock_folders | while IFS= read -r dir; do basename "$dir"; done
+}
+
+# What it lists now: apps first, then folders, whatever order dockutil prints them in.
+dock_current() {
+  dockutil --list 2>/dev/null | awk -F'\t' '
+    $3 == "persistentApps" { print $1 }
+    $3 == "persistentOthers" { others = others $1 "\n" }
+    END { printf "%s", others }'
+}
 
 dock_ok() {
   command -v dockutil >/dev/null 2>&1 || return 1
@@ -138,11 +162,19 @@ apply_dock() {
   while IFS= read -r name; do
     dockutil --add "$(app_path "$name")" --no-restart >/dev/null 2>&1
   done <<EOF
-$(dock_wanted)
+$(dock_apps)
+EOF
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    dockutil --add "$name" --section others --view auto --display stack --sort dateadded --no-restart >/dev/null 2>&1
+  done <<EOF
+$(dock_folders)
 EOF
   killall Dock >/dev/null 2>&1 || true
   missing="$(printf '%s\n' "$DOCK_APPS" | while IFS= read -r n; do app_path "$n" >/dev/null || echo "$n"; done)"
   [ -n "$missing" ] && printf 'Not installed yet, left out of the Dock: %s\n' "$(echo "$missing" | paste -sd, -)"
+  missing="$(printf '%s\n' "$DOCK_FOLDERS" | while IFS= read -r d; do [ -z "$d" ] || [ -d "$d" ] || echo "$d"; done)"
+  [ -n "$missing" ] && printf 'Folder not found, left out of the Dock: %s\n' "$(echo "$missing" | paste -sd, -)"
   return 0
 }
 

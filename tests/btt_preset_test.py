@@ -69,6 +69,16 @@ class Preset(unittest.TestCase):
         self.assertEqual(out["BTTGeneralSettings"]["keep"], 1)
         self.assertEqual(out["BTTPresetContent"][0]["BTTTriggers"][0]["BTTActionsToExecute"][0]["BTTUUID"], "A")
 
+    def test_caps_lock_is_hyper(self):
+        """Caps Lock (BTT key code 1004) acts as the full Hyper key, ⌃⌥⇧⌘ (#121)."""
+        caps = [t for app in self.data["BTTPresetContent"] if app.get("BTTAppBundleIdentifier") == "BT.G"
+                for t in app.get("BTTTriggers", []) if t.get("BTTShortcutKeyCode") == 1004]
+        self.assertEqual(len(caps), 1)
+        first = caps[0]["BTTActionsToExecute"][0]
+        self.assertEqual(first["BTTPredefinedActionType"], 293)  # Act as Hyper Key
+        self.assertFalse(first.get("BTTAdditionalActionData", {}).get("BTTActionHyperkeyExcludeShift", False))
+        self.assertEqual(caps[0].get("BTTShortcutModifierKeys"), 0)
+
     def test_pinned_settings(self):
         for k, v in sync_set("PINNED").items():
             self.assertEqual(self.general.get(k), v, k)

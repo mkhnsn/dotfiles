@@ -285,6 +285,14 @@ Incoming SSH needs Remote Login, which `mac-setup` turns on for your user only. 
 SSH isn't used: the app build on workstations can't run its SSH server, and servers
 (`tailscaled`, which could) keep Remote Login until it's been tried there.
 
+### Finding and cloning repos
+
+Repos are cloned with ghq under `~/src` (`gget owner/repo` clones and changes into it). `c`
+fuzzy-finds a repo and changes into it: the ones you've cloned, plus every repo of yours and
+your GitHub organizations' that you haven't (archived ones left out), marked `clone`. Picking
+one of those clones it first. The GitHub list is cached in `~/.cache/cproj/remote` and
+refreshed in the background once a day; `cproj-refresh` updates it now.
+
 ### Reclaiming disk space across clones
 
 `git-sweep` (installed to `~/.local/bin`, also runs as `git sweep`) scans every repo under
@@ -321,9 +329,12 @@ the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
 Sync, weekly exports, the settings that stay on each Mac, and the echo-m365 sign-in its Generate TAP command needs: the
 `AdminAccount` from that repo's `tenant.psd1`), Zoom's video shortcut, workstation apps (Brewfile, vendor
-downloads, gridfinity-studio, licenses), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
+downloads, gridfinity-studio, licenses, HueForge plugins), Ninja Remote's Screen Recording approval, Ninja Backup's deployment and a first
 backup run, macOS settings and the Dock, desktop widgets, Time Machine to echo-nas (virtual machines excluded), and the default browser. It ticks what's done, says what to do next, offers to do it when it
 can, and re-checks before moving on. Re-run it any time; `mac-setup --status` only checks.
+For apps with no Homebrew cask it opens the download page, waits for the file in `~/Downloads`
+(or uses one already there) and installs it: the `.app` from a `.zip` or `.dmg` goes to
+`/Applications`, a `.pkg` runs through `installer`, and anything else opens in Finder.
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
 steps are split per item (each app without a cask, each license, each app export, each
 escrowed secret, the browser pieces), so each gets its own tick and its own "Do it now?"
@@ -370,7 +381,7 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
   shell, Terraform, ...), applied with `duti`. Workstations only: servers (`is_server`)
   skip it.
 - `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
-  (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
+  and the Downloads stack (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
   changes, on workstations only. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
   `mac-defaults --export-shortcuts` and commit.
@@ -385,12 +396,19 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 - `app-prefs`: chosen app settings (Bartender, BetterMouse, AltTab, Stats, Festivitas,
   OpenSCAD, KeyboardCleanTool) in `macos/prefs/`, allow-list only (`macos/prefs/allowlist`),
   so licenses and app state stay out of this public repo. `app-prefs export` on the Mac
-  you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply;
-  quit the apps first). `check` and `diff` list differing key names, never values. A test
+  you changed them on, review and commit; `app-prefs apply` merges them in (runs on apply,
+  skipping running apps; `app-prefs apply --restart`, which `mac-setup` uses, quits a running
+  app that differs, applies and opens it again). `check` and `diff` list differing key names, never values. A test
   fails if a committed setting looks like a license, token or email address.
   BetterMouse is compared by content: it re-saves its maps in a new order on every launch
   and keeps one entry per mouse per connection (Bolt, Bluetooth), so a reorder or a newly
   seen connection isn't a difference, and `apply` keeps devices only this Mac has.
+- `streamdeck-library`: indexes the Stream Deck library (OneDrive (Unstable Studios) > Apps >
+  Stream Deck library: purchased profile packs and sideloaded plugins, kept out of this repo).
+  `build` after adding or replacing a file rewrites its `library.json` (checksums and the profile
+  variants in each pack); `check` verifies the files; `extract <pack> --app <app>` copies a pack's
+  profile out, as a starting point for our own. `streamdeck-apply`, which installs our own
+  profiles from this repo, is designed in [docs/streamdeck.md](docs/streamdeck.md).
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
@@ -412,7 +430,8 @@ conflicts, as are app settings changed by hand (Zoom's video shortcut). `shortcu
 
 Each job has one owner, picked as the best tool for it; an app can own several jobs, and the
 same feature in other apps is turned off (BTT's clipboard manager is pinned off, for example).
-Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⇧⌘ resize),
+Owners now: window management BTT (drag-to-snap, the ⌃⌥ keys, ⌃⌥⌘ move and ⌃⇧⌘ resize), the
+Caps Lock Hyper key and Hyper+key shortcuts BTT,
 app switching AltTab (⌘Tab), menu bar Bartender, launcher, clipboard history (⇧⌘V) and link
 cleaning Raycast (Link Cleaner, on demand: BTT cleans links only inside its clipboard manager, which
 is off). After changing a shortcut in an
@@ -436,6 +455,11 @@ with general settings, lives in `macos/btt/Default.bttpreset` and isn't deployed
 `mac-setup` compares BTT's global keyboard shortcuts and move/resize modifier keys with the
 preset's, so it asks for a re-import when they differ after an earlier import. If BTT then lists two
 presets named Default, delete the older one.
+
+Caps Lock is the Hyper key (⌃⌥⇧⌘) on every keyboard, set in the preset; holding it alone for
+0.65 s and releasing toggles Caps Lock. Hyper+key shortcuts belong to BTT (see
+`macos/shortcuts.toml`). BTT only sees Caps Lock while System Settings › Keyboard › Modifier
+Keys leaves it as Caps Lock.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
 Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).
