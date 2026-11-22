@@ -163,15 +163,23 @@ def extract(root, index, a):
     want = [v for v in pack.get("variants", [])
             if v["platform"] == "mac" and v["device"] == a.device
             and (a.app is None or v["app"].lower() == a.app.lower())
-            and (a.style is None or (v["style"] or "") == a.style)]
+            and (a.style is None or (v["style"] or "") == a.style.lower())]
     if not want:
         sys.exit(f"streamdeck-library: nothing in {a.pack} for device {a.device}"
                  + (f", app {a.app}" if a.app else "") + (f", style {a.style}" if a.style else ""))
+    names = [os.path.basename(v["path"]) for v in want]
+    clash = sorted({n for n in names if names.count(n) > 1 or os.path.exists(os.path.join(a.out, n))})
+    if clash:
+        sys.exit("streamdeck-library: would overwrite (narrow with --app/--style, or pick another "
+                 "--out): " + ", ".join(clash))
+    zip_path = os.path.join(root, pack["file"])
+    if not os.path.isfile(zip_path):
+        sys.exit(f"streamdeck-library: {pack['file']} is missing from the library")
     os.makedirs(a.out, exist_ok=True)
-    with zipfile.ZipFile(os.path.join(root, pack["file"])) as z:
-        for v in want:
-            dest = os.path.join(a.out, os.path.basename(v["path"]))
-            with z.open(v["path"]) as src, open(dest, "wb") as out:
+    with zipfile.ZipFile(zip_path) as z:
+        for v, name in zip(want, names):
+            dest = os.path.join(a.out, name)
+            with z.open(v["path"]) as src, open(dest, "xb") as out:
                 out.write(src.read())
             print(dest)
 
@@ -186,6 +194,8 @@ def main():
     ap.add_argument("--out", default=".")
     ap.add_argument("--dir", default=os.environ.get("STREAMDECK_LIBRARY", DEFAULT))
     a = ap.parse_args()
+    if a.command != "extract" and (a.pack or a.app or a.style):
+        ap.error(f"{a.command} takes only --dir")
     index_file = os.path.join(a.dir, "library.json")
     if not os.path.isdir(a.dir):
         sys.exit(f"streamdeck-library: no library at {a.dir}")

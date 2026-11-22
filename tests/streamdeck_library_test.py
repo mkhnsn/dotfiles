@@ -102,6 +102,8 @@ class Library(unittest.TestCase):
         r = self.run_tool("extract", "office", "--app", "outlook new", "--out", out)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(os.listdir(out), ["Outlook New Plain, Stream Deck XL.streamDeckProfile"])
+        r = self.run_tool("extract", "office", "--app", "Outlook New", "--style", "Plain", "--out", out)
+        self.assertIn("would overwrite", r.stderr)  # already extracted above
         r = self.run_tool("extract", "office", "--device", "mini", "--out", out)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("nothing in office", r.stderr)
