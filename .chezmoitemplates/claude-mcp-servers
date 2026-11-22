@@ -1,0 +1,3 @@
+fusion        {"type":"http","url":"http://127.0.0.1:27182/mcp"}
+btt           {"type":"http","url":"http://127.0.0.1:64832/mcp"}
+homeassistant {"type":"stdio","command":"{{ .chezmoi.homeDir }}/.local/bin/ha-mcp","args":[]}
