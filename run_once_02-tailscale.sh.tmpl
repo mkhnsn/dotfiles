@@ -44,18 +44,10 @@ if ! $SUDO tailscale up --ssh; then
 fi
 
 {{ else -}}
-# macOS: Tailscale is a GUI app; just connect if the CLI is available
-if ! command -v tailscale >/dev/null 2>&1; then
-  echo "tailscale: not installed. Install from App Store or: brew install --cask tailscale"
-  exit 0
-fi
-
-echo "tailscale: connecting..."
-echo "tailscale: you'll need to authenticate in your browser."
-if ! tailscale up; then
-  todo "Tailscale: 'tailscale up' failed; connect from the Tailscale app"
-  exit 0
-fi
+# macOS servers run the open-source tailscaled, installed and signed in by echo-core's
+# playbook (echo-macaroni-base.yml, decision 0006), which runs after this; mac-setup checks it.
+echo "tailscale: set up by the echo-core playbook on macOS servers"
+exit 0
 
 {{ end -}}
 

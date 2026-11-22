@@ -319,6 +319,15 @@ test_server_tailscale_points_to_playbook() {
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT_SERVER"
   assert_has "echo-core playbook"
   assert_lacks "Install the app, open it"
+  assert_lacks "Do it now?"
+}
+
+test_workstation_tailscale_offers_action() {
+  stub tailscale 'echo "{ \"BackendState\": \"Stopped\" }"'
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Install the app, open it"
+  assert_has "Do it now?"
 }
 
 test_btt_from_homebrew_is_flagged() {

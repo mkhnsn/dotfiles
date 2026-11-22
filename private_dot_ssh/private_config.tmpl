@@ -3,7 +3,7 @@
 isn't in this public repo; until Tailscale is connected the tailnet block is left out
 (re-run chezmoi apply after the mac-setup Tailscale steps).
 */ -}}
-{{- $suffix := output "sh" "-c" "for t in tailscale /Applications/Tailscale.app/Contents/MacOS/Tailscale; do command -v \"$t\" >/dev/null 2>&1 || [ -x \"$t\" ] || continue; \"$t\" status --json --peers=false 2>/dev/null | sed -n 's/.*\"MagicDNSSuffix\": *\"\\([^\"]*\\)\".*/\\1/p' | head -1; break; done; true" | trim -}}
+{{- $suffix := output "sh" "-c" "for t in tailscale /usr/local/libexec/tailscale/tailscale /Applications/Tailscale.app/Contents/MacOS/Tailscale; do command -v \"$t\" >/dev/null 2>&1 || [ -x \"$t\" ] || continue; \"$t\" status --json --peers=false 2>/dev/null | sed -n 's/.*\"MagicDNSSuffix\": *\"\\([^\"]*\\)\".*/\\1/p' | head -1; break; done; true" | trim -}}
 {{- /* Colima (workstations) adds this exact line, first in the file, on each start unless it's
        there; keeping it here stops chezmoi apply and Colima undoing each other. */ -}}
 {{- if not (dig "is_server" false .) -}}
