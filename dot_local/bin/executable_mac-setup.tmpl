@@ -291,6 +291,7 @@ help_ha_mcp()      { command -v claude >/dev/null 2>&1 || { echo "The Claude Cod
 help_op_browser()  { case "$1" in
                        chrome) echo "Sign in to your Google profile in Chrome. Chrome Sync installs the 1Password extension." ;;
                        connect) echo "In 1Password: Settings > Browser > Connect with 1Password in the browser." ;;
+                       autofill) echo "System Settings > General > AutoFill & Passwords: under AutoFill from, turn Passwords off and 1Password on; set Set Up Codes In to 1Password." ;;
                        *) echo "In 1Password: Settings > General > Show Quick Access: Cmd+Shift+Space." ;;
                      esac; }
 help_chezmoi()    { if chezmoi_config_stale; then echo "The dotfiles' config template changed: chezmoi init regenerates ~/.config/chezmoi/chezmoi.toml (it keeps your answers)."; else echo "Dotfiles not applied, or out of date."; fi; }
@@ -372,7 +373,7 @@ act_ha_mcp()       {
   grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null ||
     claude mcp add --scope user homeassistant -- "$HOME/.local/bin/ha-mcp" </dev/null
 }
-act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; *) open -a 1Password ;; esac; }
+act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; autofill) open -b com.apple.systempreferences ;; *) open -a 1Password ;; esac; }
 act_license()      { open -a "$(license_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
 act_onedrive()     { open -a OneDrive; }
 act_export()       { [ "$1" = "Claude Code" ] && { claude-sync import; return; }
@@ -491,6 +492,7 @@ ha_mcp|Home Assistant MCP server in Claude Code|Tools
 op_browser:chrome|Chrome signed in to your Google profile|Tools
 op_browser:connect|1Password connected to the browser|Tools
 op_browser:quick_access|1Password Quick Access on Cmd+Shift+Space|Tools
+op_browser:autofill|AutoFill from 1Password only (Apple Passwords off)|Tools
 chezmoi|Dotfiles applied|Dotfiles
 brewfile|Brewfile packages installed|Dotfiles
 gh|GitHub CLI signed in|Accounts

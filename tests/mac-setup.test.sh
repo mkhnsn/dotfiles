@@ -363,14 +363,14 @@ test_manual_steps_start_open() {
   assert_open "FileVault key saved to 1Password"; assert_open "Activation Lock code saved to 1Password"
   assert_open "Fusion signed in or activated"; assert_open "Claude signed in or activated"
   assert_open "Chrome signed in to your Google profile"; assert_open "1Password connected to the browser"
-  assert_open "1Password Quick Access on Cmd+Shift+Space"
+  assert_open "1Password Quick Access on Cmd+Shift+Space"; assert_open "AutoFill from 1Password only (Apple Passwords off)"
   assert_open "Stream Deck export restored"; assert_open "BetterDisplay export restored"
   assert_lacks "BetterMouse export restored"
   assert_open "Virtual machines moved"; assert_open "Ninja Remote Screen Recording approved"
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
   assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
   assert_open "Zoom video shortcut is ⌃⇧⌘V"
-  assert_has "27 step(s) left"
+  assert_has "28 step(s) left"
 }
 
 test_workstation_apps_missing() {
