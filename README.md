@@ -391,6 +391,11 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
   BetterMouse is compared by content: it re-saves its maps in a new order on every launch
   and keeps one entry per mouse per connection (Bolt, Bluetooth), so a reorder or a newly
   seen connection isn't a difference, and `apply` keeps devices only this Mac has.
+- `streamdeck-library`: indexes the Stream Deck library (OneDrive (Unstable Studios) > Apps >
+  Stream Deck library: purchased profile packs and sideloaded plugins, kept out of this repo).
+  `build` after adding or replacing a file rewrites its `library.json` (checksums and the profile
+  variants in each pack); `check` verifies the files. `streamdeck-apply`, which installs profiles
+  from it, is designed in [docs/streamdeck.md](docs/streamdeck.md).
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >

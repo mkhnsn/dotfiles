@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""streamdeck-library — keep the Stream Deck library's index (library.json) in step with its files.
+
+  streamdeck-library build [--dir DIR]   re-index: checksums, sizes and the profile variants
+                                         inside every pack; new files are added, missing ones
+                                         dropped
+  streamdeck-library check [--dir DIR]   exit 0 if every listed file is there with its checksum
+
+The library is OneDrive (Unstable Studios) > Apps > Stream Deck library (STREAMDECK_LIBRARY
+overrides it): purchased and sideloaded content kept out of the public dotfiles. Files are named
+<folder>/<vendor>/<id>-<version>.<ext> in packs/, plugins/, icon-packs/ and extras/.
+library.json is the index streamdeck-apply reads. Its hand-written fields (title, requires,
+installed, note, original_name) are kept; build fills in sha256, bytes and, for packs, variants.
+Reading a file that's only in the cloud downloads it first.
+Python 3 standard library only.
+"""
+import argparse
+import datetime
+import hashlib
+import json
+import os
+import re
+import sys
+import zipfile
+
+DEFAULT = os.path.expanduser(
+    "~/Library/CloudStorage/OneDrive-UnstableStudios/Apps/Stream Deck library")
+SECTIONS = {"packs": "packs", "plugins": "plugins", "icon-packs": "icon_packs", "extras": "extras"}
+HAND = ("title", "original_name", "requires", "installed", "note")
+
+# Device names as vendors write them, squashed (lowercase, no spaces) -> the device id.
+DEVICES = [("streamdeck+xl", "plus-xl"), ("streamdeckplusxl", "plus-xl"), ("sd+xl", "plus-xl"),
+           ("streamdeck+", "plus"), ("streamdeckplus", "plus"), ("sd+", "plus"),
+           ("streamdeckxl", "xl"), ("sdxl", "xl"), ("xl", "xl"),
+           ("streamdeckmini", "mini"), ("mini", "mini"), ("streamdeckneo", "neo"), ("neo", "neo"),
+           ("streamdeckstudio", "studio"), ("studio", "studio"), ("galleon", "galleon"),
+           ("streamdeck", "standard"), ("classic", "standard"), ("mk", "standard")]
+ADX = re.compile(r"^(?P<app>.+?) (?P<style>Brand|Dark|Plain), (?P<device>.+)$")
+STYLE = re.compile(r"\b(Labell?ed) (Dark|Light)\b", re.I)
+# Words in non-ADX file names that aren't part of the app's name.
+NOISE = re.compile(r"\b(SD\+?|MK(\.?2)?|XL|Mini|Neo|Plus|Studio|Galleon|Classic|Mac|Windows|Win|"
+                   r"V\d+|Labell?ed|Dark|Light)(?=\s|$)", re.I)
+
+
+def device_of(text):
+    squashed = re.sub(r"\s+", "", text.lower())
+    for name, dev in DEVICES:
+        if name in squashed:
+            return dev
+    return "standard"
+
+
+def platform_of(parts):
+    for p in parts:
+        if p.lower() in ("win", "windows"):
+            return "win"
+    return "mac"
+
+
+def variant(path):
+    """A .streamDeckProfile path inside a pack -> its app, style, device and platform."""
+    parts = path.split("/")
+    name = parts[-1][: -len(".streamDeckProfile")]
+    m = ADX.match(name)
+    if m:
+        app, style, dev = m["app"], m["style"].lower(), device_of(m["device"])
+    else:
+        s = STYLE.search(name)
+        style = f"labelled-{s.group(2).lower()}" if s else None
+        dev = device_of(name)
+        app = re.sub(r"\s+", " ", NOISE.sub("", name)).strip(" ,-")
+    return {"path": path, "app": app, "style": style, "device": dev, "platform": platform_of(parts[:-1])}
+
+
+def variants(file):
+    with zipfile.ZipFile(file) as z:
+        names = sorted(n for n in z.namelist()
+                       if n.endswith(".streamDeckProfile") and not n.startswith("__MACOSX/"))
+    return [variant(n) for n in names]
+
+
+def sha256(file):
+    h = hashlib.sha256()
+    with open(file, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def library_files(root):
+    for folder, key in SECTIONS.items():
+        base = os.path.join(root, folder)
+        for dirpath, _, files in os.walk(base):
+            for f in sorted(files):
+                if not f.startswith("."):
+                    yield key, os.path.relpath(os.path.join(dirpath, f), root)
+
+
+def split_name(rel):
+    """packs/<vendor>/<id>-<version>.<ext> -> vendor, id, version."""
+    parts = rel.split("/")
+    vendor = parts[1] if len(parts) > 2 else ""
+    stem = parts[-1].rsplit(".", 1)[0]
+    m = re.match(r"^(?P<id>.+?)-(?P<version>\d[\w.]*)$", stem)
+    return vendor, (m["id"] if m else stem), (m["version"] if m else "")
+
+
+def build(root, index):
+    old = {e["file"]: e for key in SECTIONS.values() for e in index.get(key, [])}
+    out = {"generated": datetime.date.today().isoformat(), **{k: [] for k in SECTIONS.values()}}
+    seen = set()
+    for key, rel in library_files(root):
+        seen.add(rel)
+        path = os.path.join(root, rel)
+        e = dict(old.get(rel) or {})
+        if not e:
+            vendor, ident, version = split_name(rel)
+            e = {"file": rel}
+            if key == "packs":
+                e.update(id=ident, vendor=vendor, version=version, title=ident)
+            print(f"new: {rel} (fill in its title, requires and installed in library.json)")
+        e["sha256"], e["bytes"] = sha256(path), os.path.getsize(path)
+        if key == "packs":
+            e["variants"] = variants(path)
+        out[key].append(e)
+    for rel in sorted(set(old) - seen):
+        print(f"gone: {rel} (dropped from library.json)")
+    for key in SECTIONS.values():
+        out[key].sort(key=lambda e: [x["file"] for x in index.get(key, [])].index(e["file"])
+                      if e["file"] in old else 1 << 30)
+    return out
+
+
+def check(root, index):
+    bad = 0
+    for key in SECTIONS.values():
+        for e in index.get(key, []):
+            path = os.path.join(root, e["file"])
+            if not os.path.isfile(path):
+                print(f"missing: {e['file']}"); bad += 1
+            elif sha256(path) != e.get("sha256"):
+                print(f"changed: {e['file']} (run streamdeck-library build)"); bad += 1
+    return bad
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="streamdeck-library", description=__doc__.split("\n\n")[0])
+    ap.add_argument("command", choices=["build", "check"])
+    ap.add_argument("--dir", default=os.environ.get("STREAMDECK_LIBRARY", DEFAULT))
+    a = ap.parse_args()
+    index_file = os.path.join(a.dir, "library.json")
+    if not os.path.isdir(a.dir):
+        sys.exit(f"streamdeck-library: no library at {a.dir}")
+    index = json.load(open(index_file, encoding="utf-8")) if os.path.exists(index_file) else {}
+    if a.command == "check":
+        bad = check(a.dir, index)
+        print("ok" if not bad else f"{bad} problem(s)")
+        sys.exit(1 if bad else 0)
+    out = build(a.dir, index)
+    tmp = index_file + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(out, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    os.replace(tmp, index_file)
+    n = sum(len(p["variants"]) for p in out["packs"])
+    print(f"library.json: {len(out['packs'])} packs ({n} variants), {len(out['plugins'])} plugins, "
+          f"{len(out['icon_packs'])} icon packs, {len(out['extras'])} extras")
+
+
+if __name__ == "__main__":
+    main()
