@@ -378,7 +378,7 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
   shell, Terraform, ...), applied with `duti`. Workstations only: servers (`is_server`)
   skip it.
 - `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
-  (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
+  and the Downloads stack (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
   changes, on workstations only. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
   `mac-defaults --export-shortcuts` and commit.
