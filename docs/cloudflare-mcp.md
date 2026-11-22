@@ -30,11 +30,16 @@ Read** so the server can find the account; tokens with client IP filtering aren'
    Workers scripts, KV, R2, D1, analytics, Access apps and policies, and Zone and DNS for the
    Unstable Studios zones, picked from the dashboard's permission list. No Edit permission. Stored in 1Password
    (Unstable Studios vault, item `Cloudflare MCP read-only`, field `credential`).
-2. **Header helper** in the dotfiles: `~/.local/bin/cf-mcp-headers` reads the token with
-   `op read` (as `ha-mcp` does) and prints `{"Authorization": "Bearer <token>"}`. Claude Code's
-   `headersHelper` runs it on each connection and again on a 401/403, and only after the project's
-   trust dialog is accepted ([code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)).
-   The token never lands in a file or the shell environment.
+2. **Header helper** in the dotfiles, built like `ha-mcp`: `cf-mcp-headers --store-token` copies
+   the token from 1Password into the macOS Keychain once (a `mac-setup` step), and at runtime
+   `~/.local/bin/cf-mcp-headers` reads it with `security find-generic-password` and prints
+   `{"Authorization": "Bearer <token>"}`. Not `op read` at runtime: Claude Code gives a
+   `headersHelper` 10 seconds, runs it on every connect and reconnect (and again when a tool call
+   gets a 401/403), and strips variables named like `*TOKEN*` from a project-scope helper's
+   environment, so a locked 1Password or a service-account token would fail it. It runs only after
+   the project's own folder is trusted
+   ([code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)). The token never lands in
+   a repo file or the shell environment.
 3. **One Workers repo first**: `unstable-studios/dashboard` (a Worker with D1, KV and R2), in its
    `.mcp.json`:
 
@@ -62,9 +67,10 @@ of this.
 
 ## Open questions
 
-- Whether `headersHelper` resolves a bare command on `PATH` or needs an absolute path. The docs'
-  example uses an absolute path; if a bare name fails, the repo can't hard-code
-  `/Users/mkhnsn`, so the fallback is a user-scope entry written by `claude-setup`.
+- `headersHelper` takes an absolute path or a command on `PATH`, so the bare `cf-mcp-headers`
+  works when Claude Code inherits `~/.local/bin` on its `PATH` (the shell and the desktop app do);
+  if a launch doesn't, the fallback is a user-scope entry with the absolute path, written by
+  `claude-setup`.
 - The token's zone list: all zones, or only the ones the Workers repos use.
 
 ## Not chosen
