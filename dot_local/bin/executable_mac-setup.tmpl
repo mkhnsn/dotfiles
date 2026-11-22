@@ -183,7 +183,8 @@ check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh 
                      dsmemberutil checkmembership -U "$(id -un)" -G com.apple.access_ssh 2>/dev/null | grep -q "is a member"; }
 # A copy in ~/Applications (the installer's per-user choice) counts as not installed: other
 # accounts can't use it. The action moves it to /Applications.
-btt_user_copy()    { [ -d "$HOME/Applications/BetterTouchTool.app" ] && [ ! -d "$APPS/BetterTouchTool.app" ]; }
+btt_user_copy()    { [ -d "$HOME/Applications/BetterTouchTool.app" ] && [ ! -d "$APPS/BetterTouchTool.app" ] &&
+                     [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 # BTT's master "Enable window snapping" switch isn't part of presets; it's stored only when off.
 check_btt_snapping(){ workstation || return 0; [ "$(defaults read com.hegenberg.BetterTouchTool windowSnappingEnabled 2>/dev/null)" != 0 ]; }
@@ -300,7 +301,7 @@ help_tailscale()  { echo "Tailscale isn't connected. Install the app, open it an
 help_ts_name()    { echo "Tailscale machine name should be $(lower "$HOSTNAME_WANT"). Rename it: admin console > Machines > ... > Edit machine name (turn off auto-generate). Replacing a Mac: rename the old machine first, or the new one gets a -1 suffix."; }
 help_ssh_server() { echo "Turn on Remote Login for your user only, so your other Macs can reach this one (VM copies, rsync). The action turns on sshd and limits it to $(id -un); same as System Settings > General > Sharing > Remote Login with 'Only these users'. Leave 'Allow full disk access for remote users' off."; }
 help_ts_tag()     { echo "Add $TAG_WANT in the Tailscale admin console: Machines > $(lower "$HOSTNAME_WANT") > ... > Edit ACL tags."; }
-help_btt()        { if btt_user_copy; then echo "BetterTouchTool is in ~/Applications, so other accounts on this Mac can't use it. The action quits it, moves it to /Applications and opens it again.";
+help_btt()        { if btt_user_copy; then echo "BetterTouchTool is in ~/Applications, so other accounts on this Mac can't use it. The action quits it, moves it to /Applications and opens it again. Afterwards, approve Accessibility again if asked, and turn Launch on startup off and on in BTT's settings.";
                     else echo "Install BetterTouchTool from https://folivora.ai (not Homebrew) into /Applications and activate the license."; fi; }
 help_btt_snapping(){ echo "Turn on BTT's window snapping (drag windows to edges and corners; window management is BTT's): BetterTouchTool > Settings > Window Snapping & Moving > Enable window snapping. The snap areas come from the preset."; }
 help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "BTT is missing $(btt_missing) of the preset's global shortcuts and move/resize modifier keys (the ⌃⌥ window keys, ⌃⌥⌘ move, ⌃⌥⇧⌘ resize). Import the preset from the dotfiles; it asks for Accessibility once. If BTT > Presets then lists an older Default too, delete that one.";
@@ -395,7 +396,9 @@ act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscal
 act_btt() {
   if btt_user_copy; then
     osascript -e 'quit app "BetterTouchTool"' 2>/dev/null; pkill -f BTTRelaunch 2>/dev/null; sleep 2
-    mv "$HOME/Applications/BetterTouchTool.app" "$APPS/" && open "$APPS/BetterTouchTool.app"
+    # Reopen the old copy if the move fails (a standard user can't write to /Applications).
+    mv "$HOME/Applications/BetterTouchTool.app" "$APPS/" || { open "$HOME/Applications/BetterTouchTool.app"; return 1; }
+    open "$APPS/BetterTouchTool.app"
   else
     open "https://folivora.ai"
   fi

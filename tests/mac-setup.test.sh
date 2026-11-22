@@ -279,6 +279,25 @@ test_btt_in_user_applications_is_moved() {
   [ -d "$MAC_SETUP_APPS/BetterTouchTool.app" ] && [ ! -d "$HOME/Applications/BetterTouchTool.app" ] || fail "not moved"
 }
 
+test_btt_in_user_applications_from_homebrew_is_not_moved() {
+  rm -rf "$MAC_SETUP_APPS/BetterTouchTool.app"; mkdir -p "$HOME/Applications/BetterTouchTool.app" "$T/brew/Caskroom/bettertouchtool"
+  stub open 'exit 0'
+  printf 'n\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "(not Homebrew)"
+  assert_lacks "is in ~/Applications"
+}
+
+test_btt_move_fails_reopens_old_copy() {
+  rm -rf "$MAC_SETUP_APPS/BetterTouchTool.app"; mkdir -p "$HOME/Applications/BetterTouchTool.app"
+  stub osascript 'exit 0'; stub pkill 'exit 0'; stub mv 'exit 1'
+  stub open "echo \"opened \$1\""
+  printf 'y\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "opened $HOME/Applications/BetterTouchTool.app"
+  [ -d "$HOME/Applications/BetterTouchTool.app" ] || fail "old copy gone"
+}
+
 test_btt_preset_missing() {
   has_python || return 0
   stub osascript 'echo "no triggers"'
