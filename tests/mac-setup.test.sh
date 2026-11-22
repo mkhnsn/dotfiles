@@ -837,6 +837,16 @@ test_replaced_apps_must_be_gone() {
   assert_done "Replaced apps removed"
 }
 
+test_replaced_casks_must_be_uninstalled() {
+  mkdir -p "$T/brew/Caskroom/docker-desktop"
+  run "$SCRIPT" --status
+  assert_open "Replaced apps removed"
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "brew uninstall --cask docker-desktop"
+  assert_lacks "does the job of: ."
+}
+
 test_colima_and_ollama_must_run() {
   run "$SCRIPT" --status
   assert_done "Docker engine (Colima) runs at login"
