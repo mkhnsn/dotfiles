@@ -357,6 +357,7 @@ The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
   without a cask, licenses and sign-ins are `mac-setup` steps.
+- `dot_duti`: VS Code Insiders as the default app for dev files (JSON, YAML, Markdown, shell, Terraform, ...), applied with `duti`. Workstations only: servers (`is_server`) skip it.
 - `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
   (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it

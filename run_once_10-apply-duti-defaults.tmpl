@@ -3,7 +3,10 @@ set -euo pipefail
 
 {{ template "todo.sh" }}
 
-# Only on macOS
+# Only on macOS workstations (see run_onchange_apply-duti.tmpl)
+{{ if dig "is_server" false . -}}
+exit 0
+{{ end -}}
 if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 0
 fi
