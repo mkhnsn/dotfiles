@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Sync the 3Dconnexion (SpaceMouse) settings with the dotfiles repo (macos/3dconnexion/).
+#   3dx-sync export   this Mac -> repo (then review and commit the diff)
+#   3dx-sync import   repo -> this Mac (after installing 3DxWare from 3dconnexion.com)
+#   3dx-sync check    exit 0 if every saved file matches this Mac's
+# Carries per-app navigation settings (navlib/*.user.config) and button assignments
+# (Cfg/*.xml). Other files there are driver state. The repo is public; these files hold
+# only device settings.
+
+set -euo pipefail
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "3dx-sync: macOS only"
+  exit 1
+fi
+
+live="$HOME/Library/Preferences/3Dconnexion"
+repo="${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}/macos/3dconnexion"
+dirs=(navlib Cfg)
+pattern() { case "$1" in navlib) echo "*.user.config" ;; Cfg) echo "*.xml" ;; esac; }
+
+# files <root>: the synced files under root, as dir/name lines.
+files() {
+  local d f
+  for d in "${dirs[@]}"; do
+    [[ -d "$1/$d" ]] || continue
+    while IFS= read -r f; do echo "$d/${f##*/}"; done < <(find "$1/$d" -maxdepth 1 -type f -name "$(pattern "$d")" | sort)
+  done
+}
+
+case "${1:-}" in
+  export)
+    [[ -d "$live" ]] || { echo "3dx-sync: no $live; install 3DxWare and open its settings once"; exit 1; }
+    rm -rf "$repo"
+    while IFS= read -r f; do
+      mkdir -p "$repo/${f%/*}"
+      cp "$live/$f" "$repo/$f"
+    done < <(files "$live")
+    echo "Exported to $repo"
+    git -C "${repo%/*}" status --short -- "$repo" || true
+    ;;
+  import)
+    [[ -d "$repo" ]] || { echo "3dx-sync: nothing saved in $repo"; exit 1; }
+    while IFS= read -r f; do
+      mkdir -p "$live/${f%/*}"
+      cp "$repo/$f" "$live/$f"
+    done < <(files "$repo")
+    echo "Imported into $live. Quit and reopen apps that use the SpaceMouse."
+    ;;
+  check)
+    [[ -d "$repo" ]] || exit 0
+    while IFS= read -r f; do
+      cmp -s "$repo/$f" "$live/$f" || exit 1
+    done < <(files "$repo")
+    ;;
+  *)
+    echo "usage: 3dx-sync export|import|check"
+    exit 1
+    ;;
+esac

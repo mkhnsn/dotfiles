@@ -141,7 +141,7 @@
     "disableScrollingIf3" : true,
     "mmZoomRepeatDelay" : 0.1,
     "optMove" : true,
-    "optResize" : true,
+    "optResize" : false,
     "shiftResize" : true,
     "showBTTRemoteTab" : true,
     "showDrawingsTab" : true,

@@ -88,6 +88,7 @@ setup() {
   mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac"
   touch "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/Raycast.rayconfig"
   stub app-prefs 'exit 0'
+  stub 3dx-sync 'exit 0'
   export MAC_SETUP_ECHO_M365="$T/echo-m365"
   mkdir -p "$MAC_SETUP_ECHO_M365" "$HOME/.mg"
   printf "@{\n    TenantId = 'tid-1'\n    AdminAccount = 'admin@example.com'\n}\n" > "$MAC_SETUP_ECHO_M365/tenant.psd1"
@@ -368,14 +369,18 @@ test_btt_preset_import_out_of_date() {
   assert_open "BetterTouchTool preset imported"
 }
 
-test_btt_move_resize_keys_missing() {
+test_btt_move_resize_keys_differ() {
   has_python || return 0
-  # shiftMove is off in the preset, so BTT not storing it is fine; optMove stored as 0 is missing.
+  # shiftMove is off in the preset, so BTT not storing it is fine; optMove stored as 0 differs.
   printf '%s' '{"BTTGeneralSettings":{"cmdMove":true,"optMove":true,"shiftMove":false},"BTTPresetContent":[]}' > "$T/src/macos/btt/Default.bttpreset"
   stub defaults 'case "$*" in *BetterTouchTool\ cmdMove*) echo 1 ;; *BetterTouchTool\ optMove*) echo 0 ;; *) exit 1 ;; esac'
   run "$SCRIPT" --status
   assert_open "BetterTouchTool preset imported"
+  # A modifier the preset turns off still on in BTT (an import from before the preset changed).
   stub defaults 'case "$*" in *BetterTouchTool*) echo 1 ;; *) exit 1 ;; esac'
+  run "$SCRIPT" --status
+  assert_open "BetterTouchTool preset imported"
+  stub defaults 'case "$*" in *BetterTouchTool\ shiftMove*) exit 1 ;; *BetterTouchTool*) echo 1 ;; *) exit 1 ;; esac'
   run "$SCRIPT" --status
   assert_done "BetterTouchTool preset imported"
 }
@@ -487,6 +492,14 @@ test_app_prefs_differ_lists_apps() {
   assert_has "com.surteesstudios.Bartender: ProfileSettings"
   run "$SCRIPT_SERVER" --status
   assert_done "Saved app settings applied"
+}
+
+test_spacemouse_settings_differ() {
+  stub 3dx-sync 'exit 1'
+  run "$SCRIPT" --status
+  assert_open "SpaceMouse settings applied"
+  run "$SCRIPT_SERVER" --status
+  assert_done "SpaceMouse settings applied"
 }
 
 test_gridfinity_missing() {

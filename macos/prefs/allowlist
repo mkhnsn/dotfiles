@@ -49,6 +49,8 @@ com.lwouis.alt-tab-macos	preferencesVersion
 # eu.exelban.Stats
 eu.exelban.Stats	NSStatusItem Restore Position *
 eu.exelban.Stats	LaunchAtLoginNext
+# Battery is off: Bartender shows the Mac's battery (on battery power, below 50%).
+eu.exelban.Stats	Battery_state
 
 # dk.simonbs.Festivitas
 dk.simonbs.Festivitas	dockStringLights_*
