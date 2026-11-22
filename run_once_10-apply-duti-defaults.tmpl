@@ -11,9 +11,9 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 0
 fi
 
-# Must have VS Code installed (bundle id must exist)
-if ! osascript -e 'id of app "Visual Studio Code"' >/dev/null 2>&1; then
-  echo "duti: VS Code not found; skipping default-app associations."
+# Must have VS Code Insiders installed (dot_duti points at its bundle id)
+if ! osascript -e 'id of app id "com.microsoft.VSCodeInsiders"' >/dev/null 2>&1; then
+  echo "duti: VS Code Insiders not found; skipping default-app associations."
   exit 0
 fi
 
