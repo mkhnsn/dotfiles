@@ -1,6 +1,6 @@
 # Claude Code memories in sync across machines (#117)
 
-Status: design. Waiting on one decision: creating the private repo (below).
+Status: design. Waiting on the decisions at the end.
 
 `claude-sync` moves memories and prompt history once, from an old Mac to a new one. Day to day,
 a memory saved on this Mac (136 memory files) is missing on echo-turbine (15), and the other way
@@ -24,27 +24,47 @@ round.
 
 1. **Repo**: a private GitHub repo, `mkhnsn/claude-memory`, cloned to
    `~/.local/share/claude-memory` on each machine. Layout is by path under the home folder:
-   `home/src-github-com-unstable-studios-mister-handy/<memory files>`, and `home/` itself for
-   `~/` (`-Users-mkhnsn` / `-home-mkhnsn`). Projects outside the home folder (`/private/tmp`,
-   scratch dirs) aren't synced.
-2. **Link, don't copy**: each `~/.claude/projects/<project>/memory` becomes a symlink to its
-   folder in the clone, so Claude Code reads and writes the repo directly. `claude-memory sync`
-   adopts any memory folder that's still a real folder (moves its files in, merges with what's
-   there, replaces it with the link), so new projects join on the next sync. The docs don't say
-   whether Claude Code keeps a symlinked memory folder; the first step of the build is to check
-   that a memory saved in a session lands in the clone and the link survives.
-3. **When**: a `SessionStart` hook runs `claude-memory pull` (quick, 5 s timeout, offline is
-   fine) and a `SessionEnd` hook runs `claude-memory push` (commit as `<host>: <n> memories`,
-   pull, push). A launchd/systemd timer every 30 minutes covers long sessions and machines left
-   on. Both are in the dotfiles (`dot_claude/modify_settings.json`, a launchd agent, a systemd
-   user timer) and do nothing until the clone exists.
-4. **Conflicts**: `MEMORY.md` uses git's `merge=union` (`.gitattributes`): it's one line per
-   memory, so both sides' lines are kept; `sync` then removes duplicate lines. A memory file
-   edited on both machines keeps this machine's version and saves the other as
-   `<name>.conflict-<host>.md`. The `SessionStart` hook prints those names, so the session sees
-   them and asks to merge; the end-of-apply summary lists them too. Nothing is dropped silently.
-5. **Setup**: `claude-memory init` (clone, link, first sync) as a `mac-setup` step and in
-   echo-turbine's bootstrap. The first sync on each machine merges the two sets: different
+   `projects/<rel>/` where `<rel>` is the project folder name with the literal prefix
+   `-Users-mkhnsn-` or `-home-mkhnsn-` removed (`src-github-com-unstable-studios-mister-handy`;
+   `-Users-mkhnsn--local-share-chezmoi` becomes `-local-share-chezmoi`, so every git and file
+   command gets `--` before paths). `~/` itself is `projects/_home/`. The encoding can't be
+   reversed, so only the prefix is rewritten. Projects outside the home folder (`/private/tmp`,
+   scratch dirs) aren't synced, and Mac-only ones (`Library-CloudStorage-…`) just never appear on
+   echo-turbine.
+2. **Point Claude Code at the clone**: `autoMemoryDirectory` (a setting, any scope, absolute or
+   `~/` path; [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)).
+   `claude-memory sync` writes it into each synced repo's `.claude/settings.local.json` (merging,
+   other keys kept; the file is git-ignored), set to `~/.local/share/claude-memory/projects/<rel>`.
+   It finds the repos from `ghq list -p`, the chezmoi source and `~`, and moves any memories
+   still in `~/.claude/projects/<project>/memory` into the clone first. Not symlinks: Claude Code
+   refuses to write into a folder that is a symbolic link ("Refusing to write into symlinked
+   directory", [code.claude.com/docs/en/errors](https://code.claude.com/docs/en/errors)).
+3. **When**:
+   - `SessionStart` (matcher `startup|resume`) runs `claude-memory pull`: 5 s timeout, offline
+     is fine. Check during the build whether `MEMORY.md` is loaded before or after the hook; if
+     before, a pulled change shows up from the next session.
+   - `SessionEnd` starts `nohup claude-memory push >/dev/null 2>&1 &` and returns at once:
+     SessionEnd hooks share a 1.5 s budget
+     ([code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)), too short for a
+     push.
+   - A launchd/systemd timer every 30 minutes covers long sessions, crashed ones and machines
+     left on.
+   - `push` is: commit local changes (`<host>: <n> memories`), `git pull --no-rebase`, push.
+     Committing first means a crash never leaves changes that block the next pull. A lock
+     (`mkdir ~/.local/state/claude-memory.lock`; macOS has no `flock`) keeps two sessions and the
+     timer from running git at once; a stale lock older than 10 minutes is removed.
+   - The hooks and timer are in the dotfiles (`dot_claude/modify_settings.json`, a launchd agent,
+     a systemd user timer) and do nothing until the clone exists.
+4. **Conflicts**: merges, not rebases, so "ours" is always this machine.
+   - `MEMORY.md` gets a small merge driver: keep every list line (`- [`) from both sides, once
+     each, in the order they appear; headings and other text come from this machine. A line one
+     side deleted while the other edited it comes back; that's the safe side to err on.
+   - A memory file changed on both machines keeps this machine's version and saves the other as
+     `<name>.conflict-<host>.md` (another merge driver, set in `.gitattributes`).
+   - The `SessionStart` hook prints the conflict files, so the session sees them and asks to
+     merge; the end-of-apply summary lists them too. Nothing is dropped silently.
+5. **Setup**: `claude-memory init` (clone, write the settings, first sync) as a `mac-setup` step
+   and in echo-turbine's bootstrap. The first sync on each machine merges the two sets: different
    files just add up, same-named files that differ become `.conflict-<host>.md`.
 
 ## What happens to `claude-sync`
@@ -70,9 +90,9 @@ and large, and up-arrow history from another machine is rarely wanted.
 - **Syncthing over the tailnet**: continuous and serverless, but no history, `.sync-conflict`
   files appear silently, and it needs a daemon on each machine plus folder mapping for the
   different project names (one share per project).
-- **`autoMemoryDirectory`** (a setting, any scope, absolute or `~/` path): at user scope it would
-  put every project's memories in one folder; per project it needs a local settings file in each
-  repo on each machine, which is the same bookkeeping as the links with more files to keep.
-  It's the fallback if Claude Code replaces symlinked folders.
-- **Copying in hooks instead of symlinks**: two copies to keep in step, and a memory written
-  mid-session isn't in the repo until the copy runs.
+- **Symlinking each memory folder into the clone**: Claude Code refuses to write into a
+  symlinked folder (see step 2).
+- **`autoMemoryDirectory` at user scope**: one folder for every project's memories.
+- **A `claude` wrapper passing `--settings`**: the desktop app's Code tab doesn't go through it.
+- **Copying in hooks**: two copies to keep in step, and a memory written mid-session isn't in the
+  repo until the copy runs.
