@@ -57,7 +57,8 @@ Read** so the server can find the account; tokens with client IP filtering aren'
        "cloudflare": {
          "type": "http",
          "url": "https://mcp.cloudflare.com/mcp",
-         "headersHelper": "cf-mcp-headers"
+         "headers": { "Authorization": "Bearer missing" },
+         "headersHelper": "~/.local/bin/cf-mcp-headers"
        }
      }
    }
@@ -75,10 +76,16 @@ of this.
 
 ## Open questions
 
-- `headersHelper` takes an absolute path or a command on `PATH`, so the bare `cf-mcp-headers`
-  works when Claude Code inherits `~/.local/bin` on its `PATH` (the shell and the desktop app do);
-  if a launch doesn't, the fallback is a user-scope entry with the absolute path, written by
-  `claude-setup`.
+- The `.mcp.json` names the helper as `~/.local/bin/cf-mcp-headers`: Claude Code runs the helper
+  in a shell, so `~` expands, and it doesn't depend on whether an app launched from the Dock has
+  `~/.local/bin` on its `PATH`.
+- Without the helper (an untrusted folder, a machine without the token, echo-turbine, which has
+  no Keychain), Claude Code connects with the static `headers` alone, and a server that gets no
+  `Authorization` offers an OAuth sign-in from `/mcp`, which can grant write access. So the
+  `.mcp.json` also sets a static `Authorization: Bearer missing`: the server rejects it and
+  nothing offers OAuth. Don't sign in to it with OAuth.
+- If the Keychain item ever stops trusting `/usr/bin/security`, reading it shows a prompt, which
+  can run past the helper's 10 s; `cf-mcp-headers --store-token` rewrites the item.
 - Zone Read (DNS, zone settings): none today; all zones, or only the ones the Workers repos use.
 
 ## Not chosen

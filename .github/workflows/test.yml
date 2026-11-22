@@ -42,6 +42,9 @@ jobs:
       - name: cf-mcp-headers tests
         run: bash tests/cf-mcp-headers.test.sh
 
+      - name: shortcut-check tests
+        run: python3 -I tests/shortcut_check_test.py
+
       - name: streamdeck-library tests
         run: python3 -I tests/streamdeck_library_test.py
 

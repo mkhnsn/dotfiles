@@ -22,6 +22,13 @@ run; check "token that would break the JSON: exit 1" "$RC" 1
 
 run --bogus; check "unknown argument: exit 2" "$RC" 2
 
+# The success path: the token reaches `security -i` on stdin only, never in argv.
+stub op 'echo good_TOKEN-1'
+stub security 'echo "$*" >> "'"$T"'/argv"; if [ "$1" = -i ]; then cat >> "'"$T"'/stdin"; else echo good_TOKEN-1; fi'
+run --store-token; check "--store-token stores and reads back" "$RC" 0
+check "token not in argv" "$(grep -c good_TOKEN "$T/argv")" 0
+check "token on stdin" "$(cat "$T/stdin")" 'add-generic-password -U -s cf-mcp -a cloudflare-readonly -l "Cloudflare read-only token (cf-mcp-headers)" -w good_TOKEN-1'
+
 stub op 'echo "bad token!"'
 run --store-token; check "--store-token rejects an odd token" "$RC" 1
 
