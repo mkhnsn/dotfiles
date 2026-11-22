@@ -248,8 +248,8 @@ REPLACED_APPS="Rectangle|Bartender 6|Docker"
 replaced_present() { local IFS='|' a; for a in $REPLACED_APPS; do [ -d "$APPS/$a.app" ] && echo "$a"; done; }
 # Their casks too: dragging the app to the Trash leaves Homebrew's record and its links (a
 # dangling zsh completion breaks compinit).
-REPLACED_CASKS="rectangle docker-desktop"
-replaced_casks()   { local c room; room="$(brew --prefix)/Caskroom"; for c in $REPLACED_CASKS; do [ -d "$room/$c" ] && echo "$c"; done; }
+REPLACED_CASKS="rectangle docker-desktop docker"  # docker: docker-desktop's old name
+replaced_casks()   { local c room; room="$(brew --prefix 2>/dev/null)/Caskroom"; for c in $REPLACED_CASKS; do [ -d "$room/$c" ] && echo "$c"; done; }
 check_replaced()   { workstation || return 0; [ -z "$(replaced_present)" ] && [ -z "$(replaced_casks)" ]; }
 # "Runs at login" is Homebrew's launch agent for colima; colima status alone also passes for a
 # one-off `colima start`, and fails for a minute or two while the first start builds the VM.
@@ -355,9 +355,9 @@ help_m365_admin()  { if [ ! -f "$ECHO_M365/tenant.psd1" ]; then echo "Clone echo
 help_zoom()        { echo "Zoom > Settings > Keyboard Shortcuts > Start/Stop Video: set it to ⌃⇧⌘V. The Stream Deck camera key sends that through BTT, and ⇧⌘V is Raycast's Clipboard History."; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
                     command -v brew-why >/dev/null 2>&1 && brew-why --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null | sed 's/^/    /'; true; }
-help_replaced()    { echo "Remove apps that another one now does the job of: $(replaced_present | paste -sd, - | sed 's/,/, /g'). Rectangle's window management is BTT's now; Bartender 6 is replaced by Bartender 7 (same settings file); Docker Desktop by Colima (images and volumes in Docker Desktop are not carried over). Drag them to the Trash."
-                     local c; c=$(replaced_casks | paste -sd' ' -)
-                     [ -z "$c" ] || echo "Homebrew still has their casks installed, which leaves broken links behind: brew uninstall --cask $c"; }
+help_replaced()    { local a c pre=""; a=$(replaced_present | paste -sd, - | sed 's/,/, /g'); c=$(replaced_casks | paste -sd' ' -)
+                     if [ -n "$a" ]; then echo "Remove apps that another one now does the job of: $a. Rectangle's window management is BTT's now; Bartender 6 is replaced by Bartender 7 (same settings file); Docker Desktop by Colima (images and volumes in Docker Desktop are not carried over). Drag them to the Trash."; pre="    "; fi
+                     [ -z "$c" ] || echo "${pre}Homebrew still has the casks of replaced apps installed, and their links (such as zsh completions) break once the app is gone: brew uninstall --cask $c"; }
 help_containers()  { if colima_at_login; then echo "Colima starts at login but isn't running yet. The first start downloads and builds its VM (a minute or two); log: $(brew --prefix)/var/log/colima.log"
                      else echo "Start Colima (the Docker engine) at login. The docker CLI, compose and buildx use it; Docker's config gets Homebrew's CLI plugins and the colima context. The first start builds its VM, which takes a minute or two."; fi; }
 help_ollama()      { echo "Run Ollama's server at login (brew services). Models are stored in ~/.ollama."; }

@@ -844,6 +844,7 @@ test_replaced_casks_must_be_uninstalled() {
   printf 'q\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
   assert_has "brew uninstall --cask docker-desktop"
+  assert_lacks "does the job of: ."
 }
 
 test_colima_and_ollama_must_run() {
