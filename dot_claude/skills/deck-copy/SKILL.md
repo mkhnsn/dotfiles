@@ -22,7 +22,8 @@ https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing.
 
 1. **Headlines are claims, in a sentence.** "Car builders already pay $110–132
    for an app-set light controller", not "Market validation". A reader who sees only the
-   headlines should get the whole argument.
+   headlines should get the whole argument. In a product deck's main run, short benefit
+   or noun headlines take their place (see `references/product-decks.md`).
 2. **One claim per slide.** If the headline joins two claims (with "and", a
    semicolon or a second sentence), split the slide or move one claim to the
    body or the notes.
@@ -34,7 +35,8 @@ https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing.
    State the claim directly. A contrast stays only when the audience actually
    holds the other belief, and then it's a plain sentence. One concrete analogy
    per deck is fine, on the purpose or solution slide and followed by the plain
-   statement (see `references/investor-decks.md`).
+   statement (see `references/investor-decks.md`). A product deck's hero slide may carry
+   one rhythmic tagline (see `references/product-decks.md`).
 5. **No importance words.** Cut "the differentiator", "game-changer",
    "unlock", "landscape", "ecosystem", "journey", "the future of",
    "revolutionize", "at the intersection of". Say what the thing does and
@@ -99,6 +101,8 @@ Load these when the task needs them:
 - `references/examples.md`: before and after rewrites, by pattern.
 - `references/investor-decks.md`: slide order, the ask, traction, team and
   competition slides for decks that raise money.
+- `references/product-decks.md`: decks that show a product or prototype: order,
+  short headlines, feature labels, specs and the pictures that carry them.
 
 ## Extending
 
