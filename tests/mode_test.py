@@ -47,7 +47,13 @@ class FakeMac:
         mode.main_display_width = lambda: 5120
         test.addCleanup(setattr, mode.subprocess, "run", mode.subprocess.run)
         real_run = mode.subprocess.run
-        mode.subprocess.run = lambda cmd, **kw: self.run(cmd) if cmd[:2] == ["open", "-na"] else real_run(cmd, **kw)
+        def run(cmd, **kw):
+            if cmd[:2] == ["open", "-na"]:
+                return self.run(cmd)
+            if cmd[0] == "lsappinfo":  # macOS only; the front app, restored after apply
+                return mode.subprocess.CompletedProcess(cmd, 0, "ASN:0x0-0x1:\n" if cmd[1] == "front" else "", "")
+            return real_run(cmd, **kw)
+        mode.subprocess.run = run
         test.addCleanup(setattr, mode.time, "sleep", mode.time.sleep)
         mode.time.sleep = lambda s: None
         test.addCleanup(setattr, mode, "wait", mode.wait)
