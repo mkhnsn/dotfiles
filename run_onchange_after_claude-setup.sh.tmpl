@@ -42,6 +42,22 @@ else
 fi
 {{ end -}}
 
+# Cloudflare's API server, read-only (docs/cloudflare-mcp.md), on every machine that has the
+# token: cf-mcp-headers reads it from the Keychain on macOS (mac-setup stores it) or from
+# ~/.config/cf-mcp/token on Linux. Elsewhere it isn't registered, so sessions don't carry a
+# server that can't connect. With no token at connect time, the static "Bearer missing" is
+# sent: the server rejects it, so Claude Code never falls back to an OAuth sign-in, which
+# could grant write access. The lines below change when the token is stored or the server
+# goes missing, so the script re-runs then.
+{{- $cfToken := output "sh" "-c" "[ -x \"$HOME/.local/bin/cf-mcp-headers\" ] && \"$HOME/.local/bin/cf-mcp-headers\" >/dev/null 2>&1 && echo yes || echo no" | trim }}
+# Token stored: {{ $cfToken }}
+{{- if eq $cfToken "yes" }}
+# Registered: {{ output "sh" "-c" "command -v jq >/dev/null || { echo unknown; exit 0; }; jq -e '.mcpServers.cloudflare' \"$HOME/.claude.json\" >/dev/null 2>&1 && echo yes || echo \"no (retry $(date +%s))\"" | trim }}
+mcp cloudflare '{"type":"http","url":"https://mcp.cloudflare.com/mcp","headers":{"Authorization":"Bearer missing"},"headersHelper":"~/.local/bin/cf-mcp-headers"}'
+{{- else }}
+claude mcp remove --scope user cloudflare >/dev/null 2>&1 || true
+{{- end }}
+
 # ---- Plugins (official marketplace) ----
 claude plugin marketplace list 2>/dev/null | grep -q claude-plugins-official ||
   claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 ||

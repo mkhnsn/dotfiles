@@ -1,7 +1,8 @@
 # Cloudflare API MCP server, read-only (#119)
 
-Status: trial. The read-only token exists and `cf-mcp-headers` serves it; `unstable-studios/dashboard`
-has the server in its `.mcp.json`. Nothing with write access is added.
+Status: in use, at user scope on this Mac and echo-turbine (decided 2026-11-22: the planned
+per-repo trial was in `unstable-studios/dashboard`, which isn't launched yet, and the token is
+what keeps it read-only, so a repo boundary added little). Nothing with write access is added.
 
 ## What it is
 
@@ -37,53 +38,53 @@ Read** so the server can find the account; tokens with client IP filtering aren'
    account-level Read permission (141 groups), and zone Read (47 groups) for all 28 zones in
    the account. That includes Billing, Audit Logs and the Zero Trust PII reads; narrow it in
    the dashboard if that's more than Claude should see.
-2. **Header helper** in the dotfiles, built like `ha-mcp`: `cf-mcp-headers --store-token` copies
-   the token from 1Password into the macOS Keychain once (`mac-setup` step `cf_mcp`; Keychain
-   service `cf-mcp`, account `cloudflare-readonly`), and at runtime
-   `~/.local/bin/cf-mcp-headers` reads it with `security find-generic-password` and prints
-   `{"Authorization": "Bearer <token>"}`. Not `op read` at runtime: Claude Code gives a
-   `headersHelper` 10 seconds, runs it on every connect and reconnect (and again when a tool call
-   gets a 401/403), and strips variables named like `*TOKEN*` from a project-scope helper's
-   environment, so a locked 1Password or a service-account token would fail it. It runs only after
-   the project's own folder is trusted
-   ([code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)). The token never lands in
-   a repo file or the shell environment.
-3. **One Workers repo first**: `unstable-studios/dashboard` (a Worker with D1, KV and R2), in its
-   `.mcp.json`:
+2. **Header helper** in the dotfiles, built like `ha-mcp`: `cf-mcp-headers` prints
+   `{"Authorization": "Bearer <token>"}` from a token stored once by `cf-mcp-headers --store-token`:
+   - macOS: the login Keychain (service `cf-mcp`, account `cloudflare-readonly`), copied from
+     1Password by the `mac-setup` step `cf_mcp`.
+   - Linux: `~/.config/cf-mcp/token`, mode 0600, since there's no Keychain. On echo-turbine
+     1Password is only reachable from its desktop session, not over SSH, so the token is piped
+     from a Mac's Keychain instead (`--store-token -` reads stdin; the token is never shown or
+     in an argument):
+
+     ```bash
+     security find-generic-password -s cf-mcp -a cloudflare-readonly -w |
+       ssh echo-turbine '~/.local/bin/cf-mcp-headers --store-token -'
+     ```
+
+   Not `op read` at runtime: Claude Code gives a `headersHelper` 10 seconds and runs it on every
+   connect and reconnect (and again when a tool call gets a 401/403), so a locked 1Password would
+   fail it ([code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)). The token never
+   lands in a repo file or the shell environment.
+3. **User scope**: `run_onchange_after_claude-setup.sh.tmpl` registers `cloudflare` with
+   `claude mcp add-json --scope user` on every machine where `cf-mcp-headers` finds a token, and
+   removes it where it doesn't (so sessions there don't carry a server that can't connect):
 
    ```json
    {
-     "mcpServers": {
-       "cloudflare": {
-         "type": "http",
-         "url": "https://mcp.cloudflare.com/mcp",
-         "headers": { "Authorization": "Bearer missing" },
-         "headersHelper": "~/.local/bin/cf-mcp-headers"
-       }
-     }
+     "type": "http",
+     "url": "https://mcp.cloudflare.com/mcp",
+     "headers": { "Authorization": "Bearer missing" },
+     "headersHelper": "~/.local/bin/cf-mcp-headers"
    }
    ```
 
-   Project scope, so it's approved per repo and only that repo's sessions see it.
-4. **Try it** for a week of normal work: list Workers and their bindings, D1 tables, R2 buckets,
-   recent deploys, Access apps. Check that a write fails: ask it to add a DNS TXT record and
-   expect a 403.
-5. **Then decide**: move it to user scope in `run_onchange_after_claude-setup.sh.tmpl` (the token
-   stays read-only), keep it per repo, or drop it. Record the reason on #119.
+   The script re-runs on the next `chezmoi apply` after the token is stored.
+4. **Check that a write fails** before relying on it: ask it to add a DNS TXT record and expect
+   a 403.
 
 Write access (a second token with Edit permissions) is a separate decision for Mike, not part
 of this.
 
 ## Open questions
 
-- The `.mcp.json` names the helper as `~/.local/bin/cf-mcp-headers`: Claude Code runs the helper
-  in a shell, so `~` expands, and it doesn't depend on whether an app launched from the Dock has
-  `~/.local/bin` on its `PATH`.
-- Without the helper (an untrusted folder, a machine without the token, echo-turbine, which has
-  no Keychain), Claude Code connects with the static `headers` alone, and a server that gets no
-  `Authorization` offers an OAuth sign-in from `/mcp`, which can grant write access. So the
-  `.mcp.json` also sets a static `Authorization: Bearer missing`: the server rejects it and
-  nothing offers OAuth. Don't sign in to it with OAuth.
+- The helper is named as `~/.local/bin/cf-mcp-headers`: Claude Code runs it in a shell, so `~`
+  expands, and it doesn't depend on whether an app launched from the Dock has `~/.local/bin` on
+  its `PATH`.
+- Without a token (or if the helper fails), Claude Code connects with the static `headers`
+  alone, and a server that gets no `Authorization` offers an OAuth sign-in from `/mcp`, which can
+  grant write access. So the definition also sets a static `Authorization: Bearer missing`: the
+  server rejects it and nothing offers OAuth. Don't sign in to it with OAuth.
 - If the Keychain item ever stops trusting `/usr/bin/security`, reading it shows a prompt, which
   can run past the helper's 10 s; `cf-mcp-headers --store-token` rewrites the item.
 - Zone Read covers all zones today; narrow it to the ones the Workers repos use if that's
