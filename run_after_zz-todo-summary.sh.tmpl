@@ -21,12 +21,21 @@ if command -v tailscale >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; t
 fi
 
 {{ if not (env "CODESPACES") -}}
-# This machine's fallback signing key (run_once_11) must be a GitHub signing key, or the
-# commits Claude Code and SSH sessions sign show as Unverified. allowed_signers was just
-# rebuilt from GitHub's list, so check against it.
+# This machine's fallback key (run_once_11) must be on GitHub twice. As a signing key, or
+# the commits Claude Code and SSH sessions sign show as Unverified: allowed_signers was just
+# rebuilt from GitHub's list, so check against it. As an authentication key, or git over SSH
+# fails in those sessions (git-ssh uses this key there): checked against the public list at
+# github.com/<user>.keys, and skipped when GitHub can't be reached.
 fallback_pub="$HOME/.ssh/id_ed25519_remote.pub"
-if [[ -f "$fallback_pub" ]] && ! grep -qF "$(awk '{print $2}' "$fallback_pub")" "$HOME/.config/git/allowed_signers" 2>/dev/null; then
-  items+=("Git signing: add this machine's fallback key to GitHub as a signing key: gh auth refresh -h github.com -s admin:ssh_signing_key && gh ssh-key add $fallback_pub --type signing --title \"${HOSTNAME%%.*} fallback\", then chezmoi apply")
+if [[ -f "$fallback_pub" ]]; then
+  fallback_key="$(awk '{print $2}' "$fallback_pub")"
+  if ! grep -qF "$fallback_key" "$HOME/.config/git/allowed_signers" 2>/dev/null; then
+    items+=("Git signing: add this machine's fallback key to GitHub as a signing key: gh auth refresh -h github.com -s admin:ssh_signing_key && gh ssh-key add $fallback_pub --type signing --title \"${HOSTNAME%%.*} fallback\", then chezmoi apply")
+  fi
+  if auth_keys="$(curl -fsS --max-time 5 https://github.com/mkhnsn.keys 2>/dev/null)" &&
+     ! grep -qF "$fallback_key" <<<"$auth_keys"; then
+    items+=("Git over SSH: add this machine's fallback key to GitHub as an authentication key, or SSH remotes fail in Claude Code and SSH sessions: gh auth refresh -h github.com -s admin:public_key && gh ssh-key add $fallback_pub --type authentication --title \"${HOSTNAME%%.*} fallback\"")
+  fi
 fi
 {{ end -}}
 

@@ -1,7 +1,8 @@
 {{- if not (env "CODESPACES") -}}
 #!/usr/bin/env bash
-# Generate a fallback SSH signing key for remote sessions where 1Password
-# biometric approval is unavailable (Blink Shell, SSH, remote Claude Code).
+# Generate a fallback SSH key for sessions where 1Password biometric approval is
+# unavailable (Blink Shell, SSH, Claude Code): it signs commits (ssh-sign) and
+# authenticates git over SSH (git-ssh), so GitHub needs it in both key lists.
 set -euo pipefail
 
 KEY="$HOME/.ssh/id_ed25519_remote"
@@ -16,6 +17,6 @@ chmod 700 "$HOME/.ssh"
 
 ssh-keygen -t ed25519 -f "$KEY" -N "" -C "remote-signing-$(hostname -s)"
 
-echo "Generated the fallback signing key $KEY."
-echo "The end-of-apply summary says how to add it to GitHub until it's there."
+echo "Generated the fallback key $KEY."
+echo "The end-of-apply summary says how to add it to GitHub (signing and authentication) until it's there."
 {{ end -}}
