@@ -78,13 +78,12 @@ them. `~/.local/state/claude-memory.log` has the background syncs' output.
      ones and machines left on. `run_onchange_after_claude-memory-timer.sh` loads them. On
      Linux the timer runs only while you're logged in unless lingering is on
      (`sudo loginctl enable-linger $USER`; the script says so).
-   - `sync` is: commit local changes (`<host>: <n> memories`), fetch, merge, move new memories
-     in, point checkouts at the repo, commit, push. Committing first means a crash never leaves
-     changes that block the next merge. A lock (`mkdir ~/.local/state/claude-memory.lock`; macOS
-     has no `flock`) keeps two sessions and the timer from running git at once. A lock older
-     than 10 minutes is renamed away (only one process can win that) and removed; the lock is
-     released on SIGTERM, when a hook times out; and git's own lock files older than a minute
-     are removed while holding it, since only a killed git leaves them.
+   - `sync` is: commit local changes (`<host>: <n> memories`), fetch, merge, point checkouts at
+     the repo, move their new memories in, commit, push. Committing first means a crash never leaves
+     changes that block the next merge. An `flock` on `~/.local/state/claude-memory.lock` keeps
+     two sessions and the timer from running git at once; the kernel releases it when the
+     process ends, however it ends (a hook timeout included). While holding it, git's own lock
+     files older than a minute are removed, since only a killed git leaves them.
    - Hooks, agent and timer are in the dotfiles and do nothing until the clone exists.
 4. **Conflicts**: merges, not rebases, so "ours" is always this machine. Two merge drivers
    (`.gitattributes` in the repo, set up in `.git/config` by `claude-memory` on every run):

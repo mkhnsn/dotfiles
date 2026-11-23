@@ -19,7 +19,7 @@ import json
 import os
 import re
 import shutil
-import signal
+import fcntl
 import socket
 import subprocess
 import sys
@@ -33,12 +33,11 @@ REPO = os.environ.get("CLAUDE_MEMORY_REPO", "mkhnsn/claude-memory")
 CLAUDE_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR", HOME / ".claude"))
 SRC = Path(os.environ.get("CLAUDE_MEMORY_SRC", HOME / "src"))
 STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state"))
-LOCK = STATE / "claude-memory.lock"
+LOCK = STATE / "claude-memory.lock"  # a file held with flock
 DEPLOY_KEY = HOME / ".ssh/claude-memory"
 HOST = os.environ.get("CLAUDE_MEMORY_HOST") or socket.gethostname().split(".")[0].lower()
 SELF = Path(os.path.realpath(__file__))
 FETCH_TIMEOUT = 3  # seconds; SessionStart gives the hook 6
-STALE = 600  # a lock older than this is left over from a killed run
 
 REPO_FILES = {
     ".gitattributes": """\
@@ -97,43 +96,21 @@ class Locked(Exception):
 
 
 class Lock:
+    """flock on a lock file: the kernel drops it when the process dies, however it dies."""
+
     def __enter__(self):
         STATE.mkdir(parents=True, exist_ok=True)
-        for _ in range(3):
-            try:
-                LOCK.mkdir()
-                break
-            except FileExistsError:
-                try:
-                    age = time.time() - LOCK.stat().st_mtime
-                except FileNotFoundError:
-                    continue  # released meanwhile: try again
-                if age < STALE:
-                    raise Locked()
-                # Stale. Rename it away first: only one process wins the rename, so two can't
-                # both break it and then both hold it.
-                gone = LOCK.with_name(f"{LOCK.name}.stale-{os.getpid()}")
-                try:
-                    LOCK.rename(gone)
-                    gone.rmdir()
-                except OSError:
-                    pass
-        else:
+        self.fh = open(LOCK, "a")
+        try:
+            fcntl.flock(self.fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            self.fh.close()
             raise Locked()
-        self.prev = signal.signal(signal.SIGTERM, self._term)
         clean_git_locks()
         return self
 
-    def _term(self, *_):
-        self.__exit__()
-        sys.exit(143)
-
     def __exit__(self, *exc):
-        try:
-            LOCK.rmdir()
-        except FileNotFoundError:
-            pass
-        signal.signal(signal.SIGTERM, getattr(self, "prev", signal.SIG_DFL))
+        self.fh.close()  # releases the lock
 
 
 def clean_git_locks():
@@ -141,7 +118,8 @@ def clean_git_locks():
     gitdir = CLONE / ".git"
     if not gitdir.is_dir():
         return
-    for p in [gitdir / "index.lock", gitdir / "HEAD.lock", *(gitdir / "refs").rglob("*.lock")]:
+    for p in [gitdir / "index.lock", gitdir / "HEAD.lock", gitdir / "config.lock",
+              gitdir / "packed-refs.lock", *(gitdir / "refs").rglob("*.lock")]:
         try:
             if time.time() - p.stat().st_mtime > 60:
                 p.unlink()
@@ -396,7 +374,8 @@ def configure():
         ("merge.claude-memory-file.name", "claude-memory memory file"),
         ("merge.claude-memory-file.driver", f"{SELF} merge-file %O %A %B %P"),
     ]:
-        git("config", k, v)
+        if git("config", "--get", k, check=False).stdout.strip() != v:
+            git("config", k, v)
     for name, text in REPO_FILES.items():
         if not (CLONE / name).exists():
             (CLONE / name).write_text(text)
@@ -611,9 +590,9 @@ def cmd_hook_end(args):
 
 def cmd_merge_index(args):
     o, a, b, p = args[:4]
-    text, lost = merge_index_text(Path(o).read_text(errors="replace"),
-                                  Path(a).read_text(errors="replace"),
-                                  Path(b).read_text(errors="replace"))
+    # Strict decoding: a file that isn't UTF-8 fails the driver, and the merge fallback then
+    # keeps ours as it is and saves theirs as a copy.
+    text, lost = merge_index_text(Path(o).read_text(), Path(a).read_text(), Path(b).read_text())
     Path(a).write_text(text)
     if lost:
         keep_copy(CLONE / p, Path(b).read_bytes(), other_host())

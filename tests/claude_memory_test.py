@@ -201,6 +201,16 @@ class TwoMachines(unittest.TestCase):
         self.assertEqual((self.a.mem / "one.md").read_text(), "mac edit\n")
         self.assertEqual((self.a.mem / "one.conflict-turbine.md").read_text(), "turbine edit\n")
 
+    def test_held_lock_skips_and_a_dead_holder_does_not_block(self):
+        import fcntl
+        self.a.run("init")
+        lock = self.a.home / ".local/state/claude-memory.lock"
+        with open(lock, "a") as fh:
+            fcntl.flock(fh, fcntl.LOCK_EX)
+            self.assertIn("another sync is running", self.a.run("sync"))
+        # The holder is gone (file left behind): the next sync runs.
+        self.assertNotIn("another sync is running", self.a.run("sync"))
+
     def test_hooks_do_nothing_without_a_clone(self):
         self.assertEqual(self.a.run("hook-start"), "")
         self.assertEqual(self.a.run("hook-end"), "")
