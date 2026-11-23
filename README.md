@@ -494,7 +494,12 @@ run the same thing.
   lid closed, docked with the lid open, laptop only). The keyboard is the one surface in all three,
   so every trigger has a Hyper key.
 
-Now: Hyper+M mic mute (also ⌃⌥⌘M, the Stream Deck's Mic key), Hyper+K Keep Awake
+A trigger with `apps` is generated into those apps' sections in BTT: its keys work only there,
+so Hyper+V can be the camera in each call app.
+
+Now: Hyper+M mic mute (also ⌃⌥⌘M, the Stream Deck's Mic key), Hyper+V camera in Zoom, Teams
+and Chrome for Meet (also ⌃⌥⌘V, the Stream Deck's Camera key; each sends that app's own video
+shortcut), Hyper+K Keep Awake
 (`keep-awake`, caffeinate until pressed again), Hyper+0 next work mode (`mode`, a placeholder
 until #98), Hyper+H the cheat sheet. `trigger-check --list` prints them.
 
@@ -504,7 +509,9 @@ The controls teach themselves from the same file: each trigger's `hint` is one l
 Hyper key.
 
 - **Cheat sheet**: Hyper+H opens a panel with a row per trigger (its key, what it does, the other
-  surfaces that fire it); clicking a row runs it (logged as `menu`). The last rows are Next hint
+  surfaces that fire it); clicking a row runs it (logged as `menu`). A trigger with `apps` has a
+  row only while one of those apps is in front (`hints app` shows and hides it, and the panel
+  sizes to its rows). The last rows are Next hint
   and Mute these hints. `trigger-check` generates it, a BTT floating menu named "Hints".
 - **Hint of the day**: the first time each day you switch to any app, a notification titled
   "Hint" shows one general hint (a trigger without `apps`). The first switch to an app that a
@@ -521,6 +528,7 @@ Hyper key.
   surfaces this setup has (no Stream Deck on the laptop), and so do the hints. The first 3 times
   in each setup a hint says what works there (`hints mute setup` stops those); the first run on a
   Mac only notes where it is.
+- `btt-sync import` resets the rows to the preset's, so it runs `hints refresh` afterwards.
 - `hints next` shows one now; `hints mute` stops the kind of hint shown last today (an app's, or
   `general` or `setup`), or else the app in front's, `hints unmute <bundle-id|general|setup>`
   brings it back; `hints off` / `hints on` for all of

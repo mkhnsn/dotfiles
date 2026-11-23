@@ -152,8 +152,8 @@ def check(src, registry_path):
     if os.path.exists(triggers):
         with open(triggers, "rb") as f:
             for t in tomllib.load(f).get("trigger", []):
-                reg += [{"keys": k, "owner": "btt", "action": f"{t['action']} (trigger {t['name']})"}
-                        for k in t.get("keys", [])]
+                reg += [{"keys": k, "owner": "btt", "action": f"{t['action']} (trigger {t['name']})", "scope": app}
+                        for k in t.get("keys", []) for app in (t.get("apps") or ["global"])]
     problems = []
     for e in reg:
         e["keys"] = normalize(e["keys"])

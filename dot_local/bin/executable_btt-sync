@@ -71,6 +71,18 @@ def strip(o):
         for v in o:
             strip(v)
 strip(d)
+# Floating menu rows in BTT's order; BTT can give two rows the same order, so the UUID breaks ties
+# (trigger-check sorts them the same way).
+def sort_rows(o):
+    if isinstance(o, dict):
+        if isinstance(o.get("BTTMenuItems"), list):
+            o["BTTMenuItems"].sort(key=lambda i: (i.get("BTTOrder", 0), i.get("BTTUUID", "")))
+        for v in o.values():
+            sort_rows(v)
+    elif isinstance(o, list):
+        for v in o:
+            sort_rows(v)
+sort_rows(d)
 out = (json.dumps(d, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
 with open(p + ".tmp", "wb") as f:
     f.write(out)
@@ -103,6 +115,8 @@ case "${1:-export}" in
     trigger-check --source "$src" || {
       echo "btt-sync: fix triggers.toml or run btt-sync generate first"; exit 1; }
     osascript -e "tell application \"BetterTouchTool\" to import_preset \"$preset\"" >/dev/null
+    # The import resets the cheat sheet's rows to the preset's; hints sets them for this setup and app.
+    if command -v hints >/dev/null; then (sleep 2; hints refresh) >/dev/null 2>&1 & fi
     echo "Imported $preset. Check BTT > Configuration; activate the preset if it isn't."
     ;;
   *)

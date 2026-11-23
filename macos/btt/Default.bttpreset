@@ -712,279 +712,6 @@
           "BTTUUID" : "20E2829B-442F-5D2D-AED1-7E476ECC2CFA"
         },
         {
-          "BTTAdditionalConfiguration" : "Floating Menu: Hints",
-          "BTTGestureNotes" : "Hints: cheat sheet (generated from triggers.toml)",
-          "BTTMenuAvailability" : 0,
-          "BTTMenuConfig" : {
-            "BTTMenuAlwaysUseLightMode" : 1,
-            "BTTMenuAnchorMenu" : 4,
-            "BTTMenuAnchorRelation" : 4,
-            "BTTMenuCloseAfterAction" : 1,
-            "BTTMenuCloseOnOutsideClick" : 1,
-            "BTTMenuDisableDrag" : 1,
-            "BTTMenuElementIdentifier" : "Hints",
-            "BTTMenuFrameHeight" : 202,
-            "BTTMenuFrameWidth" : 460,
-            "BTTMenuHorizontalSpacing" : 2,
-            "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
-            "BTTMenuItemBackgroundType" : 4,
-            "BTTMenuItemBlurredBackground" : 1,
-            "BTTMenuItemBorderColor" : "255, 255, 255, 46",
-            "BTTMenuItemBorderWidth" : 1,
-            "BTTMenuItemCornerRadius" : 12,
-            "BTTMenuItemPaddingBottom" : 6,
-            "BTTMenuItemPaddingLeft" : 6,
-            "BTTMenuItemPaddingRight" : 6,
-            "BTTMenuItemPaddingTop" : 6,
-            "BTTMenuItemVisibleWhileActive" : 1,
-            "BTTMenuItemVisibleWhileInactive" : 1,
-            "BTTMenuLayoutDirection" : 6,
-            "BTTMenuPositionRelativeTo" : 3,
-            "BTTMenuPositioningType" : 1,
-            "BTTMenuVerticalSpacing" : 2,
-            "BTTMenuVisibility" : 1,
-            "BTTMenuWindowLevel" : 3
-          },
-          "BTTMenuItems" : [
-            {
-              "BTTAdditionalConfiguration" : "Menu Item: Header",
-              "BTTMenuAvailability" : 0,
-              "BTTMenuConfig" : {
-                "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:rgba(255,255,255,0.6); font-family:-apple-system;'>Hyper+H · what you can do</span></body></html>",
-                "BTTMenuElementIdentifier" : "Header",
-                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundType" : 4,
-                "BTTMenuItemCornerRadius" : 7,
-                "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 1000,
-                "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 100,
-                "BTTMenuItemVisibleWhileActive" : 1,
-                "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
-              },
-              "BTTMenuName" : "Header",
-              "BTTOrder" : 0,
-              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: Header",
-              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
-              "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "84A6384F-8B83-5513-B929-9FA14ECB4CF4"
-            },
-            {
-              "BTTAdditionalConfiguration" : "Menu Item: mic-mute",
-              "BTTMenuAvailability" : 0,
-              "BTTMenuConfig" : {
-                "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+M</b>&nbsp;&nbsp;Mic: toggle mute (all apps)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
-                "BTTMenuElementIdentifier" : "mic-mute",
-                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
-                "BTTMenuItemBackgroundType" : 4,
-                "BTTMenuItemCornerRadius" : 7,
-                "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 1000,
-                "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 100,
-                "BTTMenuItemVisibleWhileActive" : 1,
-                "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
-              },
-              "BTTMenuItemActions" : [
-                {
-                  "BTTIsPureAction" : true,
-                  "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
-                  "BTTPredefinedActionType" : 206,
-                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mic-mute menu",
-                  "BTTTriggerParentUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8",
-                  "BTTUUID" : "36BD9817-7947-52DF-9BC7-7B2C9F0F8FCD"
-                }
-              ],
-              "BTTMenuName" : "mic-mute",
-              "BTTOrder" : 1,
-              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: mic-mute",
-              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
-              "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8"
-            },
-            {
-              "BTTAdditionalConfiguration" : "Menu Item: keep-awake",
-              "BTTMenuAvailability" : 0,
-              "BTTMenuConfig" : {
-                "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+K</b>&nbsp;&nbsp;Keep Awake: toggle (display and system stay on)</span></body></html>",
-                "BTTMenuElementIdentifier" : "keep-awake",
-                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
-                "BTTMenuItemBackgroundType" : 4,
-                "BTTMenuItemCornerRadius" : 7,
-                "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 1000,
-                "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 100,
-                "BTTMenuItemVisibleWhileActive" : 1,
-                "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
-              },
-              "BTTMenuItemActions" : [
-                {
-                  "BTTIsPureAction" : true,
-                  "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
-                  "BTTPredefinedActionType" : 206,
-                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" keep-awake menu",
-                  "BTTTriggerParentUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317",
-                  "BTTUUID" : "13D50ABD-2C33-5E89-9DAA-DB76781AABAB"
-                }
-              ],
-              "BTTMenuName" : "keep-awake",
-              "BTTOrder" : 2,
-              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: keep-awake",
-              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
-              "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317"
-            },
-            {
-              "BTTAdditionalConfiguration" : "Menu Item: mode-next",
-              "BTTMenuAvailability" : 0,
-              "BTTMenuConfig" : {
-                "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+0</b>&nbsp;&nbsp;Mode: next work mode (placeholder until #98)</span></body></html>",
-                "BTTMenuElementIdentifier" : "mode-next",
-                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
-                "BTTMenuItemBackgroundType" : 4,
-                "BTTMenuItemCornerRadius" : 7,
-                "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 1000,
-                "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 100,
-                "BTTMenuItemVisibleWhileActive" : 1,
-                "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
-              },
-              "BTTMenuItemActions" : [
-                {
-                  "BTTIsPureAction" : true,
-                  "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
-                  "BTTPredefinedActionType" : 206,
-                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-next menu",
-                  "BTTTriggerParentUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44",
-                  "BTTUUID" : "1C94BA81-942B-5AE2-ADBA-1E19685CDF55"
-                }
-              ],
-              "BTTMenuName" : "mode-next",
-              "BTTOrder" : 3,
-              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: mode-next",
-              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
-              "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44"
-            },
-            {
-              "BTTAdditionalConfiguration" : "Menu Item: hints-next",
-              "BTTMenuAvailability" : 0,
-              "BTTMenuConfig" : {
-                "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Next hint</span></body></html>",
-                "BTTMenuElementIdentifier" : "hints-next",
-                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
-                "BTTMenuItemBackgroundType" : 4,
-                "BTTMenuItemCornerRadius" : 7,
-                "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 1000,
-                "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 100,
-                "BTTMenuItemVisibleWhileActive" : 1,
-                "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
-              },
-              "BTTMenuItemActions" : [
-                {
-                  "BTTIsPureAction" : true,
-                  "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
-                  "BTTPredefinedActionType" : 206,
-                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
-                  "BTTTriggerParentUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB",
-                  "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
-                }
-              ],
-              "BTTMenuName" : "hints-next",
-              "BTTOrder" : 4,
-              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: hints-next",
-              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
-              "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB"
-            },
-            {
-              "BTTAdditionalConfiguration" : "Menu Item: hints-mute",
-              "BTTMenuAvailability" : 0,
-              "BTTMenuConfig" : {
-                "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Mute these hints</span></body></html>",
-                "BTTMenuElementIdentifier" : "hints-mute",
-                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
-                "BTTMenuItemBackgroundType" : 4,
-                "BTTMenuItemCornerRadius" : 7,
-                "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 1000,
-                "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 100,
-                "BTTMenuItemVisibleWhileActive" : 1,
-                "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
-              },
-              "BTTMenuItemActions" : [
-                {
-                  "BTTIsPureAction" : true,
-                  "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
-                  "BTTPredefinedActionType" : 206,
-                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
-                  "BTTTriggerParentUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0",
-                  "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
-                }
-              ],
-              "BTTMenuName" : "hints-mute",
-              "BTTOrder" : 5,
-              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: hints-mute",
-              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
-              "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0"
-            }
-          ],
-          "BTTMenuName" : "Hints",
-          "BTTOrder" : 21,
-          "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-          "BTTTriggerName" : "Floating Menu: Hints",
-          "BTTTriggerType" : 767,
-          "BTTTriggerTypeDescription" : "Hints: cheat sheet (generated from triggers.toml)",
-          "BTTTriggerTypeDescriptionReadOnly" : "Floating Menu",
-          "BTTUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E"
-        },
-        {
           "BTTActionsToExecute" : [
             {
               "BTTAdditionalActionData" : {
@@ -1112,6 +839,469 @@
           "BTTTriggerTypeDescription" : "Hints: screen disconnected (hints setup)",
           "BTTTriggerTypeDescriptionReadOnly" : "Screen/Display Did Disconnect",
           "BTTUUID" : "7E90FA63-E96E-523A-A972-BB2D9DB0F99D"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTLayoutIndependentActionChar" : "active app",
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
+              "BTTPredefinedActionType" : 128,
+              "BTTShortcutApp" : "active app",
+              "BTTShortcutAppUnderCursor" : "active app",
+              "BTTShortcutSwitchToAppFirst" : "0",
+              "BTTShortcutToSend" : "59,55,56,9",
+              "BTTTriggerParentUUID" : "DE430DA4-D545-58D4-B17D-AA3BB529CC39",
+              "BTTUUID" : "39BA1A00-23CE-5CD1-994F-664CEF99889E"
+            }
+          ],
+          "BTTGestureNotes" : "Camera: Zoom video on/off",
+          "BTTNamedTriggerAIDescription" : "In a Zoom call, Hyper+V turns your camera on or off",
+          "BTTOrder" : 28,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "camera-zoom",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Camera: Zoom video on/off",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: camera-zoom",
+          "BTTUUID" : "DE430DA4-D545-58D4-B17D-AA3BB529CC39"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTLayoutIndependentActionChar" : "active app",
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
+              "BTTPredefinedActionType" : 128,
+              "BTTShortcutApp" : "active app",
+              "BTTShortcutAppUnderCursor" : "active app",
+              "BTTShortcutSwitchToAppFirst" : "0",
+              "BTTShortcutToSend" : "55,56,31",
+              "BTTTriggerParentUUID" : "CB486228-6A6E-5D63-9271-6F1456102E8C",
+              "BTTUUID" : "E76BF296-CD96-50BF-B2DB-ED96E67E99CD"
+            }
+          ],
+          "BTTGestureNotes" : "Camera: Teams video on/off (sends ⇧⌘O)",
+          "BTTNamedTriggerAIDescription" : "In a Teams call, Hyper+V turns your camera on or off",
+          "BTTOrder" : 29,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "camera-teams",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Camera: Teams video on/off (sends ⇧⌘O)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: camera-teams",
+          "BTTUUID" : "CB486228-6A6E-5D63-9271-6F1456102E8C"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTLayoutIndependentActionChar" : "active app",
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
+              "BTTPredefinedActionType" : 128,
+              "BTTShortcutApp" : "active app",
+              "BTTShortcutAppUnderCursor" : "active app",
+              "BTTShortcutSwitchToAppFirst" : "0",
+              "BTTShortcutToSend" : "55,14",
+              "BTTTriggerParentUUID" : "8225E0C2-ED20-5EEA-8C8C-336DC1B6F13B",
+              "BTTUUID" : "60723582-745A-5928-9C05-551D799A3978"
+            }
+          ],
+          "BTTGestureNotes" : "Camera: Meet video on/off (sends ⌘E)",
+          "BTTNamedTriggerAIDescription" : "In a Meet call in Chrome, Hyper+V turns your camera on or off",
+          "BTTOrder" : 30,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "camera-meet",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Camera: Meet video on/off (sends ⌘E)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: camera-meet",
+          "BTTUUID" : "8225E0C2-ED20-5EEA-8C8C-336DC1B6F13B"
+        },
+        {
+          "BTTAdditionalConfiguration" : "Floating Menu: Hints",
+          "BTTGestureNotes" : "Hints: cheat sheet (generated from triggers.toml)",
+          "BTTMenuAvailability" : 0,
+          "BTTMenuConfig" : {
+            "BTTMenuAlwaysUseLightMode" : 1,
+            "BTTMenuAnchorMenu" : 4,
+            "BTTMenuAnchorRelation" : 4,
+            "BTTMenuCloseAfterAction" : 1,
+            "BTTMenuCloseOnOutsideClick" : 1,
+            "BTTMenuDisableDrag" : 1,
+            "BTTMenuElementIdentifier" : "Hints",
+            "BTTMenuFrameHeight" : 202,
+            "BTTMenuFrameWidth" : 460,
+            "BTTMenuHorizontalSpacing" : 2,
+            "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
+            "BTTMenuItemBackgroundType" : 4,
+            "BTTMenuItemBlurredBackground" : 1,
+            "BTTMenuItemBorderColor" : "255, 255, 255, 46",
+            "BTTMenuItemBorderWidth" : 1,
+            "BTTMenuItemCornerRadius" : 12,
+            "BTTMenuItemPaddingBottom" : 6,
+            "BTTMenuItemPaddingLeft" : 6,
+            "BTTMenuItemPaddingRight" : 6,
+            "BTTMenuItemPaddingTop" : 6,
+            "BTTMenuItemVisibleWhileActive" : 1,
+            "BTTMenuItemVisibleWhileInactive" : 1,
+            "BTTMenuLayoutDirection" : 6,
+            "BTTMenuPositionRelativeTo" : 3,
+            "BTTMenuPositioningType" : 1,
+            "BTTMenuSizingBehavior" : 3,
+            "BTTMenuVerticalSpacing" : 2,
+            "BTTMenuVisibility" : 1,
+            "BTTMenuWindowLevel" : 3
+          },
+          "BTTMenuItems" : [
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:rgba(255,255,255,0.6); font-family:-apple-system;'>Hyper+H · what you can do</span></body></html>",
+                "BTTMenuElementIdentifier" : "Header",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuName" : "Header",
+              "BTTOrder" : 0,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: Header",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "84A6384F-8B83-5513-B929-9FA14ECB4CF4"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+M</b>&nbsp;&nbsp;Mic: toggle mute (all apps)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
+                "BTTMenuElementIdentifier" : "mic-mute",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mic-mute menu",
+                  "BTTTriggerParentUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8",
+                  "BTTUUID" : "36BD9817-7947-52DF-9BC7-7B2C9F0F8FCD"
+                }
+              ],
+              "BTTMenuName" : "mic-mute",
+              "BTTOrder" : 1,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mic-mute",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+V</b>&nbsp;&nbsp;Camera: Zoom video on/off<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
+                "BTTMenuElementIdentifier" : "camera-zoom",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 0,
+                "BTTMenuItemVisibleWhileInactive" : 0,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" camera-zoom menu",
+                  "BTTTriggerParentUUID" : "8425EDD4-CA67-5DC9-94F7-891248A0FA44",
+                  "BTTUUID" : "C4D4761B-C59D-544B-A28F-59978C32B79A"
+                }
+              ],
+              "BTTMenuName" : "camera-zoom",
+              "BTTOrder" : 2,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: camera-zoom",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "8425EDD4-CA67-5DC9-94F7-891248A0FA44"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+V</b>&nbsp;&nbsp;Camera: Teams video on/off (sends ⇧⌘O)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
+                "BTTMenuElementIdentifier" : "camera-teams",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 0,
+                "BTTMenuItemVisibleWhileInactive" : 0,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" camera-teams menu",
+                  "BTTTriggerParentUUID" : "90FEDD82-7DBF-5F23-84D8-54A0929C7DD8",
+                  "BTTUUID" : "C98FDF51-CEF2-53E2-880C-141AE2E7435B"
+                }
+              ],
+              "BTTMenuName" : "camera-teams",
+              "BTTOrder" : 3,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: camera-teams",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "90FEDD82-7DBF-5F23-84D8-54A0929C7DD8"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+V</b>&nbsp;&nbsp;Camera: Meet video on/off (sends ⌘E)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
+                "BTTMenuElementIdentifier" : "camera-meet",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 0,
+                "BTTMenuItemVisibleWhileInactive" : 0,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" camera-meet menu",
+                  "BTTTriggerParentUUID" : "8982BC67-5EAC-5617-9420-236A28713257",
+                  "BTTUUID" : "F95BD49D-05D2-5ED6-9DDE-63CC5DCEA1D7"
+                }
+              ],
+              "BTTMenuName" : "camera-meet",
+              "BTTOrder" : 4,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: camera-meet",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "8982BC67-5EAC-5617-9420-236A28713257"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+K</b>&nbsp;&nbsp;Keep Awake: toggle (display and system stay on)</span></body></html>",
+                "BTTMenuElementIdentifier" : "keep-awake",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" keep-awake menu",
+                  "BTTTriggerParentUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317",
+                  "BTTUUID" : "13D50ABD-2C33-5E89-9DAA-DB76781AABAB"
+                }
+              ],
+              "BTTMenuName" : "keep-awake",
+              "BTTOrder" : 5,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: keep-awake",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+0</b>&nbsp;&nbsp;Mode: next work mode (placeholder until #98)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-next",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-next menu",
+                  "BTTTriggerParentUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44",
+                  "BTTUUID" : "1C94BA81-942B-5AE2-ADBA-1E19685CDF55"
+                }
+              ],
+              "BTTMenuName" : "mode-next",
+              "BTTOrder" : 6,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-next",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Next hint</span></body></html>",
+                "BTTMenuElementIdentifier" : "hints-next",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
+                  "BTTTriggerParentUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB",
+                  "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
+                }
+              ],
+              "BTTMenuName" : "hints-next",
+              "BTTOrder" : 7,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: hints-next",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Mute these hints</span></body></html>",
+                "BTTMenuElementIdentifier" : "hints-mute",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
+                  "BTTTriggerParentUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0",
+                  "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
+                }
+              ],
+              "BTTMenuName" : "hints-mute",
+              "BTTOrder" : 8,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: hints-mute",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0"
+            }
+          ],
+          "BTTMenuName" : "Hints",
+          "BTTOrder" : 31,
+          "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+          "BTTTriggerName" : "Floating Menu: Hints",
+          "BTTTriggerType" : 767,
+          "BTTTriggerTypeDescription" : "Hints: cheat sheet (generated from triggers.toml)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Floating Menu",
+          "BTTUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E"
         }
       ]
     },
@@ -1136,28 +1326,67 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLayoutIndependentActionChar" : "active app",
               "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
-              "BTTPredefinedActionType" : 128,
-              "BTTShortcutApp" : "active app",
-              "BTTShortcutAppUnderCursor" : "active app",
-              "BTTShortcutSwitchToAppFirst" : "0",
-              "BTTShortcutToSend" : "55,14",
-              "BTTTriggerParentUUID" : "CDBC0FD4-16E7-4B91-85ED-6B806AA4CC5F",
-              "BTTUUID" : "489A4E75-3D45-435C-895C-5667D7E96986"
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-meet key",
+              "BTTTriggerParentUUID" : "8965996E-CA16-56F8-BC20-9CA833FD020F",
+              "BTTUUID" : "ABCE2CC9-5B6C-5B6B-AA71-88B35A110E86"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "camera-meet",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "8965996E-CA16-56F8-BC20-9CA833FD020F",
+              "BTTUUID" : "2F2B8BA4-8B1A-557F-B3F8-40BE03C1C01F"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Camera: Meet video",
+          "BTTGestureNotes" : "Camera: Meet video on/off (sends ⌘E)",
           "BTTOrder" : 0,
+          "BTTShortcutKeyCode" : 9,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "8965996E-CA16-56F8-BC20-9CA833FD020F"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-meet key",
+              "BTTTriggerParentUUID" : "DF8A32A5-E3B1-587F-8DED-3D572A1EDCF5",
+              "BTTUUID" : "E2A0D0C4-E7C1-5896-ADE4-C3684BDFDBDC"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "camera-meet",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "DF8A32A5-E3B1-587F-8DED-3D572A1EDCF5",
+              "BTTUUID" : "31E86F02-B528-56DE-B620-2261CE7F0211"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Camera: Meet video on/off (sends ⌘E)",
+          "BTTOrder" : 1,
           "BTTShortcutKeyCode" : 9,
           "BTTShortcutKeyboardType" : 0,
           "BTTShortcutModifierKeys" : 1835008,
           "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
-          "BTTUUID" : "CDBC0FD4-16E7-4B91-85ED-6B806AA4CC5F"
+          "BTTUUID" : "DF8A32A5-E3B1-587F-8DED-3D572A1EDCF5"
         }
       ]
     },
@@ -1170,28 +1399,67 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLayoutIndependentActionChar" : "active app",
               "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
-              "BTTPredefinedActionType" : 128,
-              "BTTShortcutApp" : "active app",
-              "BTTShortcutAppUnderCursor" : "active app",
-              "BTTShortcutSwitchToAppFirst" : "0",
-              "BTTShortcutToSend" : "55,56,31",
-              "BTTTriggerParentUUID" : "2D385925-07EC-4236-B33B-9E94C25BBE61",
-              "BTTUUID" : "B5FBEB74-82F8-47C5-8471-8B4282BC626F"
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-teams key",
+              "BTTTriggerParentUUID" : "07A3BCA0-9E0F-5590-A1F3-07D4492A29A3",
+              "BTTUUID" : "168BE6CA-57F7-50D5-AEB2-5547161532E3"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "camera-teams",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "07A3BCA0-9E0F-5590-A1F3-07D4492A29A3",
+              "BTTUUID" : "F1604D6D-F5E0-58A2-B68F-15FDFD9B53F4"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Camera: Teams video",
+          "BTTGestureNotes" : "Camera: Teams video on/off (sends ⇧⌘O)",
           "BTTOrder" : 0,
+          "BTTShortcutKeyCode" : 9,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "07A3BCA0-9E0F-5590-A1F3-07D4492A29A3"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-teams key",
+              "BTTTriggerParentUUID" : "CD4BEB86-BA67-5AB6-BB66-459804A2FA7D",
+              "BTTUUID" : "2248CEB5-F0A5-589A-BC04-D61BF81802B0"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "camera-teams",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "CD4BEB86-BA67-5AB6-BB66-459804A2FA7D",
+              "BTTUUID" : "AE214DC6-FE4B-5D97-9D1D-C53B2B3D94CE"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Camera: Teams video on/off (sends ⇧⌘O)",
+          "BTTOrder" : 1,
           "BTTShortcutKeyCode" : 9,
           "BTTShortcutKeyboardType" : 0,
           "BTTShortcutModifierKeys" : 1835008,
           "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
-          "BTTUUID" : "2D385925-07EC-4236-B33B-9E94C25BBE61"
+          "BTTUUID" : "CD4BEB86-BA67-5AB6-BB66-459804A2FA7D"
         }
       ]
     },
@@ -1204,33 +1472,72 @@
           "BTTActionsToExecute" : [
             {
               "BTTIsPureAction" : true,
-              "BTTLayoutIndependentActionChar" : "active app",
               "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Send Shortcut to Specific App",
-              "BTTPredefinedActionType" : 128,
-              "BTTShortcutApp" : "active app",
-              "BTTShortcutAppUnderCursor" : "active app",
-              "BTTShortcutSwitchToAppFirst" : "0",
-              "BTTShortcutToSend" : "59,55,56,9",
-              "BTTTriggerParentUUID" : "4C138EBD-4844-4B86-B8D7-2613612E9B49",
-              "BTTUUID" : "7378F57D-2813-484D-8C71-DB513EF6FF09"
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-zoom key",
+              "BTTTriggerParentUUID" : "E2A79CAB-F23C-53A1-BF7D-B874216574EB",
+              "BTTUUID" : "D200C159-4B6D-547B-804F-C1E31E18A1EB"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "camera-zoom",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "E2A79CAB-F23C-53A1-BF7D-B874216574EB",
+              "BTTUUID" : "52A15125-25B9-5441-B220-23E9061AE56C"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Camera: Zoom video",
+          "BTTGestureNotes" : "Camera: Zoom video on/off",
           "BTTOrder" : 0,
+          "BTTShortcutKeyCode" : 9,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "E2A79CAB-F23C-53A1-BF7D-B874216574EB"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-zoom key",
+              "BTTTriggerParentUUID" : "7137FD02-5937-58C6-9A9A-6B7BF811350F",
+              "BTTUUID" : "ED77027D-235B-5444-AF64-90DC5AA0D96B"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "camera-zoom",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "7137FD02-5937-58C6-9A9A-6B7BF811350F",
+              "BTTUUID" : "D9594379-0FD3-566F-B875-FC08D14B5B6B"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Camera: Zoom video on/off",
+          "BTTOrder" : 1,
           "BTTShortcutKeyCode" : 9,
           "BTTShortcutKeyboardType" : 0,
           "BTTShortcutModifierKeys" : 1835008,
           "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
-          "BTTUUID" : "4C138EBD-4844-4B86-B8D7-2613612E9B49"
+          "BTTUUID" : "7137FD02-5937-58C6-9A9A-6B7BF811350F"
         }
       ]
     }
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "A4012450-0979-46F1-92D8-C7D6C92663DC"
+  "BTTPresetUUID" : "8E151B6B-C775-43E7-9D8F-1B5A0741445F"
 }
