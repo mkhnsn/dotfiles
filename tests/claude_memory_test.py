@@ -211,6 +211,19 @@ class TwoMachines(unittest.TestCase):
         # The holder is gone (file left behind): the next sync runs.
         self.assertNotIn("another sync is running", self.a.run("sync"))
 
+    def test_log_is_trimmed(self):
+        self.a.run("init")
+        log = self.a.home / ".local/state/claude-memory.log"
+        log.write_text("".join(f"line {i}\n" for i in range(40000)))  # ~400 KB
+        self.a.run("sync")
+        lines = log.read_text().splitlines()
+        self.assertEqual(len(lines), 1000)
+        self.assertEqual(lines[-1], "line 39999")
+        small = "a few lines\n"
+        log.write_text(small)
+        self.a.run("sync")
+        self.assertEqual(log.read_text(), small)
+
     def test_hooks_do_nothing_without_a_clone(self):
         self.assertEqual(self.a.run("hook-start"), "")
         self.assertEqual(self.a.run("hook-end"), "")

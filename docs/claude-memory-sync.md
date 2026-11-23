@@ -19,7 +19,8 @@ claude-memory status   what's synced, what isn't, and memories waiting to be mer
 A memory changed on two machines keeps this machine's copy and saves the other as
 `<name>.conflict-<host>.md`, on this machine only (the repo ignores them, so the same conflict
 isn't merged on both). The next session start lists those files, so the session asks to merge
-them. `~/.local/state/claude-memory.log` has the background syncs' output.
+them. `~/.local/state/claude-memory.log` has the background syncs' output; each sync trims it to its
+last 1,000 lines once it's over 256 KB.
 
 ## Constraints
 
