@@ -21,6 +21,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -246,6 +247,10 @@ def point(repo, dry):
     rel = rel_of_folder(encode(repo))
     want = memory_dir_setting(rel)
     f = repo / ".claude/settings.local.json"
+    # A cloned repo could commit .claude (or the file) as a symlink to point the write elsewhere.
+    if (repo / ".claude").is_symlink() or f.is_symlink():
+        say(f"skipped {f}: symlink")
+        return False
     try:
         data = json.loads(f.read_text()) if f.exists() and f.read_text().strip() else {}
     except (OSError, json.JSONDecodeError) as e:
@@ -265,10 +270,14 @@ def point(repo, dry):
         return True
     (CLONE / "projects" / rel).mkdir(parents=True, exist_ok=True)
     f.parent.mkdir(exist_ok=True)
+    if Path(os.path.realpath(f.parent)) != Path(os.path.realpath(repo)) / ".claude":
+        say(f"skipped {f}: .claude resolves outside the checkout")
+        return False
     data["autoMemoryDirectory"] = want
-    tmp = f.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data, indent=2) + "\n")
-    tmp.replace(f)
+    fd, tmp = tempfile.mkstemp(dir=f.parent, prefix=".settings.local.", suffix=".tmp")
+    with os.fdopen(fd, "w") as fh:
+        fh.write(json.dumps(data, indent=2) + "\n")
+    os.replace(tmp, f)
     if not ignored(repo, f):
         r = subprocess.run(["git", "-C", str(repo), "rev-parse", "--git-path", "info/exclude"],
                            capture_output=True, text=True)

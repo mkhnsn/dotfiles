@@ -82,6 +82,13 @@ class TwoMachines(unittest.TestCase):
                             ".claude/settings.local.json"], env=self.a.env)
         self.assertEqual(r.returncode, 0, "settings.local.json is ignored")
 
+    def test_symlinked_claude_folder_is_not_written_through(self):
+        outside = self.a.home / "outside"
+        outside.mkdir()
+        (self.a.repo / ".claude").symlink_to(outside)
+        self.a.run("init")
+        self.assertFalse((outside / "settings.local.json").exists())
+
     def test_keeps_other_settings(self):
         (self.a.repo / ".claude").mkdir()
         (self.a.repo / ".claude/settings.local.json").write_text('{"model": "x"}')
