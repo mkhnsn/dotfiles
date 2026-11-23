@@ -49,6 +49,7 @@ class Hints(unittest.TestCase):
                                f'printf "MENU | %s | %s\\n" "$i" "$j" >> {self.notes} ;; esac')
         self.front("com.apple.Terminal", "Terminal")
         self.stub("sleep", "exit 0")
+        self.stub("pgrep", "echo 100")  # BTT's pid
         self.setup = "laptop"
 
     def tearDown(self):
@@ -232,13 +233,26 @@ class Hints(unittest.TestCase):
         self.assertEqual([l for l in self.shown() if l.startswith("Hint")][-1],
                          "Hint | Hyper+M mutes the mic (or the Stream Deck) · Hyper+H for all")
 
-    def test_app_switch_notices_a_new_setup_and_setup_hints_can_be_muted(self):
-        self.run_hints("app")  # notes laptop, shows the general hint
-        self.run_hints("mute", "setup")
+    def test_app_switch_refreshes_rows_but_leaves_the_setup_hint_to_hints_setup(self):
+        self.run_hints("setup")  # notes laptop
         self.setup = "docked-closed"
         self.run_hints("app")
+        self.assertEqual(self.state_json()["setup"], "laptop")  # only hints setup moves it
+        self.assertEqual(self.state_json()["rows"]["setup"], "docked-closed")
+        self.assertFalse([l for l in self.shown() if l.startswith("Hint: Docked")])
+        self.run_hints("mute", "setup")
+        self.run_hints("setup")
         self.assertEqual(self.state_json()["setup"], "docked-closed")
         self.assertFalse([l for l in self.shown() if l.startswith("Hint: Docked")])
+
+    def test_rows_are_pushed_again_after_btt_restarts(self):
+        self.run_hints("setup")
+        n = len(self.menu_updates())
+        self.run_hints("setup")  # same setup, same BTT: nothing to do
+        self.assertEqual(len(self.menu_updates()), n)
+        self.stub("pgrep", "echo 200")  # BTT relaunched: it reloaded the preset's rows
+        self.run_hints("app")
+        self.assertEqual(len(self.menu_updates()), 2 * n)
 
     def test_unknown_command_prints_the_commands(self):
         r = self.run_hints("bogus")
@@ -256,6 +270,52 @@ class Hints(unittest.TestCase):
             f.write("{not json")
         self.assertEqual(self.run_hints("app").returncode, 0)
         self.assertTrue(self.state_json()["enabled"])
+
+
+class DetectSetup(unittest.TestCase):
+    """detect_setup against a fake CoreGraphics: (built-in?, asleep?) per online display."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.machinery, importlib.util
+        loader = importlib.machinery.SourceFileLoader("hints_mod", HINTS)
+        cls.h = importlib.util.module_from_spec(importlib.util.spec_from_loader("hints_mod", loader))
+        loader.exec_module(cls.h)
+
+    def detect(self, displays, rc=0):
+        class Fn:
+            def __init__(self, f):
+                self.f, self.restype = f, None
+
+            def __call__(self, *a):
+                return self.f(*a)
+
+        def online(maximum, ids, n):
+            for i in range(len(displays)):
+                ids[i] = i + 1
+            n._obj.value = len(displays)
+            return rc
+
+        cg = type("CG", (), {})()
+        cg.CGGetOnlineDisplayList = Fn(online)
+        cg.CGDisplayIsBuiltin = Fn(lambda d: displays[d - 1][0])
+        cg.CGDisplayIsAsleep = Fn(lambda d: displays[d - 1][1])
+        os.environ.pop("HINTS_SETUP", None)
+        return self.h.detect_setup(cg)
+
+    def test_setups(self):
+        self.assertEqual(self.detect([(True, False)]), "laptop")
+        self.assertEqual(self.detect([(False, False)]), "docked-closed")
+        self.assertEqual(self.detect([(True, False), (False, False)]), "docked-open")
+
+    def test_a_sleeping_external_is_still_docked(self):
+        self.assertEqual(self.detect([(False, True)]), "docked-closed")
+        self.assertEqual(self.detect([(True, False), (False, True)]), "docked-open")
+
+    def test_no_displays_or_an_error_is_unknown(self):
+        self.assertIsNone(self.detect([]))
+        self.assertIsNone(self.detect([(False, False)], rc=1001))
+        self.assertIsNone(self.detect([(True, True)]))  # built-in asleep, nothing else: can't tell
 
 
 if __name__ == "__main__":

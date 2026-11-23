@@ -44,8 +44,11 @@ def trigger_check():
 def main():
     tc = trigger_check()
     src = os.environ.get("CHEZMOI_SOURCE_DIR") or os.path.expanduser("~/.local/share/chezmoi")
-    with open(os.path.join(src, "macos/btt/triggers.toml"), "rb") as f:
-        triggers = tomllib.load(f).get("trigger", [])
+    try:
+        with open(os.path.join(src, "macos/btt/triggers.toml"), "rb") as f:
+            triggers = tomllib.load(f).get("trigger", [])
+    except OSError:
+        sys.exit(f"triggers: no macos/btt/triggers.toml in {src} (set CHEZMOI_SOURCE_DIR to the dotfiles)")
     words = " ".join(sys.argv[1:]).lower().split()
     found = 0
     for t in triggers:
