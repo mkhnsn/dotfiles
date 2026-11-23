@@ -24,7 +24,7 @@ jobs:
 
       - name: shellcheck
         run: |
-          shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults dot_local/bin/executable_3dx-sync dot_local/bin/executable_trigger dot_local/bin/executable_keep-awake dot_local/bin/executable_mode
+          shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults dot_local/bin/executable_3dx-sync dot_local/bin/executable_trigger dot_local/bin/executable_keep-awake
           shellcheck -S warning -s bash tests/*.sh install.sh
 
       - name: mac-setup tests (bash 3.2, as on macOS)
@@ -65,6 +65,9 @@ jobs:
 
       - name: hints tests
         run: python3 -I tests/hints_test.py
+
+      - name: mode tests (work modes)
+        run: python3 -I tests/mode_test.py
 
       - name: Brewfile entries exist in Homebrew (formula vs cask)
         run: python3 -I tests/brewfile_check.py

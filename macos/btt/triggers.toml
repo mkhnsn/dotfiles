@@ -26,7 +26,7 @@
 # trigger-check also generates the cheat sheet (a BTT floating menu named "Hints" with a row per
 # trigger) and the hints' BTT pieces from this file.
 #
-# Hyper keys reserved elsewhere: 1–5 work modes (#98), B and / Bartender, Space the ops menu,
+# Hyper keys reserved elsewhere: B and / Bartender, Space the ops menu,
 # . and , (macOS sysdiagnose).
 
 [[trigger]]
@@ -74,9 +74,45 @@ hint = "Hyper+K keeps the Mac and its display awake until you press it again"
 run = "keep-awake toggle"
 keys = ["⌃⌥⇧⌘K"]
 
+# Work modes (macos/modes.toml): each goes to its desktop and lays out its apps.
+[[trigger]]
+name = "mode-dev"
+action = "Mode: Dev (VS Code and Chrome)"
+hint = "Hyper+1 switches to Dev: VS Code and Chrome on a desktop of their own"
+run = "mode dev"
+keys = ["⌃⌥⇧⌘1"]
+
+[[trigger]]
+name = "mode-cad"
+action = "Mode: CAD (Fusion and Chrome)"
+hint = "Hyper+2 switches to CAD: Fusion and Chrome on a desktop of their own"
+run = "mode cad"
+keys = ["⌃⌥⇧⌘2"]
+
+[[trigger]]
+name = "mode-printing"
+action = "Mode: 3D printing (PrusaSlicer and Chrome)"
+hint = "Hyper+3 switches to 3D printing: PrusaSlicer and Chrome on a desktop of their own"
+run = "mode printing"
+keys = ["⌃⌥⇧⌘3"]
+
+[[trigger]]
+name = "mode-comms"
+action = "Mode: Comms (Outlook and Slack)"
+hint = "Hyper+4 switches to Comms: Outlook and Slack on a desktop of their own"
+run = "mode comms"
+keys = ["⌃⌥⇧⌘4"]
+
+[[trigger]]
+name = "mode-laser"
+action = "Mode: Laser (xTool Studio and Chrome)"
+hint = "Hyper+5 switches to Laser: xTool Studio and Chrome on a desktop of their own"
+run = "mode laser"
+keys = ["⌃⌥⇧⌘5"]
+
 [[trigger]]
 name = "mode-next"
-action = "Mode: next work mode (placeholder until #98)"
+action = "Mode: next work mode"
 hint = "Hyper+0 steps to the next work mode"
 run = "mode next"
 keys = ["⌃⌥⇧⌘0"]

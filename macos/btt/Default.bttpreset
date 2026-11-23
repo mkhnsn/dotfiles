@@ -94,6 +94,7 @@
     "BTTNotchBarStandardWidgetModeHideRightScrollable" : false,
     "BTTNotchBarStandardWidgetModeShowOriginalStatusIcons" : false,
     "BTTPathSampleSize" : 100,
+    "BTTSavedMousePosition" : "{4412.9921875, 424.55078125}",
     "BTTScreenshotOpenImgurInBrowser" : false,
     "BTTShowBTTWhenControlStripHidden" : true,
     "BTTShowControlStrip" : true,
@@ -611,13 +612,13 @@
               "BTTUUID" : "2B2112EA-B2D7-5D07-85F6-F7771AAB356D"
             }
           ],
-          "BTTGestureNotes" : "Mode: next work mode (placeholder until #98)",
+          "BTTGestureNotes" : "Mode: next work mode",
           "BTTNamedTriggerAIDescription" : "Hyper+0 steps to the next work mode",
           "BTTOrder" : 17,
           "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
           "BTTTriggerName" : "mode-next",
           "BTTTriggerType" : 643,
-          "BTTTriggerTypeDescription" : "Mode: next work mode (placeholder until #98)",
+          "BTTTriggerTypeDescription" : "Mode: next work mode",
           "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-next",
           "BTTUUID" : "7411AB04-5E58-51D0-82FC-DAADFF2B8E83"
         },
@@ -644,7 +645,7 @@
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Mode: next work mode (placeholder until #98)",
+          "BTTGestureNotes" : "Mode: next work mode",
           "BTTOrder" : 18,
           "BTTShortcutKeyCode" : 29,
           "BTTShortcutKeyboardType" : 0,
@@ -764,7 +765,7 @@
               "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
               "BTTPredefinedActionType" : 206,
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup; \"$HOME/.local/bin/mode\" apply) >/dev/null 2>&1 &",
               "BTTTriggerParentUUID" : "3C6E5D99-6C6E-5452-81E6-E3E2DDBBD956",
               "BTTUUID" : "817A87BB-986D-586B-8DB7-5AB9C999BDB8"
             }
@@ -785,7 +786,7 @@
               "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
               "BTTPredefinedActionType" : 206,
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup; \"$HOME/.local/bin/mode\" apply) >/dev/null 2>&1 &",
               "BTTTriggerParentUUID" : "D8D262EE-C928-5511-A869-DBAEEA9076EF",
               "BTTUUID" : "D15E2F7A-989D-5DD4-8D25-80824A3F0640"
             }
@@ -806,7 +807,7 @@
               "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
               "BTTPredefinedActionType" : 206,
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup; \"$HOME/.local/bin/mode\" apply) >/dev/null 2>&1 &",
               "BTTTriggerParentUUID" : "B190DA9E-B9A6-55C3-AA90-8CC6A2DA659D",
               "BTTUUID" : "6F1BCC89-DBD5-5C3E-89A2-7F49EF75CF0F"
             }
@@ -827,7 +828,7 @@
               "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
               "BTTPredefinedActionType" : 206,
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
-              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup; \"$HOME/.local/bin/mode\" apply) >/dev/null 2>&1 &",
               "BTTTriggerParentUUID" : "7E90FA63-E96E-523A-A972-BB2D9DB0F99D",
               "BTTUUID" : "ECAAD527-795D-5838-B528-85274FE728ED"
             }
@@ -930,7 +931,7 @@
             "BTTMenuCloseOnOutsideClick" : 1,
             "BTTMenuDisableDrag" : 1,
             "BTTMenuElementIdentifier" : "Hints",
-            "BTTMenuFrameHeight" : 202,
+            "BTTMenuFrameHeight" : 362,
             "BTTMenuFrameWidth" : 460,
             "BTTMenuHorizontalSpacing" : 2,
             "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
@@ -1187,7 +1188,7 @@
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+0</b>&nbsp;&nbsp;Mode: next work mode (placeholder until #98)</span></body></html>",
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+0</b>&nbsp;&nbsp;Mode: next work mode</span></body></html>",
                 "BTTMenuElementIdentifier" : "mode-next",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
@@ -1226,6 +1227,201 @@
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+1</b>&nbsp;&nbsp;Mode: Dev (VS Code and Chrome)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-dev",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-dev menu",
+                  "BTTTriggerParentUUID" : "5590E330-A0AA-5676-A378-B720E944F18D",
+                  "BTTUUID" : "9134D868-09E3-51F1-B530-CFEDA5A4BB37"
+                }
+              ],
+              "BTTMenuName" : "mode-dev",
+              "BTTOrder" : 11,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-dev",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "5590E330-A0AA-5676-A378-B720E944F18D"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+2</b>&nbsp;&nbsp;Mode: CAD (Fusion and Chrome)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-cad",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-cad menu",
+                  "BTTTriggerParentUUID" : "3B1D810D-BACD-57C3-9DB6-48C57EE9AC9F",
+                  "BTTUUID" : "3662FA45-8461-51E5-842E-151592BADFDF"
+                }
+              ],
+              "BTTMenuName" : "mode-cad",
+              "BTTOrder" : 12,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-cad",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "3B1D810D-BACD-57C3-9DB6-48C57EE9AC9F"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+3</b>&nbsp;&nbsp;Mode: 3D printing (PrusaSlicer and Chrome)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-printing",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-printing menu",
+                  "BTTTriggerParentUUID" : "89E4BFB0-E434-5D31-9136-77CE8EA085AC",
+                  "BTTUUID" : "70F536BC-3081-554C-8E03-5255EF80A2F1"
+                }
+              ],
+              "BTTMenuName" : "mode-printing",
+              "BTTOrder" : 13,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-printing",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "89E4BFB0-E434-5D31-9136-77CE8EA085AC"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+4</b>&nbsp;&nbsp;Mode: Comms (Outlook and Slack)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-comms",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-comms menu",
+                  "BTTTriggerParentUUID" : "7AB1CD28-6754-58CC-88EB-8BFD8CC06AD9",
+                  "BTTUUID" : "68AD993D-7F01-5A48-80DE-36130A032028"
+                }
+              ],
+              "BTTMenuName" : "mode-comms",
+              "BTTOrder" : 14,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-comms",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "7AB1CD28-6754-58CC-88EB-8BFD8CC06AD9"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+5</b>&nbsp;&nbsp;Mode: Laser (xTool Studio and Chrome)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-laser",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-laser menu",
+                  "BTTTriggerParentUUID" : "8DAE4E37-D180-5D0E-A38B-EE900F4120E6",
+                  "BTTUUID" : "64B791B7-F880-5AF9-926B-FBEE396E85D6"
+                }
+              ],
+              "BTTMenuName" : "mode-laser",
+              "BTTOrder" : 15,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-laser",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "8DAE4E37-D180-5D0E-A38B-EE900F4120E6"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Next hint</span></body></html>",
                 "BTTMenuElementIdentifier" : "hints-next",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
@@ -1248,18 +1444,18 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
-                  "BTTTriggerParentUUID" : "EA8D7D9E-B683-5472-A450-3F8349A7F817",
+                  "BTTTriggerParentUUID" : "78AE8ABF-80F2-5D41-AD41-41BE4C2CB484",
                   "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
                 }
               ],
               "BTTMenuName" : "hints-next",
-              "BTTOrder" : 9,
+              "BTTOrder" : 16,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerName" : "Menu Item: hints-next",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
               "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "EA8D7D9E-B683-5472-A450-3F8349A7F817"
+              "BTTUUID" : "78AE8ABF-80F2-5D41-AD41-41BE4C2CB484"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1287,18 +1483,18 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
-                  "BTTTriggerParentUUID" : "61E74DB0-54A7-5556-8709-5333A024DE24",
+                  "BTTTriggerParentUUID" : "49B987FA-0DC7-59F0-902A-AB69879122C5",
                   "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
                 }
               ],
               "BTTMenuName" : "hints-mute",
-              "BTTOrder" : 10,
+              "BTTOrder" : 17,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerName" : "Menu Item: hints-mute",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
               "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "61E74DB0-54A7-5556-8709-5333A024DE24"
+              "BTTUUID" : "49B987FA-0DC7-59F0-902A-AB69879122C5"
             }
           ],
           "BTTMenuName" : "Hints",
@@ -1309,6 +1505,286 @@
           "BTTTriggerTypeDescription" : "Hints: cheat sheet (generated from triggers.toml)",
           "BTTTriggerTypeDescriptionReadOnly" : "Floating Menu",
           "BTTUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/mode\" dev",
+              "BTTTriggerParentUUID" : "D4F0FF93-84CC-5342-A9C2-DCCD68DF17C4",
+              "BTTUUID" : "3D64105F-1F45-5216-9F9C-C3AEF01D81DE"
+            }
+          ],
+          "BTTGestureNotes" : "Mode: Dev (VS Code and Chrome)",
+          "BTTNamedTriggerAIDescription" : "Hyper+1 switches to Dev: VS Code and Chrome on a desktop of their own",
+          "BTTOrder" : 32,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mode-dev",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mode: Dev (VS Code and Chrome)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-dev",
+          "BTTUUID" : "D4F0FF93-84CC-5342-A9C2-DCCD68DF17C4"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mode-dev key",
+              "BTTTriggerParentUUID" : "89E85544-337B-50E8-BD24-9029570D8418",
+              "BTTUUID" : "851E9A34-932E-54AB-93DA-55E41FF30804"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mode-dev",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "89E85544-337B-50E8-BD24-9029570D8418",
+              "BTTUUID" : "55748ABA-213F-5DE6-BE55-C65F5B12DC8F"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mode: Dev (VS Code and Chrome)",
+          "BTTOrder" : 33,
+          "BTTShortcutKeyCode" : 18,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "89E85544-337B-50E8-BD24-9029570D8418"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/mode\" cad",
+              "BTTTriggerParentUUID" : "8E0AC42E-EDCA-5F30-8A25-62CEC3280250",
+              "BTTUUID" : "F65D82DF-A6CB-59FB-8C28-8086E6C1DF4E"
+            }
+          ],
+          "BTTGestureNotes" : "Mode: CAD (Fusion and Chrome)",
+          "BTTNamedTriggerAIDescription" : "Hyper+2 switches to CAD: Fusion and Chrome on a desktop of their own",
+          "BTTOrder" : 34,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mode-cad",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mode: CAD (Fusion and Chrome)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-cad",
+          "BTTUUID" : "8E0AC42E-EDCA-5F30-8A25-62CEC3280250"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mode-cad key",
+              "BTTTriggerParentUUID" : "BCF1480C-5988-5900-A110-1B27985518A3",
+              "BTTUUID" : "7A43B26A-FF70-5B04-951F-D012671CBF04"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mode-cad",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "BCF1480C-5988-5900-A110-1B27985518A3",
+              "BTTUUID" : "573EF236-D481-5C8B-BE40-4F8B77733411"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mode: CAD (Fusion and Chrome)",
+          "BTTOrder" : 35,
+          "BTTShortcutKeyCode" : 19,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "BCF1480C-5988-5900-A110-1B27985518A3"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/mode\" printing",
+              "BTTTriggerParentUUID" : "9D6FA030-4284-5235-99C0-E90321C6BBEA",
+              "BTTUUID" : "676EE17B-9C83-52C4-8BF8-390D07774E36"
+            }
+          ],
+          "BTTGestureNotes" : "Mode: 3D printing (PrusaSlicer and Chrome)",
+          "BTTNamedTriggerAIDescription" : "Hyper+3 switches to 3D printing: PrusaSlicer and Chrome on a desktop of their own",
+          "BTTOrder" : 36,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mode-printing",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mode: 3D printing (PrusaSlicer and Chrome)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-printing",
+          "BTTUUID" : "9D6FA030-4284-5235-99C0-E90321C6BBEA"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mode-printing key",
+              "BTTTriggerParentUUID" : "571C424D-8CCE-59C1-83DF-4855F1BB87DB",
+              "BTTUUID" : "671EC21B-A9E7-5DD1-926B-2245D37C5E45"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mode-printing",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "571C424D-8CCE-59C1-83DF-4855F1BB87DB",
+              "BTTUUID" : "2A5738A5-6464-51CC-A272-B46EB2CF8FEE"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mode: 3D printing (PrusaSlicer and Chrome)",
+          "BTTOrder" : 37,
+          "BTTShortcutKeyCode" : 20,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "571C424D-8CCE-59C1-83DF-4855F1BB87DB"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/mode\" comms",
+              "BTTTriggerParentUUID" : "5CF91C14-338D-5820-A464-9FE611A9643E",
+              "BTTUUID" : "13B55C7B-CA1C-53A2-9465-747D2C535191"
+            }
+          ],
+          "BTTGestureNotes" : "Mode: Comms (Outlook and Slack)",
+          "BTTNamedTriggerAIDescription" : "Hyper+4 switches to Comms: Outlook and Slack on a desktop of their own",
+          "BTTOrder" : 38,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mode-comms",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mode: Comms (Outlook and Slack)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-comms",
+          "BTTUUID" : "5CF91C14-338D-5820-A464-9FE611A9643E"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mode-comms key",
+              "BTTTriggerParentUUID" : "BC838E1D-75BA-50FD-BB63-3396B9553D53",
+              "BTTUUID" : "7DE254F9-23BF-5D0D-998F-CF5ECA972810"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mode-comms",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "BC838E1D-75BA-50FD-BB63-3396B9553D53",
+              "BTTUUID" : "D09C9065-FE41-5389-80A1-713443EC94CB"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mode: Comms (Outlook and Slack)",
+          "BTTOrder" : 39,
+          "BTTShortcutKeyCode" : 21,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "BC838E1D-75BA-50FD-BB63-3396B9553D53"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/mode\" laser",
+              "BTTTriggerParentUUID" : "1FD08BDB-CB8D-573B-9D0D-E00A73D7DA5A",
+              "BTTUUID" : "EAF0D526-A4F1-5E62-A692-4562DA422275"
+            }
+          ],
+          "BTTGestureNotes" : "Mode: Laser (xTool Studio and Chrome)",
+          "BTTNamedTriggerAIDescription" : "Hyper+5 switches to Laser: xTool Studio and Chrome on a desktop of their own",
+          "BTTOrder" : 40,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mode-laser",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mode: Laser (xTool Studio and Chrome)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-laser",
+          "BTTUUID" : "1FD08BDB-CB8D-573B-9D0D-E00A73D7DA5A"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mode-laser key",
+              "BTTTriggerParentUUID" : "627546A2-9C02-5E75-93A4-FED8252FB370",
+              "BTTUUID" : "6B3F8A98-79D9-5E17-BF19-0FBA7B5C6886"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mode-laser",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "627546A2-9C02-5E75-93A4-FED8252FB370",
+              "BTTUUID" : "BB87DE75-92EA-5267-81A8-ADAD65413A83"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mode: Laser (xTool Studio and Chrome)",
+          "BTTOrder" : 41,
+          "BTTShortcutKeyCode" : 23,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "627546A2-9C02-5E75-93A4-FED8252FB370"
         }
       ]
     },
@@ -1546,5 +2022,5 @@
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "8044B6C5-6D26-46FF-B708-27934990D561"
+  "BTTPresetUUID" : "4881B4EA-E0B2-4E7C-AE90-916BF64240DA"
 }

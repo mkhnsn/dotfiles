@@ -385,7 +385,8 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 - `dot_duti`: VS Code Insiders as the default app for dev files (JSON, YAML, Markdown,
   shell, Terraform, ...), applied with `duti`. Workstations only: servers (`is_server`)
   skip it.
-- `mac-defaults`: applies Dock, Finder and system settings, the Dock apps in order
+- `mac-defaults`: applies Dock, Finder and system settings (among them hot corners: top right
+  Notification Center, bottom right Desktop; and Spaces kept in their order), the Dock apps in order
   and the Downloads stack (`dockutil`), and the system keyboard shortcuts in `macos/symbolichotkeys.plist`
   (screenshots, Spotlight off for Raycast, input sources, ...). Runs on apply when it
   changes, on workstations only. `--check`, `--diff`, `--dock`; after changing shortcuts in System Settings,
@@ -499,9 +500,41 @@ so Hyper+V can be the camera in each call app.
 
 Now: Hyper+M mic mute (also ⌃⌥⌘M, the Stream Deck's Mic key), Hyper+V camera in Zoom, Teams
 and Chrome for Meet (also ⌃⌥⌘V, the Stream Deck's Camera key; each sends that app's own video
-shortcut), Hyper+K Keep Awake
-(`keep-awake`, caffeinate until pressed again), Hyper+0 next work mode (`mode`, a placeholder
-until #98), Hyper+H the cheat sheet. `trigger-check --list` prints them.
+shortcut), Hyper+K Keep Awake (`keep-awake`, caffeinate until pressed again), Hyper+1–5 the
+work modes and Hyper+0 the next one (below), Hyper+H the cheat sheet. `trigger-check --list`
+prints them.
+
+### Work modes
+
+`macos/modes.toml` lists the modes and their apps; `mode <name>` switches (Hyper+1–5), `mode
+next` steps (Hyper+0), `mode list` shows them.
+
+| Key | Mode | On the ultrawide |
+|---|---|---|
+| Hyper+1 | Dev | VS Code Insiders 2/3, Chrome 1/3 |
+| Hyper+2 | CAD | Fusion 2/3, Chrome 1/3 |
+| Hyper+3 | 3D printing | PrusaSlicer 1/2, Chrome 1/2 |
+| Hyper+4 | Comms | Outlook 1/2, Slack 1/2 |
+| Hyper+5 | Laser | xTool Studio 2/3, Chrome 1/3 |
+
+- **Docked** (an external display): each mode has a desktop of its own. Switching
+  goes there and lays the mode's apps out in its columns. A mode without a desktop (never opened,
+  or its desktop closed since) takes the one you're on, unless another mode has it: add a desktop
+  in Mission Control (⌃↑, the + at the top) and switch there. No set number of desktops; close a
+  mode's desktop any time. Chrome and VS Code get a window on each mode's desktop; one-window apps
+  (Slack, Outlook) are moved to the mode's desktop. An app whose window doesn't arrive (not open
+  yet, or in full screen) is left out, with a notice; nothing else is resized in its place.
+- **Travel** (the laptop screen, maybe a portable display): each of the mode's apps goes full
+  screen, a space of its own.
+- After a display change BTT runs `mode apply`, which lays the current mode out again if its
+  desktop is in front, and skips the KVM's 1080p placeholder (#148).
+- A mode can turn on a Home Assistant scene (`scene`, with the token `ha-mcp` keeps).
+- Scripts can't add a desktop on current macOS (BTT's Add New Space does nothing, and Mission
+  Control's + only shows on hover), so that one step is by hand. `mode` reads the live desktop
+  list from SkyLight, the window-server framework yabai and Hammerspoon use; `com.apple.spaces`
+  on disk lags. It relies on macOS switching to an app's desktop when you activate it (the
+  default: Mission Control › When switching to an application, switch to a Space with open
+  windows).
 
 ### Hints
 
