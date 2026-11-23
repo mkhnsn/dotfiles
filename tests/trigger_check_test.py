@@ -146,7 +146,7 @@ class Fixture(unittest.TestCase):
         self.assertEqual(ts[0]["BTTUUID"], "OTHER")  # untouched, first
         self.assertEqual([t["BTTOrder"] for t in ts], list(range(len(ts))))  # new ones after the last
         named = {t["BTTTriggerName"]: t for t in ts if t.get("BTTTriggerType") == 643}
-        self.assertEqual(set(named), {"keep-awake", "mic-mute"})
+        self.assertEqual(set(named), {"keep-awake", "mic-mute", "hints-close"})
         self.assertEqual(named["keep-awake"]["BTTActionsToExecute"][0]["BTTShellTaskActionScript"],
                          'exec "$HOME/.local/bin/keep-awake" toggle')
         mic = named["mic-mute"]["BTTActionsToExecute"][0]
@@ -238,7 +238,7 @@ class Fixture(unittest.TestCase):
         self.run_check("--write")
         ts = self.read_preset()["BTTPresetContent"][0]["BTTTriggers"]
         self.assertEqual(sorted(t.get("BTTTriggerName") or t["BTTUUID"] for t in ts if t.get("BTTTriggerType") == 643
-                                or t["BTTUUID"] == "OTHER"), ["OTHER", "keep-awake"])
+                                or t["BTTUUID"] == "OTHER"), ["OTHER", "hints-close", "keep-awake"])
         self.assertFalse(any(t.get("BTTShortcutKeyCode") == 46 for t in ts))
 
     def test_invalid_file_isnt_written(self):
@@ -246,6 +246,69 @@ class Fixture(unittest.TestCase):
         before = self.preset_text()
         self.assertEqual(self.run_check("--write").returncode, 1)
         self.assertEqual(self.preset_text(), before)
+
+    # ---- hints pieces (#144) ----
+    def hints_parts(self):
+        ts = self.read_preset()["BTTPresetContent"][0]["BTTTriggers"]
+        menu = next(t for t in ts if t.get("BTTTriggerType") == 767)
+        close = next(t for t in ts if t.get("BTTTriggerName") == "hints-close")
+        app = next(t for t in ts if t.get("BTTTriggerType") == 779)
+        return ts, menu, close, app
+
+    def test_generates_the_cheat_sheet_and_hint_triggers(self):
+        self.toml(GOOD + '\n[[trigger]]\nname = "cheat-sheet"\naction = "Cheat sheet"\nhint = "Hyper+H"\n'
+                         'btt = { action = 388, data = { BTTMenuActionMenuID = "Hints" } }\nkeys = ["⌃⌥⇧⌘H"]\n'
+                         '\n[[trigger]]\nname = "zoom-cam"\naction = "Camera <video>"\nhint = "x"\n'
+                         'run = "keep-awake on"\nkeys = ["⌃⌥⇧⌘V"]\napps = ["us.zoom.xos"]\n')
+        r = self.run_check("--write")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        ts, menu, close, app = self.hints_parts()
+        self.assertEqual(menu["BTTMenuName"], "Hints")
+        names = [i["BTTMenuName"] for i in menu["BTTMenuItems"]]
+        # a row per trigger except the cheat sheet's own, then the hint controls
+        self.assertEqual(names, ["Header", "keep-awake", "mic-mute", "zoom-cam", "hints-next", "hints-mute"])
+        rows = {i["BTTMenuName"]: i for i in menu["BTTMenuItems"]}
+        self.assertEqual(rows["keep-awake"]["BTTMenuItemActions"][0]["BTTShellTaskActionScript"],
+                         '"$HOME/.local/bin/trigger" keep-awake menu')
+        text = rows["zoom-cam"]["BTTMenuConfig"]["BTTMenuAttributedText"]
+        self.assertIn("<b>Hyper+V</b>", text)
+        self.assertIn("Hyper+H · what you can do", rows["Header"]["BTTMenuConfig"]["BTTMenuAttributedText"])
+        self.assertIn("Camera &lt;video&gt; (us.zoom.xos)", text)  # escaped
+        self.assertIn("Stream Deck", rows["mic-mute"]["BTTMenuConfig"]["BTTMenuAttributedText"])
+        self.assertNotIn("BTTMenuItemActions", rows["Header"])
+        h = menu["BTTMenuConfig"]["BTTMenuFrameHeight"]
+        self.assertEqual(h, 2 * tc.PAD + 6 * tc.ROW_H + 5 * tc.GAP)
+        a = close["BTTActionsToExecute"][0]
+        self.assertEqual((a["BTTPredefinedActionType"], a["BTTAdditionalActionData"]["BTTCloseNotificationsTitleRegex"]),
+                         (289, "^Hint"))
+        self.assertIn('"$HOME/.local/bin/hints" app', app["BTTActionsToExecute"][0]["BTTShellTaskActionScript"])
+        self.assertEqual(self.run_check().returncode, 0)  # current, and hints-close isn't reported as dropped
+        self.assertNotIn("not in triggers.toml", self.run_check().stdout)
+
+    def test_btt_defaults_in_the_menu_survive_regenerating(self):
+        self.run_check("--write")
+        d = self.read_preset()
+        menu = next(t for t in d["BTTPresetContent"][0]["BTTTriggers"] if t.get("BTTTriggerType") == 767)
+        menu["BTTMenuConfig"]["BTTMenuElementIdentifier"] = "Hints"  # BTT fills these in on export
+        menu["BTTMenuItems"][1]["BTTMenuConfig"]["BTTMenuTextMinimumScaleFactor"] = 0.3
+        self.preset(d)
+        self.assertEqual(self.run_check().returncode, 0)
+
+    def test_hints_names_are_reserved(self):
+        p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "hints-next"'))
+        self.assertTrue(any("hints-next is one of the hints' own pieces" in x for x in p), p)
+
+    def test_removed_trigger_leaves_the_cheat_sheet(self):
+        self.run_check("--write")
+        self.toml(GOOD.split("[[trigger]]\nname = \"mic-mute\"")[0])
+        self.run_check("--write")
+        _, menu, _, _ = self.hints_parts()
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]],
+                         ["Header", "keep-awake", "hints-next", "hints-mute"])
+
+    def test_apps_must_be_bundle_ids(self):
+        p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = "us.zoom.xos"'))
+        self.assertTrue(any("apps must be a list of bundle IDs" in x for x in p), p)
 
     # ---- shortcut-check reads the trigger keys ----
     def test_trigger_keys_join_the_shortcut_registry(self):

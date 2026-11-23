@@ -496,7 +496,28 @@ run the same thing.
 
 Now: Hyper+M mic mute (also ⌃⌥⌘M, the Stream Deck's Mic key), Hyper+K Keep Awake
 (`keep-awake`, caffeinate until pressed again), Hyper+0 next work mode (`mode`, a placeholder
-until #98). `trigger-check --list` prints them.
+until #98), Hyper+H the cheat sheet. `trigger-check --list` prints them.
+
+### Hints
+
+The controls teach themselves from the same file: each trigger's `hint` is one line naming its
+Hyper key.
+
+- **Cheat sheet**: Hyper+H opens a panel with a row per trigger (its key, what it does, the other
+  surfaces that fire it); clicking a row runs it (logged as `menu`). The last rows are Next hint
+  and Mute these hints. `trigger-check` generates it, a BTT floating menu named "Hints".
+- **Hint of the day**: the first time each day you switch to any app, a notification titled
+  "Hint" shows one general hint (a trigger without `apps`). The first switch to an app that a
+  trigger lists in `apps` brings one hint for that app. Unseen hints come first, then the least
+  shown; a trigger fired 3 times, from anywhere including the cheat sheet
+  (`~/.local/state/triggers.log`), isn't hinted again (until the log is trimmed). BTT closes
+  each hint after 4 seconds, while its banner is still up, so none pile up in Notification Center.
+  Focus and Do Not Disturb silence them like any notification.
+- `hints next` shows one now; `hints mute` stops the kind of hint shown last today (an app's, or
+  `general`), or else the app in front's, `hints unmute <bundle-id|general>` brings it back; `hints off` / `hints on` for all of
+  them (the cheat sheet stays); `hints status`. State: `~/.local/state/hints.json`.
+- BTT runs `hints app` when the app in front changes; it needs Python 3.11 (Homebrew's: BTT's PATH
+  finds macOS's 3.9, so `hints` switches to `/opt/homebrew/bin/python3`).
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
 Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).

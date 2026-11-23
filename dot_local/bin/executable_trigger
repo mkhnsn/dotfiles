@@ -3,7 +3,7 @@
 #   trigger <name> [source]             log, then fire it through BTT without waiting for it
 #                                       (Stream Deck, scripts)
 #   trigger --log-only <name> <source>  log only: BTT's own key bindings log, then fire it natively
-# source: key, streamdeck, knob, mouse, touch, ipad or script (the default).
+# source: key, streamdeck, knob, mouse, touch, ipad, menu (the cheat sheet) or script (the default).
 # The log, ~/.local/state/triggers.log, is "<ISO time> <name> <source>" per line, trimmed to its
 # last 1000 lines once it's over 256 KB.
 set -euo pipefail

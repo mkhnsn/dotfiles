@@ -9,15 +9,19 @@
 # name     the BTT named trigger; `trigger <name> <source>` fires it from a script or the
 #          Stream Deck and logs it to ~/.local/state/triggers.log
 # action   what it does, one line
-# hint     one line for the hints and the Hyper cheat sheet (#144)
+# hint     one line, shown as a hint notification (`hints`); name its Hyper key
 # run      a command in ~/.local/bin, or
 # btt      a BTT action instead: { action = <BTTPredefinedActionType>, data = { ... } }
 # keys     the keys that fire it. Every trigger has a Hyper key (⌃⌥⇧⌘ + key, Caps Lock held):
 #          the keyboard is the one surface in every setup. Extra keys are for senders that type
 #          a shortcut (the Stream Deck's existing keys).
 # fires    other surfaces bound to it: streamdeck, knob, mouse, touch, ipad
-# apps     bundle IDs it belongs to (optional; empty means every app)
+# apps     bundle IDs it belongs to (optional; empty means every app). Its hint then shows the
+#          first time each day you switch to one of them; without apps, it's a general hint.
 # modes    work modes it belongs to (optional; #98)
+#
+# trigger-check also generates the cheat sheet (a BTT floating menu named "Hints" with a row per
+# trigger) and the hints' BTT pieces from this file.
 #
 # Hyper keys reserved elsewhere: 1–5 work modes (#98), B and / Bartender, Space the ops menu,
 # . and , (macOS sysdiagnose).
@@ -43,3 +47,10 @@ action = "Mode: next work mode (placeholder until #98)"
 hint = "Hyper+0 steps to the next work mode"
 run = "mode next"
 keys = ["⌃⌥⇧⌘0"]
+
+[[trigger]]
+name = "cheat-sheet"
+action = "Cheat sheet: every trigger, its keys, the next hint"
+hint = "Hyper+H shows every trigger and its keys; click one to run it"
+btt = { action = 388, data = { BTTMenuActionMenuID = "Hints" } }
+keys = ["⌃⌥⇧⌘H"]
