@@ -207,7 +207,7 @@ check_claude_memory() { workstation || return 0; [ -d "${CLAUDE_MEMORY_DIR:-$HOM
 check_ha_mcp()     { workstation || return 0; grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null &&
                        security find-generic-password -s ha-mcp -a echo-homeassistant >/dev/null 2>&1; }
 # Cloudflare's API MCP server reads a read-only token from the Keychain (cf-mcp-headers); the
-# server itself is registered per repo in that repo's .mcp.json (docs/cloudflare-mcp.md).
+# next chezmoi apply registers the server at user scope (docs/cloudflare-mcp.md).
 check_cf_mcp()     { workstation || return 0; security find-generic-password -s cf-mcp -a cloudflare-readonly >/dev/null 2>&1; }
 check_op_browser() { workstation || return 0; confirmed "op_browser:$1"; }
 # After a dotfiles update changes .chezmoi.toml.tmpl, chezmoi warns until `chezmoi init` runs.
@@ -369,7 +369,7 @@ help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Passwor
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
 help_claude_memory() { echo "Clone the private claude-memory repo (over HTTPS with your gh login), move this Mac's Claude Code memories into it and point each checkout under ~/src at it, so memories stay in sync with echo-turbine."; }
 help_claude_ha()   { echo "Write the Home Assistant webhook URL that Claude Code's session hooks post to (desk panel, phone alerts), from 1Password: Infrastructure > HA webhook - Claude sessions."; }
-help_cf_mcp()      { echo "Copy the read-only Cloudflare API token from 1Password (Automation › Cloudflare MCP read-only Token) to the Keychain, for the Cloudflare MCP server in repos that use it."; }
+help_cf_mcp()      { echo "Copy the read-only Cloudflare API token from 1Password (Automation › Cloudflare MCP read-only Token) to the Keychain for the Cloudflare MCP server; the next chezmoi apply registers the server in Claude Code."; }
 help_ha_mcp()      { command -v claude >/dev/null 2>&1 || { echo "The Claude Code CLI isn't installed (cask claude-code in the Brewfile). Run the Brewfile step first, or: brew install --cask claude-code"; return; }
                      echo "Register the homeassistant MCP server in Claude Code (user scope) and copy its Home Assistant token from 1Password to the Keychain. The server (~/.local/bin/ha-mcp) is read-only."; }
 help_op_browser()  { case "$1" in
