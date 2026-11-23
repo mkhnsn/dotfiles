@@ -120,10 +120,13 @@ def trim_log():
     """Keep the log small. Rewritten in place, not replaced: launchd and cron hold it open
     (appending) while a sync runs, and a replaced file would lose that run's output."""
     try:
-        if LOG.stat().st_size <= LOG_MAX:
+        size = LOG.stat().st_size
+        if size <= LOG_MAX:
             return
         with open(LOG, "r+b") as fh:
-            tail = fh.read().splitlines(keepends=True)[-LOG_KEEP:]
+            # Only the last LOG_MAX bytes, minus the partial line they start in.
+            fh.seek(size - LOG_MAX)
+            tail = fh.read(LOG_MAX).splitlines(keepends=True)[1:][-LOG_KEEP:]
             fh.seek(0)
             fh.writelines(tail)
             fh.truncate()

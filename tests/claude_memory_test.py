@@ -219,6 +219,10 @@ class TwoMachines(unittest.TestCase):
         lines = log.read_text().splitlines()
         self.assertEqual(len(lines), 1000)
         self.assertEqual(lines[-1], "line 39999")
+        log.write_text("x" * 600 + "\n" + "".join(("y" * 499) + "\n" for _ in range(1000)))
+        self.a.run("sync")
+        self.assertLessEqual(log.stat().st_size, 256 * 1024, "long lines still end under the cap")
+        self.assertTrue(log.read_text().endswith("y" * 499 + "\n"))
         small = "a few lines\n"
         log.write_text(small)
         self.a.run("sync")
