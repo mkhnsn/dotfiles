@@ -465,8 +465,9 @@ Caps Lock is the Hyper key (⌃⌥⇧⌘) on every keyboard, set in the preset; 
 0.65 s and releasing toggles Caps Lock. Hyper+key shortcuts belong to BTT (see
 `macos/shortcuts.toml`), except Hyper+B and Hyper+/, which are Bartender's and set by hand
 (mac-setup's `bartender_keys` step). BTT only sees Caps Lock while System Settings › Keyboard ›
-Modifier Keys leaves it as Caps Lock; mac-setup's `capslock` step names any connected keyboard
-that remaps it.
+Modifier Keys leaves it as Caps Lock; mac-setup's `capslock` step names any keyboard set
+otherwise there. It reads that setting, not `hidutil`'s live key mapping: BTT's Hyper key sets
+Caps Lock to No Action on every keyboard itself, so `hidutil` shows the same remap either way.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
 Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).

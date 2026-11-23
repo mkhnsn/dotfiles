@@ -320,30 +320,36 @@ print(len(want - have) + sum(flag(k) != v for k, v in mods.items()))' "$(chezmoi
 check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null && [ "$(btt_missing)" = 0 ]; }
 check_btt_mcp()    { workstation || return 0; nc -z -G 2 127.0.0.1 64832 >/dev/null 2>&1; }
 # BTT's Hyper key needs Caps Lock to reach it: a keyboard whose Caps Lock is remapped in System
-# Settings (Modifier Keys, e.g. to No Action) sends BTT nothing. Prints the connected keyboards
-# that remap it, one per line; virtual keyboards (the SpaceMouse's) don't count. Fails closed: if
-# it can't tell, it prints a placeholder instead of nothing.
-capslock_remapped(){ local map
-                     map="$(hidutil property --get UserKeyMapping 2>/dev/null)" || { echo "a keyboard (couldn't read hidutil)"; return; }
-                     case "$map" in *30064771129*) ;; *) return 0 ;; esac
-                     printf '%s\n' "$map" | "${MAC_SETUP_PYTHON:-/usr/bin/python3}" -c '
-import re, subprocess, sys
-ids, cur = set(), None
-for line in sys.stdin:
-    m = re.match(r"\s*(?:0x)?([0-9a-fA-F]{6,})\s+UserKeyMapping", line)
-    if m: cur = m.group(1).lower(); continue
-    if cur and re.search(r"HIDKeyboardModifierMappingSrc = 30064771129\b", line): ids.add(cur)
-if not ids: sys.exit()
+# Settings (Modifier Keys, e.g. to No Action) sends BTT nothing. System Settings stores that as
+# com.apple.keyboard.modifiermapping.<vendor>-<product>-0 in the current host's global domain.
+# hidutil's live mapping can't tell: BTT's Hyper key sets the same Caps Lock → No Action on every
+# keyboard itself. Prints the keyboards that remap it, one per line, named from hidutil when
+# connected. Fails closed: if it can't tell, it prints a placeholder instead of nothing.
+capslock_remapped(){ local prefs
+                     prefs="$(defaults -currentHost export -g - 2>/dev/null)" || { echo "a keyboard (couldn't read its settings)"; return; }
+                     case "$prefs" in *com.apple.keyboard.modifiermapping.*) ;; *) return 0 ;; esac
+                     printf '%s\n' "$prefs" | "${MAC_SETUP_PYTHON:-/usr/bin/python3}" -c '
+import plistlib, re, subprocess, sys
+CAPS = 30064771129
+remapped = set()
+for k, v in plistlib.loads(sys.stdin.buffer.read()).items():
+    m = re.fullmatch(r"com\.apple\.keyboard\.modifiermapping\.(\d+)-(\d+)-\d+", k)
+    if m and any(e.get("HIDKeyboardModifierMappingSrc") == CAPS and e.get("HIDKeyboardModifierMappingDst") != CAPS
+                 for e in v if isinstance(e, dict)):
+        remapped.add((int(m.group(1)), int(m.group(2))))
+if not remapped: sys.exit()
 rows = subprocess.run(["hidutil", "list"], capture_output=True, text=True).stdout.splitlines()
 head = next((r for r in rows if "RegistryID" in r and "Product" in r), "")
 a, b = head.find(" Product ") + 1, head.find(" UserClass ") + 1  # not ProductID
-names = set()
+known = {}
 for r in rows:
     f = r.split()
-    if len(f) > 5 and f[5].lower().removeprefix("0x") in ids:
-        n = (r[a:b] if a > 0 and b > a else "").strip().removesuffix("(null)").strip() or "a keyboard"
-        if "virtual" not in n.lower(): names.add(n)
-print("\n".join(sorted(names)))' 2>/dev/null || echo "a keyboard (couldn't check)"; }
+    try: ids, usage = (int(f[0], 16), int(f[1], 16)), (int(f[3]), int(f[4]))
+    except (IndexError, ValueError): continue
+    if usage != (1, 6): continue  # keyboards only: the built-in one shares 0-0 with other services
+    n = (r[a:b] if a > 0 and b > a else "").strip().removesuffix("(null)").strip()
+    if n and ids in remapped: known.setdefault(ids, n)
+print("\n".join(sorted(known.get(i, f"a keyboard that isn'"'"'t connected (vendor {i[0]}, product {i[1]})") for i in remapped)))' 2>/dev/null || echo "a keyboard (couldn't check)"; }
 check_capslock()   { workstation || return 0; [ -z "$(capslock_remapped)" ]; }
 check_raycast_sync(){ workstation || return 0; confirmed raycast_sync; }
 check_raycast_local(){ workstation || return 0; confirmed raycast_local; }
@@ -473,7 +479,7 @@ help_btt()        { if btt_user_copy; then echo "BetterTouchTool is in ~/Applica
 help_btt_snapping(){ echo "Turn on BTT's window snapping (drag windows to edges and corners; window management is BTT's): BetterTouchTool > Settings > Window Snapping & Moving > Enable window snapping. The snap areas come from the preset."; }
 help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "$(btt_missing) of the preset's global shortcuts and move/resize modifier keys don't match BTT's (the ⌃⌥ window keys, Caps Lock as Hyper, ⌃⌥⌘ move, ⌃⇧⌘ resize). Import the preset from the dotfiles; it asks for Accessibility once. If BTT > Presets then lists an older Default too, delete that one.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
-help_capslock()   { local k; k="$(capslock_remapped | paste -sd, - | sed 's/,/, /g')"
+help_capslock()   { local k; k="$(capslock_remapped | awk 'NR > 1 { printf ", " } { printf "%s", $0 }')"
                     echo "Caps Lock is remapped on: ${k:-a keyboard}. BTT's Hyper key (Caps Lock held = ⌃⌥⇧⌘) can't see it there. System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys: pick each of those keyboards and set Caps Lock to Caps Lock."; }
 help_btt_mcp()    { echo "Turn on BetterTouchTool's MCP server (port 64832) in BTT's settings; search them for MCP. Claude Code uses it to read and change BTT's triggers."; }
 help_raycast_sync(){ echo "Turn on Raycast Cloud Sync: Raycast > Settings > Cloud Sync, all categories. It brings quicklinks, snippets, extensions and hotkeys; turn on the synced extensions here (Link Cleaner among them). Then check the hotkeys in shortcut-check --list (Raycast: ⌘Space, ⌃⌘Space, ⇧⌘V): a new Mac can reset some when it first joins. No Cloud Sync data yet: run Import Settings & Data with the latest .rayconfig from OneDrive > Apps > Mac app exports > Raycast (passphrase in 1Password)."; }

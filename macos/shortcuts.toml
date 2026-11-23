@@ -164,7 +164,7 @@ action = "Window: resize (hold and move the pointer)"
 # alone (0.65 s) and release to toggle Caps Lock. Split: Hyper+1–5 work modes (#98), Hyper+letters
 # BTT named triggers and menus (#143; Space: ops menu), Hyper+B and Hyper+/ Bartender (below).
 # Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it
-# (mac-setup's capslock step checks every connected keyboard).
+# (mac-setup's capslock step checks that setting for every keyboard).
 [[shortcut]]
 keys = "⇪"
 owner = "btt"
