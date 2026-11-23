@@ -76,6 +76,8 @@ def validate(cfg):
         if m.get("key") in keys:
             problems.append(f"mode {n}: key {m.get('key')} used twice")
         keys.add(m.get("key"))
+        if "scene" in m and not (isinstance(m["scene"], str) and m["scene"].startswith("scene.")):
+            problems.append(f"mode {n}: scene must be a Home Assistant scene, like \"scene.meeting_lights\"")
         layout = m.get("layout")
         if not isinstance(layout, list) or not layout:
             problems.append(f"mode {n}: needs a layout")
@@ -178,6 +180,9 @@ def managed_spaces():
         spaces = sl.SLSCopyManagedDisplaySpaces(sl.SLSMainConnectionID())
         if spaces:
             data = cf.CFPropertyListCreateData(None, spaces, 200, 0, None)  # binary plist
+            if not data:  # something in it isn't a plist type
+                cf.CFRelease(spaces)
+                raise ValueError("desktop list isn't a plist")
             raw = ctypes.string_at(cf.CFDataGetBytePtr(data), cf.CFDataGetLength(data))
             cf.CFRelease(data)
             cf.CFRelease(spaces)
@@ -191,13 +196,36 @@ def managed_spaces():
         return []
 
 
-def desktops():
-    """(desktop space IDs of the display in front, in order; the current one)."""
+def active_space():
+    """The space in front (on the display with focus), from SkyLight; None if it can't tell."""
+    if os.environ.get("MODE_SPACES"):
+        return None
+    try:
+        sl = ctypes.CDLL("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight")
+        sl.SLSMainConnectionID.restype = ctypes.c_int
+        sl.SLSGetActiveSpace.restype = ctypes.c_uint64
+        sl.SLSGetActiveSpace.argtypes = [ctypes.c_int]
+        return int(sl.SLSGetActiveSpace(sl.SLSMainConnectionID())) or None
+    except (OSError, AttributeError):
+        return None
+
+
+def desktops(every_display=False):
+    """(desktop space IDs of the display in front, in order; the space in front, which may be a
+    full-screen app's rather than a desktop). With every_display, the desktops of all displays.
+    Full-screen spaces (type 4) aren't desktops."""
     monitors = [m for m in managed_spaces() if m.get("Spaces")]
-    for m in monitors:  # the first display with desktops (docked with the lid closed there's one)
-        ids = [sp.get("ManagedSpaceID") for sp in m["Spaces"] if sp.get("type", 0) == 0]
-        return ids, (m.get("Current Space") or {}).get("ManagedSpaceID")
-    return [], None
+    def ids_of(m):
+        return [sp.get("ManagedSpaceID") for sp in m["Spaces"] if sp.get("type", 0) == 0]
+    if every_display:
+        return [i for m in monitors for i in ids_of(m)], None
+    active = active_space()
+    front = (next((m for m in monitors if (m.get("Current Space") or {}).get("ManagedSpaceID") == active), None)
+             or next((m for m in monitors if m.get("Display Identifier") == "Main"), None)
+             or (monitors[0] if monitors else None))
+    if not front:
+        return [], None
+    return ids_of(front), active or (front.get("Current Space") or {}).get("ManagedSpaceID")
 
 
 JXA_APPS = r'''
@@ -226,19 +254,22 @@ function run(argv) {
 
 def app_state(names):
     """{app name: {"running": bool, "here": windows on the current desktop}}."""
-    r = subprocess.run(["osascript", "-l", "JavaScript", "-e", JXA_APPS, json.dumps(names)],
-                       capture_output=True, text=True, timeout=10)
     try:
+        r = subprocess.run(["osascript", "-l", "JavaScript", "-e", JXA_APPS, json.dumps(names)],
+                           capture_output=True, text=True, timeout=10)
         return json.loads(r.stdout)
-    except ValueError:
+    except (ValueError, subprocess.TimeoutExpired):
         return {n: {"running": False, "here": 0} for n in names}
 
 
 def btt(action):
     """Run one BTT action (JSON) and wait for it."""
-    subprocess.run(["osascript", "-e", "on run argv", "-e",
-                    'tell application "BetterTouchTool" to trigger_action (item 1 of argv)', "-e", "end run",
-                    json.dumps(action)], capture_output=True, timeout=15)
+    try:
+        subprocess.run(["osascript", "-e", "on run argv", "-e",
+                        'tell application "BetterTouchTool" to trigger_action (item 1 of argv)', "-e", "end run",
+                        json.dumps(action)], capture_output=True, timeout=15)
+    except subprocess.TimeoutExpired:
+        print(f"mode: BTT didn't answer (action {action['BTTPredefinedActionType']})", file=sys.stderr)
 
 
 def wait(check, timeout=4.0, step=0.15):
@@ -276,9 +307,13 @@ def activate(name):
 
 
 def notify(text):
-    subprocess.run(["osascript", "-e", "on run argv", "-e",
-                    'tell application "BetterTouchTool" to display_notification (item 1 of argv) with title "Mode" sound name ""',
-                    "-e", "end run", text], capture_output=True, timeout=10)
+    try:
+        subprocess.run(["osascript", "-e", "on run argv", "-e",
+                        'tell application "BetterTouchTool" to display_notification (item 1 of argv) with title "Mode" sound name ""',
+                        "-e", "end run", text], capture_output=True, timeout=10)
+    except subprocess.TimeoutExpired:
+        pass
+    print(text)
 
 
 def turn_on_scene(scene):
@@ -292,18 +327,22 @@ def turn_on_scene(scene):
                                  headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
     try:
         urllib.request.urlopen(req, timeout=5).close()
-    except OSError as e:
-        print(f"mode: couldn't turn on {scene}: {e}", file=sys.stderr)
+    except Exception as e:  # network, HTTP or a bad URL: the mode still switches
+        print(f"mode: couldn't turn on {scene}: {type(e).__name__}", file=sys.stderr)
 
 
 # ---- modes ---------------------------------------------------------------------------------------
 def docked(setup):
-    return setup == "docked-closed"
+    """Docked: an external display (lid closed, or open beside it). Travel: the laptop alone."""
+    return setup in ("docked-closed", "docked-open")
 
 
 def bring_here(app, space):
-    """A window of the app on the mode's desktop (the current one), in front."""
+    """A window of the app on the mode's desktop, in front. False if none arrived: then nothing may
+    be placed, since BTT places whatever window is in front."""
     name = app["name"]
+    if desktops()[1] != space:
+        go_to(space)
     st = app_state([name])[name]
     if not st["here"]:
         if app.get("new_window") and st["running"]:
@@ -311,28 +350,45 @@ def bring_here(app, space):
         elif not st["running"]:
             activate(name)  # launches here
         else:
-            # A single-window app on another desktop: it takes us there; send its window back.
+            # A one-window app on another desktop: activating it takes us there; send its window
+            # back. (A window in full screen can't be moved: it stays, and the check below fails.)
             activate(name)
             wait(lambda: desktops()[1] != space, timeout=2)
             ids, _ = desktops()
-            if space in ids and ids.index(space) + 1 in MOVE_TO_DESKTOP:
+            if desktops()[1] in ids and space in ids and ids.index(space) + 1 in MOVE_TO_DESKTOP:
                 btt({"BTTPredefinedActionType": MOVE_TO_DESKTOP[ids.index(space) + 1]})
             go_to(space)
-        wait(lambda: app_state([name])[name]["here"] > 0, timeout=8)
+        if not wait(lambda: app_state([name])[name]["here"] > 0, timeout=12):
+            if desktops()[1] != space:
+                go_to(space)
+            return False
     activate(name)
     time.sleep(0.2)
+    if desktops()[1] != space:  # macOS took us to another of its windows: don't place that one
+        go_to(space)
+        return False
+    return True
 
 
 def switch(mode, cfg, state):
     apps = cfg["apps"]
-    ids = desktops()[0]
-    if ids:  # forget desktops that were closed
-        state["spaces"] = {m: sid for m, sid in state["spaces"].items() if sid in ids}
+    every = desktops(every_display=True)[0]
+    if every:  # forget desktops that were closed (on any display)
+        state["spaces"] = {m: sid for m, sid in state["spaces"].items() if sid in every}
     setup = detect_setup()
+    if setup is None:
+        notify("Can't tell which screens are connected; try again in a moment.")
+        return False
     if docked(setup):
         ids, current = desktops()
+        if not ids:
+            notify("Can't read the desktops; try again in a moment.")
+            return False
         space = state["spaces"].get(mode["name"])
         if space not in ids:  # never opened, or its desktop was closed: take this one
+            if current not in ids:
+                notify("This is a full-screen app's space. Go to a desktop and switch again.")
+                return False
             owner = next((m for m, sid in state["spaces"].items() if sid == current and m != mode["name"]), None)
             if owner:
                 title = next((m["title"] for m in cfg["mode"] if m["name"] == owner), owner)
@@ -340,21 +396,27 @@ def switch(mode, cfg, state):
                 return False
             space = current
             state["spaces"][mode["name"]] = space
-        if desktops()[1] != space:
-            go_to(space)
+        missing = []
         for aid, cell in mode["layout"]:
-            bring_here(apps[aid], space)
-            place(cell)
-        activate(apps[mode["layout"][0][0]]["name"])
+            if bring_here(apps[aid], space):
+                place(cell)
+            else:
+                missing.append(apps[aid]["name"])
+        main = apps[mode["layout"][0][0]]["name"]
+        if main not in missing:
+            activate(main)
+            if desktops()[1] != space:
+                go_to(space)
+        if missing:
+            notify(f"{mode['title']}: no window from {', '.join(missing)} here (not open yet, or in full screen).")
     else:
         # Travel: each app full screen, on a space of its own; the main app last, in front.
         for aid, _ in list(reversed(mode["layout"])):
             name = apps[aid]["name"]
-            st = app_state([name])[name]
             activate(name)
-            if not st["running"]:
-                wait(lambda: app_state([name])[name]["running"], timeout=10)
-                time.sleep(1)
+            if not wait(lambda: app_state([name])[name]["running"], timeout=12):
+                continue
+            time.sleep(1)
             btt({"BTTPredefinedActionType": 112})  # Enter Fullscreen (if it isn't)
             time.sleep(0.8)
     state["current"] = mode["name"]
@@ -368,6 +430,10 @@ def apply(cfg, state):
     """Lay the current mode out again on its desktop, if that's the one in front (after a display
     change). Never adds desktops or moves windows between them."""
     mode = next((m for m in cfg["mode"] if m["name"] == state.get("current")), None)
+    # Docking fires several display events: one layout is enough. CGDisplayPixelsWide is in
+    # points; the ultrawide is 5120 wide, the KVM's placeholder 1920.
+    if time.time() - state.get("applied_at", 0) < 10:
+        return
     if not mode or not docked(detect_setup()) or main_display_width() < MIN_WIDTH:
         return
     ids, current = desktops()
@@ -381,7 +447,11 @@ def apply(cfg, state):
         if here[name]["here"]:
             activate(name)
             time.sleep(0.2)
+            if desktops()[1] != current:
+                go_to(current)
+                continue
             place(cell)
+    state["applied_at"] = time.time()
     if front:
         subprocess.run(["lsappinfo", "setfront", front], capture_output=True)
 
@@ -412,7 +482,11 @@ def main():
         cur = state.get("current")
         switch(modes[(names.index(cur) + 1) % len(modes) if cur in names else 0], cfg, state)
     elif cmd in [m["name"] for m in modes]:
-        switch(next(m for m in modes if m["name"] == cmd), cfg, state)
+        try:
+            switch(next(m for m in modes if m["name"] == cmd), cfg, state)
+        finally:
+            save_state(state)  # a desktop it took is remembered even if something failed later
+        return
     else:
         print(next(p for p in __doc__.split("\n\n") if p.startswith("  mode ")))
         sys.exit(2)

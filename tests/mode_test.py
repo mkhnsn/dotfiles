@@ -22,8 +22,12 @@ CFG = {
 class FakeMac:
     """Desktops (ids in order, the current one) and which desktop each app's windows are on."""
 
-    def __init__(self, desktops, current, windows):
+    def __init__(self, desktops, current, windows, other_display=(), fails=(), jumps=()):
         self.desktops, self.current, self.windows = desktops, current, windows  # windows: {app: [space ids]}
+        self.other = list(other_display)  # desktops on a second display
+        self.fails = set(fails)  # apps that never open a window
+        self.jumps = dict(jumps)  # app -> a desktop activating it takes you to, even with a window here
+        self.setup = "docked-closed"
         self.log = []
 
     def install(self, test):
@@ -31,20 +35,23 @@ class FakeMac:
         for name in ("desktops", "app_state", "btt", "activate", "notify", "turn_on_scene", "detect_setup",
                      "main_display_width"):
             test.addCleanup(setattr, mode, name, getattr(mode, name))
-        mode.desktops = lambda: (list(self.desktops), self.current)
+        mode.desktops = lambda every_display=False: ((self.desktops + self.other, None) if every_display
+                                                     else (list(self.desktops), self.current))
         mode.app_state = lambda names: {n: {"running": n in self.windows, "here": self.windows.get(n, []).count(self.current)}
                                         for n in names}
         mode.btt = self.btt
         mode.activate = self.activate
         mode.notify = lambda text: self.log.append(("notify", text))
         mode.turn_on_scene = lambda scene: self.log.append(("scene", scene))
-        mode.detect_setup = lambda: "docked-closed"
+        mode.detect_setup = lambda: self.setup
         mode.main_display_width = lambda: 5120
         test.addCleanup(setattr, mode.subprocess, "run", mode.subprocess.run)
         real_run = mode.subprocess.run
         mode.subprocess.run = lambda cmd, **kw: self.run(cmd) if cmd[:2] == ["open", "-na"] else real_run(cmd, **kw)
         test.addCleanup(setattr, mode.time, "sleep", mode.time.sleep)
         mode.time.sleep = lambda s: None
+        test.addCleanup(setattr, mode, "wait", mode.wait)
+        mode.wait = lambda check, timeout=4.0, step=0.15: check()
 
     def btt(self, action):
         t = action["BTTPredefinedActionType"]
@@ -59,6 +66,11 @@ class FakeMac:
 
     def activate(self, name):
         self.front = name
+        if name in self.jumps:
+            self.current = self.jumps[name]
+            return
+        if name in self.fails:
+            return
         spaces = self.windows.setdefault(name, [])
         if not spaces:
             spaces.append(self.current)  # launched here
@@ -66,6 +78,8 @@ class FakeMac:
             self.current = spaces[0]  # macOS takes you to its desktop
 
     def run(self, cmd):
+        if cmd[2] in self.fails:
+            return
         self.windows.setdefault(cmd[2], []).append(self.current)  # a new window here
         self.log.append(("new window", cmd[2]))
 
@@ -78,11 +92,12 @@ class Config(unittest.TestCase):
 
     def test_problems_are_reported(self):
         bad = {"apps": {"a": {"name": "A", "new_window": "open"}},
-               "mode": [{"name": "x", "title": "X", "key": "1", "layout": [["a", "9/3"], ["nope", "1/2"]]},
+               "mode": [{"name": "x", "title": "X", "key": "1", "layout": [["a", "9/3"], ["nope", "1/2"]],
+                         "scene": "lights"},
                         {"name": "x", "key": "1", "layout": []}]}
         p = mode.validate(bad)
         for want in ("new_window must be a command", "can't read cell '9/3'", "no app 'nope'", "name used twice",
-                     "needs title", "key 1 used twice", "needs a layout"):
+                     "needs title", "key 1 used twice", "needs a layout", "scene must be a Home Assistant scene"):
             self.assertTrue(any(want in x for x in p), (want, p))
 
     def test_cells(self):
@@ -149,6 +164,75 @@ class Switch(unittest.TestCase):
         self.assertEqual(self.state["spaces"], {})
 
 
+class Failures(unittest.TestCase):
+    """What the review found: nothing may be placed unless the app's window is here."""
+
+    def setUp(self):
+        self.state = {"spaces": {}}
+
+    def places(self, mac):
+        return [e for e in mac.log if e[0] == "place"]
+
+    def test_an_app_that_never_opens_isnt_placed(self):
+        mac = FakeMac([1, 2], 2, {"Chrome": [2]}, fails={"Code"})
+        mac.install(self)
+        mode.switch(CFG["mode"][0], CFG, self.state)
+        self.assertEqual(self.places(mac), [("place", "Chrome", "mode: 3/3")])
+        self.assertTrue(any(e[0] == "notify" and "no window from Code" in e[1] for e in mac.log))
+
+    def test_a_full_screen_window_isnt_placed_and_we_stay_on_the_desktop(self):
+        mac = FakeMac([1, 2], 2, {"Mail": [9], "Slack": [2]})  # Mail is full screen on space 9
+        mac.install(self)
+        orig = mac.btt
+        def btt(action):  # Move Window To Desktop can't move a full-screen window
+            if action["BTTPredefinedActionType"] in mode.MOVE_TO_DESKTOP.values() and mac.front == "Mail":
+                mac.log.append(("btt", action["BTTPredefinedActionType"]))
+                return
+            orig(action)
+        mode.btt = btt
+        mode.switch(CFG["mode"][1], CFG, self.state)
+        self.assertEqual(mac.current, 2)
+        self.assertEqual(self.places(mac), [("place", "Slack", "mode: 2/2")])
+
+    def test_a_jump_to_another_desktop_isnt_placed(self):
+        mac = FakeMac([1, 2, 3], 2, {"Code": [2], "Chrome": [2, 3]}, jumps={"Chrome": 3})
+        mac.install(self)
+        self.state["spaces"] = {"dev": 2}
+        mode.switch(CFG["mode"][0], CFG, self.state)
+        self.assertEqual((mac.current, self.places(mac)), (2, [("place", "Code", "mode: 1-2/3")]))
+
+    def test_a_full_screen_space_isnt_adopted(self):
+        mac = FakeMac([1, 2], 9, {})
+        mac.install(self)
+        self.assertFalse(mode.switch(CFG["mode"][0], CFG, self.state))
+        self.assertEqual(self.state["spaces"], {})
+        self.assertTrue(any("full-screen app's space" in e[1] for e in mac.log if e[0] == "notify"))
+
+    def test_no_desktops_or_no_setup_changes_nothing(self):
+        mac = FakeMac([], None, {})
+        mac.install(self)
+        self.assertFalse(mode.switch(CFG["mode"][0], CFG, self.state))
+        mac.setup = None
+        self.assertFalse(mode.switch(CFG["mode"][0], CFG, self.state))
+        self.assertEqual(self.state["spaces"], {})
+        self.assertNotIn("current", self.state)
+
+    def test_a_desktop_on_another_display_isnt_forgotten(self):
+        mac = FakeMac([1, 2], 2, {}, other_display=[7])
+        mac.install(self)
+        self.state["spaces"] = {"dev": 7}
+        mode.switch(CFG["mode"][1], CFG, self.state)
+        self.assertEqual(self.state["spaces"]["dev"], 7)
+
+    def test_lid_open_beside_the_ultrawide_is_docked(self):
+        mac = FakeMac([1, 2], 2, {"Chrome": [2]})
+        mac.install(self)
+        mac.setup = "docked-open"
+        mode.switch(CFG["mode"][0], CFG, self.state)
+        self.assertNotIn(("btt", 112), mac.log)
+        self.assertEqual(self.state["spaces"], {"dev": 2})
+
+
 class Apply(unittest.TestCase):
     def test_lays_out_again_only_on_the_modes_desktop(self):
         mac = FakeMac([1, 2], 2, {"Code": [2], "Chrome": [2]})
@@ -160,6 +244,14 @@ class Apply(unittest.TestCase):
         mac.current = 1
         mode.apply(CFG, state)
         self.assertEqual([e for e in mac.log if e[0] == "place"], [])
+
+    def test_one_layout_per_dock(self):
+        mac = FakeMac([1, 2], 2, {"Code": [2], "Chrome": [2]})
+        mac.install(self)
+        state = {"spaces": {"dev": 2}, "current": "dev"}
+        mode.apply(CFG, state)
+        mode.apply(CFG, state)  # the next display event of the same dock
+        self.assertEqual(len([e for e in mac.log if e[0] == "place"]), 2)
 
     def test_leaves_the_kvm_placeholder_alone(self):
         mac = FakeMac([1], 1, {"Code": [1]})
