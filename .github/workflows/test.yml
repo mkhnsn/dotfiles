@@ -63,5 +63,8 @@ jobs:
       - name: trigger-check tests (named triggers reachable, preset current)
         run: python3 -I tests/trigger_check_test.py
 
+      - name: hints tests
+        run: python3 -I tests/hints_test.py
+
       - name: Brewfile entries exist in Homebrew (formula vs cask)
         run: python3 -I tests/brewfile_check.py

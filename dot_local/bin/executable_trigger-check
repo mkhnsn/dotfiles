@@ -5,8 +5,13 @@ Each [[trigger]] becomes a BTT named trigger (type 643) running its command or B
 one global keyboard trigger per key. A key trigger logs (`trigger --log-only <name> key`) and
 then fires the named trigger (action 248), so every surface runs the same thing.
 
-The generator owns, in the preset's global triggers, every named trigger and every keyboard
-trigger that fires a named trigger; anything else is left alone. It updates triggers in place by
+It also generates the hints' pieces (#144): the cheat sheet, a floating menu named "Hints" with
+a row per trigger (Hyper+H, the cheat-sheet trigger, toggles it); the named trigger hints-close,
+which closes BTT notifications titled "Hint…"; and an Active App Did Change trigger running
+`hints app`.
+
+The generator owns, in the preset's global triggers, every named trigger, every keyboard
+trigger that fires a named trigger and the hints' pieces; anything else is left alone. It updates triggers in place by
 UUID (derived from the trigger name), so what BTT adds on export survives a regenerate.
 
 Fails when:
@@ -20,7 +25,7 @@ Fails when:
 Usage: trigger-check [--source DIR] [--write] [--list]
 Python 3.11+ standard library only (tomllib).
 """
-import argparse, json, os, re, shlex, subprocess, sys, tomllib, uuid
+import argparse, html, json, os, re, shlex, subprocess, sys, tomllib, uuid
 
 MODS = [(1 << 18, "⌃"), (1 << 19, "⌥"), (1 << 17, "⇧"), (1 << 20, "⌘")]
 HYPER = sum(bit for bit, _ in MODS)
@@ -122,6 +127,9 @@ def validate(src, triggers):
                 key = k.replace("⌃", "").replace("⌥", "").replace("⇧", "").replace("⌘", "")
                 if key in RESERVED:
                     problems.append(f"reserved: {where}: Hyper+{key} belongs elsewhere (see macos/shortcuts.toml)")
+        apps = t.get("apps", [])
+        if not isinstance(apps, list) or not all(isinstance(x, str) and x for x in apps):
+            problems.append(f"invalid: {where}: apps must be a list of bundle IDs, like [\"us.zoom.xos\"]")
         for s in fires:
             if s not in SURFACES or s == "key":
                 problems.append(f"invalid: {where}: unknown surface {s!r} (one of {', '.join(sorted(set(SURFACES) - {'key'}))})")
@@ -175,16 +183,99 @@ def wanted(triggers):
                         "BTTShortcutModifierKeys": flags, "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
                         "BTTTriggerOnDown": 1, "BTTTriggerType": 0, "BTTUUID": kid})
             order += 1
-    return out
+    return out + hints_pieces(triggers)
+
+
+# The hints' pieces (#144), with fixed UUIDs.
+MENU = "Hints"
+INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-change")}
+ROW_H, GAP, PAD, WIDTH = 30, 2, 6, 460
+
+
+def key_label(t):
+    for k in t.get("keys", []):
+        parsed = parse_keys(k)
+        if parsed and parsed[1] == HYPER:
+            return "Hyper+" + k.replace("⌃", "").replace("⌥", "").replace("⇧", "").replace("⌘", "")
+    return (t.get("keys") or [""])[0]
+
+
+SURFACE_NAMES = {"streamdeck": "Stream Deck", "knob": "knob", "mouse": "mouse", "touch": "touch",
+                 "ipad": "iPad"}
+
+
+def row(n, name, text, script, menu_uuid, header=False):
+    iid = uid("hints", "menu", name)
+    color = "rgba(255,255,255,0.6)" if header else "white"
+    item = {"BTTTriggerType": 773, "BTTTriggerClass": "BTTTriggerTypeFloatingMenu",
+            "BTTOrder": n, "BTTTriggerParentUUID": menu_uuid, "BTTUUID": iid, "BTTMenuName": name,
+            "BTTMenuAvailability": 0,
+            "BTTMenuConfig": {"BTTMenuAlwaysUseLightMode": 1, "BTTMenuItemVisibleWhileActive": 1,
+                              "BTTMenuItemVisibleWhileInactive": 1, "BTTMenuItemMinWidth": 100,
+                              "BTTMenuItemMaxWidth": 1000, "BTTMenuItemMinHeight": ROW_H,
+                              "BTTMenuItemMaxHeight": ROW_H, "BTTMenuItemBackgroundType": 4,
+                              "BTTMenuItemBackgroundColor": "0, 0, 0, 0",
+                              "BTTMenuItemBackgroundColorHover": "0, 0, 0, 0" if header else "10, 132, 255, 255",
+                              "BTTMenuItemCornerRadius": 7, "BTTMenuTextOffsetX": 10,
+                              "BTTMenuAttributedText": "<html><body style='text-align:left;'><span style='font-size:14px; "
+                                                       f"color:{color}; font-family:-apple-system;'>{text}</span></body></html>"}}
+    if script:
+        item["BTTMenuItemActions"] = [shell_action(script, iid, uid("hints", "menu", name, "action"), 0)]
+    return item
+
+
+def hints_pieces(triggers):
+    menu_uuid = uid("hints", "menu")
+    rows = [row(0, "Header", "Hyper+H · what you can do", None, menu_uuid, header=True)]
+    for t in triggers:
+        if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") == MENU:
+            continue  # the cheat sheet's own key
+        more = ", ".join(SURFACE_NAMES[s] for s in t.get("fires", []) if s in SURFACE_NAMES)
+        where = f" ({', '.join(t['apps'])})" if t.get("apps") else ""
+        text = (f"<b>{html.escape(key_label(t))}</b>&nbsp;&nbsp;{html.escape(t['action'])}{html.escape(where)}"
+                + (f"<span style='color:rgba(255,255,255,0.6);'> · {html.escape(more)}</span>" if more else ""))
+        rows.append(row(len(rows), t["name"], text, f'"$HOME/.local/bin/trigger" {t["name"]} menu', menu_uuid))
+    rows.append(row(len(rows), "hints-next", "Next hint", '"$HOME/.local/bin/hints" next', menu_uuid))
+    rows.append(row(len(rows), "hints-mute", "Mute these hints", '"$HOME/.local/bin/hints" mute', menu_uuid))
+    height = 2 * PAD + len(rows) * ROW_H + (len(rows) - 1) * GAP
+    menu = {"BTTTriggerType": 767, "BTTTriggerClass": "BTTTriggerTypeFloatingMenu",
+            "BTTTriggerName": f"Floating Menu: {MENU}", "BTTMenuName": MENU, "BTTMenuAvailability": 0,
+            "BTTUUID": menu_uuid, "BTTGestureNotes": "Hints: cheat sheet (generated from triggers.toml)",
+            "BTTMenuConfig": {"BTTMenuPositioningType": 1, "BTTMenuPositionRelativeTo": 3,
+                              "BTTMenuAnchorMenu": 4, "BTTMenuAnchorRelation": 4, "BTTMenuLayoutDirection": 6,
+                              "BTTMenuFrameWidth": WIDTH, "BTTMenuFrameHeight": height,
+                              "BTTMenuVerticalSpacing": GAP, "BTTMenuHorizontalSpacing": GAP,
+                              "BTTMenuWindowLevel": 3, "BTTMenuVisibility": 1, "BTTMenuCloseOnOutsideClick": 1,
+                              "BTTMenuCloseAfterAction": 1, "BTTMenuDisableDrag": 1, "BTTMenuAlwaysUseLightMode": 1,
+                              "BTTMenuItemBackgroundType": 4, "BTTMenuItemBackgroundColor": "28, 28, 30, 200",
+                              "BTTMenuItemBlurredBackground": 1, "BTTMenuItemBorderWidth": 1,
+                              "BTTMenuItemBorderColor": "255, 255, 255, 46", "BTTMenuItemCornerRadius": 12,
+                              "BTTMenuItemPaddingLeft": PAD, "BTTMenuItemPaddingRight": PAD,
+                              "BTTMenuItemPaddingTop": PAD, "BTTMenuItemPaddingBottom": PAD},
+            "BTTMenuItems": rows}
+    close_uuid = uid("hints", "close")
+    close = {"BTTTriggerType": 643, "BTTTriggerClass": "BTTTriggerTypeOtherTriggers", "BTTTriggerName": "hints-close",
+             "BTTUUID": close_uuid, "BTTGestureNotes": "Hints: close hint notifications",
+             "BTTActionsToExecute": [{"BTTIsPureAction": True, "BTTOrder": 0, "BTTPredefinedActionType": 289,
+                                      "BTTTriggerParentUUID": close_uuid, "BTTUUID": uid("hints", "close", "action"),
+                                      "BTTAdditionalActionData": {"BTTCloseNotificationsMode": "matching",
+                                                                  "BTTCloseNotificationsTitleRegex": "^Hint"}}]}
+    app_uuid = uid("hints", "app-change")
+    app = {"BTTTriggerType": 779, "BTTTriggerClass": "BTTTriggerTypeOtherTriggers", "BTTUUID": app_uuid,
+           "BTTGestureNotes": "Hints: the daily hints (hints app)",
+           "BTTActionsToExecute": [shell_action('"$HOME/.local/bin/hints" app >/dev/null 2>&1 &', app_uuid,
+                                                uid("hints", "app-change", "action"), 0)]}
+    return [menu, close, app]
 
 
 def generated(t):
     """Whether the generator owns this preset trigger."""
-    return t.get("BTTTriggerType") == 643 or (
+    return t.get("BTTUUID") in INTERNAL or t.get("BTTTriggerType") == 643 or (
         t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"
         and any(a.get("BTTPredefinedActionType") == 248 for a in t.get("BTTActionsToExecute") or []))
 
 
+LISTS = {"BTTActionsToExecute", "BTTMenuItems", "BTTMenuItemActions"}
 # Fields the generator writes that an entry can stop needing (switching run and btt, dropping
 # data): cleared from the old trigger first, so they don't linger.
 OWNED = {"BTTAdditionalActionData", "BTTShellTaskActionScript", "BTTShellTaskActionConfig",
@@ -198,9 +289,12 @@ def merge(old, new):
     if old.get("BTTPredefinedActionType") == new.get("BTTPredefinedActionType") and "BTTPredefinedActionName" in old:
         out["BTTPredefinedActionName"] = old["BTTPredefinedActionName"]
     out.update(new)
-    if "BTTActionsToExecute" in new:
-        before = {a.get("BTTUUID"): a for a in old.get("BTTActionsToExecute") or []}
-        out["BTTActionsToExecute"] = [merge(before.get(a["BTTUUID"], {}), a) for a in new["BTTActionsToExecute"]]
+    for k, v in new.items():
+        if k in LISTS:  # actions and menu items: matched by UUID
+            before = {a.get("BTTUUID"): a for a in old.get(k) or []}
+            out[k] = [merge(before.get(a["BTTUUID"], {}), a) for a in v]
+        elif isinstance(v, dict) and isinstance(old.get(k), dict) and k not in OWNED:
+            out[k] = {**old[k], **v}  # a menu's config: keep the defaults BTT fills in
     return out
 
 

@@ -653,6 +653,375 @@
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
           "BTTUUID" : "343D311E-66B0-598A-8C43-41DA85C5657B"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTAdditionalActionData" : {
+                "BTTMenuActionMenuID" : "Hints"
+              },
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Toggle Floating Menu Hidden or Shown",
+              "BTTPredefinedActionType" : 388,
+              "BTTTriggerParentUUID" : "5694F044-D417-523B-A56F-BED0825B4756",
+              "BTTUUID" : "007D288C-6896-580F-95BD-F40E4FCCDE56"
+            }
+          ],
+          "BTTGestureNotes" : "Cheat sheet: every trigger, its keys, the next hint",
+          "BTTNamedTriggerAIDescription" : "Hyper+H shows every trigger and its keys; click one to run it",
+          "BTTOrder" : 19,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "cheat-sheet",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Cheat sheet: every trigger, its keys, the next hint",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: cheat-sheet",
+          "BTTUUID" : "5694F044-D417-523B-A56F-BED0825B4756"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only cheat-sheet key",
+              "BTTTriggerParentUUID" : "20E2829B-442F-5D2D-AED1-7E476ECC2CFA",
+              "BTTUUID" : "AD2F477F-853D-5965-BC29-1FAF4D7EAF1E"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "cheat-sheet",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "20E2829B-442F-5D2D-AED1-7E476ECC2CFA",
+              "BTTUUID" : "3915492A-138C-50F2-AF9A-EB17D15D66B8"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Cheat sheet: every trigger, its keys, the next hint",
+          "BTTOrder" : 20,
+          "BTTShortcutKeyCode" : 4,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "20E2829B-442F-5D2D-AED1-7E476ECC2CFA"
+        },
+        {
+          "BTTAdditionalConfiguration" : "Floating Menu: Hints",
+          "BTTGestureNotes" : "Hints: cheat sheet (generated from triggers.toml)",
+          "BTTMenuAvailability" : 0,
+          "BTTMenuConfig" : {
+            "BTTMenuAlwaysUseLightMode" : 1,
+            "BTTMenuAnchorMenu" : 4,
+            "BTTMenuAnchorRelation" : 4,
+            "BTTMenuCloseAfterAction" : 1,
+            "BTTMenuCloseOnOutsideClick" : 1,
+            "BTTMenuDisableDrag" : 1,
+            "BTTMenuElementIdentifier" : "Hints",
+            "BTTMenuFrameHeight" : 202,
+            "BTTMenuFrameWidth" : 460,
+            "BTTMenuHorizontalSpacing" : 2,
+            "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
+            "BTTMenuItemBackgroundType" : 4,
+            "BTTMenuItemBlurredBackground" : 1,
+            "BTTMenuItemBorderColor" : "255, 255, 255, 46",
+            "BTTMenuItemBorderWidth" : 1,
+            "BTTMenuItemCornerRadius" : 12,
+            "BTTMenuItemPaddingBottom" : 6,
+            "BTTMenuItemPaddingLeft" : 6,
+            "BTTMenuItemPaddingRight" : 6,
+            "BTTMenuItemPaddingTop" : 6,
+            "BTTMenuItemVisibleWhileActive" : 1,
+            "BTTMenuItemVisibleWhileInactive" : 1,
+            "BTTMenuLayoutDirection" : 6,
+            "BTTMenuPositionRelativeTo" : 3,
+            "BTTMenuPositioningType" : 1,
+            "BTTMenuVerticalSpacing" : 2,
+            "BTTMenuVisibility" : 1,
+            "BTTMenuWindowLevel" : 3
+          },
+          "BTTMenuItems" : [
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:rgba(255,255,255,0.6); font-family:-apple-system;'>Hyper+H · what you can do</span></body></html>",
+                "BTTMenuElementIdentifier" : "Header",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 1000,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 100,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuName" : "Header",
+              "BTTOrder" : 0,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: Header",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "84A6384F-8B83-5513-B929-9FA14ECB4CF4"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+M</b>&nbsp;&nbsp;Mic: toggle mute (all apps)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
+                "BTTMenuElementIdentifier" : "mic-mute",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 1000,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 100,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mic-mute menu",
+                  "BTTTriggerParentUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8",
+                  "BTTUUID" : "36BD9817-7947-52DF-9BC7-7B2C9F0F8FCD"
+                }
+              ],
+              "BTTMenuName" : "mic-mute",
+              "BTTOrder" : 1,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mic-mute",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+K</b>&nbsp;&nbsp;Keep Awake: toggle (display and system stay on)</span></body></html>",
+                "BTTMenuElementIdentifier" : "keep-awake",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 1000,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 100,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" keep-awake menu",
+                  "BTTTriggerParentUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317",
+                  "BTTUUID" : "13D50ABD-2C33-5E89-9DAA-DB76781AABAB"
+                }
+              ],
+              "BTTMenuName" : "keep-awake",
+              "BTTOrder" : 2,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: keep-awake",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+0</b>&nbsp;&nbsp;Mode: next work mode (placeholder until #98)</span></body></html>",
+                "BTTMenuElementIdentifier" : "mode-next",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 1000,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 100,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mode-next menu",
+                  "BTTTriggerParentUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44",
+                  "BTTUUID" : "1C94BA81-942B-5AE2-ADBA-1E19685CDF55"
+                }
+              ],
+              "BTTMenuName" : "mode-next",
+              "BTTOrder" : 3,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: mode-next",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Next hint</span></body></html>",
+                "BTTMenuElementIdentifier" : "hints-next",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 1000,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 100,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
+                  "BTTTriggerParentUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB",
+                  "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
+                }
+              ],
+              "BTTMenuName" : "hints-next",
+              "BTTOrder" : 4,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: hints-next",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Mute these hints</span></body></html>",
+                "BTTMenuElementIdentifier" : "hints-mute",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 1000,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 100,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
+                  "BTTTriggerParentUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0",
+                  "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
+                }
+              ],
+              "BTTMenuName" : "hints-mute",
+              "BTTOrder" : 5,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerName" : "Menu Item: hints-mute",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
+              "BTTUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0"
+            }
+          ],
+          "BTTMenuName" : "Hints",
+          "BTTOrder" : 21,
+          "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+          "BTTTriggerName" : "Floating Menu: Hints",
+          "BTTTriggerType" : 767,
+          "BTTTriggerTypeDescription" : "Hints: cheat sheet (generated from triggers.toml)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Floating Menu",
+          "BTTUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTAdditionalActionData" : {
+                "BTTCloseNotificationsMode" : "matching",
+                "BTTCloseNotificationsTitleRegex" : "^Hint"
+              },
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Close All Notification Alerts  or  Notification Center",
+              "BTTPredefinedActionType" : 289,
+              "BTTTriggerParentUUID" : "39FDAF4E-E96D-5188-B701-62B607347258",
+              "BTTUUID" : "8F0F8BB2-D79E-5AAD-A5BF-78757F3096E7"
+            }
+          ],
+          "BTTGestureNotes" : "Hints: close hint notifications",
+          "BTTOrder" : 22,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "hints-close",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Hints: close hint notifications",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: hints-close",
+          "BTTUUID" : "39FDAF4E-E96D-5188-B701-62B607347258"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" app >/dev/null 2>&1 &",
+              "BTTTriggerParentUUID" : "6B27761E-0AD2-5BBB-8DBA-BCF362A40789",
+              "BTTUUID" : "7284410F-8B48-544C-9C69-4ED4D1411C07"
+            }
+          ],
+          "BTTGestureNotes" : "Hints: the daily hints (hints app)",
+          "BTTOrder" : 23,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerType" : 779,
+          "BTTTriggerTypeDescription" : "Hints: the daily hints (hints app)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Active App Did Change",
+          "BTTUUID" : "6B27761E-0AD2-5BBB-8DBA-BCF362A40789"
         }
       ]
     },
@@ -773,5 +1142,5 @@
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "229C27E6-A64A-4646-B9A7-E6BF77F550AC"
+  "BTTPresetUUID" : "4D8B7B7C-FDC8-4C9C-A47C-8F0D4D9F94CB"
 }
