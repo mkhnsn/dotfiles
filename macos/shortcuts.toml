@@ -161,13 +161,25 @@ action = "Window: resize (hold and move the pointer)"
 
 # ---- Hyper: Caps Lock (BTT, every keyboard) ---------------------------------------------------
 # Caps Lock acts as ⌃⌥⇧⌘ while held, so a "⌃⌥⇧⌘<key>" entry here is a Hyper key. Hold Caps Lock
-# alone (0.65 s) and release to toggle Caps Lock. Planned split (#121): Hyper+1–5 work modes,
-# Hyper+letters BTT named triggers and menus (Space: ops menu), Hyper+B and Hyper+/ Bartender.
-# Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it.
+# alone (0.65 s) and release to toggle Caps Lock. Split: Hyper+1–5 work modes (#98), Hyper+letters
+# BTT named triggers and menus (#143; Space: ops menu), Hyper+B and Hyper+/ Bartender (below).
+# Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it
+# (mac-setup's capslock step checks every connected keyboard).
 [[shortcut]]
 keys = "⇪"
 owner = "btt"
 action = "Hyper key (⌃⌥⇧⌘); hold alone for Caps Lock"
+
+# Set by hand in Bartender > Settings > Hotkeys (mac-setup's bartender_keys step).
+[[shortcut]]
+keys = "⌃⌥⇧⌘B"
+owner = "bartender"
+action = "Show hidden menu bar items"
+
+[[shortcut]]
+keys = "⌃⌥⇧⌘/"
+owner = "bartender"
+action = "Command Bar (click menu bar items from the keyboard)"
 
 # ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
 # The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut

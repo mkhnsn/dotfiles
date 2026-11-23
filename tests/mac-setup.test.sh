@@ -67,6 +67,7 @@ setup() {
   printf '%s' '{"BTTPresetContent":[{"BTTAppBundleIdentifier":"BT.G","BTTTriggers":[{"BTTTriggerClass":"BTTTriggerTypeKeyboardShortcut","BTTShortcutKeyCode":123,"BTTShortcutModifierKeys":786432}]},{"BTTAppBundleIdentifier":"us.zoom.xos","BTTTriggers":[{"BTTTriggerClass":"BTTTriggerTypeKeyboardShortcut","BTTShortcutKeyCode":9,"BTTShortcutModifierKeys":1835008}]}]}' > "$T/src/macos/btt/Default.bttpreset"
   stub osascript   'echo "[{\"BTTTriggerClass\": \"BTTTriggerTypeKeyboardShortcut\", \"BTTShortcutKeyCode\": 123, \"BTTShortcutModifierKeys\": 786432}]"'
   stub open        'exit 0'
+  stub hidutil     'exit 0'
   stub mac-defaults 'exit 0'
   # Prints the LaunchServices handlers for any key: a preset with move/resize keys would see
   # them all as missing, so the BTT tests stub defaults themselves.
@@ -88,6 +89,7 @@ setup() {
   mark_done raycast_sync
   mark_done raycast_local
   mark_done zoom
+  mark_done bartender_keys
   mark_done widgets
   mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac"
   touch "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Test-Mac/Raycast.rayconfig"
@@ -421,6 +423,52 @@ test_btt_mcp_off() {
   assert_open "BetterTouchTool MCP server on"
 }
 
+test_capslock_remapped() {
+  has_python || return 0
+  # The built-in keyboard's Caps Lock goes to No Action (System Settings > Modifier Keys); the
+  # SpaceMouse's virtual keyboard has the same remap, which doesn't count.
+  cat > "$T/keymap" <<'K'
+RegistryID  Key                   Value
+1000008e0   UserKeyMapping   (null)
+10000196a   UserKeyMapping   (
+        {
+        HIDKeyboardModifierMappingDst = 30064771072;
+        HIDKeyboardModifierMappingSrc = 30064771129;
+    }
+)
+100001047   UserKeyMapping   (
+        {
+        HIDKeyboardModifierMappingDst = 30064771299;
+        HIDKeyboardModifierMappingSrc = 30064771298;
+    },
+        {
+        HIDKeyboardModifierMappingDst = 30064771072;
+        HIDKeyboardModifierMappingSrc = 30064771129;
+    }
+)
+K
+  cat > "$T/hidlist" <<'K'
+Services:
+VendorID ProductID LocationID UsagePage Usage RegistryID  Transport Class                                Product                            UserClass               Built-In 
+0x5ac    0x250     0x0        1         6     0x10000196a (null)    AppleHIDKeyboardEventDriver          3Dconnexion Virtual Keyboard       (null)                  0        
+0x0      0x0       0xac       1         6     0x100001047 FIFO      AppleHIDKeyboardEventDriverV2        Apple Internal Keyboard / Trackpad (null)                  1        
+K
+  stub hidutil "case \"\$1\" in property) cat $T/keymap ;; list) cat $T/hidlist ;; esac"
+  run "$SCRIPT" --status
+  assert_open "Caps Lock reaches BTT's Hyper key"
+  # Run interactively, it stops at this step (the first one open) and names the keyboard.
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Caps Lock is remapped on: Apple Internal Keyboard / Trackpad. BTT"
+  # Can't tell (Python fails): open, not done.
+  MAC_SETUP_PYTHON=/nonexistent run "$SCRIPT" --status
+  assert_open "Caps Lock reaches BTT's Hyper key"
+  # Only the virtual keyboard remaps it: fine.
+  sed -i.bak '/^100001047/,/^)/d' "$T/keymap"
+  run "$SCRIPT" --status
+  assert_done "Caps Lock reaches BTT's Hyper key"
+}
+
 test_raycast_backup_missing() {
   # Another Mac's export doesn't count; nor does one from this Mac older than a week.
   mkdir -p "$MAC_SETUP_ONEDRIVE/Apps/Mac app exports/Raycast/Other-Mac"
@@ -471,7 +519,8 @@ test_manual_steps_start_open() {
   assert_open "First Ninja Backup run succeeded"; assert_done "Ninja Backup deployed to this Mac"
   assert_open "Raycast Cloud Sync on"; assert_open "Raycast script folder, MCP server and app list set"
   assert_open "Zoom video shortcut is ⌃⇧⌘V"; assert_open "Desktop widgets placed"
-  assert_has "30 step(s) left"
+  assert_open "Bartender on Hyper+B (hidden items) and Hyper+/ (Command Bar)"
+  assert_has "31 step(s) left"
 }
 
 test_workstation_apps_missing() {

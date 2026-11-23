@@ -319,9 +319,36 @@ mods = {m + j: g.get(m + j) in (True, 1) for m in ("control", "opt", "shift", "c
 print(len(want - have) + sum(flag(k) != v for k, v in mods.items()))' "$(chezmoi source-path)/macos/btt/Default.bttpreset" 2>/dev/null || echo 1; }
 check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null && [ "$(btt_missing)" = 0 ]; }
 check_btt_mcp()    { workstation || return 0; nc -z -G 2 127.0.0.1 64832 >/dev/null 2>&1; }
+# BTT's Hyper key needs Caps Lock to reach it: a keyboard whose Caps Lock is remapped in System
+# Settings (Modifier Keys, e.g. to No Action) sends BTT nothing. Prints the connected keyboards
+# that remap it, one per line; virtual keyboards (the SpaceMouse's) don't count. Fails closed: if
+# it can't tell, it prints a placeholder instead of nothing.
+capslock_remapped(){ local map
+                     map="$(hidutil property --get UserKeyMapping 2>/dev/null)" || { echo "a keyboard (couldn't read hidutil)"; return; }
+                     case "$map" in *30064771129*) ;; *) return 0 ;; esac
+                     printf '%s\n' "$map" | "${MAC_SETUP_PYTHON:-/usr/bin/python3}" -c '
+import re, subprocess, sys
+ids, cur = set(), None
+for line in sys.stdin:
+    m = re.match(r"\s*(?:0x)?([0-9a-fA-F]{6,})\s+UserKeyMapping", line)
+    if m: cur = m.group(1).lower(); continue
+    if cur and re.search(r"HIDKeyboardModifierMappingSrc = 30064771129\b", line): ids.add(cur)
+if not ids: sys.exit()
+rows = subprocess.run(["hidutil", "list"], capture_output=True, text=True).stdout.splitlines()
+head = next((r for r in rows if "RegistryID" in r and "Product" in r), "")
+a, b = head.find(" Product ") + 1, head.find(" UserClass ") + 1  # not ProductID
+names = set()
+for r in rows:
+    f = r.split()
+    if len(f) > 5 and f[5].lower().removeprefix("0x") in ids:
+        n = (r[a:b] if a > 0 and b > a else "").strip().removesuffix("(null)").strip() or "a keyboard"
+        if "virtual" not in n.lower(): names.add(n)
+print("\n".join(sorted(names)))' 2>/dev/null || echo "a keyboard (couldn't check)"; }
+check_capslock()   { workstation || return 0; [ -z "$(capslock_remapped)" ]; }
 check_raycast_sync(){ workstation || return 0; confirmed raycast_sync; }
 check_raycast_local(){ workstation || return 0; confirmed raycast_local; }
 check_zoom()       { workstation || return 0; confirmed zoom; }
+check_bartender_keys(){ workstation || return 0; confirmed bartender_keys; }
 # Raycast's Generate TAP runs echo-m365's New-Tap.ps1, which needs that repo's saved Graph
 # sign-in (~/.mg/mg.authrecord.<TenantId>.json) to be its AdminAccount. Both come from the
 # repo's tenant.psd1; the record holds the account name, not a token.
@@ -446,6 +473,8 @@ help_btt()        { if btt_user_copy; then echo "BetterTouchTool is in ~/Applica
 help_btt_snapping(){ echo "Turn on BTT's window snapping (drag windows to edges and corners; window management is BTT's): BetterTouchTool > Settings > Window Snapping & Moving > Enable window snapping. The snap areas come from the preset."; }
 help_btt_preset() { if pgrep -x BetterTouchTool >/dev/null; then echo "$(btt_missing) of the preset's global shortcuts and move/resize modifier keys don't match BTT's (the ⌃⌥ window keys, Caps Lock as Hyper, ⌃⌥⌘ move, ⌃⇧⌘ resize). Import the preset from the dotfiles; it asks for Accessibility once. If BTT > Presets then lists an older Default too, delete that one.";
                     else echo "BetterTouchTool isn't running, so its triggers aren't either. Open it, and turn on Launch on startup in its settings."; fi; }
+help_capslock()   { local k; k="$(capslock_remapped | paste -sd, - | sed 's/,/, /g')"
+                    echo "Caps Lock is remapped on: ${k:-a keyboard}. BTT's Hyper key (Caps Lock held = ⌃⌥⇧⌘) can't see it there. System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys: pick each of those keyboards and set Caps Lock to Caps Lock."; }
 help_btt_mcp()    { echo "Turn on BetterTouchTool's MCP server (port 64832) in BTT's settings; search them for MCP. Claude Code uses it to read and change BTT's triggers."; }
 help_raycast_sync(){ echo "Turn on Raycast Cloud Sync: Raycast > Settings > Cloud Sync, all categories. It brings quicklinks, snippets, extensions and hotkeys; turn on the synced extensions here (Link Cleaner among them). Then check the hotkeys in shortcut-check --list (Raycast: ⌘Space, ⌃⌘Space, ⇧⌘V): a new Mac can reset some when it first joins. No Cloud Sync data yet: run Import Settings & Data with the latest .rayconfig from OneDrive > Apps > Mac app exports > Raycast (passphrase in 1Password)."; }
 help_raycast_backup(){ echo "No Raycast export from this Mac in the last week. Raycast > Settings > Advanced > Export: set the export passphrase (it's in 1Password), Weekly, location OneDrive > Apps > Mac app exports > Raycast > $HOSTNAME_WANT, keep the last 5. Then run Export Settings & Data once."; }
@@ -458,6 +487,7 @@ EOR
 }
 help_m365_admin()  { if [ ! -f "$ECHO_M365/tenant.psd1" ]; then echo "Clone echo-m365 (ghq get unstable-studios/echo-m365), then sign in to the tenant."; return; fi
                      echo "Raycast's Generate TAP needs echo-m365 signed in as $(m365_setting AdminAccount). In a terminal: cd $ECHO_M365 && ./scripts/Connect-Tenant.ps1 -Disconnect && ./scripts/Connect-Tenant.ps1, and sign in as that account with its passkey. Disconnecting clears the shared Graph token cache, so mclean-iac needs its own sign-in again afterwards."; }
+help_bartender_keys(){ echo "In Bartender's settings, set the hotkey that shows hidden items to ⌃⌥⇧⌘B (Hyper+B) and the Command Bar's (its keyboard search of menu bar items) to ⌃⌥⇧⌘/ (Hyper+/); hold Caps Lock while recording them."; }
 help_zoom()        { echo "Zoom > Settings > Keyboard Shortcuts > Start/Stop Video: set it to ⌃⇧⌘V. The Stream Deck camera key sends that through BTT, and ⇧⌘V is Raycast's Clipboard History."; }
 help_ws_apps()    { echo "Apps from Brewfile.workstation are missing. App Store apps need you signed in to the App Store first (open App Store > Sign In)."
                     command -v brew-why >/dev/null 2>&1 && brew-why --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null | sed 's/^/    /'; true; }
@@ -635,11 +665,13 @@ act_defaults()    { mac-defaults; }
 act_browser()     { defaultbrowser chrome; }
 act_btt_preset()  { open -a BetterTouchTool; sleep 3; btt-sync import; }
 act_btt_mcp()     { open -a BetterTouchTool; }
+act_capslock()    { open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"; }
 act_raycast_sync(){ open -a Raycast; }
 act_raycast_backup(){ check_onedrive || { echo "    Sign in to OneDrive first."; return 1; }
                      mkdir -p "$RAYCAST_EXPORTS"; open -a Raycast; }
 act_raycast_local(){ open -a Raycast; }
 act_zoom()        { open -a zoom.us; }
+act_bartender_keys(){ open -a "Bartender 7" 2>/dev/null || open -a Bartender; }
 act_m365_admin()  { [ -f "$ECHO_M365/tenant.psd1" ] || return 1
                     ( cd "$ECHO_M365" && pwsh -NoProfile -File scripts/Connect-Tenant.ps1 -Disconnect &&
                       pwsh -NoProfile -File scripts/Connect-Tenant.ps1 ); }
@@ -682,6 +714,7 @@ ts_tag|Tailscale tag $TAG_WANT|Network
 ssh_server|Remote Login on, for you only|Network
 btt|BetterTouchTool installed from folivora.ai|Apps
 btt_preset|BetterTouchTool preset imported|Apps
+capslock|Caps Lock reaches BTT's Hyper key (not remapped)|Apps
 btt_snapping|BetterTouchTool window snapping on|Apps
 btt_mcp|BetterTouchTool MCP server on|Apps
 ws_apps|Workstation apps installed (Brewfile.workstation)|Apps
@@ -703,6 +736,7 @@ raycast_backup|Raycast exports weekly to OneDrive|Apps
 raycast_local|Raycast script folder, MCP server and app list set|Apps
 m365_admin|Generate TAP: echo-m365 signed in as its admin account|Apps
 zoom|Zoom video shortcut is ⌃⇧⌘V|Apps
+bartender_keys|Bartender on Hyper+B (hidden items) and Hyper+/ (Command Bar)|Apps
 remote|Ninja Remote Screen Recording approved|Apps
 ninja_backup|Ninja Backup deployed to this Mac|Apps
 ninja_backup_run|First Ninja Backup run succeeded|Apps
@@ -712,7 +746,7 @@ timemachine|Time Machine backs up to echo-nas|Settings
 tm_no_vms|Virtual machines kept out of Time Machine|Settings
 browser|Default browser is Chrome|Settings"
 
-MANUAL=" escrow remote ninja_backup_run license hueforge_plugins op_browser export vm raycast_sync raycast_local zoom widgets "   # steps confirmed by hand, remembered in $STATE_DIR
+MANUAL=" escrow remote ninja_backup_run license hueforge_plugins op_browser export vm raycast_sync raycast_local zoom bartender_keys widgets "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
 # Print the prompt ourselves: `read -p` only shows it when input is a terminal.
