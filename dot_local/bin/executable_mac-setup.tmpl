@@ -231,18 +231,52 @@ check_icloud_local(){ workstation || return 0; [ "$(defaults read com.apple.bird
 doppler_personal() { local t; t="$(doppler me --json --scope / 2>/dev/null | sed -n 's/.*"type": *"\([^"]*\)".*/\1/p' | head -1)"
                      case "$t" in ""|service_token|service_account) return 1 ;; *) return 0 ;; esac; }
 check_doppler()    { if workstation; then doppler me >/dev/null 2>&1; else ! doppler_personal; fi; }
-# Folders under the ghq root with a doppler.yaml (dependencies skipped), and the ones Doppler
-# has no project for yet: `doppler run` there fails until `doppler setup` reads the file.
-doppler_yaml_dirs()  { find "${GHQ_ROOT:-$HOME/src}" -maxdepth 6 \( -name node_modules -o -name .git -o -name .terraform \) -prune \
-                         -o -name doppler.yaml -print 2>/dev/null | sed 's|/doppler.yaml$||' | sort; }
-# A doppler.yaml is one project for its folder, or a list of them, each with a path under it.
-doppler_unset_dirs() { local d p ps; doppler_yaml_dirs | while IFS= read -r d; do
-                         ps="$(sed -n 's/^[[:space:]-]*path:[[:space:]]*//p' "$d/doppler.yaml" | tr -d "\"'")"
-                         for p in ${ps:-.}; do
-                           [ "$p" = . ] && p="$d" || p="$d/${p%/}"
-                           [ -n "$(doppler configure get project --scope "$p" --plain 2>/dev/null)" ] || { echo "$d"; break; }
-                         done; done; }
-check_doppler_repos(){ workstation || return 0; [ -z "$(doppler_unset_dirs)" ]; }
+# Repos that say in a doppler.yaml which Doppler project each folder uses. `doppler run` there
+# fails until `doppler setup` has read the file. Only our own orgs: a cloned outside repo's
+# doppler.yaml shouldn't point its folders at our projects.
+DOPPLER_ORGS="${MAC_SETUP_DOPPLER_ORGS:-github.com/unstable-studios github.com/mkhnsn}"
+doppler_yaml_dirs()  { local root="${GHQ_ROOT:-$HOME/src}" o
+                       for o in $DOPPLER_ORGS; do
+                         [ -d "$root/$o" ] || continue
+                         find -H "$root/$o" -maxdepth 4 \( -name node_modules -o -name .git -o -name .terraform \) -prune \
+                           -o -name doppler.yaml -print 2>/dev/null
+                       done | sed 's|/doppler.yaml$||' | sort; }
+# Each entry of a doppler.yaml as "path|project|config": "." for the one-project form, else each
+# list entry's path. Comments, CRs and quotes go; flow-style entries ({project: …}) aren't read.
+doppler_yaml_entries(){ tr -d '\r' < "$1" | sed 's/[[:space:]]#.*$//' | awk '
+                         function flush() { if (proj != "") print (path == "" ? "." : path) "|" proj "|" conf; proj = conf = path = "" }
+                         /^[[:space:]]*-/ { flush(); sub(/^[[:space:]]*-[[:space:]]*/, "") }
+                         { line = $0; gsub(/["\047]/, "", line); sub(/[[:space:]]+$/, "", line) }
+                         match(line, /^[[:space:]]*project:[[:space:]]*/) { proj = substr(line, RLENGTH + 1) }
+                         match(line, /^[[:space:]]*config:[[:space:]]*/)  { conf = substr(line, RLENGTH + 1) }
+                         match(line, /^[[:space:]]*path:[[:space:]]*/)    { path = substr(line, RLENGTH + 1) }
+                         END { flush() }'; }
+# Where to run `doppler setup`: each repo folder, and the same folder through each ~/src/<repo>
+# link into it (gget makes them). Doppler matches the path you cd'd through, not the real one.
+doppler_setup_dirs() { local root="${GHQ_ROOT:-$HOME/src}" d r l t
+                       doppler_yaml_dirs | while IFS= read -r d; do
+                         echo "$d|$d"
+                         r="$(cd "$d" && pwd -P)"   # both sides resolved, so a symlinked root still matches
+                         for l in "$root"/*; do
+                           [ -L "$l" ] || continue
+                           t="$(cd "$l" 2>/dev/null && pwd -P)" || continue
+                           case "$r" in "$t"|"$t"/*) echo "$l${r#"$t"}|$d" ;; esac
+                         done
+                       done; }
+# The setup folders whose doppler.yaml entries Doppler doesn't have, or has with another
+# project or config (a parent's setup is inherited, and a mapping can change).
+doppler_unset_dirs() { local run d p proj conf scope
+                       doppler_setup_dirs | while IFS='|' read -r run d; do
+                         doppler_yaml_entries "$d/doppler.yaml" | while IFS='|' read -r p proj conf; do
+                           if [ "$p" = . ]; then scope="$run"; else scope="$run/${p%/}"; fi
+                           if [ "$(doppler configure get project --scope "$scope" --plain 2>/dev/null)" != "$proj" ] ||
+                              { [ -n "$conf" ] && [ "$(doppler configure get config --scope "$scope" --plain 2>/dev/null)" != "$conf" ]; }; then
+                             echo "$run"; break
+                           fi
+                         done
+                       done; }
+check_doppler_repos(){ workstation || return 0; [ -z "$(doppler_yaml_dirs)" ] && return 0
+                       doppler me >/dev/null 2>&1 && [ -z "$(doppler_unset_dirs)" ]; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # Servers run the open-source tailscaled from the echo-core playbook (decision 0006); the app
 # only connects after someone signs in, and the two variants can't run side by side.
@@ -397,7 +431,8 @@ help_icloud_local(){ echo "Turn off Optimize Mac Storage: System Settings > your
 help_gh()         { if workstation; then echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too.";
                     elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "A personal GitHub token is set in GH_TOKEN or GITHUB_TOKEN. Remove it from your shell config and open a new terminal; gh can't sign out a token set in the environment.";
                     else echo "gh is signed in with your own GitHub login, which this server shouldn't keep (no FileVault). The action signs it out; that doesn't revoke the token, so revoke it at https://github.com/settings/applications too. If something here needs GitHub, use a fine-grained token limited to those repos: gh auth login --with-token."; fi; }
-help_doppler_repos(){ echo "Not set up for Doppler yet: $(doppler_unset_dirs | sed "s|^$HOME/|~/|" | paste -sd ' ' -). The action runs doppler setup --no-interactive in each, which reads its doppler.yaml."; }
+help_doppler_repos(){ if ! doppler me >/dev/null 2>&1; then echo "Doppler isn't signed in. The action signs in, then sets up each repo with a doppler.yaml."; return; fi
+                     echo "Doppler isn't set up in: $(doppler_unset_dirs | sed "s|^$HOME/|~/|" | paste -sd ' ' -). The action runs doppler setup in each."; }
 help_doppler()    { if workstation; then echo "Doppler CLI not signed in.";
                     else echo "Doppler is signed in with your own login, which this server shouldn't keep (no FileVault). The action signs it out. For what runs here, use a service token for that project and config: doppler configure set token <dp.st...> --scope <dir>."; fi; }
 help_tailscale()  { if workstation; then echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found.";
@@ -511,8 +546,9 @@ act_brewfile()    { chezmoi apply; }
 act_gh()          { if workstation; then gh auth login --web --git-protocol https
                     elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "    Unset GH_TOKEN/GITHUB_TOKEN first (see above)."
                     else gh auth logout --hostname github.com; fi; }
-act_doppler_repos(){ local d; doppler_unset_dirs | while IFS= read -r d; do
-                       (cd "$d" && doppler setup --no-interactive >/dev/null) || echo "    doppler setup failed in $d"; done; }
+act_doppler_repos(){ local d; doppler me >/dev/null 2>&1 || doppler login || return 0
+                     doppler_unset_dirs | while IFS= read -r d; do
+                       (cd "$d" && doppler setup --no-interactive </dev/null >/dev/null) || echo "    doppler setup failed in $d"; done; }
 act_doppler()     { if workstation; then doppler login; else doppler logout --yes --scope /; fi; }
 {{- if not (dig "is_server" false .) }}
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }

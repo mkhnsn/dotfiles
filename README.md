@@ -361,9 +361,11 @@ of installing it, and `run_once_02-tailscale` leaves Tailscale to the playbook. 
 On servers, `gh` and Doppler mustn't carry your personal logins (an always-on Mac has no
 FileVault): `mac-setup` flags a GitHub web login or classic token and any Doppler login
 that isn't a service token, and offers to sign them out. Use a fine-grained GitHub token or a Doppler service
-token scoped to what runs there, or none. On workstations, each folder under the ghq root
-with a `doppler.yaml` needs `doppler setup` before `doppler run` works there; `mac-setup`
-finds the ones that haven't had it and runs `doppler setup --no-interactive` in each. Secrets in the dotfiles come from a 1Password
+token scoped to what runs there, or none. On workstations, each folder in our repos (`github.com/unstable-studios` and
+`github.com/mkhnsn` under the ghq root) with a `doppler.yaml` needs `doppler setup` before
+`doppler run` works there. `mac-setup` finds the ones whose project or config isn't what the file
+names and runs `doppler setup` in each, also through the `~/src/<repo>` links `gget` makes, since
+Doppler matches the path you `cd` through. Secrets in the dotfiles come from a 1Password
 service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 
 ## Workstation apps and macOS settings

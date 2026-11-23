@@ -1029,38 +1029,86 @@ test_btt_window_snapping_must_be_on() {
   assert_open "BetterTouchTool window snapping on"
 }
 
-test_doppler_repos_set_up_from_their_doppler_yaml() {
-  local src="$GHQ_ROOT/github.com/acme" tilde='~'
+# A doppler stub that keeps "scope|project|config" lines in $T/doppler-set: `configure get`
+# reads them, `setup` adds the entries of ./doppler.yaml (one-project form or list form).
+doppler_table_stub() {
+  stub doppler "set='$T/doppler-set'
+case \"\$*\" in
+  me*) [ -f '$T/doppler-out' ] && exit 1; exit 0 ;;
+  'configure get '*) what=\$3; scope=\$(printf '%s' \"\$*\" | sed 's/.*--scope \\(.*\\) --plain.*/\\1/')
+    awk -F'|' -v s=\"\$scope\" -v w=\"\$what\" '\$1 == s { print (w == \"project\" ? \$2 : \$3) }' \"\$set\" ;;
+  setup*) tr -d '\\r' < doppler.yaml | sed 's/[[:space:]]#.*//; s/[\"]//g' | awk -v d=\"\$PWD\" '
+      /project:/ { if (p != \"\") print (q == \"\" ? d : d \"/\" q) \"|\" p \"|\" c; p = \$NF; c = \"\"; q = \"\" }
+      /config:/ { c = \$NF } /path:/ { sub(/.*path:[[:space:]]*/, \"\"); sub(/\\/\$/, \"\"); q = \$0 }
+      END { print (q == \"\" ? d : d \"/\" q) \"|\" p \"|\" c }' >> \"\$set\" ;;
+  *) exit 0 ;;
+esac"
+  : > "$T/doppler-set"
+}
 
-  mkdir -p "$src/done/apps/web" "$src/todo" "$src/todo/node_modules/dep"
-  touch "$src/done/apps/web/doppler.yaml" "$src/todo/doppler.yaml" "$src/todo/node_modules/dep/doppler.yaml"
-  # `doppler setup` records its folder; `configure get project --scope D` answers for recorded folders
-  echo "$src/done/apps/web" > "$T/doppler-set"
-  stub doppler "case \"\$*\" in
-    *'configure get project'*) d=\"\$(printf '%s' \"\$*\" | sed 's/.*--scope \\([^ ]*\\).*/\\1/')\"; grep -qx \"\$d\" '$T/doppler-set' && echo proj ;;
-    setup*) pwd >> '$T/doppler-set' ;;
-    *) exit 0 ;;
-  esac"
+test_doppler_repos_set_up_from_their_doppler_yaml() {
+  local org="$GHQ_ROOT/github.com/unstable-studios" tilde='~'
+  mkdir -p "$org/done/apps/web" "$org/todo" "$org/todo/node_modules/dep" "$GHQ_ROOT/github.com/outsider/repo"
+  printf 'setup:\n  project: web\n  config: base\n' > "$org/done/apps/web/doppler.yaml"
+  printf 'setup:\n  project: todo\n  config: base\n' > "$org/todo/doppler.yaml"
+  touch "$org/todo/node_modules/dep/doppler.yaml" "$GHQ_ROOT/github.com/outsider/repo/doppler.yaml"
+  doppler_table_stub
+  echo "$org/done/apps/web|web|base" >> "$T/doppler-set"
   run "$SCRIPT" --status
   assert_open "Doppler set up in each repo with a doppler.yaml"
   printf 'y\nq\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_has "$tilde/src/github.com/acme/todo."
-  assert_lacks "acme/done"; assert_lacks "node_modules"
-  grep -qx "$src/todo" "$T/doppler-set" || fail "doppler setup didn't run in $src/todo"
+  assert_has "$tilde/src/github.com/unstable-studios/todo."
+  assert_lacks "unstable-studios/done"; assert_lacks "node_modules"; assert_lacks "outsider"
+  grep -qx "$org/todo|todo|base" "$T/doppler-set" || fail "doppler setup didn't run in $org/todo"
   run "$SCRIPT" --status
   assert_done "Doppler set up in each repo with a doppler.yaml"
-  # a doppler.yaml listing several paths is set up when each of them is
-  mkdir -p "$src/mono/infra/a" "$src/mono/infra/b"
-  printf 'setup:\n  - project: a\n    config: base\n    path: infra/a/\n  - project: b\n    config: base\n    path: "infra/b"\n' > "$src/mono/doppler.yaml"
-  echo "$src/mono/infra/a" >> "$T/doppler-set"
+}
+
+test_doppler_repos_reads_list_form_and_wants_its_projects() {
+  local org="$GHQ_ROOT/github.com/unstable-studios"
+  mkdir -p "$org/mono/infra/a" "$org/mono/my dir/b"
+  # CRLF, quotes, trailing comments and a path with a space
+  printf 'setup:\r\n  - project: "a" # the a stack\r\n    config: base\r\n    path: infra/a/ # a\r\n  - project: b\r\n    config: base\r\n    path: "my dir/b"\r\n' > "$org/mono/doppler.yaml"
+  doppler_table_stub
+  echo "$org/mono/infra/a|a|base" >> "$T/doppler-set"
   run "$SCRIPT" --status
   assert_open "Doppler set up in each repo with a doppler.yaml"
-  echo "$src/mono/infra/b" >> "$T/doppler-set"
+  echo "$org/mono/my dir/b|b|base" >> "$T/doppler-set"
   run "$SCRIPT" --status
   assert_done "Doppler set up in each repo with a doppler.yaml"
-  # servers use scoped service tokens instead
-  rm "$T/doppler-set"; touch "$T/doppler-set"
+  # a project inherited from a parent, or a mapping that changed, isn't the one asked for
+  printf 'setup:\n  project: other\n  config: base\n' > "$org/mono/infra/a/doppler.yaml"
+  run "$SCRIPT" --status
+  assert_open "Doppler set up in each repo with a doppler.yaml"
+}
+
+test_doppler_repos_sets_up_each_src_link_too() {
+  local org="$GHQ_ROOT/github.com/unstable-studios"
+  mkdir -p "$org/app/apps/web"
+  printf 'setup:\n  project: web\n  config: base\n' > "$org/app/apps/web/doppler.yaml"
+  ln -s "$org/app" "$GHQ_ROOT/app"   # as gget links repos
+  doppler_table_stub
+  echo "$org/app/apps/web|web|base" >> "$T/doppler-set"
+  run "$SCRIPT" --status
+  assert_open "Doppler set up in each repo with a doppler.yaml"
+  printf 'y\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  grep -q "^$GHQ_ROOT/app/apps/web|web|base$" "$T/doppler-set" || fail "doppler setup didn't run through the ~/src/app link"
+}
+
+test_doppler_repos_signs_in_first_and_skips_servers() {
+  local org="$GHQ_ROOT/github.com/unstable-studios"
+  mkdir -p "$org/todo"; printf 'setup:\n  project: todo\n  config: base\n' > "$org/todo/doppler.yaml"
+  doppler_table_stub; touch "$T/doppler-out"
+  printf 's\nq\n' > "$T/answers"   # skip "Doppler signed in", then stop at this step
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Doppler isn't signed in. The action signs in"
+  [ -s "$T/doppler-set" ] && fail "doppler setup ran while signed out"
+  # with no doppler.yaml anywhere there's nothing to do, signed in or not
+  rm "$org/todo/doppler.yaml"
+  run "$SCRIPT" --status
+  assert_done "Doppler set up in each repo with a doppler.yaml"
   run "$SCRIPT_SERVER" --status
   assert_done "Doppler set up in each repo with a doppler.yaml"
 }
