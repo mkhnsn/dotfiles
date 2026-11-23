@@ -120,7 +120,7 @@ the token never lives in chezmoi.
 #### Windows Terminal theming (from WSL)
 
 `run_windows-terminal.sh.tmpl` mirrors the Ghostty look (JetBrains Mono + the `Darkside`
-scheme, slight transparency) into Windows Terminal. chezmoi runs inside WSL but Windows
+scheme with its bright black lifted to `#7a7a7a`, slight transparency) into Windows Terminal. chezmoi runs inside WSL but Windows
 Terminal owns its `settings.json` on the Windows side, so the script **surgically merges**
 font / color scheme / opacity / default-profile into the existing file (under
 `/mnt/c/Users/<you>/AppData/Local/Packages/Microsoft.WindowsTerminal_*/LocalState/`) rather

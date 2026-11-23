@@ -40,14 +40,14 @@ import json, sys, os, shutil
 
 path, distro = sys.argv[1], sys.argv[2]
 
-# --- Darkside palette (translated from Ghostty's bundled theme) ---
+# --- Darkside palette (Ghostty's bundled theme, with the same brightBlack fix) ---
 SCHEME = {
     "name": "Darkside",
     "background": "#222324", "foreground": "#bababa",
     "cursorColor": "#bbbbbb", "selectionBackground": "#303333",
     "black": "#000000", "red": "#e8341c", "green": "#68c256", "yellow": "#f2d42c",
     "blue": "#1c98e8", "purple": "#8e69c9", "cyan": "#1c98e8", "white": "#bababa",
-    "brightBlack": "#4c4c4c", "brightRed": "#e05a4f", "brightGreen": "#77b869",
+    "brightBlack": "#7a7a7a", "brightRed": "#e05a4f", "brightGreen": "#77b869",
     "brightYellow": "#efd64b", "brightBlue": "#387cd3", "brightPurple": "#957bbe",
     "brightCyan": "#3d97e2", "brightWhite": "#bababa",
 }
