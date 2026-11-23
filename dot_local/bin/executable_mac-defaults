@@ -30,6 +30,10 @@ com.apple.dock|tilesize|int|54
 com.apple.dock|show-recents|bool|false
 com.apple.dock|magnification|bool|false
 com.apple.dock|mru-spaces|bool|false
+com.apple.dock|wvous-tr-corner|int|12
+com.apple.dock|wvous-tr-modifier|int|0
+com.apple.dock|wvous-br-corner|int|4
+com.apple.dock|wvous-br-modifier|int|0
 com.apple.finder|ShowPathbar|bool|true
 com.apple.finder|FXPreferredViewStyle|string|Nlsv
 com.apple.finder|_FXSortFoldersFirst|bool|true
