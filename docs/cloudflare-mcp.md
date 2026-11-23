@@ -32,11 +32,11 @@ Read** so the server can find the account; tokens with client IP filtering aren'
    Unstable Studios zones, picked from the dashboard's permission list. No Edit permission. Stored in 1Password
    at `op://Automation/Cloudflare MCP read-only Token/credential`.
 
-   The token made on 2026-11-22 has every account-level Read permission (checked with
-   `GET /accounts/{id}/tokens/{id}`: 150-odd groups, all named `… Read` or `… Read-Only`) and
-   no zone permissions, so DNS records and zone settings aren't visible. That includes Billing,
-   Audit Logs and the Zero Trust PII reads; narrow it in the dashboard if that's more than
-   Claude should see. Adding zone Read for DNS is a dashboard change, not a code one.
+   The token made on 2026-11-22 has two policies, both only Read (checked with
+   `GET /accounts/{id}/tokens/{id}`: every group is named `… Read` or `… Read-Only`): every
+   account-level Read permission (141 groups), and zone Read (47 groups) for all 28 zones in
+   the account. That includes Billing, Audit Logs and the Zero Trust PII reads; narrow it in
+   the dashboard if that's more than Claude should see.
 2. **Header helper** in the dotfiles, built like `ha-mcp`: `cf-mcp-headers --store-token` copies
    the token from 1Password into the macOS Keychain once (`mac-setup` step `cf_mcp`; Keychain
    service `cf-mcp`, account `cloudflare-readonly`), and at runtime
@@ -86,7 +86,8 @@ of this.
   nothing offers OAuth. Don't sign in to it with OAuth.
 - If the Keychain item ever stops trusting `/usr/bin/security`, reading it shows a prompt, which
   can run past the helper's 10 s; `cf-mcp-headers --store-token` rewrites the item.
-- Zone Read (DNS, zone settings): none today; all zones, or only the ones the Workers repos use.
+- Zone Read covers all zones today; narrow it to the ones the Workers repos use if that's
+  more than needed.
 
 ## Not chosen
 
