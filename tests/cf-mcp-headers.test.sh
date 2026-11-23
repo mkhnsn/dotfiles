@@ -9,7 +9,7 @@ mkdir -p "$T/bin"
 stub() { printf '#!/bin/sh\n%s\n' "$2" > "$T/bin/$1"; chmod +x "$T/bin/$1"; }
 check() { if [ "$2" = "$3" ]; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); printf 'FAIL %s\n  want: %s\n  got:  %s\n' "$1" "$3" "$2"; fi; }
 run() { OUT="$(CF_MCP_STORE=keychain PATH="$T/bin:/usr/bin:/bin" sh "$SCRIPT" "$@" 2>&1)"; RC=$?; }
-runf() { OUT="$(CF_MCP_STORE=file XDG_CONFIG_HOME="$T/cfg" PATH="$T/bin:/usr/bin:/bin" sh "$SCRIPT" "$@" 2>&1)"; RC=$?; }
+runf() { OUT="$(CF_MCP_STORE=file XDG_CONFIG_HOME="$T/cfg" PATH="$T/bin:/usr/bin:/bin" sh "$SCRIPT" 2>&1)"; RC=$?; }
 
 stub security 'echo abc_DEF-123'
 run; check "prints the header as JSON" "$RC $OUT" '0 {"Authorization": "Bearer abc_DEF-123"}'
