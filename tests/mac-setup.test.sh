@@ -983,12 +983,20 @@ test_claude_ha_steps() {
   run "$SCRIPT" --status
   assert_done "Claude Code reports sessions to Home Assistant"
   assert_done "Home Assistant MCP server in Claude Code"
+  assert_done "Cloudflare read-only token in the Keychain"
   rm "$HOME/.config/claude-ha/webhook-url"; stub security 'exit 44'
   run "$SCRIPT" --status
   assert_open "Claude Code reports sessions to Home Assistant"
   assert_open "Home Assistant MCP server in Claude Code"
+  assert_open "Cloudflare read-only token in the Keychain"
+  # The Keychain item the step checks is the one cf-mcp-headers stores.
+  stub security '[ "$*" = "find-generic-password -s cf-mcp -a cloudflare-readonly" ] || exit 44'
+  run "$SCRIPT" --status
+  assert_done "Cloudflare read-only token in the Keychain"
+  stub security 'exit 44'
   run "$SCRIPT_SERVER" --status
   assert_done "Claude Code reports sessions to Home Assistant"
+  assert_done "Cloudflare read-only token in the Keychain"
 }
 
 test_claude_memory_step() {
