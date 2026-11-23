@@ -206,9 +206,10 @@ def wanted(triggers):
             kid = uid("key", n, k) if scope == GLOBAL else uid("key", n, k, scope)
             log = f'"$HOME/.local/bin/trigger" --log-only {n} key'
             out.append((scope, {"BTTActionsToExecute": [
-                            shell_action(log, kid, uid("key", n, k, "log"), 0),
+                            shell_action(log, kid, uid("key", n, k, "log") if scope == GLOBAL else uid("key", n, k, scope, "log"), 0),
                             {"BTTIsPureAction": True, "BTTNamedTriggerToTrigger": n, "BTTOrder": 1, "BTTPredefinedActionType": 248,
-                             "BTTTriggerParentUUID": kid, "BTTUUID": uid("key", n, k, "fire")}],
+                             "BTTTriggerParentUUID": kid,
+                             "BTTUUID": uid("key", n, k, "fire") if scope == GLOBAL else uid("key", n, k, scope, "fire")}],
                         "BTTAutoAdaptToKeyboardLayout": 0, "BTTGestureNotes": t["action"], "BTTOrder": order,
                         "BTTShortcutKeyCode": code, "BTTShortcutKeyboardType": 0,
                         "BTTShortcutModifierKeys": flags, "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
@@ -258,9 +259,9 @@ def cheat_sheet_rows(triggers):
     return [t for t in triggers if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") != MENU]
 
 
-def row(n, name, text, script, menu_uuid, header=False, shown=True):
+def row(n, name, text, script, menu_uuid, header=False, shown=True, uuid_key=None):
     """A cheat-sheet row. App rows start hidden: `hints app` shows the front app's."""
-    iid = uid("hints", "menu", name)
+    iid = uid("hints", "menu", name) if uuid_key is None else uid("hints", "menu", name, uuid_key)
     item = {"BTTTriggerType": 773, "BTTTriggerClass": "BTTTriggerTypeFloatingMenu",
             "BTTOrder": n, "BTTTriggerParentUUID": menu_uuid, "BTTUUID": iid, "BTTMenuName": name,
             "BTTMenuAvailability": 0,
@@ -285,8 +286,11 @@ def hints_pieces(triggers):
     for t in cheat_sheet_rows(triggers):
         rows.append(row(len(rows), t["name"], row_text(t), f'"$HOME/.local/bin/trigger" {t["name"]} menu', menu_uuid,
                         shown=not t.get("apps")))
-    rows.append(row(len(rows), "hints-next", "Next hint", '"$HOME/.local/bin/hints" next', menu_uuid))
-    rows.append(row(len(rows), "hints-mute", "Mute these hints", '"$HOME/.local/bin/hints" mute', menu_uuid))
+    # The hint controls stay last: BTT keeps an existing row's place, so they get new UUIDs (new
+    # rows, placed after the rest) whenever the trigger rows change.
+    after = ",".join(r["BTTMenuName"] for r in rows)
+    for name, text, cmd in (("hints-next", "Next hint", "next"), ("hints-mute", "Mute these hints", "mute")):
+        rows.append(row(len(rows), name, text, f'"$HOME/.local/bin/hints" {cmd}', menu_uuid, uuid_key=after))
     # It sizes to the rows shown (content sizing); rows have a fixed width, so only the height moves.
     shown = [r for r in rows if r["BTTMenuConfig"]["BTTMenuItemVisibleWhileActive"]]
     height = 2 * PAD + len(shown) * ROW_H + (len(shown) - 1) * GAP
@@ -368,6 +372,9 @@ def merge(old, new):
     return out
 
 
+CLASHES = []  # hand-made BTT keyboard triggers on a generated key, found by generate()
+
+
 def generate(preset, triggers):
     """Returns the preset and what it dropped: generated triggers no longer in triggers.toml,
     or named triggers made in BTT. BTT renumbers triggers 0, 1, 2… on import, so a trigger keeps
@@ -398,6 +405,11 @@ def generate(preset, triggers):
         keep = {w["BTTUUID"] for w in new}
         dropped += [t.get("BTTTriggerName") or t.get("BTTGestureNotes") or t.get("BTTUUID")
                     for t in current if generated(t) and t.get("BTTUUID") not in keep]
+        mine = {(w.get("BTTShortcutKeyCode"), w.get("BTTShortcutModifierKeys")) for w in new
+                if w.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"}
+        CLASHES.extend(f"{t.get('BTTGestureNotes') or t.get('BTTUUID')} ({scope})" for t in kept
+                       if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"
+                       and (t.get("BTTShortcutKeyCode"), t.get("BTTShortcutModifierKeys")) in mine)
         # In BTT's order, as it exports them.
         section["BTTTriggers"] = sorted(kept + new, key=lambda t: t.get("BTTOrder", 0))
     return preset, dropped
@@ -429,6 +441,10 @@ def main():
         text = f.read()
     d, dropped = generate(json.loads(text), triggers)
     out = dump(d)
+    if CLASHES:
+        print("\n".join(f"conflict: {c} is a hand-made BTT trigger on a key triggers.toml generates; "
+                        "delete it in BTT (or the preset)" for c in CLASHES))
+        sys.exit(1)
     for name in dropped:
         print(f"{'dropping' if a.write else 'not in triggers.toml'}: {name} (named triggers and the "
               "keys that fire them come from triggers.toml; add it there to keep it)")

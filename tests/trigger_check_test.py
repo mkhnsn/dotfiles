@@ -153,6 +153,40 @@ class Fixture(unittest.TestCase):
         sections = {a["BTTAppBundleIdentifier"]: a for a in self.read_preset()["BTTPresetContent"]}
         self.assertEqual(sections["com.microsoft.teams2"]["BTTTriggers"], [])
 
+    def test_multi_app_keys_have_their_own_uuids(self):
+        self.toml(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = ["a.one", "b.two"]'))
+        uuids = []
+        def walk(o):
+            if isinstance(o, dict):
+                if "BTTUUID" in o:
+                    uuids.append(o["BTTUUID"])
+                for v in o.values():
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+        walk([w for _, w in tc.wanted(tc.load(self.d))])
+        self.assertEqual(len(uuids), len(set(uuids)))
+
+    def test_hand_made_trigger_on_a_generated_key_is_reported(self):
+        d = self.read_preset()
+        d["BTTPresetContent"].append({"BTTAppBundleIdentifier": "us.zoom.xos", "BTTTriggers": [
+            {"BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut", "BTTShortcutKeyCode": 40,
+             "BTTShortcutModifierKeys": tc.HYPER, "BTTUUID": "HAND", "BTTGestureNotes": "old camera",
+             "BTTActionsToExecute": [{"BTTPredefinedActionType": 128, "BTTUUID": "HAND-A"}]}]})
+        self.preset(d)
+        self.toml(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = ["us.zoom.xos"]'))
+        r = self.run_check("--write")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("conflict: old camera (us.zoom.xos) is a hand-made BTT trigger", r.stdout)
+
+    def test_hint_controls_stay_last_when_a_trigger_is_added(self):
+        self.run_check("--write")
+        self.toml(GOOD + '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n')
+        self.run_check("--write")
+        _, menu, _, _ = self.hints_parts()
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]][-3:], ["late", "hints-next", "hints-mute"])
+
     def test_btt_fields_are_checked(self):
         p = self.problems(GOOD.replace('data = { BTTMicMuteApplyToAllInputDevices = true }', 'fields = { BTTWhatever = 1 }'))
         self.assertTrue(any("fields are the action's own keys" in x for x in p), p)
@@ -369,7 +403,7 @@ class Fixture(unittest.TestCase):
         self.toml(GOOD + '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n')
         self.run_check("--write")
         _, menu, _, _ = self.hints_parts()
-        self.assertEqual(menu["BTTMenuItems"][-1]["BTTMenuName"], "late")
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]][-3:], ["late", "hints-next", "hints-mute"])
 
     def test_apps_must_be_bundle_ids(self):
         p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = "us.zoom.xos"'))

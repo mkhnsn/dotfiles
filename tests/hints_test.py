@@ -284,6 +284,18 @@ class Hints(unittest.TestCase):
         self.run_hints("refresh")  # after btt-sync import reset them
         self.assertEqual(len(self.menu_updates()), 2 * n)
 
+    def test_a_failed_row_update_is_tried_again(self):
+        self.run_hints("setup")
+        self.stub("osascript", "exit 1")  # BTT still reloading
+        self.front("us.zoom.xos", "zoom.us")
+        self.run_hints("app")
+        self.assertIsNone(self.state_json()["rows"].get("app"))  # not recorded as done
+        self.stub("osascript", f'case "$*" in *update_menu_item*) eval "i=\\${{$(($#-1))}}"; eval "j=\\${{$#}}"; '
+                               f'printf "MENU | %s | %s\\n" "$i" "$j" >> {self.notes} ;; esac')
+        self.run_hints("app")
+        self.assertEqual(self.state_json()["rows"]["app"], "us.zoom.xos")
+        self.assertEqual(self.row_updates("zoom-video")[-1]["BTTMenuItemVisibleWhileActive"], 1)
+
     def test_rows_follow_the_app_with_hints_off(self):
         self.run_hints("off")
         self.front("us.zoom.xos", "zoom.us")

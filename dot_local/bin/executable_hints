@@ -263,16 +263,18 @@ def update_cheat_sheet(rows):
               'tell application "BetterTouchTool" to update_menu_item menu_name (item 1 of argv) '
               'item_name (item 2 of argv) json (item 3 of argv)',
               'end run']
+    ok = True
     for name, payload in rows:
         try:
             r = subprocess.run(["osascript"] + sum((["-e", line] for line in script), [])
                                + [TC.MENU, name, json.dumps(payload)], capture_output=True, text=True, timeout=10)
             if r.returncode:
                 print(f"hints: couldn't update the cheat sheet row {name}: {r.stderr.strip()}", file=sys.stderr)
+                ok = False
         except subprocess.TimeoutExpired:
             print("hints: BTT didn't answer; the cheat sheet keeps its rows", file=sys.stderr)
             return False
-    return True
+    return ok  # on a failure the state isn't saved, so the next run tries again
 
 
 def setup_changed(setup, triggers, state):

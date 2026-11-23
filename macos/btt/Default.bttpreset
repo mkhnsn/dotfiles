@@ -955,6 +955,7 @@
           },
           "BTTMenuItems" : [
             {
+              "BTTAdditionalConfiguration" : "Menu Item: Header",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -982,6 +983,7 @@
               "BTTUUID" : "84A6384F-8B83-5513-B929-9FA14ECB4CF4"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: mic-mute",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1021,6 +1023,7 @@
               "BTTUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: camera-zoom",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1060,6 +1063,7 @@
               "BTTUUID" : "8425EDD4-CA67-5DC9-94F7-891248A0FA44"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: camera-teams",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1099,6 +1103,7 @@
               "BTTUUID" : "90FEDD82-7DBF-5F23-84D8-54A0929C7DD8"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: camera-meet",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1138,6 +1143,7 @@
               "BTTUUID" : "8982BC67-5EAC-5617-9420-236A28713257"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: keep-awake",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1177,6 +1183,7 @@
               "BTTUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: mode-next",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1241,18 +1248,18 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
-                  "BTTTriggerParentUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB",
+                  "BTTTriggerParentUUID" : "EA8D7D9E-B683-5472-A450-3F8349A7F817",
                   "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
                 }
               ],
               "BTTMenuName" : "hints-next",
-              "BTTOrder" : 7,
+              "BTTOrder" : 9,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerName" : "Menu Item: hints-next",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
               "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB"
+              "BTTUUID" : "EA8D7D9E-B683-5472-A450-3F8349A7F817"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1280,18 +1287,18 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
-                  "BTTTriggerParentUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0",
+                  "BTTTriggerParentUUID" : "61E74DB0-54A7-5556-8709-5333A024DE24",
                   "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
                 }
               ],
               "BTTMenuName" : "hints-mute",
-              "BTTOrder" : 8,
+              "BTTOrder" : 10,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerName" : "Menu Item: hints-mute",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
               "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "B4A53700-C30C-54C8-94D2-22C0A44978C0"
+              "BTTUUID" : "61E74DB0-54A7-5556-8709-5333A024DE24"
             }
           ],
           "BTTMenuName" : "Hints",
@@ -1332,7 +1339,7 @@
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
               "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-meet key",
               "BTTTriggerParentUUID" : "8965996E-CA16-56F8-BC20-9CA833FD020F",
-              "BTTUUID" : "ABCE2CC9-5B6C-5B6B-AA71-88B35A110E86"
+              "BTTUUID" : "22DB4504-3C94-59AF-A0BA-FB511295A7B6"
             },
             {
               "BTTIsPureAction" : true,
@@ -1341,7 +1348,7 @@
               "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
               "BTTPredefinedActionType" : 248,
               "BTTTriggerParentUUID" : "8965996E-CA16-56F8-BC20-9CA833FD020F",
-              "BTTUUID" : "2F2B8BA4-8B1A-557F-B3F8-40BE03C1C01F"
+              "BTTUUID" : "95585414-3FC3-5BA9-9669-2905BB7B4476"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
@@ -1365,7 +1372,7 @@
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
               "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-meet key",
               "BTTTriggerParentUUID" : "DF8A32A5-E3B1-587F-8DED-3D572A1EDCF5",
-              "BTTUUID" : "E2A0D0C4-E7C1-5896-ADE4-C3684BDFDBDC"
+              "BTTUUID" : "6CDB3CD9-0C66-5575-A63D-D42C90EAE005"
             },
             {
               "BTTIsPureAction" : true,
@@ -1374,7 +1381,7 @@
               "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
               "BTTPredefinedActionType" : 248,
               "BTTTriggerParentUUID" : "DF8A32A5-E3B1-587F-8DED-3D572A1EDCF5",
-              "BTTUUID" : "31E86F02-B528-56DE-B620-2261CE7F0211"
+              "BTTUUID" : "5F4ED252-0889-55FF-9ED9-C5D97FDDF008"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
@@ -1405,7 +1412,7 @@
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
               "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-teams key",
               "BTTTriggerParentUUID" : "07A3BCA0-9E0F-5590-A1F3-07D4492A29A3",
-              "BTTUUID" : "168BE6CA-57F7-50D5-AEB2-5547161532E3"
+              "BTTUUID" : "82A9D0A4-2921-5812-A0C6-09A9B9192EA6"
             },
             {
               "BTTIsPureAction" : true,
@@ -1414,7 +1421,7 @@
               "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
               "BTTPredefinedActionType" : 248,
               "BTTTriggerParentUUID" : "07A3BCA0-9E0F-5590-A1F3-07D4492A29A3",
-              "BTTUUID" : "F1604D6D-F5E0-58A2-B68F-15FDFD9B53F4"
+              "BTTUUID" : "245A36B6-E2DB-5B18-A052-9A633850C4E3"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
@@ -1438,7 +1445,7 @@
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
               "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-teams key",
               "BTTTriggerParentUUID" : "CD4BEB86-BA67-5AB6-BB66-459804A2FA7D",
-              "BTTUUID" : "2248CEB5-F0A5-589A-BC04-D61BF81802B0"
+              "BTTUUID" : "4BF01F4E-858C-54A8-B110-EBEF04AB9376"
             },
             {
               "BTTIsPureAction" : true,
@@ -1447,7 +1454,7 @@
               "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
               "BTTPredefinedActionType" : 248,
               "BTTTriggerParentUUID" : "CD4BEB86-BA67-5AB6-BB66-459804A2FA7D",
-              "BTTUUID" : "AE214DC6-FE4B-5D97-9D1D-C53B2B3D94CE"
+              "BTTUUID" : "08E0E4B3-8FE9-52A3-AD68-90FC54BD7186"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
@@ -1478,7 +1485,7 @@
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
               "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-zoom key",
               "BTTTriggerParentUUID" : "E2A79CAB-F23C-53A1-BF7D-B874216574EB",
-              "BTTUUID" : "D200C159-4B6D-547B-804F-C1E31E18A1EB"
+              "BTTUUID" : "141C2848-E5C5-51B2-B653-5D8766070284"
             },
             {
               "BTTIsPureAction" : true,
@@ -1487,7 +1494,7 @@
               "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
               "BTTPredefinedActionType" : 248,
               "BTTTriggerParentUUID" : "E2A79CAB-F23C-53A1-BF7D-B874216574EB",
-              "BTTUUID" : "52A15125-25B9-5441-B220-23E9061AE56C"
+              "BTTUUID" : "BC00CB50-42C3-5F1A-9D20-A89E2BA561D6"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
@@ -1511,7 +1518,7 @@
               "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
               "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only camera-zoom key",
               "BTTTriggerParentUUID" : "7137FD02-5937-58C6-9A9A-6B7BF811350F",
-              "BTTUUID" : "ED77027D-235B-5444-AF64-90DC5AA0D96B"
+              "BTTUUID" : "AB525C96-EC50-5BB4-B778-11247D390CBA"
             },
             {
               "BTTIsPureAction" : true,
@@ -1520,7 +1527,7 @@
               "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
               "BTTPredefinedActionType" : 248,
               "BTTTriggerParentUUID" : "7137FD02-5937-58C6-9A9A-6B7BF811350F",
-              "BTTUUID" : "D9594379-0FD3-566F-B875-FC08D14B5B6B"
+              "BTTUUID" : "2431A12D-9813-5610-AB8D-5F6B50B8BD7B"
             }
           ],
           "BTTAutoAdaptToKeyboardLayout" : 0,
@@ -1539,5 +1546,5 @@
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "8E151B6B-C775-43E7-9D8F-1B5A0741445F"
+  "BTTPresetUUID" : "8044B6C5-6D26-46FF-B708-27934990D561"
 }
