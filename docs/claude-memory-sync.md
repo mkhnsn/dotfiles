@@ -83,10 +83,11 @@ them. `~/.local/state/claude-memory.log` has the background syncs' output.
    - `sync` is: commit local changes (`<host>: <n> memories`), fetch, merge, point checkouts at
      the repo, move their new memories in, commit, push. Committing first means a crash never leaves
      changes that block the next merge. An `flock` on `~/.local/state/claude-memory.lock` keeps
-     two sessions and the timer from running git at once; the kernel releases it when the
+     sessions and the launchd agent or cron job from running git at once; the kernel releases it when the
      process ends, however it ends (a hook timeout included). While holding it, git's own lock
      files older than a minute are removed, since only a killed git leaves them.
-   - Hooks, agent and timer are in the dotfiles and do nothing until the clone exists.
+   - The hooks and the launchd agent are in the dotfiles, the cron job in echo-core; all of them
+     do nothing until the clone exists.
 4. **Conflicts**: merges, not rebases, so "ours" is always this machine. Two merge drivers
    (`.gitattributes` in the repo, set up in `.git/config` by `claude-memory` on every run):
    - `MEMORY.md`: three-way on index lines (`- [`, `* [`, `1. [`): this machine's text, minus
