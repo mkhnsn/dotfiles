@@ -1,0 +1,34 @@
+#!/bin/sh
+# Auth header for Cloudflare's API MCP server (https://mcp.cloudflare.com/mcp), used as the
+# server's `headersHelper` in a project's .mcp.json. The token is a read-only account token:
+# the server has no read-only switch, so the token is the only limit (docs/cloudflare-mcp.md).
+#
+# Claude Code gives a headersHelper 10 s and runs it on every connect, so the token is read
+# from the macOS Keychain, never from 1Password at runtime. `cf-mcp-headers --store-token`
+# copies it there from 1Password once (mac-setup runs it).
+SERVICE=cf-mcp
+ACCOUNT=cloudflare-readonly
+REF="op://Automation/Cloudflare MCP read-only Token/credential"
+
+if [ "${1:-}" = --store-token ]; then
+  token="$(op read "$REF")" || exit 1
+  # The token reaches security on stdin, never in argv where other processes could see it
+  # (`security -i` reads the command from stdin; printf is a shell builtin). A Cloudflare
+  # token is letters, digits, - and _, so it is safe unquoted in the command.
+  case "$token" in *[!A-Za-z0-9_-]*|"") echo "cf-mcp-headers: unexpected token format" >&2; exit 1 ;; esac
+  printf 'add-generic-password -U -s %s -a %s -l "Cloudflare read-only token (cf-mcp-headers)" -w %s\n' \
+    "$SERVICE" "$ACCOUNT" "$token" | security -i >/dev/null 2>&1
+  [ "$(security find-generic-password -s "$SERVICE" -a "$ACCOUNT" -w 2>/dev/null)" = "$token" ] || {
+    echo "cf-mcp-headers: the Keychain item doesn't match the token; nothing usable stored" >&2; exit 1; }
+  echo "Stored the Cloudflare read-only token in the Keychain ($SERVICE)."
+  exit 0
+fi
+
+[ $# -eq 0 ] || { echo "usage: cf-mcp-headers [--store-token]" >&2; exit 2; }
+token="$(security find-generic-password -s "$SERVICE" -a "$ACCOUNT" -w 2>/dev/null)"
+if [ -z "$token" ]; then
+  echo "cf-mcp-headers: no Cloudflare token in the Keychain; run: cf-mcp-headers --store-token" >&2
+  exit 1
+fi
+case "$token" in *[!A-Za-z0-9_-]*) echo "cf-mcp-headers: the Keychain token has unexpected characters" >&2; exit 1 ;; esac
+printf '{"Authorization": "Bearer %s"}\n' "$token"

@@ -204,6 +204,9 @@ CLAUDE_HA_REF="op://Infrastructure/HA webhook - Claude sessions/credential"
 check_claude_ha()  { workstation || return 0; [ -s "$CLAUDE_HA_URL_FILE" ]; }
 check_ha_mcp()     { workstation || return 0; grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null &&
                        security find-generic-password -s ha-mcp -a echo-homeassistant >/dev/null 2>&1; }
+# Cloudflare's API MCP server reads a read-only token from the Keychain (cf-mcp-headers); the
+# server itself is registered per repo in that repo's .mcp.json (docs/cloudflare-mcp.md).
+check_cf_mcp()     { workstation || return 0; security find-generic-password -s cf-mcp -a cloudflare-readonly >/dev/null 2>&1; }
 check_op_browser() { workstation || return 0; confirmed "op_browser:$1"; }
 # After a dotfiles update changes .chezmoi.toml.tmpl, chezmoi warns until `chezmoi init` runs.
 chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep -q "config file template has changed"; }
@@ -363,6 +366,7 @@ help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-o
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
 help_claude_ha()   { echo "Write the Home Assistant webhook URL that Claude Code's session hooks post to (desk panel, phone alerts), from 1Password: Infrastructure > HA webhook - Claude sessions."; }
+help_cf_mcp()      { echo "Copy the read-only Cloudflare API token from 1Password (Automation › Cloudflare MCP read-only Token) to the Keychain, for the Cloudflare MCP server in repos that use it."; }
 help_ha_mcp()      { command -v claude >/dev/null 2>&1 || { echo "The Claude Code CLI isn't installed (cask claude-code in the Brewfile). Run the Brewfile step first, or: brew install --cask claude-code"; return; }
                      echo "Register the homeassistant MCP server in Claude Code (user scope) and copy its Home Assistant token from 1Password to the Keychain. The server (~/.local/bin/ha-mcp) is read-only."; }
 help_op_browser()  { case "$1" in
@@ -465,6 +469,7 @@ act_ha_mcp()       {
   grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null ||
     claude mcp add --scope user homeassistant -- "$HOME/.local/bin/ha-mcp" </dev/null
 }
+act_cf_mcp()       { "$HOME/.local/bin/cf-mcp-headers" --store-token; }
 act_op_browser()   { case "$1" in chrome) open -a "Google Chrome" ;; autofill) open -b com.apple.systempreferences ;; *) open -a 1Password ;; esac; }
 act_license()      { open -a "$(license_field "$1" 2)" 2>/dev/null || echo "    $1 isn't installed yet."; }
 act_onedrive()     { open -a OneDrive; }
@@ -602,6 +607,7 @@ onepassword|1Password CLI connected|Tools
 op_ssh|1Password SSH agent on|Tools
 claude_ha|Claude Code reports sessions to Home Assistant|Tools
 ha_mcp|Home Assistant MCP server in Claude Code|Tools
+cf_mcp|Cloudflare read-only token in the Keychain|Tools
 op_browser:chrome|Chrome signed in to your Google profile|Tools
 op_browser:connect|1Password connected to the browser|Tools
 op_browser:quick_access|1Password Quick Access on Cmd+Shift+Space|Tools
