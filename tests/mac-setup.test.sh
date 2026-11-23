@@ -20,6 +20,7 @@ setup() {
   T="$(mktemp -d)"
   export MAC_SETUP_TM_PREFS="$T/tm-prefs"
   export HOME="$T/home" XDG_STATE_HOME="$T/state" XDG_CONFIG_HOME="$T/home/.config" MAC_SETUP_APPS="$T/Applications" MAC_SETUP_BREW="$T/none" MAC_SETUP_SYSAPPS="$T/System"
+  export GHQ_ROOT="$T/home/src"   # never the real ~/src
   export MAC_SETUP_LOCKHART="$T/lockhart" MAC_SETUP_ONEDRIVE="$T/OneDrive"
   mkdir -p "$T/OneDrive"
   STUBS="$HOME/.local/bin"
@@ -1026,6 +1027,42 @@ test_btt_window_snapping_must_be_on() {
   stub defaults 'case "$*" in *windowSnappingEnabled*) echo 0 ;; *) printf "    {\n        LSHandlerRoleAll = \"com.google.chrome\";\n        LSHandlerURLScheme = http;\n    },\n" ;; esac'
   run "$SCRIPT" --status
   assert_open "BetterTouchTool window snapping on"
+}
+
+test_doppler_repos_set_up_from_their_doppler_yaml() {
+  local src="$GHQ_ROOT/github.com/acme" tilde='~'
+
+  mkdir -p "$src/done/apps/web" "$src/todo" "$src/todo/node_modules/dep"
+  touch "$src/done/apps/web/doppler.yaml" "$src/todo/doppler.yaml" "$src/todo/node_modules/dep/doppler.yaml"
+  # `doppler setup` records its folder; `configure get project --scope D` answers for recorded folders
+  echo "$src/done/apps/web" > "$T/doppler-set"
+  stub doppler "case \"\$*\" in
+    *'configure get project'*) d=\"\$(printf '%s' \"\$*\" | sed 's/.*--scope \\([^ ]*\\).*/\\1/')\"; grep -qx \"\$d\" '$T/doppler-set' && echo proj ;;
+    setup*) pwd >> '$T/doppler-set' ;;
+    *) exit 0 ;;
+  esac"
+  run "$SCRIPT" --status
+  assert_open "Doppler set up in each repo with a doppler.yaml"
+  printf 'y\nq\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "$tilde/src/github.com/acme/todo."
+  assert_lacks "acme/done"; assert_lacks "node_modules"
+  grep -qx "$src/todo" "$T/doppler-set" || fail "doppler setup didn't run in $src/todo"
+  run "$SCRIPT" --status
+  assert_done "Doppler set up in each repo with a doppler.yaml"
+  # a doppler.yaml listing several paths is set up when each of them is
+  mkdir -p "$src/mono/infra/a" "$src/mono/infra/b"
+  printf 'setup:\n  - project: a\n    config: base\n    path: infra/a/\n  - project: b\n    config: base\n    path: "infra/b"\n' > "$src/mono/doppler.yaml"
+  echo "$src/mono/infra/a" >> "$T/doppler-set"
+  run "$SCRIPT" --status
+  assert_open "Doppler set up in each repo with a doppler.yaml"
+  echo "$src/mono/infra/b" >> "$T/doppler-set"
+  run "$SCRIPT" --status
+  assert_done "Doppler set up in each repo with a doppler.yaml"
+  # servers use scoped service tokens instead
+  rm "$T/doppler-set"; touch "$T/doppler-set"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Doppler set up in each repo with a doppler.yaml"
 }
 
 # ---- Run -------------------------------------------------------------------------

@@ -231,6 +231,18 @@ check_icloud_local(){ workstation || return 0; [ "$(defaults read com.apple.bird
 doppler_personal() { local t; t="$(doppler me --json --scope / 2>/dev/null | sed -n 's/.*"type": *"\([^"]*\)".*/\1/p' | head -1)"
                      case "$t" in ""|service_token|service_account) return 1 ;; *) return 0 ;; esac; }
 check_doppler()    { if workstation; then doppler me >/dev/null 2>&1; else ! doppler_personal; fi; }
+# Folders under the ghq root with a doppler.yaml (dependencies skipped), and the ones Doppler
+# has no project for yet: `doppler run` there fails until `doppler setup` reads the file.
+doppler_yaml_dirs()  { find "${GHQ_ROOT:-$HOME/src}" -maxdepth 6 \( -name node_modules -o -name .git -o -name .terraform \) -prune \
+                         -o -name doppler.yaml -print 2>/dev/null | sed 's|/doppler.yaml$||' | sort; }
+# A doppler.yaml is one project for its folder, or a list of them, each with a path under it.
+doppler_unset_dirs() { local d p ps; doppler_yaml_dirs | while IFS= read -r d; do
+                         ps="$(sed -n 's/^[[:space:]-]*path:[[:space:]]*//p' "$d/doppler.yaml" | tr -d "\"'")"
+                         for p in ${ps:-.}; do
+                           [ "$p" = . ] && p="$d" || p="$d/${p%/}"
+                           [ -n "$(doppler configure get project --scope "$p" --plain 2>/dev/null)" ] || { echo "$d"; break; }
+                         done; done; }
+check_doppler_repos(){ workstation || return 0; [ -z "$(doppler_unset_dirs)" ]; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # Servers run the open-source tailscaled from the echo-core playbook (decision 0006); the app
 # only connects after someone signs in, and the two variants can't run side by side.
@@ -385,6 +397,7 @@ help_icloud_local(){ echo "Turn off Optimize Mac Storage: System Settings > your
 help_gh()         { if workstation; then echo "GitHub CLI not signed in. The action runs gh auth login (HTTPS); signing in with SSH works too.";
                     elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "A personal GitHub token is set in GH_TOKEN or GITHUB_TOKEN. Remove it from your shell config and open a new terminal; gh can't sign out a token set in the environment.";
                     else echo "gh is signed in with your own GitHub login, which this server shouldn't keep (no FileVault). The action signs it out; that doesn't revoke the token, so revoke it at https://github.com/settings/applications too. If something here needs GitHub, use a fine-grained token limited to those repos: gh auth login --with-token."; fi; }
+help_doppler_repos(){ echo "Not set up for Doppler yet: $(doppler_unset_dirs | sed "s|^$HOME/|~/|" | paste -sd ' ' -). The action runs doppler setup --no-interactive in each, which reads its doppler.yaml."; }
 help_doppler()    { if workstation; then echo "Doppler CLI not signed in.";
                     else echo "Doppler is signed in with your own login, which this server shouldn't keep (no FileVault). The action signs it out. For what runs here, use a service token for that project and config: doppler configure set token <dp.st...> --scope <dir>."; fi; }
 help_tailscale()  { if workstation; then echo "Tailscale isn't connected. Install the app, open it and sign in; turn on its CLI in the app's settings if 'tailscale' isn't found.";
@@ -498,6 +511,8 @@ act_brewfile()    { chezmoi apply; }
 act_gh()          { if workstation; then gh auth login --web --git-protocol https
                     elif [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]; then echo "    Unset GH_TOKEN/GITHUB_TOKEN first (see above)."
                     else gh auth logout --hostname github.com; fi; }
+act_doppler_repos(){ local d; doppler_unset_dirs | while IFS= read -r d; do
+                       (cd "$d" && doppler setup --no-interactive >/dev/null) || echo "    doppler setup failed in $d"; done; }
 act_doppler()     { if workstation; then doppler login; else doppler logout --yes --scope /; fi; }
 {{- if not (dig "is_server" false .) }}
 act_tailscale()   { [ -d "$APPS/Tailscale.app" ] || brew install --cask tailscale-app; open -a Tailscale; }
@@ -621,6 +636,7 @@ brewfile|Brewfile packages installed|Dotfiles
 gh|$GH_TITLE|Accounts
 claude_memory|Claude Code memories synced (claude-memory)|Accounts
 doppler|$DOPPLER_TITLE|Accounts
+doppler_repos|Doppler set up in each repo with a doppler.yaml|Accounts
 icloud_docs|Desktop & Documents in iCloud|Accounts
 icloud_local|iCloud keeps files downloaded (Optimize Mac Storage off)|Accounts
 ts_app|No Tailscale app (servers use tailscaled)|Network
