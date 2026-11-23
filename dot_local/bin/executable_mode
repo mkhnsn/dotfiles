@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """mode: switch work modes (macos/modes.toml); Hyper+1–5 run `mode <name>`, Hyper+0 `mode next`.
 
-Docked (an external display, lid closed), a mode lives on a desktop of its own. Switching goes to
+Docked (an external display), a mode lives on a desktop of its own. Switching goes to
 the mode's desktop; a mode without one (never opened, or its desktop closed since) takes the
 desktop you're on, unless another mode has it: then add a desktop in Mission Control and switch
 there. It opens the mode's apps on that desktop and lays them out in the mode's columns on the

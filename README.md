@@ -517,12 +517,13 @@ next` steps (Hyper+0), `mode list` shows them.
 | Hyper+4 | Comms | Outlook 1/2, Slack 1/2 |
 | Hyper+5 | Laser | xTool Studio 2/3, Chrome 1/3 |
 
-- **Docked** (an external display, lid closed): each mode has a desktop of its own. Switching
+- **Docked** (an external display): each mode has a desktop of its own. Switching
   goes there and lays the mode's apps out in its columns. A mode without a desktop (never opened,
   or its desktop closed since) takes the one you're on, unless another mode has it: add a desktop
   in Mission Control (⌃↑, the + at the top) and switch there. No set number of desktops; close a
   mode's desktop any time. Chrome and VS Code get a window on each mode's desktop; one-window apps
-  (Slack, Outlook) are moved to the mode's desktop.
+  (Slack, Outlook) are moved to the mode's desktop. An app whose window doesn't arrive (not open
+  yet, or in full screen) is left out, with a notice; nothing else is resized in its place.
 - **Travel** (the laptop screen, maybe a portable display): each of the mode's apps goes full
   screen, a space of its own.
 - After a display change BTT runs `mode apply`, which lays the current mode out again if its
