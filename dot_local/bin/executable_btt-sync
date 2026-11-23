@@ -12,6 +12,8 @@
 #   btt-sync export   BTT -> repo (then review and commit the diff)
 #   btt-sync import   repo -> BTT (on a new Mac, after installing BTT from folivora.ai)
 #   btt-sync normalize   tidy the repo preset (export does this)
+#   btt-sync generate    write macos/btt/triggers.toml's named triggers into the repo preset
+#                        (trigger-check --write); import checks they're current first
 # Export keeps diffs meaningful: keys are sorted, machine state (launch counts, lid state)
 # and per-trigger update times are dropped, and the settings in PINNED keep their values whatever the Mac had.
 # The preset includes BTT's general settings. It's in a public repo: keep secrets out of triggers.
@@ -29,7 +31,8 @@ if [[ ! -d /Applications/BetterTouchTool.app ]]; then
   exit 1
 fi
 
-preset="${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}/macos/btt/Default.bttpreset"
+src="${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}"
+preset="$src/macos/btt/Default.bttpreset"
 
 # Normalize a preset file in place (default: the repo's): sorted keys, no machine state,
 # pinned settings. Written to a temp file first, so a failure leaves the file as it was.
@@ -80,6 +83,10 @@ case "${1:-export}" in
     # BTT can't write to every path; export to Downloads, then move into the repo.
     tmp="$HOME/Downloads/.btt-sync-$$.bttpreset"
     osascript -e "tell application \"BetterTouchTool\" to export_preset \"Default\" outputPath \"$tmp\" compress false includeSettings true" >/dev/null
+    # BTT writes the file after the call returns; wait up to 10 s for it.
+    for _ in $(seq 50); do [[ -s "$tmp" ]] && break; sleep 0.2; done
+    [[ -s "$tmp" ]] || { echo "btt-sync: BTT didn't write the export"; exit 1; }
+    sleep 0.5  # let it finish writing
     # Normalize the export before it replaces the repo's preset.
     normalize "$tmp" || { rm -f "$tmp" "$tmp.tmp"; exit 1; }
     mv "$tmp" "$preset"
@@ -89,12 +96,17 @@ case "${1:-export}" in
   normalize)
     normalize
     ;;
+  generate)
+    trigger-check --source "$src" --write
+    ;;
   import)
+    trigger-check --source "$src" || {
+      echo "btt-sync: fix triggers.toml or run btt-sync generate first"; exit 1; }
     osascript -e "tell application \"BetterTouchTool\" to import_preset \"$preset\"" >/dev/null
     echo "Imported $preset. Check BTT > Configuration; activate the preset if it isn't."
     ;;
   *)
-    echo "usage: btt-sync [export|import|normalize]"
+    echo "usage: btt-sync [export|import|normalize|generate]"
     exit 1
     ;;
 esac

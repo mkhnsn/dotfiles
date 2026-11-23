@@ -11,6 +11,9 @@ straight from their configs:
   alttab    macos/prefs/com.lwouis.alt-tab-macos.plist (switcher shortcuts; AltTab's defaults
             when unset)
 
+The keys of BTT named triggers are listed in macos/btt/triggers.toml instead (trigger-check
+generates their bindings); they join the registry as BTT's.
+
 Other owners (Raycast, whose settings are encrypted, or an app's own menus) are entered by hand
 with source = "manual"; they can't be read, so they're only checked for conflicts.
 
@@ -144,6 +147,13 @@ def overlaps(a, b):
 def check(src, registry_path):
     with open(registry_path, "rb") as f:
         reg = tomllib.load(f).get("shortcut", [])
+    # BTT named triggers list their own keys (macos/btt/triggers.toml); they're BTT's.
+    triggers = os.path.join(src, "macos/btt/triggers.toml")
+    if os.path.exists(triggers):
+        with open(triggers, "rb") as f:
+            for t in tomllib.load(f).get("trigger", []):
+                reg += [{"keys": k, "owner": "btt", "action": f"{t['action']} (trigger {t['name']})"}
+                        for k in t.get("keys", [])]
     problems = []
     for e in reg:
         e["keys"] = normalize(e["keys"])

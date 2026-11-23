@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""trigger-check: BTT named triggers from macos/btt/triggers.toml, checked and generated.
+
+Each [[trigger]] becomes a BTT named trigger (type 643) running its command or BTT action, plus
+one global keyboard trigger per key. A key trigger logs (`trigger --log-only <name> key`) and
+then fires the named trigger (action 248), so every surface runs the same thing.
+
+The generator owns, in the preset's global triggers, every named trigger and every keyboard
+trigger that fires a named trigger; anything else is left alone. It updates triggers in place by
+UUID (derived from the trigger name), so what BTT adds on export survives a regenerate.
+
+Fails when:
+  invalid      a field is missing or wrong, a name or key is used twice, or `run` names a
+               command that isn't in dot_local/bin
+  unreachable  a setup (docked with the lid closed or open, laptop only) has no surface for it;
+               every trigger needs a Hyper key (⌃⌥⇧⌘ + key), the keyboard being in every setup
+  reserved     a Hyper key another tool or a later phase owns
+  stale        the preset doesn't match triggers.toml (run `trigger-check --write`)
+
+Usage: trigger-check [--source DIR] [--write] [--list]
+Python 3.11+ standard library only (tomllib).
+"""
+import argparse, json, os, re, shlex, subprocess, sys, tomllib, uuid
+
+MODS = [(1 << 18, "⌃"), (1 << 19, "⌥"), (1 << 17, "⇧"), (1 << 20, "⌘")]
+HYPER = sum(bit for bit, _ in MODS)
+KEYS = {"A": 0, "S": 1, "D": 2, "F": 3, "H": 4, "G": 5, "Z": 6, "X": 7, "C": 8, "V": 9, "B": 11,
+        "Q": 12, "W": 13, "E": 14, "R": 15, "Y": 16, "T": 17, "1": 18, "2": 19, "3": 20, "4": 21,
+        "6": 22, "5": 23, "=": 24, "9": 25, "7": 26, "-": 27, "8": 28, "0": 29, "]": 30, "O": 31,
+        "U": 32, "[": 33, "I": 34, "P": 35, "↩": 36, "L": 37, "J": 38, "'": 39, "K": 40, ";": 41,
+        "\\": 42, ",": 43, "/": 44, "N": 45, "M": 46, ".": 47, "⇥": 48, "Space": 49, "`": 50,
+        "F13": 105, "F14": 107, "F15": 113, "F16": 106, "F17": 64, "F18": 79, "F19": 80, "F20": 90}
+# Hyper keys owned elsewhere (macos/shortcuts.toml): work modes (#98), Bartender, the ops menu,
+# macOS sysdiagnose.
+RESERVED = {"1", "2", "3", "4", "5", "B", "/", "Space", ".", ","}
+SETUPS = ("docked-closed", "docked-open", "laptop")
+SURFACES = {"key": SETUPS, "ipad": SETUPS,
+            "streamdeck": ("docked-closed", "docked-open"), "knob": ("docked-closed", "docked-open"),
+            "mouse": ("docked-closed", "docked-open"), "touch": ("docked-open", "laptop")}
+NS = uuid.UUID("7d0b7c1e-3b0a-4b51-9a57-2f1d6c0f0143")  # fixed: trigger UUIDs stay stable
+
+
+def uid(*parts):
+    return str(uuid.uuid5(NS, ":".join(parts))).upper()
+
+
+def parse_keys(keys):
+    """'⌃⌥⇧⌘K' -> (key code, modifier flags), or None."""
+    flags, rest = 0, keys
+    for bit, glyph in MODS:
+        if glyph in rest:
+            flags |= bit
+            rest = rest.replace(glyph, "", 1)
+    code = KEYS.get(rest)
+    return None if code is None or not flags else (code, flags)
+
+
+def load(src):
+    with open(os.path.join(src, "macos/btt/triggers.toml"), "rb") as f:
+        return tomllib.load(f).get("trigger", [])
+
+
+def validate(src, triggers):
+    problems, names, keys_seen = [], set(), {}
+    for t in triggers:
+        n = t.get("name", "?")
+        where = f"trigger {n}"
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", str(n)):
+            problems.append(f"invalid: {where}: name must be lowercase letters, digits and dashes")
+        if n in names:
+            problems.append(f"invalid: {where}: name used twice")
+        names.add(n)
+        for field in ("action", "hint"):
+            if not isinstance(t.get(field), str) or not t[field].strip():
+                problems.append(f"invalid: {where}: needs {field}")
+        if ("run" in t) == ("btt" in t):
+            problems.append(f"invalid: {where}: needs exactly one of run or btt")
+        if "run" in t:
+            cmd = shlex.split(t["run"])[0] if t["run"].strip() else ""
+            bin_dir = os.path.join(src, "dot_local/bin")
+            if not any(os.path.exists(os.path.join(bin_dir, f"executable_{cmd}{ext}")) for ext in ("", ".tmpl")):
+                problems.append(f"invalid: {where}: run: {cmd!r} isn't in dot_local/bin")
+        if "btt" in t and not isinstance(t["btt"].get("action"), int):
+            problems.append(f"invalid: {where}: btt needs action = <BTTPredefinedActionType>")
+        keys = t.get("keys", [])
+        hyper = False
+        for k in keys:
+            parsed = parse_keys(k)
+            if parsed is None:
+                problems.append(f"invalid: {where}: can't read keys {k!r}")
+                continue
+            if parsed in keys_seen:
+                problems.append(f"invalid: {where}: {k} is also {keys_seen[parsed]}'s")
+            keys_seen[parsed] = n
+            if parsed[1] == HYPER:
+                hyper = True
+                key = k.replace("⌃", "").replace("⌥", "").replace("⇧", "").replace("⌘", "")
+                if key in RESERVED:
+                    problems.append(f"reserved: {where}: Hyper+{key} belongs elsewhere (see macos/shortcuts.toml)")
+        fires = t.get("fires", [])
+        for s in fires:
+            if s not in SURFACES or s == "key":
+                problems.append(f"invalid: {where}: unknown surface {s!r} (one of {', '.join(sorted(set(SURFACES) - {'key'}))})")
+        surfaces = (["key"] if hyper else []) + [s for s in fires if s in SURFACES]
+        for setup in SETUPS:
+            if not any(setup in SURFACES[s] for s in surfaces):
+                problems.append(f"unreachable: {where}: nothing fires it {setup}" +
+                                ("" if hyper else "; add a Hyper key (⌃⌥⇧⌘ + key)"))
+    return problems
+
+
+def shell_action(script, parent, uuid_, order):
+    return {"BTTIsPureAction": True, "BTTOrder": order, "BTTPredefinedActionType": 206,
+             "BTTShellTaskActionConfig": "/bin/bash:::-c:::-:::",
+            "BTTShellTaskActionScript": script, "BTTTriggerParentUUID": parent, "BTTUUID": uuid_}
+
+
+def wanted(triggers, first_order):
+    """The generated triggers, in order."""
+    out, order = [], first_order
+    for t in triggers:
+        n = t["name"]
+        tid = uid("named", n)
+        if "run" in t:
+            parts = shlex.split(t["run"])
+            script = 'exec "$HOME/.local/bin/' + parts[0] + '"' + "".join(" " + shlex.quote(p) for p in parts[1:])
+            act = shell_action(script, tid, uid("named", n, "action"), 0)
+        else:
+            act = {"BTTIsPureAction": True, "BTTOrder": 0, "BTTPredefinedActionType": t["btt"]["action"],
+                   "BTTTriggerParentUUID": tid, "BTTUUID": uid("named", n, "action")}
+            if t["btt"].get("data"):
+                act["BTTAdditionalActionData"] = dict(t["btt"]["data"])
+        out.append({"BTTActionsToExecute": [act], "BTTGestureNotes": t["action"], "BTTOrder": order,
+                    "BTTNamedTriggerAIDescription": t["hint"],
+                    "BTTTriggerClass": "BTTTriggerTypeOtherTriggers", "BTTTriggerName": n,
+                    "BTTTriggerType": 643, "BTTUUID": tid})
+        order += 1
+        for k in t["keys"]:
+            code, flags = parse_keys(k)
+            kid = uid("key", n, k)
+            log = f'"$HOME/.local/bin/trigger" --log-only {n} key'
+            out.append({"BTTActionsToExecute": [
+                            shell_action(log, kid, uid("key", n, k, "log"), 0),
+                            {"BTTIsPureAction": True, "BTTNamedTriggerToTrigger": n, "BTTOrder": 1, "BTTPredefinedActionType": 248,
+                             "BTTTriggerParentUUID": kid, "BTTUUID": uid("key", n, k, "fire")}],
+                        "BTTAutoAdaptToKeyboardLayout": 0, "BTTGestureNotes": t["action"], "BTTOrder": order,
+                        "BTTShortcutKeyCode": code, "BTTShortcutKeyboardType": 0,
+                        "BTTShortcutModifierKeys": flags, "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
+                        "BTTTriggerOnDown": 1, "BTTTriggerType": 0, "BTTUUID": kid})
+            order += 1
+    return out
+
+
+def generated(t):
+    """Whether the generator owns this preset trigger."""
+    return t.get("BTTTriggerType") == 643 or (
+        t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"
+        and any(a.get("BTTPredefinedActionType") == 248 for a in t.get("BTTActionsToExecute") or []))
+
+
+def merge(old, new):
+    """new's keys over old's; actions matched by UUID the same way. Keeps what BTT added."""
+    out = dict(old)
+    out.update(new)
+    if "BTTActionsToExecute" in new:
+        before = {a.get("BTTUUID"): a for a in old.get("BTTActionsToExecute") or []}
+        out["BTTActionsToExecute"] = [merge(before.get(a["BTTUUID"], {}), a) for a in new["BTTActionsToExecute"]]
+    return out
+
+
+def generate(preset, triggers):
+    g = next(a for a in preset["BTTPresetContent"] if a.get("BTTAppBundleIdentifier") == "BT.G")
+    current = g.get("BTTTriggers", [])
+    kept = [t for t in current if not generated(t)]
+    existing = {t.get("BTTUUID"): t for t in current if generated(t)}
+    first = max([t.get("BTTOrder", 0) for t in kept] or [-1]) + 1
+    g["BTTTriggers"] = kept + [merge(existing.get(w["BTTUUID"], {}), w) for w in wanted(triggers, first)]
+    return preset
+
+
+def dump(d):
+    return json.dumps(d, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True) + "\n"
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--source", help="dotfiles source dir (default: chezmoi source-path)")
+    ap.add_argument("--write", action="store_true", help="regenerate the triggers in the preset")
+    ap.add_argument("--list", action="store_true", help="print the triggers and their keys")
+    a = ap.parse_args()
+    src = a.source or os.environ.get("CHEZMOI_SOURCE_DIR") or subprocess.run(
+        ["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+    triggers = load(src)
+    problems = validate(src, triggers)
+    if a.list:
+        for t in triggers:
+            print(f"{t['name']:<16} {', '.join(t.get('keys', [])):<20} {t['action']}")
+    if problems:
+        print("\n".join(problems))
+        print(f"{len(problems)} problem(s)")
+        sys.exit(1)
+    path = os.path.join(src, "macos/btt/Default.bttpreset")
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    out = dump(generate(json.loads(text), triggers))
+    if a.write:
+        if out != text:
+            with open(path + ".tmp", "w", encoding="utf-8") as f:
+                f.write(out)
+            os.replace(path + ".tmp", path)
+            print(f"wrote {len(triggers)} triggers to {path}; run btt-sync import")
+        else:
+            print(f"ok: {len(triggers)} triggers, preset up to date")
+        return
+    if out != text:
+        print("stale: macos/btt/Default.bttpreset doesn't match triggers.toml; run trigger-check --write")
+        sys.exit(1)
+    print(f"ok: {len(triggers)} triggers, reachable in every setup")
+
+
+if __name__ == "__main__":
+    main()

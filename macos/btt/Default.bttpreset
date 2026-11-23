@@ -175,32 +175,6 @@
         {
           "BTTActionsToExecute" : [
             {
-              "BTTAdditionalActionData" : {
-                "BTTMicMuteAlsoSetVolume" : false,
-                "BTTMicMuteApplyToAllInputDevices" : true
-              },
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Toggle Mute Microphone (Audio Input)",
-              "BTTPredefinedActionType" : 585,
-              "BTTTriggerParentUUID" : "B11F2D68-9B37-421F-8A7D-58EA605D6BC8",
-              "BTTUUID" : "6AD02A94-5EEA-4A3E-8C29-A00F8E652C82"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Mic: toggle mute (all apps)",
-          "BTTOrder" : 0,
-          "BTTShortcutKeyCode" : 46,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 1835008,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "B11F2D68-9B37-421F-8A7D-58EA605D6BC8"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
               "BTTIsPureAction" : true,
               "BTTOrder" : 0,
               "BTTPredefinedActionName" : "Maximize Window Left Half",
@@ -447,7 +421,7 @@
             {
               "BTTIsPureAction" : true,
               "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Toggle Caps Lock On/Off",
+              "BTTPredefinedActionName" : "Toggle Caps Lock On or Off",
               "BTTPredefinedActionType" : 194,
               "BTTTriggerParentUUID" : "E0058B86-70EB-44E7-BE8B-FB39B1A89F9F",
               "BTTUUID" : "A5641C57-A907-4B8C-9D42-6547AEBDB585"
@@ -476,6 +450,209 @@
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
           "BTTUUID" : "E0058B86-70EB-44E7-BE8B-FB39B1A89F9F"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTAdditionalActionData" : {
+                "BTTMicMuteAlsoSetVolume" : false,
+                "BTTMicMuteApplyToAllInputDevices" : true
+              },
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Toggle Mute Microphone (Audio Input)",
+              "BTTPredefinedActionType" : 585,
+              "BTTTriggerParentUUID" : "C7E580F4-6A4F-505A-97F0-0027E36AA9C0",
+              "BTTUUID" : "A5F0DE09-3D27-5088-B461-B18066282637"
+            }
+          ],
+          "BTTGestureNotes" : "Mic: toggle mute (all apps)",
+          "BTTNamedTriggerAIDescription" : "Hyper+M mutes or unmutes the mic in every app",
+          "BTTOrder" : 12,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mic-mute",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mic: toggle mute (all apps)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mic-mute",
+          "BTTUUID" : "C7E580F4-6A4F-505A-97F0-0027E36AA9C0"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mic-mute key",
+              "BTTTriggerParentUUID" : "1309A290-39A6-59C7-AB42-061AB9DAFDC2",
+              "BTTUUID" : "A9D47458-4BD5-5952-86C9-AD45D69B583C"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mic-mute",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "1309A290-39A6-59C7-AB42-061AB9DAFDC2",
+              "BTTUUID" : "0C477159-3E15-5267-8CFF-C9830791DEDF"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mic: toggle mute (all apps)",
+          "BTTOrder" : 13,
+          "BTTShortcutKeyCode" : 46,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "1309A290-39A6-59C7-AB42-061AB9DAFDC2"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mic-mute key",
+              "BTTTriggerParentUUID" : "46E94AB2-81C8-5C79-809B-AF847059DC66",
+              "BTTUUID" : "3B9E8C84-3234-5E9D-96B8-D3284ACC503A"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mic-mute",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "46E94AB2-81C8-5C79-809B-AF847059DC66",
+              "BTTUUID" : "65709803-0387-54A6-8567-47D429E98933"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mic: toggle mute (all apps)",
+          "BTTOrder" : 14,
+          "BTTShortcutKeyCode" : 46,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1835008,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "46E94AB2-81C8-5C79-809B-AF847059DC66"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/keep-awake\" toggle",
+              "BTTTriggerParentUUID" : "B10B40C4-3C99-5CC7-81BC-55ECB522646F",
+              "BTTUUID" : "D892F5B9-07E1-56A5-B55B-143B6477E98A"
+            }
+          ],
+          "BTTGestureNotes" : "Keep Awake: toggle (display and system stay on)",
+          "BTTNamedTriggerAIDescription" : "Hyper+K keeps the Mac and its display awake until you press it again",
+          "BTTOrder" : 15,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "keep-awake",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Keep Awake: toggle (display and system stay on)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: keep-awake",
+          "BTTUUID" : "B10B40C4-3C99-5CC7-81BC-55ECB522646F"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only keep-awake key",
+              "BTTTriggerParentUUID" : "457733C0-A0E3-5107-8C9E-F25651571ACC",
+              "BTTUUID" : "6BDD40C0-F900-5C8A-B152-9A76701B487B"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "keep-awake",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "457733C0-A0E3-5107-8C9E-F25651571ACC",
+              "BTTUUID" : "6EA27CE2-5D90-5FAD-9C37-7D912D460842"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Keep Awake: toggle (display and system stay on)",
+          "BTTOrder" : 16,
+          "BTTShortcutKeyCode" : 40,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "457733C0-A0E3-5107-8C9E-F25651571ACC"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/mode\" next",
+              "BTTTriggerParentUUID" : "7411AB04-5E58-51D0-82FC-DAADFF2B8E83",
+              "BTTUUID" : "2B2112EA-B2D7-5D07-85F6-F7771AAB356D"
+            }
+          ],
+          "BTTGestureNotes" : "Mode: next work mode (placeholder until #98)",
+          "BTTNamedTriggerAIDescription" : "Hyper+0 steps to the next work mode",
+          "BTTOrder" : 17,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "mode-next",
+          "BTTTriggerType" : 643,
+          "BTTTriggerTypeDescription" : "Mode: next work mode (placeholder until #98)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Named Trigger: mode-next",
+          "BTTUUID" : "7411AB04-5E58-51D0-82FC-DAADFF2B8E83"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only mode-next key",
+              "BTTTriggerParentUUID" : "343D311E-66B0-598A-8C43-41DA85C5657B",
+              "BTTUUID" : "C72648E1-68A1-5F94-90BA-4612AC10677C"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "mode-next",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionName" : "Trigger Named Trigger (Configured in Other Tab)",
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "343D311E-66B0-598A-8C43-41DA85C5657B",
+              "BTTUUID" : "EC350BC6-C7B1-54FA-A388-ED38244B8E27"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Mode: next work mode (placeholder until #98)",
+          "BTTOrder" : 18,
+          "BTTShortcutKeyCode" : 29,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "343D311E-66B0-598A-8C43-41DA85C5657B"
         }
       ]
     },
@@ -596,5 +773,5 @@
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "01E82978-F549-45D3-AAAF-014D6B4479AA"
+  "BTTPresetUUID" : "B411EAE0-F105-4772-82DE-DF2225DEEE2D"
 }
