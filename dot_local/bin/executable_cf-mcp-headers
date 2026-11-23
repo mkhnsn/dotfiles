@@ -39,7 +39,7 @@ if [ "${1:-}" = --store-token ]; then
       "$SERVICE" "$ACCOUNT" "$token" | security -i >/dev/null 2>&1
     where="the Keychain ($SERVICE)"
   else
-    (umask 077; mkdir -p "$(dirname "$FILE")" && printf '%s\n' "$token" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE") || exit 1
+    (umask 077; mkdir -p "$(dirname "$FILE")" && rm -f "$FILE.tmp" && printf '%s\n' "$token" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE") || exit 1
     where="$FILE"
   fi
   [ "$(read_token)" = "$token" ] || {

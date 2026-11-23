@@ -44,17 +44,25 @@ fi
 
 # Cloudflare's API server, read-only (docs/cloudflare-mcp.md), on every machine that has the
 # token: cf-mcp-headers reads it from the Keychain on macOS (mac-setup stores it) or from
-# ~/.config/cf-mcp/token on Linux. Elsewhere it isn't registered, so sessions don't carry a
-# server that can't connect. With no token at connect time, the static "Bearer missing" is
-# sent: the server rejects it, so Claude Code never falls back to an OAuth sign-in, which
-# could grant write access. The lines below change when the token is stored or the server
-# goes missing, so the script re-runs then.
-{{- $cfToken := output "sh" "-c" "[ -x \"$HOME/.local/bin/cf-mcp-headers\" ] && \"$HOME/.local/bin/cf-mcp-headers\" >/dev/null 2>&1 && echo yes || echo no" | trim }}
+# ~/.config/cf-mcp/token on Linux. Where it's definitely absent the server is removed, so
+# sessions don't carry one that can't connect. With no token at connect time, the static
+# "Bearer missing" is sent: the server rejects it, so Claude Code never falls back to an OAuth
+# sign-in, which could grant write access. The lines below change when the token is stored or
+# the server goes missing, so the script re-runs then.
+{{- /* Whether the token exists, without reading it: no Keychain ACL prompt, and a locked
+       Keychain (apply over SSH) gives "unknown", which leaves the registration alone.
+       find-generic-password exits 44 only when the item isn't there. */}}
+{{- $cfToken := "no" }}
+{{- if eq .chezmoi.os "darwin" }}
+{{- $cfToken = output "sh" "-c" "security find-generic-password -s cf-mcp -a cloudflare-readonly >/dev/null 2>&1; case $? in 0) echo yes ;; 44) echo no ;; *) echo unknown ;; esac" | trim }}
+{{- else if stat (joinPath .chezmoi.homeDir ".config/cf-mcp/token") }}
+{{- $cfToken = "yes" }}
+{{- end }}
 # Token stored: {{ $cfToken }}
 {{- if eq $cfToken "yes" }}
 # Registered: {{ output "sh" "-c" "command -v jq >/dev/null || { echo unknown; exit 0; }; jq -e '.mcpServers.cloudflare' \"$HOME/.claude.json\" >/dev/null 2>&1 && echo yes || echo \"no (retry $(date +%s))\"" | trim }}
 mcp cloudflare '{"type":"http","url":"https://mcp.cloudflare.com/mcp","headers":{"Authorization":"Bearer missing"},"headersHelper":"~/.local/bin/cf-mcp-headers"}'
-{{- else }}
+{{- else if eq $cfToken "no" }}
 claude mcp remove --scope user cloudflare >/dev/null 2>&1 || true
 {{- end }}
 

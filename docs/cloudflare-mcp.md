@@ -1,6 +1,6 @@
 # Cloudflare API MCP server, read-only (#119)
 
-Status: in use, at user scope on this Mac and echo-turbine (decided 2026-11-22: the planned
+Status: in use, at user scope on the workstation Macs and echo-turbine (decided 2026-11-22: the planned
 per-repo trial was in `unstable-studios/dashboard`, which isn't launched yet, and the token is
 what keeps it read-only, so a repo boundary added little). Nothing with write access is added.
 
@@ -69,7 +69,11 @@ Read** so the server can find the account; tokens with client IP filtering aren'
    }
    ```
 
-   The script re-runs on the next `chezmoi apply` after the token is stored.
+   It checks that the token exists without reading it (on macOS, a Keychain lookup with no
+   `-w`), so a locked Keychain, such as during an apply over SSH, leaves the registration as it
+   is instead of removing it. The script re-runs on the next `chezmoi apply` after the token is
+   stored, so on a new Linux machine it's: apply (installs the helper), store the token, apply
+   again.
 4. **Check that a write fails** before relying on it: ask it to add a DNS TXT record and expect
    a 403.
 
