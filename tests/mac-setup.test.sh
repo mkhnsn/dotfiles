@@ -437,6 +437,10 @@ RegistryID  Key                   Value
 )
 100001047   UserKeyMapping   (
         {
+        HIDKeyboardModifierMappingDst = 30064771299;
+        HIDKeyboardModifierMappingSrc = 30064771298;
+    },
+        {
         HIDKeyboardModifierMappingDst = 30064771072;
         HIDKeyboardModifierMappingSrc = 30064771129;
     }
@@ -450,6 +454,13 @@ VendorID ProductID LocationID UsagePage Usage RegistryID  Transport Class       
 K
   stub hidutil "case \"\$1\" in property) cat $T/keymap ;; list) cat $T/hidlist ;; esac"
   run "$SCRIPT" --status
+  assert_open "Caps Lock reaches BTT's Hyper key"
+  # Run interactively, it stops at this step (the first one open) and names the keyboard.
+  printf 'q\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_has "Caps Lock is remapped on: Apple Internal Keyboard / Trackpad. BTT"
+  # Can't tell (Python fails): open, not done.
+  MAC_SETUP_PYTHON=/nonexistent run "$SCRIPT" --status
   assert_open "Caps Lock reaches BTT's Hyper key"
   # Only the virtual keyboard remaps it: fine.
   sed -i.bak '/^100001047/,/^)/d' "$T/keymap"
