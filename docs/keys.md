@@ -10,6 +10,7 @@ Which key does what, and where each one lives. No private keys are in this repo.
 | Echo-Net Admin SSH Key | 1Password (SSH agent) | SSH into the Macs and servers. Macs get it in `authorized_keys` from 1Password (Automation > "Mac SSH authorized keys"); Linux hosts get it from Ansible. |
 | DigitalOcean SSH Key | 1Password (SSH agent) | The DigitalOcean droplet; 1Password writes its `Match` block to `~/.ssh/1Password/config` |
 | `~/.ssh/id_ed25519_remote` | On disk, one per machine | Fallback for signing (and SSH remotes) when 1Password can't ask for approval: Claude Code sessions and SSH logins |
+| `~/.ssh/claude-memory` (echo-turbine) | On disk, echo-turbine only | Deploy key (read-write) for the private `mkhnsn/claude-memory` repo, set as that clone's `core.sshCommand` (`docs/claude-memory-sync.md`). echo-core's `echo-turbine-claude-memory.yml` playbook makes it if missing. The Macs use HTTPS through `gh` instead. |
 | Blink Shell keys | Blink on the iPad and iPhone | SSH into the Macs (Blink can't use 1Password); listed in the same `authorized_keys` note |
 
 `~/.ssh/config` sends every host to the 1Password agent. `~/.config/git/git-ssh` (git's

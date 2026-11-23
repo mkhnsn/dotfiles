@@ -1,0 +1,17 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Load the claude-memory launchd agent; re-runs when the plist changes. Its sync does nothing
+# until `claude-memory init` has cloned the repo. (On echo-turbine, cron runs the sync:
+# echo-core's ansible/playbooks/echo-turbine-claude-memory.yml.)
+# plist: {{ include "Library/LaunchAgents/com.unstablestudios.claude-memory.plist.tmpl" | sha256sum }}
+plist="$HOME/Library/LaunchAgents/com.unstablestudios.claude-memory.plist"
+[ -f "$plist" ] || exit 0
+launchctl bootout "gui/$(id -u)/com.unstablestudios.claude-memory" 2>/dev/null || true
+# bootout returns before the agent is gone, and bootstrap fails (error 5) until it is.
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null && exit 0
+  sleep 1
+done
+echo "claude-memory: couldn't load $plist; run: launchctl bootstrap gui/$(id -u) $plist" >&2
+exit 1
+{{ end -}}

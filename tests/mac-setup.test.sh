@@ -82,6 +82,7 @@ setup() {
   mark_done op_browser
   mark_done app_exports
   mkdir -p "$HOME/.claude/projects/-Users-x-src/memory"; touch "$HOME/.claude/projects/-Users-x-src/memory/user.md"
+  mkdir -p "$HOME/.local/share/claude-memory/.git"
   mark_done vm
   mark_done raycast_sync
   mark_done raycast_local
@@ -996,6 +997,16 @@ test_claude_ha_steps() {
   run "$SCRIPT_SERVER" --status
   assert_done "Claude Code reports sessions to Home Assistant"
   assert_done "Cloudflare read-only token in the Keychain"
+}
+
+test_claude_memory_step() {
+  run "$SCRIPT" --status
+  assert_done "Claude Code memories synced (claude-memory)"
+  rm -rf "$HOME/.local/share/claude-memory"
+  run "$SCRIPT" --status
+  assert_open "Claude Code memories synced (claude-memory)"
+  run "$SCRIPT_SERVER" --status
+  assert_done "Claude Code memories synced (claude-memory)"
 }
 
 test_claude_code_memories_restored() {

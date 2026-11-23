@@ -48,6 +48,9 @@ jobs:
       - name: streamdeck-library tests
         run: python3 -I tests/streamdeck_library_test.py
 
+      - name: claude-memory tests
+        run: python3 -I tests/claude_memory_test.py
+
       - name: app-prefs tests (and guard on committed settings)
         run: python3 -I tests/app_prefs_test.py
 

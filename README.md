@@ -412,7 +412,7 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 - PrusaSlicer user presets (filament, print) are plain dotfiles under
   `Library/Application Support/PrusaSlicer`; after changing one, `chezmoi re-add` it.
 - Kept private, through each app's own export saved to OneDrive (Unstable Studios) > Apps >
-  Mac app exports: Stream Deck profiles, BetterDisplay settings and Claude Code's memories and prompt history (`claude-sync export` on the old Mac before wiping it; mac-setup runs `claude-sync import`). `mac-setup` checks OneDrive is signed in first and reminds you to restore them.
+  Mac app exports: Stream Deck profiles, BetterDisplay settings and Claude Code's prompt history (`claude-sync export` on the old Mac before wiping it; mac-setup runs `claude-sync import`). Claude Code's memories sync on their own through a private repo (`claude-memory`, docs/claude-memory-sync.md). `mac-setup` checks OneDrive is signed in first and reminds you to restore them.
 
 When workstation apps fail to install, the end-of-apply summary lists each one with its cause and the
 command that fixes it. Apps that are already installed in a way Homebrew can't take over (an installer

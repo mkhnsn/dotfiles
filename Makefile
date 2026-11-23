@@ -27,6 +27,7 @@ test:
 	@/bin/bash tests/chezmoiignore.test.sh
 	@/bin/bash tests/claude-sync.test.sh
 	@/bin/bash tests/cf-mcp-headers.test.sh
+	@python3 -I tests/claude_memory_test.py
 	@python3 -I tests/app_prefs_test.py
 	@python3 -I tests/shortcut_check_test.py
 	@python3 -I tests/brew_why_test.py
