@@ -28,7 +28,8 @@ fallback key when `CLAUDECODE`, `SSH_CONNECTION` or `SSH_CLIENT` is set.
   the public `users/mkhnsn/ssh_signing_keys` API), so `git log --show-signature` trusts
   exactly what GitHub does.
 - A new machine generates its fallback key once (`run_once_11-remote-signing-key`). The
-  end-of-apply summary reminds you to add it to GitHub as a signing key until it's there.
+  end-of-apply summary reminds you to add it to GitHub as a signing key and as an
+  authentication key (git over SSH uses it in Claude Code and SSH sessions) until each is there.
 
 ## Retiring a machine
 
