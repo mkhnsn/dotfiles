@@ -1,6 +1,7 @@
 #!/bin/bash
 # Fire a BetterTouchTool named trigger (macos/btt/triggers.toml) and log it.
-#   trigger <name> [source]             log, then fire it through BTT (Stream Deck, scripts)
+#   trigger <name> [source]             log, then fire it through BTT without waiting for it
+#                                       (Stream Deck, scripts)
 #   trigger --log-only <name> <source>  log only: BTT's own key bindings log, then fire it natively
 # source: key, streamdeck, knob, mouse, touch, ipad or script (the default).
 # The log, ~/.local/state/triggers.log, is "<ISO time> <name> <source>" per line, trimmed to its
@@ -22,9 +23,9 @@ mkdir -p "$state"
 printf '%s %s %s\n' "$(date +%Y-%m-%dT%H:%M:%S%z)" "$name" "$source" >> "$log"
 # Trim in place (rewrite, don't replace), like claude-memory's log.
 if [[ $(wc -c < "$log") -gt 262144 ]]; then
-  tail -n 1000 "$log" > "$log.tmp" && cat "$log.tmp" > "$log" && rm -f "$log.tmp"
+  tail -n 1000 "$log" > "$log.$$" && cat "$log.$$" > "$log"; rm -f "$log.$$"
 fi
 
 [[ $log_only == 1 ]] && exit 0
-exec osascript -e 'on run argv' -e 'tell application "BetterTouchTool" to trigger_named (item 1 of argv)' \
+exec osascript -e 'on run argv' -e 'tell application "BetterTouchTool" to trigger_named_async_without_response (item 1 of argv)' \
   -e 'end run' "$name" >/dev/null

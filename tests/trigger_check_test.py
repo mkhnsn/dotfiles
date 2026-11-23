@@ -79,14 +79,14 @@ class Fixture(unittest.TestCase):
 
     def test_trigger_without_hyper_key_is_unreachable(self):
         p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⌘K"]'))
-        self.assertEqual(len([x for x in p if x.startswith("unreachable: trigger keep-awake")]), 3)
+        self.assertEqual([x for x in p if x.startswith("unreachable: trigger keep-awake")],
+                         ["unreachable: trigger keep-awake: no Hyper key (⌃⌥⇧⌘ + key); the keyboard is the one surface in every setup"]
+                         + [f"unreachable: trigger keep-awake: nothing fires it {s}" for s in tc.SETUPS])
 
     def test_desk_only_surface_doesnt_cover_the_laptop(self):
-        p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = []\nfires = ["streamdeck", "touch"]'))
-        self.assertEqual(p, [])
         p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = []\nfires = ["streamdeck"]'))
-        self.assertEqual([x for x in p if "keep-awake" in x],
-                         ["unreachable: trigger keep-awake: nothing fires it laptop; add a Hyper key (⌃⌥⇧⌘ + key)"])
+        self.assertIn("unreachable: trigger keep-awake: nothing fires it laptop", p)
+        self.assertNotIn("unreachable: trigger keep-awake: nothing fires it docked-closed", p)
 
     def test_reserved_hyper_key(self):
         p = self.problems(GOOD.replace("⌃⌥⇧⌘K", "⌃⌥⇧⌘B"))
@@ -110,12 +110,41 @@ class Fixture(unittest.TestCase):
         self.assertTrue(any("unknown surface 'pedal'" in x for x in p))
         self.assertTrue(any("can't read keys '⌃⌥⌘Ö'" in x for x in p))
 
+    def test_ipad_only_still_needs_a_hyper_key(self):
+        p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'fires = ["ipad"]'))
+        self.assertIn("unreachable: trigger keep-awake: no Hyper key (⌃⌥⇧⌘ + key); the keyboard is the one surface in every setup", p)
+        r = self.run_check("--write")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+
+    def test_key_taken_in_the_shortcut_registry(self):
+        with open(os.path.join(self.d, "macos/shortcuts.toml"), "w") as f:
+            f.write('[[shortcut]]\nkeys = "⌃⌥⌘M"\nowner = "btt"\naction = "Window: maximize"\n'
+                    '[[shortcut]]\nkeys = "⌃⌥⌘V"\nowner = "btt"\nscope = "us.zoom.xos"\naction = "Camera"\n')
+        p = self.problems(GOOD.replace('"⌃⌥⇧⌘M", ', '"⌃⌥⇧⌘M", "⌃⌥⌘V", '))
+        self.assertTrue(any(x.startswith("conflict: trigger mic-mute: ⌃⌥⌘M is btt's Window: maximize") for x in p), p)
+        self.assertFalse(any("⌃⌥⌘V" in x for x in p), p)  # app-scoped: no clash with a global key
+
+    def test_malformed_entries_are_reported_not_crashed(self):
+        for bad, want in (('btt = 5', "btt must be"), ('run = "keep-awake \'toggle"', "run must be a command line"),
+                          ('run = 5', "run must be a command line"), ('keys = "⌃⌥⇧⌘J"', "keys must be a list"),
+                          ('fires = "ipad"', "fires must be a list")):
+            text = GOOD.replace('run = "keep-awake toggle"\nkeys = ["⌃⌥⇧⌘K"]',
+                                bad + ('\nkeys = ["⌃⌥⇧⌘K"]' if not bad.startswith("keys") else ""))
+            if bad.startswith("btt"):
+                text = text.replace(bad, bad)  # replaces run: exactly one of run or btt still holds
+            p = self.problems(text)
+            self.assertTrue(any(want in x for x in p), (bad, p))
+        self.toml(GOOD + '\n[[trigger]]\nname = "x"\nkeys = ["⌃⌥⇧⌘X"]\n')
+        self.assertEqual(self.run_check().returncode, 1)  # no action/hint: reported
+
     # ---- generation ----
     def test_generate_writes_named_and_key_triggers(self):
         r = self.run_check("--write")
         self.assertEqual(r.returncode, 0, r.stdout)
         ts = self.read_preset()["BTTPresetContent"][0]["BTTTriggers"]
         self.assertEqual(ts[0]["BTTUUID"], "OTHER")  # untouched, first
+        self.assertEqual([t["BTTOrder"] for t in ts], list(range(len(ts))))  # new ones after the last
         named = {t["BTTTriggerName"]: t for t in ts if t.get("BTTTriggerType") == 643}
         self.assertEqual(set(named), {"keep-awake", "mic-mute"})
         self.assertEqual(named["keep-awake"]["BTTActionsToExecute"][0]["BTTShellTaskActionScript"],
@@ -151,6 +180,57 @@ class Fixture(unittest.TestCase):
                 a["BTTPredefinedActionName"] = "added by BTT"
         self.preset(d)
         self.assertEqual(self.run_check().returncode, 0)
+
+    def test_switching_btt_to_run_leaves_nothing_behind(self):
+        self.run_check("--write")
+        d = self.read_preset()
+        for t in d["BTTPresetContent"][0]["BTTTriggers"]:
+            for a in t.get("BTTActionsToExecute", []):
+                a["BTTPredefinedActionName"] = "name BTT gave it"
+        self.preset(d)
+        self.toml(GOOD.replace('btt = { action = 585, data = { BTTMicMuteApplyToAllInputDevices = true } }',
+                               'run = "keep-awake on"'))
+        self.run_check("--write")
+        mic = next(t for t in self.read_preset()["BTTPresetContent"][0]["BTTTriggers"] if t.get("BTTTriggerName") == "mic-mute")
+        act = mic["BTTActionsToExecute"][0]
+        self.assertEqual(act["BTTPredefinedActionType"], 206)
+        self.assertNotIn("BTTAdditionalActionData", act)
+        self.assertNotIn("BTTPredefinedActionName", act)  # it named the old action
+        keep = next(t for t in self.read_preset()["BTTPresetContent"][0]["BTTTriggers"] if t.get("BTTTriggerName") == "keep-awake")
+        self.assertEqual(keep["BTTActionsToExecute"][0]["BTTPredefinedActionName"], "name BTT gave it")
+
+    def test_trigger_added_in_btt_after_generated_ones_stays_current(self):
+        self.run_check("--write")
+        d = self.read_preset()
+        ts = d["BTTPresetContent"][0]["BTTTriggers"]
+        ts.append({"BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut", "BTTShortcutKeyCode": 4, "BTTOrder": len(ts),
+                   "BTTShortcutModifierKeys": 786432, "BTTUUID": "NEW",
+                   "BTTActionsToExecute": [{"BTTPredefinedActionType": 21, "BTTUUID": "NEW-A"}]})
+        self.preset(d)
+        r = self.run_check()
+        self.assertEqual(r.returncode, 0, r.stdout)
+
+    def test_btt_renumbering_on_import_is_kept(self):
+        self.run_check("--write")
+        d = self.read_preset()
+        ts = d["BTTPresetContent"][0]["BTTTriggers"]
+        for i, t in enumerate(reversed(ts)):  # BTT may hand back any numbering, exported in order
+            t["BTTOrder"] = i
+        ts.sort(key=lambda t: t["BTTOrder"])
+        self.preset(d)
+        self.assertEqual(self.run_check("--write").stdout.strip(), "ok: 2 triggers, preset up to date")
+
+    def test_named_trigger_made_in_btt_is_reported_when_dropped(self):
+        d = self.read_preset()
+        d["BTTPresetContent"][0]["BTTTriggers"].append(
+            {"BTTTriggerType": 643, "BTTTriggerClass": "BTTTriggerTypeOtherTriggers", "BTTTriggerName": "handmade",
+             "BTTUUID": "HAND", "BTTActionsToExecute": []})
+        self.preset(d)
+        r = self.run_check()
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("not in triggers.toml: handmade", r.stdout)
+        r = self.run_check("--write")
+        self.assertIn("dropping: handmade", r.stdout)
 
     def test_removed_trigger_is_dropped(self):
         self.run_check("--write")

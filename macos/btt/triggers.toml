@@ -27,7 +27,7 @@ name = "mic-mute"
 action = "Mic: toggle mute (all apps)"
 hint = "Hyper+M mutes or unmutes the mic in every app"
 btt = { action = 585, data = { BTTMicMuteAlsoSetVolume = false, BTTMicMuteApplyToAllInputDevices = true } }
-keys = ["⌃⌥⇧⌘M", "⌃⌥⌘M"]  # ⌃⌥⌘M: the Stream Deck's Mic key sends it
+keys = ["⌃⌥⇧⌘M", "⌃⌥⌘M"]  # ⌃⌥⌘M: the Stream Deck's Mic key sends it (logged as key)
 fires = ["streamdeck"]
 
 [[trigger]]

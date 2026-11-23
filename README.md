@@ -480,11 +480,16 @@ run the same thing.
 - `btt-sync generate` (`trigger-check --write`) writes the named triggers and their key bindings
   into the preset; `btt-sync import` loads it and refuses while the preset is out of date. The
   generator owns the preset's named triggers and the keys that fire them; edit those in
-  `triggers.toml`, not in BTT. It keeps what BTT adds on export, so an export stays clean.
+  `triggers.toml`, not in BTT (one made in BTT is reported, and dropped on the next generate). It
+  keeps what BTT adds on export and the order BTT gives triggers, so an export stays clean, even
+  with other triggers added in BTT.
 - `trigger <name> [source]` fires one from a script or the Stream Deck. Every firing, keys
-  included, is logged to `~/.local/state/triggers.log` with its source, trimmed to 1000 lines.
+  included, is logged to `~/.local/state/triggers.log` with its source; past 256 KB it's trimmed
+  to the last 1000 lines. A Stream Deck button that sends a shortcut (the Mic key's ⌃⌥⌘M) logs
+  as `key`; one that runs `trigger <name> streamdeck` logs as `streamdeck`.
 - `trigger-check` (in `make test` and CI) fails when an entry is invalid, a Hyper key is taken
-  elsewhere, the preset is stale, or a trigger can't be reached in every setup (docked with the
+  elsewhere or in `macos/shortcuts.toml`, the preset is stale, or a trigger can't be reached in
+  every setup (docked with the
   lid closed, docked with the lid open, laptop only). The keyboard is the one surface in all three,
   so every trigger has a Hyper key.
 
