@@ -162,7 +162,8 @@ action = "Window: resize (hold and move the pointer)"
 # ---- Hyper: Caps Lock (BTT, every keyboard) ---------------------------------------------------
 # Caps Lock acts as ⌃⌥⇧⌘ while held, so a "⌃⌥⇧⌘<key>" entry here is a Hyper key. Hold Caps Lock
 # alone (0.65 s) and release to toggle Caps Lock. Split: Hyper+1–5 work modes (#98), Hyper+letters
-# BTT named triggers and menus (#143; Space: ops menu), Hyper+B and Hyper+/ Bartender (below).
+# and 0 BTT named triggers (macos/btt/triggers.toml, read by shortcut-check) and menus (Space: ops
+# menu), Hyper+B and Hyper+/ Bartender (below).
 # Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it
 # (mac-setup's capslock step checks every connected keyboard).
 [[shortcut]]
@@ -181,15 +182,11 @@ keys = "⌃⌥⇧⌘/"
 owner = "bartender"
 action = "Command Bar (click menu bar items from the keyboard)"
 
-# ---- Calls: BTT (mic is system-wide; camera goes to the call app in front) ------------------
-# The Stream Deck's Mic and Camera keys send these. Slack huddles: not yet (its video shortcut
+# ---- Calls: BTT (camera goes to the call app in front) ---------------------------------------
+# The Stream Deck's Camera key sends these. Mic mute (Hyper+M, and ⌃⌥⌘M for the Stream Deck's Mic
+# key) is a named trigger: macos/btt/triggers.toml. Slack huddles: not yet (its video shortcut
 # isn't confirmed). Zoom's Start/Stop Video is moved to ⌃⇧⌘V by hand (see the zoom entry), so
 # ⇧⌘V is free for Raycast.
-[[shortcut]]
-keys = "⌃⌥⌘M"
-owner = "btt"
-action = "Mic: toggle mute (all apps)"
-
 [[shortcut]]
 keys = "⌃⌥⌘V"
 owner = "btt"

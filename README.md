@@ -441,7 +441,8 @@ app switching AltTab (⌘Tab), menu bar Bartender, launcher, clipboard history (
 cleaning Raycast (Link Cleaner, on demand: BTT cleans links only inside its clipboard manager, which
 is off). After changing a shortcut in an
 app, export it (`btt-sync export`, `app-prefs export`), update the registry, and run
-`shortcut-check`.
+`shortcut-check`. The keys of BTT named triggers are listed in `macos/btt/triggers.toml`
+instead (below), and `shortcut-check` reads them from there.
 
 ## BetterTouchTool
 
@@ -467,6 +468,34 @@ Caps Lock is the Hyper key (⌃⌥⇧⌘) on every keyboard, set in the preset; 
 (mac-setup's `bartender_keys` step). BTT only sees Caps Lock while System Settings › Keyboard ›
 Modifier Keys leaves it as Caps Lock; mac-setup's `capslock` step names any connected keyboard
 that remaps it.
+
+### Named triggers
+
+Every action the controls run (mic mute, Keep Awake, the work-mode switch, …) is a BTT named
+trigger defined once in `macos/btt/triggers.toml`: its name, what it does, a one-line hint, the
+command in `~/.local/bin` (or BTT action) it runs, its keys, and the other surfaces that fire it
+(Stream Deck, Q6 knob, mouse, touch, iPad). A key, a Stream Deck button and a gesture then all
+run the same thing.
+
+- `btt-sync generate` (`trigger-check --write`) writes the named triggers and their key bindings
+  into the preset; `btt-sync import` loads it and refuses while the preset is out of date. The
+  generator owns the preset's named triggers and the keys that fire them; edit those in
+  `triggers.toml`, not in BTT (one made in BTT is reported, and dropped on the next generate). It
+  keeps what BTT adds on export and the order BTT gives triggers, so an export stays clean, even
+  with other triggers added in BTT.
+- `trigger <name> [source]` fires one from a script or the Stream Deck. Every firing, keys
+  included, is logged to `~/.local/state/triggers.log` with its source; past 256 KB it's trimmed
+  to the last 1000 lines. A Stream Deck button that sends a shortcut (the Mic key's ⌃⌥⌘M) logs
+  as `key`; one that runs `trigger <name> streamdeck` logs as `streamdeck`.
+- `trigger-check` (in `make test` and CI) fails when an entry is invalid, a Hyper key is taken
+  elsewhere or in `macos/shortcuts.toml`, the preset is stale, or a trigger can't be reached in
+  every setup (docked with the
+  lid closed, docked with the lid open, laptop only). The keyboard is the one surface in all three,
+  so every trigger has a Hyper key.
+
+Now: Hyper+M mic mute (also ⌃⌥⌘M, the Stream Deck's Mic key), Hyper+K Keep Awake
+(`keep-awake`, caffeinate until pressed again), Hyper+0 next work mode (`mode`, a placeholder
+until #98). `trigger-check --list` prints them.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
 Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).

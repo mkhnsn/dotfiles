@@ -24,7 +24,7 @@ jobs:
 
       - name: shellcheck
         run: |
-          shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults dot_local/bin/executable_3dx-sync
+          shellcheck -s bash tests/.build/mac-setup tests/.build/mac-setup-server dot_local/bin/executable_mac-defaults dot_local/bin/executable_3dx-sync dot_local/bin/executable_trigger dot_local/bin/executable_keep-awake dot_local/bin/executable_mode
           shellcheck -S warning -s bash tests/*.sh install.sh
 
       - name: mac-setup tests (bash 3.2, as on macOS)
@@ -59,6 +59,9 @@ jobs:
 
       - name: BTT preset is normalized and keeps pinned settings
         run: python3 -I tests/btt_preset_test.py
+
+      - name: trigger-check tests (named triggers reachable, preset current)
+        run: python3 -I tests/trigger_check_test.py
 
       - name: Brewfile entries exist in Homebrew (formula vs cask)
         run: python3 -I tests/brewfile_check.py

@@ -1,0 +1,33 @@
+#!/bin/bash
+# Work mode, a placeholder until the mode switch is designed (#98): it only records the mode
+# and shows it. The BTT named trigger mode-next runs `mode next` (macos/btt/triggers.toml).
+#   mode [get|next|set <mode>]
+set -euo pipefail
+
+MODES=(focus meetings ops)
+state="${XDG_STATE_HOME:-$HOME/.local/state}"
+file="$state/mode"
+mkdir -p "$state"
+
+current() { local m; m="$(cat "$file" 2>/dev/null || true)"; echo "${m:-${MODES[0]}}"; }
+set_mode() {
+  printf '%s\n' "$1" > "$file"
+  # BTT shows the notification: osascript's own doesn't appear when BTT runs the script.
+  osascript -e 'on run argv' -e 'tell application "BetterTouchTool" to display_notification (item 1 of argv) with title "Mode" sound name ""' \
+    -e 'end run' "$1" >/dev/null 2>&1 || true
+  echo "$1"
+}
+
+case "${1:-get}" in
+  get) current ;;
+  next)
+    cur="$(current)"; next="${MODES[0]}"
+    for i in "${!MODES[@]}"; do
+      if [[ "${MODES[$i]}" == "$cur" ]]; then next="${MODES[$(( (i + 1) % ${#MODES[@]} ))]}"; fi
+    done
+    set_mode "$next" ;;
+  set)
+    for m in "${MODES[@]}"; do [[ "$m" == "${2:-}" ]] && { set_mode "$m"; exit 0; }; done
+    echo "mode: one of ${MODES[*]}" >&2; exit 2 ;;
+  *) echo "usage: mode [get|next|set <mode>]" >&2; exit 2 ;;
+esac

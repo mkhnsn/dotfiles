@@ -1,0 +1,26 @@
+#!/bin/bash
+# Keep the Mac and its display awake until turned off (caffeinate -dims, held by a background
+# process). The BTT named trigger keep-awake runs `keep-awake toggle` (macos/btt/triggers.toml).
+#   keep-awake [toggle|on|off|status]
+set -euo pipefail
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}"
+pidfile="$state/keep-awake.pid"
+mkdir -p "$state"
+
+running() { [[ -s "$pidfile" ]] && ps -p "$(cat "$pidfile")" -o comm= 2>/dev/null | grep -q caffeinate; }
+# BTT shows the notification: osascript's own doesn't appear when BTT runs the script.
+notify() { osascript -e 'on run argv' -e 'tell application "BetterTouchTool" to display_notification (item 1 of argv) with title "Keep Awake" sound name ""' \
+             -e 'end run' "$1" >/dev/null 2>&1 || true; echo "$1"; }
+on()  { running && { echo "Keep Awake is already on"; return; }
+        nohup caffeinate -dims >/dev/null 2>&1 &
+        echo $! > "$pidfile"; notify "On: the Mac stays awake"; }
+off() { if running; then kill "$(cat "$pidfile")"; fi; rm -f "$pidfile"; notify "Off: normal sleep"; }
+
+case "${1:-toggle}" in
+  toggle) if running; then off; else on; fi ;;
+  on) on ;;
+  off) off ;;
+  status) if running; then echo on; else echo off; fi ;;
+  *) echo "usage: keep-awake [toggle|on|off|status]" >&2; exit 2 ;;
+esac

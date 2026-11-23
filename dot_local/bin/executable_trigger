@@ -1,0 +1,31 @@
+#!/bin/bash
+# Fire a BetterTouchTool named trigger (macos/btt/triggers.toml) and log it.
+#   trigger <name> [source]             log, then fire it through BTT without waiting for it
+#                                       (Stream Deck, scripts)
+#   trigger --log-only <name> <source>  log only: BTT's own key bindings log, then fire it natively
+# source: key, streamdeck, knob, mouse, touch, ipad or script (the default).
+# The log, ~/.local/state/triggers.log, is "<ISO time> <name> <source>" per line, trimmed to its
+# last 1000 lines once it's over 256 KB.
+set -euo pipefail
+
+log_only=0
+if [[ "${1:-}" == "--log-only" ]]; then log_only=1; shift; fi
+name="${1:-}"
+source="${2:-script}"
+if [[ -z "$name" || ! "$name" =~ ^[a-z0-9][a-z0-9-]*$ || ! "$source" =~ ^[a-z]+$ ]]; then
+  echo "usage: trigger [--log-only] <name> [source]" >&2
+  exit 2
+fi
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}"
+log="$state/triggers.log"
+mkdir -p "$state"
+printf '%s %s %s\n' "$(date +%Y-%m-%dT%H:%M:%S%z)" "$name" "$source" >> "$log"
+# Trim in place (rewrite, don't replace), like claude-memory's log.
+if [[ $(wc -c < "$log") -gt 262144 ]]; then
+  tail -n 1000 "$log" > "$log.$$" && cat "$log.$$" > "$log"; rm -f "$log.$$"
+fi
+
+[[ $log_only == 1 ]] && exit 0
+exec osascript -e 'on run argv' -e 'tell application "BetterTouchTool" to trigger_named_async_without_response (item 1 of argv)' \
+  -e 'end run' "$name" >/dev/null
