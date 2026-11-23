@@ -165,7 +165,7 @@ action = "Window: resize (hold and move the pointer)"
 # and 0 BTT named triggers (macos/btt/triggers.toml, read by shortcut-check) and menus (Space: ops
 # menu), Hyper+B and Hyper+/ Bartender (below).
 # Set Caps Lock to Caps Lock in System Settings > Keyboard > Modifier Keys, or BTT can't see it
-# (mac-setup's capslock step checks every connected keyboard).
+# (mac-setup's capslock step checks that setting for every connected keyboard).
 [[shortcut]]
 keys = "⇪"
 owner = "btt"

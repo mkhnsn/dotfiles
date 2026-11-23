@@ -467,7 +467,8 @@ Caps Lock is the Hyper key (⌃⌥⇧⌘) on every keyboard, set in the preset; 
 `macos/shortcuts.toml`), except Hyper+B and Hyper+/, which are Bartender's and set by hand
 (mac-setup's `bartender_keys` step). BTT only sees Caps Lock while System Settings › Keyboard ›
 Modifier Keys leaves it as Caps Lock; mac-setup's `capslock` step names any connected keyboard
-that remaps it.
+set otherwise there. It reads that setting, not `hidutil`'s live key mapping: BTT's Hyper key sets
+Caps Lock to No Action on every keyboard itself, so `hidutil` shows the same remap either way.
 
 ### Named triggers
 

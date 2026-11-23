@@ -425,46 +425,66 @@ test_btt_mcp_off() {
 
 test_capslock_remapped() {
   has_python || return 0
-  # The built-in keyboard's Caps Lock goes to No Action (System Settings > Modifier Keys); the
-  # SpaceMouse's virtual keyboard has the same remap, which doesn't count.
-  cat > "$T/keymap" <<'K'
-RegistryID  Key                   Value
-1000008e0   UserKeyMapping   (null)
-10000196a   UserKeyMapping   (
-        {
-        HIDKeyboardModifierMappingDst = 30064771072;
-        HIDKeyboardModifierMappingSrc = 30064771129;
-    }
-)
-100001047   UserKeyMapping   (
-        {
-        HIDKeyboardModifierMappingDst = 30064771299;
-        HIDKeyboardModifierMappingSrc = 30064771298;
-    },
-        {
-        HIDKeyboardModifierMappingDst = 30064771072;
-        HIDKeyboardModifierMappingSrc = 30064771129;
-    }
-)
+  # System Settings > Modifier Keys: the built-in keyboard's (0-0) and a disconnected keyboard's
+  # Caps Lock go to No Action; the Keychron maps Caps Lock to itself (set back) and Control to
+  # Command, neither of which counts.
+  cat > "$T/prefs.plist" <<'K'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>com.apple.keyboard.modifiermapping.0-0-0</key>
+<array><dict><key>HIDKeyboardModifierMappingDst</key><integer>30064771072</integer>
+<key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer></dict></array>
+<key>com.apple.keyboard.modifiermapping.13364-53296-0</key>
+<array><dict><key>HIDKeyboardModifierMappingDst</key><integer>30064771129</integer>
+<key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer></dict>
+<dict><key>HIDKeyboardModifierMappingDst</key><integer>30064771299</integer>
+<key>HIDKeyboardModifierMappingSrc</key><integer>30064771296</integer></dict></array>
+<key>com.apple.keyboard.modifiermapping.1133-50475-0</key>
+<array><dict><key>HIDKeyboardModifierMappingDst</key><integer>30064771072</integer>
+<key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer></dict></array>
+</dict></plist>
 K
+  # Services first, then Devices with narrower columns (whose rows mustn't be read with the
+  # Services offsets); the built-in keyboard shares 0-0 with a non-keyboard service.
   cat > "$T/hidlist" <<'K'
 Services:
 VendorID ProductID LocationID UsagePage Usage RegistryID  Transport Class                                Product                            UserClass               Built-In 
-0x5ac    0x250     0x0        1         6     0x10000196a (null)    AppleHIDKeyboardEventDriver          3Dconnexion Virtual Keyboard       (null)                  0        
+0x0      0x0       0x0        65280     3     0x10000103c FIFO      AppleHIDTransportHIDDevice           PMU ildo2                          (null)                  1        
 0x0      0x0       0xac       1         6     0x100001047 FIFO      AppleHIDKeyboardEventDriverV2        Apple Internal Keyboard / Trackpad (null)                  1        
+0x3434   0xd030    0x20342300 1         6     0x1000b32d0 USB       AppleUserHIDEventService             Keychron Link                      AppleUserHIDEventDriver 0        
+Devices:
+VendorID ProductID LocationID UsagePage Usage RegistryID  Transport Class                 Product                            UserClass
+0x0      0x0       0xac       1         6     0x100001037 FIFO      AppleHIDTransportHIDDevice Apple Internal Keyboard / Trackpad (null)
 K
-  stub hidutil "case \"\$1\" in property) cat $T/keymap ;; list) cat $T/hidlist ;; esac"
+  stub defaults "case \"\$*\" in *export\ -g*) cat $T/prefs.plist ;; *) exit 1 ;; esac"
+  # hidutil's live mapping (BTT's own Caps Lock remap, on every keyboard) is ignored.
+  stub hidutil "case \"\$1\" in list) cat $T/hidlist ;; *) echo 'HIDKeyboardModifierMappingSrc = 30064771129' ;; esac"
   run "$SCRIPT" --status
   assert_open "Caps Lock reaches BTT's Hyper key"
-  # Run interactively, it stops at this step (the first one open) and names the keyboard.
+  # Run interactively, it stops at this step (the first one open) and names the keyboard, and
+  # not the disconnected one.
   printf 'q\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
   assert_has "Caps Lock is remapped on: Apple Internal Keyboard / Trackpad. BTT"
-  # Can't tell (Python fails): open, not done.
+  # Can't tell: open, not done (Python fails; the settings can't be read; hidutil fails).
   MAC_SETUP_PYTHON=/nonexistent run "$SCRIPT" --status
   assert_open "Caps Lock reaches BTT's Hyper key"
-  # Only the virtual keyboard remaps it: fine.
-  sed -i.bak '/^100001047/,/^)/d' "$T/keymap"
+  stub defaults 'exit 1'
+  run "$SCRIPT" --status
+  assert_open "Caps Lock reaches BTT's Hyper key"
+  stub defaults "case \"\$*\" in *export\ -g*) cat $T/prefs.plist ;; *) exit 1 ;; esac"
+  stub hidutil 'exit 1'
+  run "$SCRIPT" --status
+  assert_open "Caps Lock reaches BTT's Hyper key"
+  # The built-in keyboard set back: the disconnected keyboard's remap alone doesn't count.
+  stub hidutil "case \"\$1\" in list) cat $T/hidlist ;; esac"
+  "${MAC_SETUP_PYTHON:-python3}" - "$T/prefs.plist" <<'P'
+import plistlib, sys
+p = sys.argv[1]; d = plistlib.load(open(p, "rb"))
+d.pop("com.apple.keyboard.modifiermapping.0-0-0")
+plistlib.dump(d, open(p, "wb"))
+P
   run "$SCRIPT" --status
   assert_done "Caps Lock reaches BTT's Hyper key"
 }
