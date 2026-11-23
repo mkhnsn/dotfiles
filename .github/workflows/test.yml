@@ -36,6 +36,9 @@ jobs:
       - name: chezmoiignore tests (1Password files skipped when secrets can't be read)
         run: bash tests/chezmoiignore.test.sh
 
+      - name: claude-memory tests
+        run: python3 -I tests/claude_memory_test.py
+
       - name: app-prefs tests (and guard on committed settings)
         run: python3 -I tests/app_prefs_test.py
 

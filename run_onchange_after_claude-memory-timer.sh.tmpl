@@ -1,0 +1,15 @@
+#!/bin/sh
+# Load the claude-memory timer (launchd on macOS, a systemd user timer on Linux). Re-runs when
+# the unit files change. The timer's sync does nothing until `claude-memory init` has cloned the repo.
+{{ if eq .chezmoi.os "darwin" -}}
+# plist: {{ include "Library/LaunchAgents/com.unstablestudios.claude-memory.plist.tmpl" | sha256sum }}
+plist="$HOME/Library/LaunchAgents/com.unstablestudios.claude-memory.plist"
+[ -f "$plist" ] || exit 0
+launchctl bootout "gui/$(id -u)/com.unstablestudios.claude-memory" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$plist"
+{{- else if eq .chezmoi.os "linux" -}}
+# units: {{ include "dot_config/systemd/user/claude-memory.service" | sha256sum }} {{ include "dot_config/systemd/user/claude-memory.timer" | sha256sum }}
+command -v systemctl >/dev/null 2>&1 || exit 0
+systemctl --user daemon-reload 2>/dev/null || exit 0
+systemctl --user enable --now claude-memory.timer
+{{- end }}

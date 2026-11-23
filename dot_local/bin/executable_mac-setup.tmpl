@@ -202,6 +202,8 @@ check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
 CLAUDE_HA_URL_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/claude-ha/webhook-url"
 CLAUDE_HA_REF="op://Infrastructure/HA webhook - Claude sessions/credential"
 check_claude_ha()  { workstation || return 0; [ -s "$CLAUDE_HA_URL_FILE" ]; }
+# Claude Code memories sync through a private repo (claude-memory, docs/claude-memory-sync.md).
+check_claude_memory() { workstation || return 0; [ -d "${CLAUDE_MEMORY_DIR:-$HOME/.local/share/claude-memory}/.git" ]; }
 check_ha_mcp()     { workstation || return 0; grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null &&
                        security find-generic-password -s ha-mcp -a echo-homeassistant >/dev/null 2>&1; }
 check_op_browser() { workstation || return 0; confirmed "op_browser:$1"; }
@@ -362,6 +364,7 @@ help_brew()       { echo "Homebrew isn't installed."; }
 help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
 help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
+help_claude_memory() { echo "Clone the private claude-memory repo (over HTTPS with your gh login), move this Mac's Claude Code memories into it and point each checkout under ~/src at it, so memories stay in sync with echo-turbine."; }
 help_claude_ha()   { echo "Write the Home Assistant webhook URL that Claude Code's session hooks post to (desk panel, phone alerts), from 1Password: Infrastructure > HA webhook - Claude sessions."; }
 help_ha_mcp()      { command -v claude >/dev/null 2>&1 || { echo "The Claude Code CLI isn't installed (cask claude-code in the Brewfile). Run the Brewfile step first, or: brew install --cask claude-code"; return; }
                      echo "Register the homeassistant MCP server in Claude Code (user scope) and copy its Home Assistant token from 1Password to the Keychain. The server (~/.local/bin/ha-mcp) is read-only."; }
@@ -452,6 +455,7 @@ act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com
 act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
 act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
 act_op_ssh()       { open -a 1Password; }
+act_claude_memory() { "$HOME/.local/bin/claude-memory" init; }
 act_claude_ha()    {
   local id; id="$(op read "$CLAUDE_HA_REF")" || return 1
   mkdir -p "$(dirname "$CLAUDE_HA_URL_FILE")"
@@ -609,6 +613,7 @@ op_browser:autofill|AutoFill from 1Password only (Apple Passwords off)|Tools
 chezmoi|Dotfiles applied|Dotfiles
 brewfile|Brewfile packages installed|Dotfiles
 gh|$GH_TITLE|Accounts
+claude_memory|Claude Code memories synced (claude-memory)|Accounts
 doppler|$DOPPLER_TITLE|Accounts
 icloud_docs|Desktop & Documents in iCloud|Accounts
 icloud_local|iCloud keeps files downloaded (Optimize Mac Storage off)|Accounts

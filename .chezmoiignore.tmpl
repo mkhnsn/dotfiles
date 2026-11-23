@@ -36,6 +36,9 @@ macos/
 # VS Code on macOS uses ~/Library/Application Support/Code, not ~/.config/Code
 .config/Code/
 .config/Code/**
+# The claude-memory timer is a launchd agent here
+.config/systemd/
+.config/systemd/**
 {{- end -}}
 
 {{- if eq .chezmoi.os "linux" -}}
@@ -47,6 +50,9 @@ Library/Application Support/Code/
 Library/Application Support/Code/**
 Library/Application Support/Code - Insiders/
 Library/Application Support/Code - Insiders/**
+# The claude-memory timer is a systemd user timer here
+Library/LaunchAgents/
+Library/LaunchAgents/**
 # Claude Desktop is macOS-only here
 Library/Application Support/Claude/
 Library/Application Support/Claude/**
