@@ -459,8 +459,10 @@ presets named Default, delete the older one.
 
 Caps Lock is the Hyper key (⌃⌥⇧⌘) on every keyboard, set in the preset; holding it alone for
 0.65 s and releasing toggles Caps Lock. Hyper+key shortcuts belong to BTT (see
-`macos/shortcuts.toml`). BTT only sees Caps Lock while System Settings › Keyboard › Modifier
-Keys leaves it as Caps Lock.
+`macos/shortcuts.toml`), except Hyper+B and Hyper+/, which are Bartender's and set by hand
+(mac-setup's `bartender_keys` step). BTT only sees Caps Lock while System Settings › Keyboard ›
+Modifier Keys leaves it as Caps Lock; mac-setup's `capslock` step names any connected keyboard
+that remaps it.
 
 The Stream Deck camera key sends ⌃⇧⌘V to Zoom, so on a new Mac set Zoom › Settings › Keyboard
 Shortcuts › Start/Stop Video to ⌃⇧⌘V (Zoom's default ⇧⌘V is Raycast's Clipboard History).
