@@ -182,29 +182,11 @@ keys = "⌃⌥⇧⌘/"
 owner = "bartender"
 action = "Command Bar (click menu bar items from the keyboard)"
 
-# ---- Calls: BTT (camera goes to the call app in front) ---------------------------------------
-# The Stream Deck's Camera key sends these. Mic mute (Hyper+M, and ⌃⌥⌘M for the Stream Deck's Mic
-# key) is a named trigger: macos/btt/triggers.toml. Slack huddles: not yet (its video shortcut
-# isn't confirmed). Zoom's Start/Stop Video is moved to ⌃⇧⌘V by hand (see the zoom entry), so
-# ⇧⌘V is free for Raycast.
-[[shortcut]]
-keys = "⌃⌥⌘V"
-owner = "btt"
-scope = "us.zoom.xos"
-action = "Camera: Zoom video (sends ⌃⇧⌘V)"
-
-[[shortcut]]
-keys = "⌃⌥⌘V"
-owner = "btt"
-scope = "com.microsoft.teams2"
-action = "Camera: Teams video (sends ⇧⌘O)"
-
-[[shortcut]]
-keys = "⌃⌥⌘V"
-owner = "btt"
-scope = "com.google.Chrome"
-action = "Camera: Meet video (sends ⌘E)"
-
+# ---- Calls -------------------------------------------------------------------------------------
+# Mic mute (Hyper+M, and ⌃⌥⌘M for the Stream Deck's Mic key) and the camera keys (Hyper+V, and
+# ⌃⌥⌘V for the Stream Deck's Camera key, in Zoom, Teams and Chrome for Meet) are named triggers:
+# macos/btt/triggers.toml. Slack huddles: not yet (its video shortcut isn't confirmed). Zoom's
+# Start/Stop Video is moved to ⌃⇧⌘V by hand (below), so ⇧⌘V is free for Raycast.
 # Set by hand in Zoom › Settings › Keyboard Shortcuts › Start/Stop Video (default ⇧⌘V).
 [[shortcut]]
 keys = "⌃⇧⌘V"

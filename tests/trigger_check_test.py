@@ -120,10 +120,76 @@ class Fixture(unittest.TestCase):
     def test_key_taken_in_the_shortcut_registry(self):
         with open(os.path.join(self.d, "macos/shortcuts.toml"), "w") as f:
             f.write('[[shortcut]]\nkeys = "⌃⌥⌘M"\nowner = "btt"\naction = "Window: maximize"\n'
-                    '[[shortcut]]\nkeys = "⌃⌥⌘V"\nowner = "btt"\nscope = "us.zoom.xos"\naction = "Camera"\n')
-        p = self.problems(GOOD.replace('"⌃⌥⇧⌘M", ', '"⌃⌥⇧⌘M", "⌃⌥⌘V", '))
+                    '[[shortcut]]\nkeys = "⌃⌥⌘V"\nowner = "zoom"\nscope = "us.zoom.xos"\naction = "Video"\n')
+        p = self.problems(GOOD)
         self.assertTrue(any(x.startswith("conflict: trigger mic-mute: ⌃⌥⌘M is btt's Window: maximize") for x in p), p)
-        self.assertFalse(any("⌃⌥⌘V" in x for x in p), p)  # app-scoped: no clash with a global key
+        # an app key clashes in that app, and with a global trigger key; not in another app
+        p = self.problems(GOOD.replace('"⌃⌥⇧⌘M", ', '"⌃⌥⇧⌘M", "⌃⌥⌘V", '))
+        self.assertTrue(any("⌃⌥⌘V is zoom's Video" in x for x in p), p)
+        app = GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K", "⌃⌥⌘V"]\napps = ["com.microsoft.teams2"]')
+        self.assertFalse(any("⌃⌥⌘V" in x for x in self.problems(app)))
+        self.assertTrue(any("⌃⌥⌘V" in x for x in self.problems(app.replace("com.microsoft.teams2", "us.zoom.xos"))))
+
+    def test_app_keys_go_in_each_apps_section(self):
+        self.toml(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = ["us.zoom.xos", "com.microsoft.teams2"]')
+                  .replace('btt = { action = 585, data = { BTTMicMuteApplyToAllInputDevices = true } }',
+                           'btt = { action = 128, fields = { BTTShortcutToSend = "59,55,56,9", BTTShortcutApp = "active app" } }'))
+        r = self.run_check("--write")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        d = self.read_preset()
+        sections = {a["BTTAppBundleIdentifier"]: a for a in d["BTTPresetContent"]}
+        for app in ("us.zoom.xos", "com.microsoft.teams2"):
+            keys = [t for t in sections[app]["BTTTriggers"] if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"]
+            self.assertEqual([(t["BTTShortcutKeyCode"], t["BTTActionsToExecute"][1]["BTTNamedTriggerToTrigger"]) for t in keys],
+                             [(40, "keep-awake")])
+        g = sections["BT.G"]["BTTTriggers"]
+        self.assertFalse(any(t.get("BTTShortcutKeyCode") == 40 for t in g))  # not global
+        mic = next(t for t in g if t.get("BTTTriggerName") == "mic-mute")["BTTActionsToExecute"][0]
+        self.assertEqual((mic["BTTPredefinedActionType"], mic["BTTShortcutToSend"]), (128, "59,55,56,9"))
+        self.assertEqual(self.run_check().returncode, 0)
+        # dropping an app takes its keys out of that app's section
+        self.toml(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = ["us.zoom.xos"]'))
+        self.run_check("--write")
+        sections = {a["BTTAppBundleIdentifier"]: a for a in self.read_preset()["BTTPresetContent"]}
+        self.assertEqual(sections["com.microsoft.teams2"]["BTTTriggers"], [])
+
+    def test_multi_app_keys_have_their_own_uuids(self):
+        self.toml(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = ["a.one", "b.two"]'))
+        uuids = []
+        def walk(o):
+            if isinstance(o, dict):
+                if "BTTUUID" in o:
+                    uuids.append(o["BTTUUID"])
+                for v in o.values():
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+        walk([w for _, w in tc.wanted(tc.load(self.d))])
+        self.assertEqual(len(uuids), len(set(uuids)))
+
+    def test_hand_made_trigger_on_a_generated_key_is_reported(self):
+        d = self.read_preset()
+        d["BTTPresetContent"].append({"BTTAppBundleIdentifier": "us.zoom.xos", "BTTTriggers": [
+            {"BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut", "BTTShortcutKeyCode": 40,
+             "BTTShortcutModifierKeys": tc.HYPER, "BTTUUID": "HAND", "BTTGestureNotes": "old camera",
+             "BTTActionsToExecute": [{"BTTPredefinedActionType": 128, "BTTUUID": "HAND-A"}]}]})
+        self.preset(d)
+        self.toml(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = ["us.zoom.xos"]'))
+        r = self.run_check("--write")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("conflict: old camera (us.zoom.xos) is a hand-made BTT trigger", r.stdout)
+
+    def test_hint_controls_stay_last_when_a_trigger_is_added(self):
+        self.run_check("--write")
+        self.toml(GOOD + '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n')
+        self.run_check("--write")
+        _, menu, _, _ = self.hints_parts()
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]][-3:], ["late", "hints-next", "hints-mute"])
+
+    def test_btt_fields_are_checked(self):
+        p = self.problems(GOOD.replace('data = { BTTMicMuteApplyToAllInputDevices = true }', 'fields = { BTTWhatever = 1 }'))
+        self.assertTrue(any("fields are the action's own keys" in x for x in p), p)
 
     def test_malformed_entries_are_reported_not_crashed(self):
         for bad, want in (('btt = 5', "btt must be"), ('run = "keep-awake \'toggle"', "run must be a command line"),
@@ -273,11 +339,14 @@ class Fixture(unittest.TestCase):
         text = rows["zoom-cam"]["BTTMenuConfig"]["BTTMenuAttributedText"]
         self.assertIn("<b>Hyper+V</b>", text)
         self.assertIn("Hyper+H · what you can do", rows["Header"]["BTTMenuConfig"]["BTTMenuAttributedText"])
-        self.assertIn("Camera &lt;video&gt; (us.zoom.xos)", text)  # escaped
+        self.assertIn("Camera &lt;video&gt;", text)  # escaped
         self.assertIn("Stream Deck", rows["mic-mute"]["BTTMenuConfig"]["BTTMenuAttributedText"])
         self.assertNotIn("BTTMenuItemActions", rows["Header"])
         h = menu["BTTMenuConfig"]["BTTMenuFrameHeight"]
-        self.assertEqual(h, 2 * tc.PAD + 6 * tc.ROW_H + 5 * tc.GAP)
+        self.assertEqual(h, 2 * tc.PAD + 5 * tc.ROW_H + 4 * tc.GAP)  # the app row starts hidden
+        self.assertEqual(rows["zoom-cam"]["BTTMenuConfig"]["BTTMenuItemVisibleWhileActive"], 0)
+        self.assertEqual(rows["keep-awake"]["BTTMenuConfig"]["BTTMenuItemVisibleWhileActive"], 1)
+        self.assertEqual(menu["BTTMenuConfig"]["BTTMenuSizingBehavior"], 3)
         a = close["BTTActionsToExecute"][0]
         self.assertEqual((a["BTTPredefinedActionType"], a["BTTAdditionalActionData"]["BTTCloseNotificationsTitleRegex"]),
                          (289, "^Hint"))
@@ -320,6 +389,21 @@ class Fixture(unittest.TestCase):
         _, menu, _, _ = self.hints_parts()
         self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]],
                          ["Header", "keep-awake", "hints-next", "hints-mute"])
+
+    def test_menu_rows_keep_btts_order(self):
+        self.run_check("--write")
+        d = self.read_preset()
+        menu = next(t for t in d["BTTPresetContent"][0]["BTTTriggers"] if t.get("BTTTriggerType") == 767)
+        for i, r in enumerate(reversed(menu["BTTMenuItems"])):  # BTT keeps a row's order on import
+            r["BTTOrder"] = i
+        menu["BTTMenuItems"].sort(key=lambda r: (r["BTTOrder"], r["BTTUUID"]))
+        self.preset(d)
+        self.assertEqual(self.run_check().returncode, 0)
+        # a new trigger's row goes after the last
+        self.toml(GOOD + '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n')
+        self.run_check("--write")
+        _, menu, _, _ = self.hints_parts()
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]][-3:], ["late", "hints-next", "hints-mute"])
 
     def test_apps_must_be_bundle_ids(self):
         p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = "us.zoom.xos"'))

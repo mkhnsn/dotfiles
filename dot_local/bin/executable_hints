@@ -7,6 +7,9 @@ shows one hint for that app (a trigger listing it in `apps`). Hints are BTT noti
 "Hint", closed while their banner is up so they don't pile up in Notification Center. Hyper+H
 opens the cheat sheet, whose last rows run `hints next` and `hints mute`.
 
+Rows of triggers with `apps` show only while one of those apps is in front (`hints app` shows and
+hides them).
+
 The setup (docked with the lid closed, docked with the lid open, laptop only) decides which
 surfaces a hint and the cheat sheet name: the Stream Deck only when docked, touch only with the
 lid open. BTT runs `hints setup` when a screen connects or disconnects and when the lid opens or
@@ -19,6 +22,7 @@ Which hint: one you haven't been shown yet, then the one shown least. A trigger 
 
   hints app [bundle-id]      the daily hints, for the app in front (BTT runs this)
   hints setup                the setup changed: update the cheat sheet, maybe say what works now
+  hints refresh              push the cheat sheet's rows again (btt-sync import runs this)
   hints next [bundle-id]     another hint now, for the app in front (or a general one)
   hints mute [bundle-id|general|setup]   stop hints for an app, the general ones, or the
                              setup-change ones; with no argument,
@@ -204,13 +208,13 @@ def notify(title, body):
 
 
 def cmd_app(args, state):
-    if not state["enabled"]:
-        return
     bundle, name = (args[0], args[0]) if args else front_app()
     triggers, counts = load_triggers(), fired_counts()
     today = datetime.date.today().isoformat()
     setup = detect_setup()
-    refresh_rows(setup, triggers, state)
+    refresh_rows(setup, triggers, state, bundle)
+    if not state["enabled"]:
+        return  # the cheat sheet stays current with hints off
     for scope in (GENERAL, bundle):
         if not scope or scope in state["muted"] or state["shown_on"].get(scope) == today:
             continue
@@ -227,39 +231,56 @@ def btt_pid():
     return r.stdout.split()[0] if r.stdout.split() else None
 
 
-def refresh_rows(setup, triggers, state):
-    """Rewrite the rows when they're for another setup, or BTT restarted (it reloads the preset's)."""
-    if not setup:
-        return
+def refresh_rows(setup, triggers, state, app=None):
+    """Keep the cheat sheet's rows right: their surfaces for this setup, and the app rows shown
+    only in their app. Sends only what changed; everything again when BTT restarted (it reloads
+    the preset's rows)."""
     pid = btt_pid()
-    if state.get("rows") != {"setup": setup, "btt": pid}:
-        update_cheat_sheet(triggers, setup)
-        state["rows"] = {"setup": setup, "btt": pid}
-
-
-def update_cheat_sheet(triggers, setup):
-    """Rewrite the cheat sheet's rows for this setup (BTT keeps it until the next import)."""
-    have = surfaces_in(setup)
+    app = app if any(app in t.get("apps", []) for t in triggers) else None  # only apps with rows matter
+    want = {"setup": setup or state["rows"].get("setup"), "btt": pid, "app": app}
+    have = state["rows"]
+    if want == have:
+        return
+    fresh = have.get("btt") != pid or have.get("setup") != want["setup"]
+    rows = []
     for t in TC.cheat_sheet_rows(triggers):
-        payload = json.dumps({"BTTMenuAttributedText": TC.row_html(TC.row_text(t, have))})
-        script = ['on run argv',
-                  'tell application "BetterTouchTool" to update_menu_item menu_name (item 1 of argv) '
-                  'item_name (item 2 of argv) json (item 3 of argv)',
-                  'end run']
+        payload = {}
+        if fresh and want["setup"]:
+            payload["BTTMenuAttributedText"] = TC.row_html(TC.row_text(t, surfaces_in(want["setup"])))
+        if t.get("apps") and (fresh or have.get("app") != app):
+            shown = int(app in t["apps"])
+            payload.update(BTTMenuItemVisibleWhileActive=shown, BTTMenuItemVisibleWhileInactive=shown)
+        if payload:
+            rows.append((t["name"], payload))
+    if update_cheat_sheet(rows):
+        state["rows"] = want
+
+
+def update_cheat_sheet(rows):
+    """Send each (row name, properties) to BTT; False if BTT didn't answer (BTT keeps the rows until
+    the next import)."""
+    script = ['on run argv',
+              'tell application "BetterTouchTool" to update_menu_item menu_name (item 1 of argv) '
+              'item_name (item 2 of argv) json (item 3 of argv)',
+              'end run']
+    ok = True
+    for name, payload in rows:
         try:
-            r = subprocess.run(["osascript"] + sum((["-e", line] for line in script), []) + [TC.MENU, t["name"], payload],
-                               capture_output=True, text=True, timeout=10)
+            r = subprocess.run(["osascript"] + sum((["-e", line] for line in script), [])
+                               + [TC.MENU, name, json.dumps(payload)], capture_output=True, text=True, timeout=10)
             if r.returncode:
-                print(f"hints: couldn't update the cheat sheet row {t['name']}: {r.stderr.strip()}", file=sys.stderr)
+                print(f"hints: couldn't update the cheat sheet row {name}: {r.stderr.strip()}", file=sys.stderr)
+                ok = False
         except subprocess.TimeoutExpired:
             print("hints: BTT didn't answer; the cheat sheet keeps its rows", file=sys.stderr)
-            return
+            return False
+    return ok  # on a failure the state isn't saved, so the next run tries again
 
 
 def setup_changed(setup, triggers, state):
     first = "setup" not in state  # the first run on this Mac: just note where it is
     state["setup"] = setup
-    refresh_rows(setup, triggers, state)
+    refresh_rows(setup, triggers, state, state["rows"].get("app"))
     shown = state["setup_shown"].get(setup, 0)
     if first or not state["enabled"] or SETUP in state["muted"] or shown >= SETUP_HINTS:
         return
@@ -277,7 +298,12 @@ def cmd_setup(_, state):
     if setup and setup != state.get("setup"):
         setup_changed(setup, triggers, state)
     else:
-        refresh_rows(setup, triggers, state)
+        refresh_rows(setup, triggers, state, state["rows"].get("app"))
+
+
+def cmd_refresh(_, state):
+    state["rows"] = {}
+    refresh_rows(detect_setup(), load_triggers(), state, front_app()[0])
 
 
 def cmd_next(args, state):
@@ -332,7 +358,7 @@ def cmd_status(_, state):
 def main():
     args = sys.argv[1:]
     cmd = args.pop(0) if args else "status"
-    if cmd not in ("app", "setup", "next", "mute", "unmute", "status", "on", "off"):
+    if cmd not in ("app", "setup", "refresh", "next", "mute", "unmute", "status", "on", "off"):
         print(next(p for p in __doc__.split("\n\n") if p.startswith("  hints ")))
         sys.exit(2)
     os.makedirs(STATE_DIR, exist_ok=True)
@@ -343,7 +369,7 @@ def main():
         state["enabled"] = cmd == "on"
         print(f"hints {cmd}")
     else:
-        {"app": cmd_app, "setup": cmd_setup, "next": cmd_next, "mute": cmd_mute, "unmute": cmd_unmute,
+        {"app": cmd_app, "setup": cmd_setup, "refresh": cmd_refresh, "next": cmd_next, "mute": cmd_mute, "unmute": cmd_unmute,
          "status": cmd_status}[cmd](args, state)
     if cmd != "status":
         save_state(state)

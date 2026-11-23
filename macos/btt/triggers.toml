@@ -11,13 +11,16 @@
 # action   what it does, one line
 # hint     one line, shown as a hint notification (`hints`); name its Hyper key
 # run      a command in ~/.local/bin, or
-# btt      a BTT action instead: { action = <BTTPredefinedActionType>, data = { ... } }
+# btt      a BTT action instead: { action = <BTTPredefinedActionType>, data = { ... } }; `fields`
+#          for an action's own top-level keys (Send Shortcut to Specific App, 128)
 # keys     the keys that fire it. Every trigger has a Hyper key (⌃⌥⇧⌘ + key, Caps Lock held):
 #          the keyboard is the one surface in every setup. Extra keys are for senders that type
 #          a shortcut (the Stream Deck's existing keys).
 # fires    other surfaces bound to it: streamdeck, knob, mouse, touch, ipad
-# apps     bundle IDs it belongs to (optional; empty means every app). Its hint then shows the
-#          first time each day you switch to one of them; without apps, it's a general hint.
+# apps     bundle IDs it belongs to (optional; empty means every app). Its keys then work only in
+#          those apps (the same key can do something else elsewhere), its cheat-sheet row shows
+#          only there, and its hint shows the first time each day you switch to one of them;
+#          without apps, it's a general hint.
 # modes    work modes it belongs to (optional; #98)
 #
 # trigger-check also generates the cheat sheet (a BTT floating menu named "Hints" with a row per
@@ -33,6 +36,36 @@ hint = "Hyper+M mutes or unmutes the mic in every app"
 btt = { action = 585, data = { BTTMicMuteAlsoSetVolume = false, BTTMicMuteApplyToAllInputDevices = true } }
 keys = ["⌃⌥⇧⌘M", "⌃⌥⌘M"]  # ⌃⌥⌘M: the Stream Deck's Mic key sends it (logged as key)
 fires = ["streamdeck"]
+
+# Camera: Hyper+V in a call app sends that app's own video shortcut (to the app in front). ⌃⌥⌘V
+# is the Stream Deck's Camera key. Zoom's Start/Stop Video is moved to ⌃⇧⌘V by hand (mac-setup's
+# zoom step), since its default ⇧⌘V is Raycast's Clipboard History.
+[[trigger]]
+name = "camera-zoom"
+action = "Camera: Zoom video on/off"
+hint = "In a Zoom call, Hyper+V turns your camera on or off"
+btt = { action = 128, fields = { BTTShortcutToSend = "59,55,56,9", BTTShortcutApp = "active app", BTTShortcutAppUnderCursor = "active app", BTTShortcutSwitchToAppFirst = "0", BTTLayoutIndependentActionChar = "active app" } }
+keys = ["⌃⌥⇧⌘V", "⌃⌥⌘V"]
+fires = ["streamdeck"]
+apps = ["us.zoom.xos"]
+
+[[trigger]]
+name = "camera-teams"
+action = "Camera: Teams video on/off (sends ⇧⌘O)"
+hint = "In a Teams call, Hyper+V turns your camera on or off"
+btt = { action = 128, fields = { BTTShortcutToSend = "55,56,31", BTTShortcutApp = "active app", BTTShortcutAppUnderCursor = "active app", BTTShortcutSwitchToAppFirst = "0", BTTLayoutIndependentActionChar = "active app" } }
+keys = ["⌃⌥⇧⌘V", "⌃⌥⌘V"]
+fires = ["streamdeck"]
+apps = ["com.microsoft.teams2"]
+
+[[trigger]]
+name = "camera-meet"
+action = "Camera: Meet video on/off (sends ⌘E)"
+hint = "In a Meet call in Chrome, Hyper+V turns your camera on or off"
+btt = { action = 128, fields = { BTTShortcutToSend = "55,14", BTTShortcutApp = "active app", BTTShortcutAppUnderCursor = "active app", BTTShortcutSwitchToAppFirst = "0", BTTLayoutIndependentActionChar = "active app" } }
+keys = ["⌃⌥⇧⌘V", "⌃⌥⌘V"]
+fires = ["streamdeck"]
+apps = ["com.google.Chrome"]
 
 [[trigger]]
 name = "keep-awake"
