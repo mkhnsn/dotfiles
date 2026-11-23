@@ -73,11 +73,13 @@ them. `~/.local/state/claude-memory.log` has the background syncs' output.
    - `SessionEnd` runs `claude-memory hook-end`, which starts `sync` in the background and returns
      at once: SessionEnd hooks share a 1.5 s budget
      ([code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)).
-   - A launchd agent (`com.unstablestudios.claude-memory`) on macOS and a systemd user timer
-     (`claude-memory.timer`) on Linux run `sync` every 30 minutes, for long sessions, crashed
-     ones and machines left on. `run_onchange_after_claude-memory-timer.sh` loads them. On
-     Linux the timer runs only while you're logged in unless lingering is on
-     (`sudo loginctl enable-linger $USER`; the script says so).
+   - Every 30 minutes, for long sessions, crashed ones and machines left on: a launchd agent
+     (`com.unstablestudios.claude-memory`, loaded by `run_onchange_after_claude-memory-timer.sh`)
+     on macOS, and a cron job on echo-turbine, set up by echo-core's
+     `ansible/playbooks/echo-turbine-claude-memory.yml`. Cron there, not a systemd user timer:
+     crond runs whether or not you're logged in, where a user timer needs lingering. launchd
+     on the Mac, not cron: cron skips runs missed while the Mac sleeps, launchd runs them on
+     wake.
    - `sync` is: commit local changes (`<host>: <n> memories`), fetch, merge, point checkouts at
      the repo, move their new memories in, commit, push. Committing first means a crash never leaves
      changes that block the next merge. An `flock` on `~/.local/state/claude-memory.lock` keeps
@@ -103,7 +105,7 @@ them. `~/.local/state/claude-memory.log` has the background syncs' output.
    (`~/.ssh/claude-memory`, read-write), set as the clone's `core.sshCommand`. Commits in the
    clone aren't signed (`commit.gpgsign=false` there), for the same reason.
 6. **Setup**: `claude-memory init` is a `mac-setup` step (Accounts, after `gh`); on echo-turbine
-   it's run once by hand. The first sync on each machine merges the two sets: different files
+   the echo-core playbook runs it, after making the deploy key if it's missing. The first sync on each machine merges the two sets: different files
    add up, same-named files that differ become `.conflict-<host>.md`.
 
 ## What happens to `claude-sync`

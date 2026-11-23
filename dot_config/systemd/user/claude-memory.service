@@ -1,8 +1,0 @@
-# claude-memory sync (docs/claude-memory-sync.md in the dotfiles); started by claude-memory.timer.
-[Unit]
-Description=Sync Claude Code memories with the claude-memory repo
-
-[Service]
-Type=oneshot
-ExecStart=%h/.local/bin/claude-memory sync
-Nice=10

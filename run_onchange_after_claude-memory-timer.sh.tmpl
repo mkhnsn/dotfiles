@@ -1,7 +1,8 @@
-#!/bin/sh
-# Load the claude-memory timer (launchd on macOS, a systemd user timer on Linux). Re-runs when
-# the unit files change. The timer's sync does nothing until `claude-memory init` has cloned the repo.
 {{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Load the claude-memory launchd agent; re-runs when the plist changes. Its sync does nothing
+# until `claude-memory init` has cloned the repo. (On echo-turbine, cron runs the sync:
+# echo-core's ansible/playbooks/echo-turbine-claude-memory.yml.)
 # plist: {{ include "Library/LaunchAgents/com.unstablestudios.claude-memory.plist.tmpl" | sha256sum }}
 plist="$HOME/Library/LaunchAgents/com.unstablestudios.claude-memory.plist"
 [ -f "$plist" ] || exit 0
@@ -13,12 +14,4 @@ for _ in 1 2 3 4 5 6 7 8 9 10; do
 done
 echo "claude-memory: couldn't load $plist; run: launchctl bootstrap gui/$(id -u) $plist" >&2
 exit 1
-{{- else if eq .chezmoi.os "linux" -}}
-# units: {{ include "dot_config/systemd/user/claude-memory.service" | sha256sum }} {{ include "dot_config/systemd/user/claude-memory.timer" | sha256sum }}
-command -v systemctl >/dev/null 2>&1 || exit 0
-systemctl --user daemon-reload 2>/dev/null || exit 0
-systemctl --user enable --now claude-memory.timer
-# Without lingering, user timers stop when the last login session ends.
-[ "$(loginctl show-user "$(id -un)" -p Linger --value 2>/dev/null)" = yes ] ||
-  echo "claude-memory: the timer runs only while you're logged in; for always: sudo loginctl enable-linger $(id -un)"
-{{- end }}
+{{ end -}}
