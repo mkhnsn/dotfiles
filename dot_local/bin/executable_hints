@@ -13,26 +13,31 @@ Which hint: one you haven't been shown yet, then the one shown least. A trigger 
   hints app [bundle-id]      the daily hints, for the app in front (BTT runs this)
   hints next [bundle-id]     another hint now, for the app in front (or a general one)
   hints mute [bundle-id|general]   stop hints for an app, or the general ones; with no argument,
-                             whatever the last hint was for
+                             what today's last hint was for, else the app in front (when it has
+                             hints), else the general ones
   hints unmute <bundle-id|general>
   hints on | off             all hints (the cheat sheet stays)
   hints status
 
-State: ~/.local/state/hints.json. Python 3.11+ standard library only (tomllib).
+Runs are serialized with a lock (BTT starts one on every app switch). State:
+~/.local/state/hints.json. Python 3.11+ standard library only (tomllib).
 """
-import datetime, json, os, re, subprocess, sys
+import datetime, fcntl, json, os, re, subprocess, sys, tempfile
 
 try:
     import tomllib
 except ModuleNotFoundError:
     # BTT runs scripts with a bare PATH, which finds macOS's Python 3.9 (no tomllib).
-    for py in ("/opt/homebrew/bin/python3", "/usr/local/bin/python3"):
-        if os.path.exists(py) and os.path.realpath(py) != os.path.realpath(sys.executable):
-            os.execv(py, [py, *sys.argv])
+    if not os.environ.get("HINTS_REEXEC"):  # once: two old Pythons mustn't exec each other forever
+        os.environ["HINTS_REEXEC"] = "1"
+        for py in ("/opt/homebrew/bin/python3", "/usr/local/bin/python3"):
+            if os.path.exists(py) and os.path.realpath(py) != os.path.realpath(sys.executable):
+                os.execv(py, [py, *sys.argv])
     sys.exit("hints: needs Python 3.11 or later (brew install python)")
 
 STATE_DIR = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"))
 STATE = os.path.join(STATE_DIR, "hints.json")
+LOCK = os.path.join(STATE_DIR, "hints.lock")
 LOG = os.path.join(STATE_DIR, "triggers.log")
 KNOWN_AFTER = 3  # fired this many times: no more hints about it
 CLOSE_AFTER = 4  # seconds: BTT can only close a notification while its banner is up (~5 s)
@@ -57,19 +62,21 @@ def load_state():
             s = json.load(f)
     except (OSError, ValueError):
         s = {}
-    s.setdefault("enabled", True)
-    s.setdefault("muted", [])
-    s.setdefault("seen", {})
-    s.setdefault("shown_on", {})
+    if not isinstance(s, dict):
+        s = {}
+    for key, kind, default in (("enabled", bool, True), ("muted", list, []), ("seen", dict, {}),
+                               ("shown_on", dict, {}), ("last", dict, {})):
+        if not isinstance(s.get(key), kind):
+            s[key] = default
     return s
 
 
 def save_state(s):
-    os.makedirs(STATE_DIR, exist_ok=True)
-    with open(STATE + ".tmp", "w") as f:
+    fd, tmp = tempfile.mkstemp(dir=STATE_DIR, prefix=".hints.")
+    with os.fdopen(fd, "w") as f:
         json.dump(s, f, indent=2, sort_keys=True)
         f.write("\n")
-    os.replace(STATE + ".tmp", STATE)
+    os.replace(tmp, STATE)
 
 
 def fired_counts():
@@ -118,7 +125,7 @@ def show(t, scope, app_name, state):
     body = t["hint"] + " · Hyper+H for all"
     notify(title, body)
     state["seen"][t["name"]] = state["seen"].get(t["name"], 0) + 1
-    state["last"] = scope
+    state["last"] = {"scope": scope, "on": datetime.date.today().isoformat()}
 
 
 def notify(title, body):
@@ -127,7 +134,10 @@ def notify(title, body):
               'with title (item 1 of argv) sound name ""',
               'end run']
     args = ["osascript"] + sum((["-e", line] for line in script), []) + [title, body]
-    subprocess.run(args, capture_output=True)
+    try:
+        subprocess.run(args, capture_output=True, timeout=10)
+    except subprocess.TimeoutExpired:
+        pass
     # Close it after a few seconds (named trigger hints-close: BTT's Close Notifications, by title).
     subprocess.Popen(["/bin/sh", "-c", f"sleep {CLOSE_AFTER}; osascript -e 'tell application "
                       "\"BetterTouchTool\" to trigger_named_async_without_response \"hints-close\"'"],
@@ -164,14 +174,18 @@ def cmd_next(args, state):
 
 
 def cmd_mute(args, state):
-    scope = args[0] if args else state.get("last") or front_app()[0]
-    if not scope:
-        sys.exit("hints: which app? hints mute <bundle-id|general>")
+    if args:
+        scope = args[0]
+    elif state["last"].get("on") == datetime.date.today().isoformat():
+        scope = state["last"]["scope"]  # the hint on screen, or the one shown last today
+    else:
+        bundle = front_app()[0]
+        scope = bundle if bundle and candidates(load_triggers(), bundle) else GENERAL
     if scope not in state["muted"]:
         state["muted"].append(scope)
     print(f"muted {scope}; hints unmute {scope} brings it back")
     notify("Hints muted", f"No more hints for {'general controls' if scope == GENERAL else scope}. "
-           f"`hints unmute {scope}` brings them back.")
+           f"hints unmute {scope} brings them back.")
 
 
 def cmd_unmute(args, state):
@@ -197,16 +211,19 @@ def cmd_status(_, state):
 def main():
     args = sys.argv[1:]
     cmd = args.pop(0) if args else "status"
+    if cmd not in ("app", "next", "mute", "unmute", "status", "on", "off"):
+        print(__doc__.split("\n\n")[3])
+        sys.exit(2)
+    os.makedirs(STATE_DIR, exist_ok=True)
+    lock = open(LOCK, "w")
+    fcntl.flock(lock, fcntl.LOCK_EX)  # one run at a time: read, decide, show, write
     state = load_state()
     if cmd in ("on", "off"):
         state["enabled"] = cmd == "on"
         print(f"hints {cmd}")
-    elif cmd in ("app", "next", "mute", "unmute", "status"):
+    else:
         {"app": cmd_app, "next": cmd_next, "mute": cmd_mute, "unmute": cmd_unmute,
          "status": cmd_status}[cmd](args, state)
-    else:
-        print(__doc__.split("\n\n")[2])
-        sys.exit(2)
     if cmd != "status":
         save_state(state)
 

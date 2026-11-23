@@ -86,6 +86,8 @@ def validate(src, triggers):
             problems.append(f"invalid: {where}: name must be lowercase letters, digits and dashes")
         if n in names:
             problems.append(f"invalid: {where}: name used twice")
+        if n in HINTS_NAMES:
+            problems.append(f"invalid: {where}: {n} is one of the hints' own pieces")
         names.add(n)
         for field in ("action", "hint"):
             if not isinstance(t.get(field), str) or not t[field].strip():
@@ -188,6 +190,7 @@ def wanted(triggers):
 
 # The hints' pieces (#144), with fixed UUIDs.
 MENU = "Hints"
+HINTS_NAMES = {"hints-close", "hints-next", "hints-mute"}  # generated here; not for triggers.toml
 INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-change")}
 ROW_H, GAP, PAD, WIDTH = 30, 2, 6, 460
 
@@ -226,9 +229,11 @@ def row(n, name, text, script, menu_uuid, header=False):
 
 def hints_pieces(triggers):
     menu_uuid = uid("hints", "menu")
-    rows = [row(0, "Header", "Hyper+H · what you can do", None, menu_uuid, header=True)]
+    own = [t for t in triggers if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") == MENU]
+    title = (key_label(own[0]) + " · " if own else "") + "what you can do"
+    rows = [row(0, "Header", html.escape(title), None, menu_uuid, header=True)]
     for t in triggers:
-        if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") == MENU:
+        if t in own:
             continue  # the cheat sheet's own key
         more = ", ".join(SURFACE_NAMES[s] for s in t.get("fires", []) if s in SURFACE_NAMES)
         where = f" ({', '.join(t['apps'])})" if t.get("apps") else ""

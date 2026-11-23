@@ -272,6 +272,7 @@ class Fixture(unittest.TestCase):
                          '"$HOME/.local/bin/trigger" keep-awake menu')
         text = rows["zoom-cam"]["BTTMenuConfig"]["BTTMenuAttributedText"]
         self.assertIn("<b>Hyper+V</b>", text)
+        self.assertIn("Hyper+H · what you can do", rows["Header"]["BTTMenuConfig"]["BTTMenuAttributedText"])
         self.assertIn("Camera &lt;video&gt; (us.zoom.xos)", text)  # escaped
         self.assertIn("Stream Deck", rows["mic-mute"]["BTTMenuConfig"]["BTTMenuAttributedText"])
         self.assertNotIn("BTTMenuItemActions", rows["Header"])
@@ -292,6 +293,18 @@ class Fixture(unittest.TestCase):
         menu["BTTMenuItems"][1]["BTTMenuConfig"]["BTTMenuTextMinimumScaleFactor"] = 0.3
         self.preset(d)
         self.assertEqual(self.run_check().returncode, 0)
+
+    def test_hints_names_are_reserved(self):
+        p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "hints-next"'))
+        self.assertTrue(any("hints-next is one of the hints' own pieces" in x for x in p), p)
+
+    def test_removed_trigger_leaves_the_cheat_sheet(self):
+        self.run_check("--write")
+        self.toml(GOOD.split("[[trigger]]\nname = \"mic-mute\"")[0])
+        self.run_check("--write")
+        _, menu, _, _ = self.hints_parts()
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]],
+                         ["Header", "keep-awake", "hints-next", "hints-mute"])
 
     def test_apps_must_be_bundle_ids(self):
         p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K"]\napps = "us.zoom.xos"'))

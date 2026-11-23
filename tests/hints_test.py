@@ -112,17 +112,40 @@ class Hints(unittest.TestCase):
         self.run_hints("next")
         self.assertEqual([s.split(" | ")[1][:7] for s in self.shown()], ["Hyper+M", "Hyper+K"])
 
-    def test_mute_takes_the_last_hint_scope_and_unmute_restores(self):
+    def test_mute_takes_todays_last_hint_and_unmute_restores(self):
         self.run_hints("app")
         r = self.run_hints("mute")
         self.assertIn("muted general", r.stdout)
         self.assertEqual(self.state_json()["muted"], ["general"])
-        os.remove(os.path.join(self.state, "hints.json"))  # a new day, same mute
-        self.run_hints("mute", "general")
         self.run_hints("app")
-        self.assertFalse(any(s.startswith("Hint |") for s in self.shown()[1:]))
+        self.assertEqual(len(self.shown()), 2)  # the hint, then "Hints muted"; no new hint
         self.run_hints("unmute", "general")
         self.assertEqual(self.state_json()["muted"], [])
+
+    def test_mute_without_a_hint_today_takes_the_app_in_front(self):
+        st = os.path.join(self.state, "hints.json")
+        with open(st, "w") as f:
+            json.dump({"last": {"scope": "us.zoom.xos", "on": "2020-01-01"}}, f)
+        self.front("com.apple.Safari", "Safari")  # no hints of its own: general
+        self.assertIn("muted general", self.run_hints("mute").stdout)
+        self.run_hints("unmute", "general")
+        self.front("us.zoom.xos", "zoom.us")
+        self.assertIn("muted us.zoom.xos", self.run_hints("mute").stdout)
+
+    def test_next_prefers_the_app_in_front(self):
+        self.front("us.zoom.xos", "zoom.us")
+        self.run_hints("next")
+        self.assertTrue(self.shown()[0].startswith("Hint: zoom.us | Hyper+V"))
+
+    def test_parallel_runs_show_the_daily_hint_once(self):
+        env = dict(os.environ, PATH=self.bin + ":/usr/bin:/bin", XDG_STATE_HOME=self.state,
+                   CHEZMOI_SOURCE_DIR=self.src)
+        procs = [subprocess.Popen([sys.executable, "-I", HINTS, "app"], env=env,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(12)]
+        errs = [p.communicate()[1] for p in procs]
+        self.assertEqual([p.returncode for p in procs], [0] * 12, errs)
+        self.assertEqual(len(self.shown()), 1)
+        self.assertTrue(self.state_json()["enabled"])
 
     def test_off_silences_daily_hints_but_not_next(self):
         self.run_hints("off")
@@ -150,8 +173,16 @@ class Hints(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(len(self.shown()), 1)
 
-    def test_unknown_command(self):
-        self.assertEqual(self.run_hints("bogus").returncode, 2)
+    def test_unknown_command_prints_the_commands(self):
+        r = self.run_hints("bogus")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("hints unmute <bundle-id|general>", r.stdout)
+
+    def test_state_of_the_wrong_shape_is_replaced(self):
+        for bad in ("[]", '{"muted": null, "seen": 3, "last": "general"}'):
+            with open(os.path.join(self.state, "hints.json"), "w") as f:
+                f.write(bad)
+            self.assertEqual(self.run_hints("mute").returncode, 0, bad)
 
     def test_corrupt_state_is_replaced(self):
         with open(os.path.join(self.state, "hints.json"), "w") as f:

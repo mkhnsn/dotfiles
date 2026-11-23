@@ -509,11 +509,12 @@ Hyper key.
 - **Hint of the day**: the first time each day you switch to any app, a notification titled
   "Hint" shows one general hint (a trigger without `apps`). The first switch to an app that a
   trigger lists in `apps` brings one hint for that app. Unseen hints come first, then the least
-  shown; a trigger fired 3 times (`~/.local/state/triggers.log`) isn't hinted again. BTT closes
+  shown; a trigger fired 3 times, from anywhere including the cheat sheet
+  (`~/.local/state/triggers.log`), isn't hinted again (until the log is trimmed). BTT closes
   each hint after 4 seconds, while its banner is still up, so none pile up in Notification Center.
   Focus and Do Not Disturb silence them like any notification.
-- `hints next` shows one now; `hints mute` stops the kind of hint shown last (an app's, or
-  `general`), `hints unmute <bundle-id|general>` brings it back; `hints off` / `hints on` for all of
+- `hints next` shows one now; `hints mute` stops the kind of hint shown last today (an app's, or
+  `general`), or else the app in front's, `hints unmute <bundle-id|general>` brings it back; `hints off` / `hints on` for all of
   them (the cheat sheet stays); `hints status`. State: `~/.local/state/hints.json`.
 - BTT runs `hints app` when the app in front changes; it needs Python 3.11 (Homebrew's: BTT's PATH
   finds macOS's 3.9, so `hints` switches to `/opt/homebrew/bin/python3`).
