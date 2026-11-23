@@ -323,8 +323,9 @@ check_btt_mcp()    { workstation || return 0; nc -z -G 2 127.0.0.1 64832 >/dev/n
 # Settings (Modifier Keys, e.g. to No Action) sends BTT nothing. System Settings stores that as
 # com.apple.keyboard.modifiermapping.<vendor>-<product>-0 in the current host's global domain.
 # hidutil's live mapping can't tell: BTT's Hyper key sets the same Caps Lock → No Action on every
-# keyboard itself. Prints the keyboards that remap it, one per line, named from hidutil when
-# connected. Fails closed: if it can't tell, it prints a placeholder instead of nothing.
+# keyboard itself. Prints the connected keyboards that remap it, one per line (a remap left on a
+# keyboard that isn't connected can't block BTT; it's flagged once it's plugged in). Fails closed:
+# if it can't tell, it prints a placeholder instead of nothing.
 capslock_remapped(){ local prefs
                      prefs="$(defaults -currentHost export -g - 2>/dev/null)" || { echo "a keyboard (couldn't read its settings)"; return; }
                      case "$prefs" in *com.apple.keyboard.modifiermapping.*) ;; *) return 0 ;; esac
@@ -338,8 +339,10 @@ for k, v in plistlib.loads(sys.stdin.buffer.read()).items():
                  for e in v if isinstance(e, dict)):
         remapped.add((int(m.group(1)), int(m.group(2))))
 if not remapped: sys.exit()
-rows = subprocess.run(["hidutil", "list"], capture_output=True, text=True).stdout.splitlines()
-head = next((r for r in rows if "RegistryID" in r and "Product" in r), "")
+out = subprocess.run(["hidutil", "list"], capture_output=True, text=True, check=True).stdout
+# Services only: the Devices section below it has its own, narrower columns.
+rows = out.split("Devices:")[0].splitlines()
+head = next(r for r in rows if "RegistryID" in r and "Product" in r)
 a, b = head.find(" Product ") + 1, head.find(" UserClass ") + 1  # not ProductID
 known = {}
 for r in rows:
@@ -349,7 +352,7 @@ for r in rows:
     if usage != (1, 6): continue  # keyboards only: the built-in one shares 0-0 with other services
     n = (r[a:b] if a > 0 and b > a else "").strip().removesuffix("(null)").strip()
     if n and ids in remapped: known.setdefault(ids, n)
-print("\n".join(sorted(known.get(i, f"a keyboard that isn'"'"'t connected (vendor {i[0]}, product {i[1]})") for i in remapped)))' 2>/dev/null || echo "a keyboard (couldn't check)"; }
+print("\n".join(sorted(known.values())))' 2>/dev/null || echo "a keyboard (couldn't check)"; }
 check_capslock()   { workstation || return 0; [ -z "$(capslock_remapped)" ]; }
 check_raycast_sync(){ workstation || return 0; confirmed raycast_sync; }
 check_raycast_local(){ workstation || return 0; confirmed raycast_local; }
