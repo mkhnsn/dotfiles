@@ -4,25 +4,33 @@
 BTT runs `hints app` whenever the app in front changes. The first time each day it shows one
 general hint (a trigger with no `apps`), and the first time each day you switch to an app it
 shows one hint for that app (a trigger listing it in `apps`). Hints are BTT notifications titled
-"Hint", closed while their banner is up so they don't pile up in Notification Center. Hyper+H opens the cheat sheet, whose
-last rows run `hints next` and `hints mute`.
+"Hint", closed while their banner is up so they don't pile up in Notification Center. Hyper+H
+opens the cheat sheet, whose last rows run `hints next` and `hints mute`.
+
+The setup (docked with the lid closed, docked with the lid open, laptop only) decides which
+surfaces a hint and the cheat sheet name: the Stream Deck only when docked, touch only with the
+lid open. BTT runs `hints setup` when a screen connects or disconnects and when the lid opens or
+closes (and `hints app` notices a change too): it updates the cheat sheet's rows, and the first 3
+times in each setup it shows what works there.
 
 Which hint: one you haven't been shown yet, then the one shown least. A trigger fired 3 times
 (~/.local/state/triggers.log) is skipped: you know it.
 
   hints app [bundle-id]      the daily hints, for the app in front (BTT runs this)
+  hints setup                the setup changed: update the cheat sheet, maybe say what works now
   hints next [bundle-id]     another hint now, for the app in front (or a general one)
-  hints mute [bundle-id|general]   stop hints for an app, or the general ones; with no argument,
+  hints mute [bundle-id|general|setup]   stop hints for an app, the general ones, or the
+                             setup-change ones; with no argument,
                              what today's last hint was for, else the app in front (when it has
                              hints), else the general ones
-  hints unmute <bundle-id|general>
+  hints unmute <bundle-id|general|setup>
   hints on | off             all hints (the cheat sheet stays)
   hints status
 
 Runs are serialized with a lock (BTT starts one on every app switch). State:
 ~/.local/state/hints.json. Python 3.11+ standard library only (tomllib).
 """
-import datetime, fcntl, json, os, re, subprocess, sys, tempfile
+import ctypes, ctypes.util, datetime, fcntl, html, importlib.machinery, importlib.util, json, os, re, subprocess, sys, tempfile
 
 try:
     import tomllib
@@ -42,6 +50,49 @@ LOG = os.path.join(STATE_DIR, "triggers.log")
 KNOWN_AFTER = 3  # fired this many times: no more hints about it
 CLOSE_AFTER = 4  # seconds: BTT can only close a notification while its banner is up (~5 s)
 GENERAL = "general"
+SETUP = "setup"
+SETUP_HINTS = 3  # setup-change hints per setup
+SETUP_NAMES = {"docked-closed": "Docked, lid closed", "docked-open": "Docked, lid open", "laptop": "Laptop"}
+
+
+def trigger_check():
+    """trigger-check as a module: the surfaces table and the cheat sheet's row format."""
+    here = os.path.dirname(os.path.realpath(__file__))
+    for name in ("trigger-check", "executable_trigger-check"):
+        path = os.path.join(here, name)
+        if os.path.exists(path):
+            loader = importlib.machinery.SourceFileLoader("trigger_check", path)
+            mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("trigger_check", loader))
+            loader.exec_module(mod)
+            return mod
+    sys.exit("hints: trigger-check isn't next to hints")
+
+
+TC = trigger_check()
+
+
+def detect_setup():
+    """docked-closed, docked-open or laptop, from the active displays: an external one means docked;
+    the built-in one is active only with the lid open. HINTS_SETUP overrides it (tests)."""
+    if os.environ.get("HINTS_SETUP"):
+        return os.environ["HINTS_SETUP"]
+    try:
+        cg = ctypes.CDLL(ctypes.util.find_library("CoreGraphics"))
+        cg.CGDisplayIsBuiltin.restype = ctypes.c_bool
+        ids, n = (ctypes.c_uint32 * 16)(), ctypes.c_uint32()
+        if cg.CGGetActiveDisplayList(16, ids, ctypes.byref(n)) != 0:
+            return None
+    except (OSError, TypeError, AttributeError):
+        return None
+    builtin = [cg.CGDisplayIsBuiltin(ids[i]) for i in range(n.value)]
+    if not any(not b for b in builtin):
+        return "laptop"
+    return "docked-open" if any(builtin) else "docked-closed"
+
+
+def surfaces_in(setup):
+    """The surfaces this setup has (key is always one)."""
+    return {s for s, setups in TC.SURFACES.items() if setup is None or setup in setups}
 
 
 def source_dir():
@@ -65,7 +116,7 @@ def load_state():
     if not isinstance(s, dict):
         s = {}
     for key, kind, default in (("enabled", bool, True), ("muted", list, []), ("seen", dict, {}),
-                               ("shown_on", dict, {}), ("last", dict, {})):
+                               ("shown_on", dict, {}), ("last", dict, {}), ("setup_shown", dict, {})):
         if not isinstance(s.get(key), kind):
             s[key] = default
     return s
@@ -120,9 +171,11 @@ def pick(triggers, scope, state, counts):
     return min(pool, key=lambda t: (state["seen"].get(t["name"], 0), order[t["name"]]))
 
 
-def show(t, scope, app_name, state):
+def show(t, scope, app_name, state, setup=None):
     title = "Hint" if scope == GENERAL else f"Hint: {app_name or scope}"
-    body = t["hint"] + " · Hyper+H for all"
+    have = surfaces_in(setup if setup is not None else detect_setup())
+    also = [TC.SURFACE_NAMES[s] for s in t.get("fires", []) if s in TC.SURFACE_NAMES and s in have]
+    body = t["hint"] + (f" (or the {' or '.join(also)})" if also else "") + " · Hyper+H for all"
     notify(title, body)
     state["seen"][t["name"]] = state["seen"].get(t["name"], 0) + 1
     state["last"] = {"scope": scope, "on": datetime.date.today().isoformat()}
@@ -150,6 +203,9 @@ def cmd_app(args, state):
     bundle, name = (args[0], args[0]) if args else front_app()
     triggers, counts = load_triggers(), fired_counts()
     today = datetime.date.today().isoformat()
+    setup = detect_setup()
+    if setup and setup != state.get("setup"):
+        setup_changed(setup, triggers, state)
     for scope in (GENERAL, bundle):
         if not scope or scope in state["muted"] or state["shown_on"].get(scope) == today:
             continue
@@ -158,7 +214,44 @@ def cmd_app(args, state):
             continue  # no hints for this app: nothing to remember
         state["shown_on"][scope] = today
         if t:
-            show(t, scope, name, state)
+            show(t, scope, name, state, setup)
+
+
+def update_cheat_sheet(triggers, setup):
+    """Rewrite the cheat sheet's rows for this setup (BTT keeps it until the next import)."""
+    have = surfaces_in(setup)
+    for t in TC.cheat_sheet_rows(triggers):
+        payload = json.dumps({"BTTMenuAttributedText": TC.row_html(TC.row_text(t, have))})
+        script = ['on run argv',
+                  'tell application "BetterTouchTool" to update_menu_item menu_name (item 1 of argv) '
+                  'item_name (item 2 of argv) json (item 3 of argv)',
+                  'end run']
+        try:
+            subprocess.run(["osascript"] + sum((["-e", line] for line in script), []) + [TC.MENU, t["name"], payload],
+                           capture_output=True, timeout=10)
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def setup_changed(setup, triggers, state):
+    first = "setup" not in state  # the first run on this Mac: just note where it is
+    state["setup"] = setup
+    update_cheat_sheet(triggers, setup)
+    shown = state["setup_shown"].get(setup, 0)
+    if first or not state["enabled"] or SETUP in state["muted"] or shown >= SETUP_HINTS:
+        return
+    live = [TC.SURFACE_NAMES[s] for s in ("streamdeck", "knob", "mouse", "touch", "ipad") if s in surfaces_in(setup)]
+    used = [s for s in live if any(TC.SURFACE_NAMES.get(f) == s for t in triggers for f in t.get("fires", []))]
+    what = (", ".join(used) + " and the Hyper keys") if used else "the Hyper keys"
+    notify(f"Hint: {SETUP_NAMES.get(setup, setup)}", f"Here: {what} work. Hyper+H for all.")
+    state["setup_shown"][setup] = shown + 1
+    state["last"] = {"scope": SETUP, "on": datetime.date.today().isoformat()}
+
+
+def cmd_setup(_, state):
+    setup = detect_setup()
+    if setup and setup != state.get("setup"):
+        setup_changed(setup, load_triggers(), state)
 
 
 def cmd_next(args, state):
@@ -184,7 +277,8 @@ def cmd_mute(args, state):
     if scope not in state["muted"]:
         state["muted"].append(scope)
     print(f"muted {scope}; hints unmute {scope} brings it back")
-    notify("Hints muted", f"No more hints for {'general controls' if scope == GENERAL else scope}. "
+    what = {GENERAL: "general controls", SETUP: "setup changes"}.get(scope, scope)
+    notify("Hints muted", f"No more hints for {what}. "
            f"hints unmute {scope} brings them back.")
 
 
@@ -201,6 +295,7 @@ def cmd_unmute(args, state):
 def cmd_status(_, state):
     print(f"hints: {'on' if state['enabled'] else 'off'}")
     print(f"muted: {', '.join(state['muted']) or 'nothing'}")
+    print(f"setup: {detect_setup() or 'unknown'}")
     triggers, counts = load_triggers(), fired_counts()
     for t in triggers:
         n = counts.get(t["name"], 0)
@@ -211,8 +306,8 @@ def cmd_status(_, state):
 def main():
     args = sys.argv[1:]
     cmd = args.pop(0) if args else "status"
-    if cmd not in ("app", "next", "mute", "unmute", "status", "on", "off"):
-        print(__doc__.split("\n\n")[3])
+    if cmd not in ("app", "setup", "next", "mute", "unmute", "status", "on", "off"):
+        print(next(p for p in __doc__.split("\n\n") if p.startswith("  hints ")))
         sys.exit(2)
     os.makedirs(STATE_DIR, exist_ok=True)
     lock = open(LOCK, "w")
@@ -222,7 +317,7 @@ def main():
         state["enabled"] = cmd == "on"
         print(f"hints {cmd}")
     else:
-        {"app": cmd_app, "next": cmd_next, "mute": cmd_mute, "unmute": cmd_unmute,
+        {"app": cmd_app, "setup": cmd_setup, "next": cmd_next, "mute": cmd_mute, "unmute": cmd_unmute,
          "status": cmd_status}[cmd](args, state)
     if cmd != "status":
         save_state(state)

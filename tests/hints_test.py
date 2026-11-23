@@ -13,6 +13,7 @@ name = "mic-mute"
 action = "Mic"
 hint = "Hyper+M mutes the mic"
 keys = ["⌃⌥⇧⌘M"]
+fires = ["streamdeck"]
 
 [[trigger]]
 name = "keep-awake"
@@ -43,9 +44,12 @@ class Hints(unittest.TestCase):
         # delayed hints-close call.
         self.stub("osascript", f'case "$*" in *display_notification*) '
                                f'eval "t=\\${{$(($#-1))}}"; eval "b=\\${{$#}}"; '
-                               f'printf "%s | %s\\n" "$t" "$b" >> {self.notes} ;; esac')
+                               f'printf "%s | %s\\n" "$t" "$b" >> {self.notes} ;; '
+                               f'*update_menu_item*) eval "i=\\${{$(($#-1))}}"; eval "j=\\${{$#}}"; '
+                               f'printf "MENU | %s | %s\\n" "$i" "$j" >> {self.notes} ;; esac')
         self.front("com.apple.Terminal", "Terminal")
         self.stub("sleep", "exit 0")
+        self.setup = "laptop"
 
     def tearDown(self):
         shutil.rmtree(self.d)
@@ -63,15 +67,19 @@ class Hints(unittest.TestCase):
 
     def run_hints(self, *args):
         env = dict(os.environ, PATH=self.bin + ":/usr/bin:/bin", XDG_STATE_HOME=self.state,
-                   CHEZMOI_SOURCE_DIR=self.src)
+                   CHEZMOI_SOURCE_DIR=self.src, HINTS_SETUP=self.setup)
         return subprocess.run([sys.executable, "-I", HINTS, *args], env=env, capture_output=True, text=True)
 
-    def shown(self):
+    def lines(self):
         try:
             with open(self.notes) as f:
                 return f.read().splitlines()
         except OSError:
             return []
+
+    def shown(self):
+        """Notifications shown (not cheat-sheet updates)."""
+        return [l for l in self.lines() if not l.startswith("MENU ")]
 
     def state_json(self):
         with open(os.path.join(self.state, "hints.json")) as f:
@@ -139,7 +147,7 @@ class Hints(unittest.TestCase):
 
     def test_parallel_runs_show_the_daily_hint_once(self):
         env = dict(os.environ, PATH=self.bin + ":/usr/bin:/bin", XDG_STATE_HOME=self.state,
-                   CHEZMOI_SOURCE_DIR=self.src)
+                   CHEZMOI_SOURCE_DIR=self.src, HINTS_SETUP=self.setup)
         procs = [subprocess.Popen([sys.executable, "-I", HINTS, "app"], env=env,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(12)]
         errs = [p.communicate()[1] for p in procs]
@@ -168,15 +176,74 @@ class Hints(unittest.TestCase):
     def test_runs_from_btts_bare_path(self):
         """BTT's PATH finds /usr/bin/python3 (3.9, no tomllib): hints re-runs under Homebrew's."""
         env = {"HOME": self.d, "PATH": self.bin + ":/usr/bin:/bin", "XDG_STATE_HOME": self.state,
-               "CHEZMOI_SOURCE_DIR": self.src}
+               "CHEZMOI_SOURCE_DIR": self.src, "HINTS_SETUP": self.setup}
         r = subprocess.run(["/usr/bin/python3", HINTS, "next"], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(len(self.shown()), 1)
 
+    # ---- setups (#152) ----
+    def menu_updates(self):
+        return [l for l in self.lines() if l.startswith("MENU ")]
+
+    def test_first_run_notes_the_setup_quietly(self):
+        self.setup = "docked-closed"
+        self.run_hints("setup")
+        self.assertEqual(self.state_json()["setup"], "docked-closed")
+        self.assertFalse([l for l in self.shown() if l.startswith("Hint")])
+        # the cheat sheet still gets this setup's rows
+        rows = {l.split(" | ")[1]: l for l in self.menu_updates()}
+        self.assertEqual(set(rows), {"mic-mute", "keep-awake", "zoom-video"})
+        self.assertIn("Stream Deck", rows["mic-mute"])
+
+    def test_setup_change_says_what_works_three_times(self):
+        self.run_hints("setup")  # laptop, first run: quiet
+        for i in range(5):
+            self.setup = "docked-closed" if i % 2 == 0 else "laptop"
+            self.run_hints("setup")
+        hints = [l for l in self.shown() if l.startswith("Hint")]
+        self.assertEqual(hints[0], "Hint: Docked, lid closed | Here: Stream Deck and the Hyper keys work. Hyper+H for all.")
+        self.assertEqual(hints[1], "Hint: Laptop | Here: the Hyper keys work. Hyper+H for all.")
+        self.assertEqual(len(hints), 5)
+        self.setup = "docked-closed"
+        self.run_hints("setup")  # same setup again: nothing
+        self.setup = "laptop"
+        self.run_hints("setup")  # a 3rd laptop hint
+        self.setup = "docked-closed"
+        self.run_hints("setup")  # the docked hints are used up (3)
+        hints = [l for l in self.shown() if l.startswith("Hint")]
+        self.assertEqual(len(hints), 6)
+        self.assertEqual(self.state_json()["setup_shown"], {"docked-closed": 3, "laptop": 3})
+
+    def test_laptop_rows_and_hints_leave_out_desk_surfaces(self):
+        self.run_hints("setup")
+        rows = {l.split(" | ")[1]: l for l in self.menu_updates()}
+        self.assertNotIn("Stream Deck", rows["mic-mute"])
+        self.run_hints("next")
+        self.assertEqual(self.shown()[-1], "Hint | Hyper+M mutes the mic · Hyper+H for all")
+        self.setup = "docked-open"
+        self.run_hints("next", "us.zoom.xos")
+        self.run_hints("next")
+        self.assertIn("Hyper+K", self.shown()[-1])
+        os.remove(self.notes)
+        self.run_hints("unmute", "x")
+        with open(os.path.join(self.state, "hints.json"), "w") as f:
+            json.dump({"seen": {"keep-awake": 5, "zoom-video": 5}}, f)
+        self.run_hints("next")
+        self.assertEqual([l for l in self.shown() if l.startswith("Hint")][-1],
+                         "Hint | Hyper+M mutes the mic (or the Stream Deck) · Hyper+H for all")
+
+    def test_app_switch_notices_a_new_setup_and_setup_hints_can_be_muted(self):
+        self.run_hints("app")  # notes laptop, shows the general hint
+        self.run_hints("mute", "setup")
+        self.setup = "docked-closed"
+        self.run_hints("app")
+        self.assertEqual(self.state_json()["setup"], "docked-closed")
+        self.assertFalse([l for l in self.shown() if l.startswith("Hint: Docked")])
+
     def test_unknown_command_prints_the_commands(self):
         r = self.run_hints("bogus")
         self.assertEqual(r.returncode, 2)
-        self.assertIn("hints unmute <bundle-id|general>", r.stdout)
+        self.assertIn("hints unmute <bundle-id|general|setup>", r.stdout)
 
     def test_state_of_the_wrong_shape_is_replaced(self):
         for bad in ("[]", '{"muted": null, "seen": 3, "last": "general"}'):

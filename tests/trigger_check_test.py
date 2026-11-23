@@ -285,6 +285,21 @@ class Fixture(unittest.TestCase):
         self.assertEqual(self.run_check().returncode, 0)  # current, and hints-close isn't reported as dropped
         self.assertNotIn("not in triggers.toml", self.run_check().stdout)
 
+    def test_setup_events_run_hints_setup(self):
+        self.run_check("--write")
+        ts = self.read_preset()["BTTPresetContent"][0]["BTTTriggers"]
+        events = {t["BTTTriggerType"]: t for t in ts if t.get("BTTTriggerType") in tc.SETUP_EVENTS}
+        self.assertEqual(set(events), {792, 793, 683, 684})
+        for t in events.values():
+            self.assertIn('"$HOME/.local/bin/hints" setup', t["BTTActionsToExecute"][0]["BTTShellTaskActionScript"])
+        self.assertEqual(self.run_check().returncode, 0)
+
+    def test_row_text_names_only_the_surfaces_given(self):
+        t = {"name": "x", "action": "Mic", "keys": ["⌃⌥⇧⌘M"], "fires": ["streamdeck", "touch"]}
+        self.assertIn("Stream Deck, touch", tc.row_text(t))
+        self.assertIn("· touch", tc.row_text(t, {"key", "touch"}))
+        self.assertNotIn("·", tc.row_text(t, {"key"}))
+
     def test_btt_defaults_in_the_menu_survive_regenerating(self):
         self.run_check("--write")
         d = self.read_preset()
@@ -328,6 +343,31 @@ class Fixture(unittest.TestCase):
             f.write('[[shortcut]]\nkeys = "⌃⌥⇧⌘K"\nowner = "raycast"\naction = "something"\n')
         _, problems, _ = sc.check(self.d, reg_path)
         self.assertTrue(any(p.startswith("conflict: ⌃⌥⇧⌘K") for p in problems))
+
+
+class Search(unittest.TestCase):
+    """triggers (the Raycast "Search Triggers" command) over the repo's triggers.toml."""
+
+    def run_search(self, *words):
+        return subprocess.run([sys.executable, "-I", os.path.join(REPO, "dot_local/bin/executable_triggers"), *words],
+                              env=dict(os.environ, CHEZMOI_SOURCE_DIR=REPO), capture_output=True, text=True)
+
+    def test_lists_every_trigger_with_its_key(self):
+        out = self.run_search().stdout
+        for t in tc.load(REPO):
+            self.assertIn(f"{t['name']}: ", out)
+            self.assertIn(tc.key_label(t), out)
+
+    def test_all_words_must_match(self):
+        out = self.run_search("mic", "MUTE").stdout
+        self.assertIn("mic-mute: ", out)
+        self.assertNotIn("keep-awake: ", out)
+        self.assertIn("also Stream Deck", out)
+
+    def test_no_match(self):
+        r = self.run_search("zzz-nothing")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("No trigger matches", r.stdout)
 
 
 class Committed(unittest.TestCase):
