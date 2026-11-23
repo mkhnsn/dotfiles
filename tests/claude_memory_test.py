@@ -107,7 +107,9 @@ class TwoMachines(unittest.TestCase):
             self.assertIn("- [One]", idx)
             self.assertIn("- [Two]", idx)
             self.assertEqual((m.mem / "same.md").read_text(), "mac\n")
-            self.assertEqual((m.mem / "same.conflict-turbine.md").read_text(), "turbine\n")
+        # The conflict copy stays on the machine that found it.
+        self.assertEqual((self.b.mem / "same.conflict-turbine.md").read_text(), "turbine\n")
+        self.assertFalse((self.a.mem / "same.conflict-turbine.md").exists())
 
     def test_edit_on_both_keeps_ours_and_saves_theirs(self):
         self.init_both()
@@ -142,6 +144,62 @@ class TwoMachines(unittest.TestCase):
         self.b.run("sync")
         self.a.run("sync")
         self.assertEqual((self.a.mem / "two.md").read_text(), "two, edited\n")
+
+    def test_index_prose_from_the_default_folder_is_kept(self):
+        self.a.write_default("MEMORY.md", "# Index\n- [One](one.md) — a\n")
+        self.a.run("init")
+        self.a.write_default("MEMORY.md", "# Index\n## Hosts\n- [Two](two.md) — b\nSee notes.\n")
+        self.a.run("sync")
+        idx = (self.a.mem / "MEMORY.md").read_text()
+        self.assertIn("- [Two]", idx)
+        copy = (self.a.mem / "MEMORY.conflict-mac.md").read_text()
+        self.assertIn("See notes.", copy)
+
+    def test_unpointed_project_memories_stay(self):
+        other = self.a.home / ".claude/projects" / enc(self.a.home / "Documents/notes") / "memory"
+        other.mkdir(parents=True)
+        (other / "n.md").write_text("n\n")
+        self.a.run("init")
+        self.assertTrue((other / "n.md").exists())
+        self.assertIn("not synced", self.a.run("status"))
+
+    def test_two_first_commits_merge(self):
+        # Both machines commit to the empty repo before either pushes.
+        self.a.write_default("one.md", "one\n")
+        self.b.write_default("two.md", "two\n")
+        for m in (self.a, self.b):
+            subprocess.run(["git", "clone", "-q", m.env["CLAUDE_MEMORY_URL"], str(m.clone)],
+                           check=True, env=m.env, capture_output=True)
+        self.a.run("sync")
+        self.b.run("sync")  # unrelated histories
+        self.a.run("sync")
+        for m in (self.a, self.b):
+            self.assertEqual((m.mem / "one.md").read_text(), "one\n")
+            self.assertEqual((m.mem / "two.md").read_text(), "two\n")
+
+    def test_broken_driver_still_keeps_theirs(self):
+        self.init_both()
+        self.b.run("sync")
+        (self.a.mem / "one.md").write_text("mac edit\n")
+        (self.b.mem / "one.md").write_text("turbine edit\n")
+        self.b.run("sync")
+        subprocess.run(["git", "-C", str(self.a.clone), "config", "merge.claude-memory-file.driver",
+                        "/nonexistent %O %A %B"], check=True, env=self.a.env)
+        env = {**self.a.env}
+        subprocess.run(["git", "-C", str(self.a.clone), "commit", "-qam", "mac: 1 memories"],
+                       env=env, capture_output=True)
+        subprocess.run(["git", "-C", str(self.a.clone), "fetch", "-q"], check=True, env=env)
+        import importlib.machinery
+        import importlib.util
+        from unittest import mock
+        keep = ("HOME", "CLAUDE_MEMORY_HOST", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM")
+        with mock.patch.dict(os.environ, {k: self.a.env[k] for k in keep}):
+            loader = importlib.machinery.SourceFileLoader("cm", str(SCRIPT))
+            cm = importlib.util.module_from_spec(importlib.util.spec_from_loader("cm", loader))
+            loader.exec_module(cm)
+            cm.merge_upstream()  # the driver fails: the fallback must still save theirs
+        self.assertEqual((self.a.mem / "one.md").read_text(), "mac edit\n")
+        self.assertEqual((self.a.mem / "one.conflict-turbine.md").read_text(), "turbine edit\n")
 
     def test_hooks_do_nothing_without_a_clone(self):
         self.assertEqual(self.a.run("hook-start"), "")

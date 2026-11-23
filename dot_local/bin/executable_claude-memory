@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """claude-memory: Claude Code's memories, in sync across machines through a private git repo.
 
-  claude-memory init     clone the repo, move this machine's memories in, push
-  claude-memory sync     move new memories in, point each checkout at the repo, commit, pull, push
+  claude-memory init     clone the repo, point checkouts at it, move their memories in, push
+  claude-memory sync     point checkouts at the repo, move new memories in, commit, pull, push
   claude-memory status   what's synced, what isn't, and memories waiting to be merged
   claude-memory hook-start / hook-end   used by Claude Code's SessionStart / SessionEnd hooks
 
@@ -10,14 +10,16 @@ The repo (~/.local/share/claude-memory) holds projects/<rel>/, where <rel> is Cl
 project folder name (~/.claude/projects/<name>) without the home-folder prefix, so the same
 repo matches on a Mac (/Users/…) and on Linux (/home/…). Each checkout under ~/src (and the
 chezmoi source) gets `autoMemoryDirectory` in its .claude/settings.local.json, so Claude Code
-reads and writes the repo directly. A memory changed on two machines keeps this machine's
-copy and saves the other as <name>.conflict-<host>.md; the next session is told to merge it.
+reads and writes the repo directly; only those checkouts' memories move into the repo. A memory
+changed on two machines keeps this machine's copy and saves the other next to it as
+<name>.conflict-<host>.md (on this machine only); the next session is told to merge it.
 Design: docs/claude-memory-sync.md in the dotfiles.
 """
 import json
 import os
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -35,19 +37,29 @@ LOCK = STATE / "claude-memory.lock"
 DEPLOY_KEY = HOME / ".ssh/claude-memory"
 HOST = os.environ.get("CLAUDE_MEMORY_HOST") or socket.gethostname().split(".")[0].lower()
 SELF = Path(os.path.realpath(__file__))
-FETCH_TIMEOUT = 4  # seconds; SessionStart gives the hook 6
+FETCH_TIMEOUT = 3  # seconds; SessionStart gives the hook 6
+STALE = 600  # a lock older than this is left over from a killed run
 
-ATTRIBUTES = """\
-# Merge drivers are set up by `claude-memory init` (in .git/config, not versioned).
+REPO_FILES = {
+    ".gitattributes": """\
+# Merge drivers are set up by `claude-memory` (in .git/config, not versioned).
 projects/**/*.md merge=claude-memory-file
 projects/**/MEMORY.md merge=claude-memory-index
-"""
-README = """\
+""",
+    ".gitignore": """\
+# Conflict copies stay on the machine that found the conflict, until merged there.
+*.conflict-*.md
+.DS_Store
+*.swp
+*~
+""",
+    "README.md": """\
 # Claude Code memories
 
 Synced by `claude-memory` from the dotfiles (docs/claude-memory-sync.md). Don't edit by hand
-while a session is running; `*.conflict-<host>.md` files wait to be merged into their original.
-"""
+while a session is running.
+""",
+}
 
 
 def encode(path):
@@ -65,11 +77,12 @@ def rel_of_folder(name):
     return None
 
 
-def git(*args, check=True, timeout=None, env=None):
-    r = subprocess.run(["git", "-C", str(CLONE), *args], capture_output=True, text=True,
+def git(*args, check=True, timeout=None, env=None, text=True):
+    r = subprocess.run(["git", "-C", str(CLONE), *args], capture_output=True, text=text,
                        timeout=timeout, env={**os.environ, **(env or {})})
     if check and r.returncode != 0:
-        raise RuntimeError(f"git {' '.join(args)}: {(r.stderr or r.stdout).strip()}")
+        err = r.stderr if text else r.stderr.decode(errors="replace")
+        raise RuntimeError(f"git {' '.join(args)}: {err.strip()}")
     return r
 
 
@@ -86,41 +99,70 @@ class Locked(Exception):
 class Lock:
     def __enter__(self):
         STATE.mkdir(parents=True, exist_ok=True)
-        try:
-            LOCK.mkdir()
-        except FileExistsError:
-            if time.time() - LOCK.stat().st_mtime < 600:
-                raise Locked()
-            LOCK.rmdir()  # stale: older than 10 minutes
-            LOCK.mkdir()
+        for _ in range(3):
+            try:
+                LOCK.mkdir()
+                break
+            except FileExistsError:
+                try:
+                    age = time.time() - LOCK.stat().st_mtime
+                except FileNotFoundError:
+                    continue  # released meanwhile: try again
+                if age < STALE:
+                    raise Locked()
+                # Stale. Rename it away first: only one process wins the rename, so two can't
+                # both break it and then both hold it.
+                gone = LOCK.with_name(f"{LOCK.name}.stale-{os.getpid()}")
+                try:
+                    LOCK.rename(gone)
+                    gone.rmdir()
+                except OSError:
+                    pass
+        else:
+            raise Locked()
+        self.prev = signal.signal(signal.SIGTERM, self._term)
+        clean_git_locks()
         return self
+
+    def _term(self, *_):
+        self.__exit__()
+        sys.exit(143)
 
     def __exit__(self, *exc):
         try:
             LOCK.rmdir()
         except FileNotFoundError:
             pass
+        signal.signal(signal.SIGTERM, getattr(self, "prev", signal.SIG_DFL))
 
 
-# ---- moving memories into the repo --------------------------------------------------
+def clean_git_locks():
+    """git's own lock files left by a killed git (we hold our lock, so no git of ours runs)."""
+    gitdir = CLONE / ".git"
+    if not gitdir.is_dir():
+        return
+    for p in [gitdir / "index.lock", gitdir / "HEAD.lock", *(gitdir / "refs").rglob("*.lock")]:
+        try:
+            if time.time() - p.stat().st_mtime > 60:
+                p.unlink()
+        except FileNotFoundError:
+            pass
 
-def free_name(path, tag):
-    """<stem>.conflict-<tag>.md next to path, numbered if taken."""
-    cand = path.with_name(f"{path.stem}.conflict-{tag}.md")
-    n = 2
-    while cand.exists():
-        cand = path.with_name(f"{path.stem}.conflict-{tag}-{n}.md")
-        n += 1
-    return cand
+
+# ---- MEMORY.md --------------------------------------------------------------------
+
+ENTRY = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+\[")
 
 
 def is_entry(line):
-    return line.lstrip().startswith("- [")
+    return bool(ENTRY.match(line))
 
 
 def merge_index_text(base, ours, theirs):
     """MEMORY.md: this machine's text, minus entries the other side removed, plus entries it
-    added. An entry both sides changed is kept twice (safe; the session can tidy it)."""
+    added. An entry both sides changed is kept twice (safe; the session can tidy it).
+    Returns (text, lost): lost is True when theirs added other lines (headings, prose) that
+    the result doesn't carry, so the caller keeps theirs as a conflict copy."""
     b, o, t = (s.splitlines() for s in (base, ours, theirs))
     bs, ts, os_ = set(b), set(t), set(o)
     out, seen = [], set()
@@ -137,11 +179,28 @@ def merge_index_text(base, ours, theirs):
     if added:
         last = max((i for i, l in enumerate(out) if is_entry(l)), default=len(out) - 1)
         out[last + 1:last + 1] = added
-    return "\n".join(out) + ("\n" if out else "")
+    lost = any(l.strip() and not is_entry(l) and l not in bs and l not in os_ for l in t)
+    return "\n".join(out) + ("\n" if out else ""), lost
 
 
-def same(a, b):
-    return a.read_bytes() == b.read_bytes()
+# ---- moving memories into the repo --------------------------------------------------
+
+def free_name(path, tag):
+    """<stem>.conflict-<tag>.md next to path, numbered if taken."""
+    cand = path.with_name(f"{path.stem}.conflict-{tag}.md")
+    n = 2
+    while cand.exists():
+        cand = path.with_name(f"{path.stem}.conflict-{tag}-{n}.md")
+        n += 1
+    return cand
+
+
+def keep_copy(target, data, tag):
+    """Save data next to target as a conflict copy, unless a copy already holds it."""
+    if any(c.read_bytes() == data for c in target.parent.glob(f"{target.stem}.conflict-*.md")):
+        return False
+    free_name(target, tag).write_bytes(data)
+    return True
 
 
 def adopt(folder, dest, dry):
@@ -156,18 +215,18 @@ def adopt(folder, dest, dry):
         if not target.exists():
             shutil.move(str(src), str(target))
             moved += 1
-        elif same(src, target):
+        elif src.read_bytes() == target.read_bytes():
             src.unlink()
         elif src.name == "MEMORY.md":
-            target.write_text(merge_index_text("", target.read_text(), src.read_text()))
+            text, lost = merge_index_text("", target.read_text(), src.read_text())
+            target.write_text(text)
+            if lost:
+                conflicts += keep_copy(target, src.read_bytes(), HOST)
             src.unlink()
             moved += 1
         else:
-            if not any(same(src, c) for c in target.parent.glob(f"{target.stem}.conflict-*.md")):
-                shutil.move(str(src), str(free_name(target, HOST)))
-                conflicts += 1
-            else:
-                src.unlink()
+            conflicts += keep_copy(target, src.read_bytes(), HOST)
+            src.unlink()
     if not dry:
         for d in sorted((p for p in folder.rglob("*") if p.is_dir()), reverse=True):
             try:
@@ -181,17 +240,17 @@ def adopt(folder, dest, dry):
     return moved, conflicts
 
 
-def adopt_all(dry=False):
+def adopt_all(pointed, dry=False):
+    """Move memories in for the checkouts that read the repo; others stay where they are."""
     total = conflicts = 0
-    pdir = CLAUDE_DIR / "projects"
-    for proj in sorted(pdir.iterdir()) if pdir.is_dir() else []:
-        rel = rel_of_folder(proj.name)
-        mem = proj / "memory"
-        if rel is None or not mem.is_dir() or mem.is_symlink():
+    for repo in pointed:
+        name = encode(repo)
+        mem = CLAUDE_DIR / "projects" / name / "memory"
+        if not mem.is_dir() or mem.is_symlink():
             continue
-        m, c = adopt(mem, CLONE / "projects" / rel, dry)
+        m, c = adopt(mem, CLONE / "projects" / rel_of_folder(name), dry)
         if m or c:
-            say(f"{'would move' if dry else 'moved'} {m} file(s) from {proj.name}"
+            say(f"{'would move' if dry else 'moved'} {m} file(s) from {name}"
                 + (f", {c} kept as .conflict-{HOST}.md" if c else ""))
         total += m
         conflicts += c
@@ -228,31 +287,56 @@ def memory_dir_setting(rel):
         return str(path)
 
 
-def ignored(repo, path):
-    if not (repo / ".git").exists():
-        return True  # not a repo (~/src itself): nothing to commit it to
-    r = subprocess.run(["git", "-C", str(repo), "check-ignore", "-q", "--", str(path)])
-    return r.returncode == 0
+def settings_file(repo):
+    return repo / ".claude/settings.local.json"
 
 
 def read_setting(repo):
+    f = settings_file(repo)
+    if (repo / ".claude").is_symlink() or f.is_symlink():
+        return None
     try:
-        data = json.loads((repo / ".claude/settings.local.json").read_text() or "{}")
+        data = json.loads(f.read_text() or "{}")
         return data.get("autoMemoryDirectory") if isinstance(data, dict) else None
     except (OSError, json.JSONDecodeError):
         return None
 
 
+def wanted(repo):
+    return memory_dir_setting(rel_of_folder(encode(repo)))
+
+
+def is_git(repo):
+    return (repo / ".git").exists()
+
+
+def tracked(repo, path):
+    return is_git(repo) and subprocess.run(
+        ["git", "-C", str(repo), "ls-files", "--error-unmatch", "--", str(path)],
+        capture_output=True).returncode == 0
+
+
+def ignored(repo, path):
+    if not is_git(repo):
+        return True  # not a repo (~/src itself): nothing to commit it to
+    return subprocess.run(["git", "-C", str(repo), "check-ignore", "-q", "--", str(path)]
+                          ).returncode == 0
+
+
 def point(repo, dry):
-    rel = rel_of_folder(encode(repo))
-    want = memory_dir_setting(rel)
-    f = repo / ".claude/settings.local.json"
+    """Set autoMemoryDirectory in repo's settings.local.json. True when it reads the repo."""
+    want = wanted(repo)
+    f = settings_file(repo)
     # A cloned repo could commit .claude (or the file) as a symlink to point the write elsewhere.
     if (repo / ".claude").is_symlink() or f.is_symlink():
         say(f"skipped {f}: symlink")
         return False
+    if tracked(repo, f):
+        say(f"skipped {f}: it's committed to the repo")
+        return False
     try:
-        data = json.loads(f.read_text()) if f.exists() and f.read_text().strip() else {}
+        before = f.read_text() if f.exists() else ""
+        data = json.loads(before) if before.strip() else {}
     except (OSError, json.JSONDecodeError) as e:
         say(f"skipped {f}: {e}")
         return False
@@ -261,14 +345,14 @@ def point(repo, dry):
         return False
     have = data.get("autoMemoryDirectory")
     if have == want:
-        return False
+        return True
     if have and not str(have).startswith(memory_dir_setting("").rstrip("/") + "/"):
         say(f"skipped {f}: autoMemoryDirectory is already {have}")
         return False
     if dry:
         say(f"would set autoMemoryDirectory in {f}")
         return True
-    (CLONE / "projects" / rel).mkdir(parents=True, exist_ok=True)
+    (CLONE / "projects" / rel_of_folder(encode(repo))).mkdir(parents=True, exist_ok=True)
     f.parent.mkdir(exist_ok=True)
     if Path(os.path.realpath(f.parent)) != Path(os.path.realpath(repo)) / ".claude":
         say(f"skipped {f}: .claude resolves outside the checkout")
@@ -277,6 +361,11 @@ def point(repo, dry):
     fd, tmp = tempfile.mkstemp(dir=f.parent, prefix=".settings.local.", suffix=".tmp")
     with os.fdopen(fd, "w") as fh:
         fh.write(json.dumps(data, indent=2) + "\n")
+    # Claude Code writes permission rules to this file too: if it changed since we read it,
+    # leave it for the next sync rather than overwrite that change.
+    if (f.read_text() if f.exists() else "") != before:
+        os.unlink(tmp)
+        return False
     os.replace(tmp, f)
     if not ignored(repo, f):
         r = subprocess.run(["git", "-C", str(repo), "rev-parse", "--git-path", "info/exclude"],
@@ -287,30 +376,30 @@ def point(repo, dry):
         exclude.parent.mkdir(parents=True, exist_ok=True)
         with exclude.open("a") as fh:
             fh.write("\n.claude/settings.local.json\n")
+    say(f"pointed {repo} at the repo (restart its sessions to pick it up)")
     return True
 
 
 def point_all(dry=False):
-    n = sum(point(r, dry) for r in checkouts())
-    if n and not dry:
-        say(f"pointed {n} checkout(s) at the repo (restart their sessions to pick it up)")
-    return n
+    return [r for r in checkouts() if point(r, dry)]
 
 
 # ---- git ----------------------------------------------------------------------------
 
 def configure():
-    """Local git settings, re-asserted on every run so a moved script still works."""
-    cmd = f"{sys.executable} {SELF}"
+    """Local git settings and repo files, re-asserted on every run."""
     for k, v in [
         ("commit.gpgsign", "false"),  # no signing prompt from a background job
         ("pull.rebase", "false"),
         ("merge.claude-memory-index.name", "claude-memory MEMORY.md"),
-        ("merge.claude-memory-index.driver", f"{cmd} merge-index %O %A %B"),
+        ("merge.claude-memory-index.driver", f"{SELF} merge-index %O %A %B %P"),
         ("merge.claude-memory-file.name", "claude-memory memory file"),
-        ("merge.claude-memory-file.driver", f"{cmd} merge-file %O %A %B %P"),
+        ("merge.claude-memory-file.driver", f"{SELF} merge-file %O %A %B %P"),
     ]:
         git("config", k, v)
+    for name, text in REPO_FILES.items():
+        if not (CLONE / name).exists():
+            (CLONE / name).write_text(text)
 
 
 def has_upstream():
@@ -329,6 +418,11 @@ def commit_local():
     return len(changed)
 
 
+def stage(n, p):
+    r = git("show", f":{n}:{p}", check=False, text=False)
+    return r.stdout if r.returncode == 0 else None
+
+
 def merge_upstream():
     if not has_upstream():
         return
@@ -336,18 +430,32 @@ def merge_upstream():
         git("reset", "-q", "--hard", "origin/main")  # nothing here yet: take theirs
         return
     theirs = git("rev-parse", "origin/main").stdout.strip()
-    r = git("merge", "-q", "--no-edit", "origin/main", check=False,
-            env={"CLAUDE_MEMORY_THEIRS": theirs})
+    # Unrelated histories: two machines that each made the first commit in the empty repo.
+    r = git("merge", "-q", "--no-edit", "--allow-unrelated-histories", "origin/main",
+            check=False, env={"CLAUDE_MEMORY_THEIRS": theirs})
     if r.returncode == 0:
         return
-    # A conflict the drivers don't cover (one side deleted, the other changed): keep whatever
-    # file exists, so nothing is lost, and finish the merge.
-    unmerged = [l for l in git("diff", "--name-only", "--diff-filter=U").stdout.splitlines() if l]
+    unmerged = sorted({l.split("\t", 1)[1] for l in
+                       git("ls-files", "-u").stdout.splitlines() if "\t" in l})
     if not unmerged:
         git("merge", "--abort", check=False)
         raise RuntimeError(f"merge failed: {(r.stderr or r.stdout).strip()}")
+    # What the drivers didn't settle (a driver that failed, one side deleting what the other
+    # changed, files outside projects/): keep this machine's version, or whichever exists,
+    # and save the other machine's memory as a conflict copy. Nothing is dropped.
+    tag = other_host(theirs)
     for p in unmerged:
-        if (CLONE / p).exists():
+        ours, other = stage(2, p), stage(3, p)
+        target = CLONE / p
+        if ours is not None:
+            target.write_bytes(ours)
+            if other is not None and other != ours and p.startswith("projects/") \
+                    and p.endswith(".md"):
+                keep_copy(target, other, tag)
+        elif other is not None:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(other)
+        if target.exists():
             git("add", "--", p)
         else:
             git("rm", "-q", "--cached", "--", p, check=False)
@@ -373,16 +481,28 @@ def conflicts():
         if (CLONE / "projects").is_dir() else []
 
 
+def other_host(theirs=None):
+    """The machine whose commits are being merged: the newest commit on their side that isn't
+    this machine's."""
+    sha = theirs or os.environ.get("CLAUDE_MEMORY_THEIRS")
+    if sha:
+        base = git("merge-base", "HEAD", sha, check=False).stdout.strip()
+        rng = f"{base}..{sha}" if base else sha
+        for subj in git("log", "--no-merges", "--format=%s", rng, check=False).stdout.splitlines():
+            m = re.match(r"([A-Za-z0-9-]+): ", subj)
+            if m and m.group(1) != HOST:
+                return m.group(1)
+    return "other"
+
+
 # ---- commands -----------------------------------------------------------------------
 
-def need_clone():
-    if not (CLONE / ".git").is_dir():
-        say(f"no clone at {CLONE}; run: claude-memory init")
-        sys.exit(1)
+def have_clone():
+    return (CLONE / ".git").is_dir()
 
 
 def cmd_init(args):
-    if not (CLONE / ".git").is_dir():
+    if not have_clone():
         CLONE.parent.mkdir(parents=True, exist_ok=True)
         if os.environ.get("CLAUDE_MEMORY_URL"):  # tests
             url, pre = os.environ["CLAUDE_MEMORY_URL"], []
@@ -397,20 +517,16 @@ def cmd_init(args):
             k, v = kv.split("=", 1)
             git("config", "--add" if k == "credential.helper" else "--replace-all", k, v)
         say(f"cloned {REPO} to {CLONE}")
-    configure()
-    if not (CLONE / ".gitattributes").exists():
-        (CLONE / ".gitattributes").write_text(ATTRIBUTES)
-    if not (CLONE / "README.md").exists():
-        (CLONE / "README.md").write_text(README)
     cmd_sync([])
 
 
 def cmd_sync(args):
     dry = "--dry-run" in args
-    need_clone()
+    if not have_clone():
+        say(f"no clone at {CLONE}; nothing to do (run: claude-memory init)")
+        return
     if dry:
-        adopt_all(dry=True)
-        point_all(dry=True)
+        adopt_all(point_all(dry=True), dry=True)
         return
     try:
         with Lock():
@@ -418,8 +534,7 @@ def cmd_sync(args):
             commit_local()
             if fetch(timeout=60):
                 merge_upstream()
-            adopt_all()
-            point_all()
+            adopt_all(point_all())
             commit_local()
             if has_upstream() or has_head():
                 push()
@@ -434,39 +549,41 @@ def cmd_sync(args):
 
 
 def cmd_status(args):
-    need_clone()
+    if not have_clone():
+        say(f"no clone at {CLONE}; run: claude-memory init")
+        sys.exit(1)
     print(f"Repo: {CLONE} ({REPO})")
     n = sum(1 for _ in (CLONE / "projects").rglob("*.md")) if (CLONE / "projects").is_dir() else 0
     print(f"Memory files in the repo: {n}")
     ahead = git("rev-list", "--count", "origin/main..HEAD", check=False).stdout.strip() \
         if has_upstream() else "?"
     print(f"Commits not pushed: {ahead}")
-    pending = git("status", "--porcelain").stdout.splitlines()
-    print(f"Changes not committed: {len(pending)}")
-    outside = []
+    print(f"Changes not committed: {len(git('status', '--porcelain').stdout.splitlines())}")
+    cos = checkouts()
+    pointed = {encode(r) for r in cos if read_setting(r) == wanted(r)}
+    print(f"Checkouts using the repo: {len(pointed)} of {len(cos)}")
+    local = []
     pdir = CLAUDE_DIR / "projects"
     for proj in sorted(pdir.iterdir()) if pdir.is_dir() else []:
         mem = proj / "memory"
         if mem.is_dir() and any(mem.iterdir()):
-            outside.append(proj.name + (" (outside the home folder: not synced)"
-                                        if rel_of_folder(proj.name) is None else " (next sync)"))
-    if outside:
-        print("Memories still in ~/.claude/projects:")
-        for o in outside:
+            why = "moves on the next sync" if proj.name in pointed else "not synced: no checkout here reads the repo"
+            local.append(f"{proj.name} ({why})")
+    if local:
+        print("Memories in ~/.claude/projects:")
+        for o in local:
             print(f"  {o}")
-    pointed = [r for r in checkouts()
-               if read_setting(r) == memory_dir_setting(rel_of_folder(encode(r)))]
-    print(f"Checkouts using the repo: {len(pointed)} of {len(checkouts())}")
     for c in conflicts():
         print(f"  to merge: {CLONE / c}")
 
 
 def cmd_hook_start(args):
     """SessionStart: pull what other machines saved, and say what waits to be merged."""
-    if not (CLONE / ".git").is_dir():
+    if not have_clone():
         return
     try:
         with Lock():
+            configure()
             commit_local()
             if fetch(timeout=FETCH_TIMEOUT):
                 merge_upstream()
@@ -484,7 +601,7 @@ def cmd_hook_start(args):
 
 def cmd_hook_end(args):
     """SessionEnd: start a sync in the background (SessionEnd hooks get 1.5 s)."""
-    if not (CLONE / ".git").is_dir():
+    if not have_clone():
         return
     STATE.mkdir(parents=True, exist_ok=True)
     with open(STATE / "claude-memory.log", "a") as log:
@@ -492,27 +609,20 @@ def cmd_hook_end(args):
                          stdout=log, stderr=log, start_new_session=True)
 
 
-def other_host():
-    """The machine whose commit is being merged: merge_upstream passes its sha."""
-    sha = os.environ.get("CLAUDE_MEMORY_THEIRS")
-    if sha:
-        subj = git("log", "-1", "--no-merges", "--format=%s", sha, check=False).stdout
-        m = re.match(r"([A-Za-z0-9-]+): ", subj)
-        if m:
-            return m.group(1)
-    return "other"
-
-
 def cmd_merge_index(args):
-    o, a, b = (Path(x) for x in args[:3])
-    Path(a).write_text(merge_index_text(o.read_text(), a.read_text(), b.read_text()))
+    o, a, b, p = args[:4]
+    text, lost = merge_index_text(Path(o).read_text(errors="replace"),
+                                  Path(a).read_text(errors="replace"),
+                                  Path(b).read_text(errors="replace"))
+    Path(a).write_text(text)
+    if lost:
+        keep_copy(CLONE / p, Path(b).read_bytes(), other_host())
 
 
 def cmd_merge_file(args):
     o, a, b, p = args[:4]
     if Path(a).read_bytes() != Path(b).read_bytes():
-        target = CLONE / p
-        shutil.copyfile(b, free_name(target, other_host()))
+        keep_copy(CLONE / p, Path(b).read_bytes(), other_host())
     # %A is left as this machine's version: that's the merge result.
 
 

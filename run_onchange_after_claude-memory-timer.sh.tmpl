@@ -6,10 +6,19 @@
 plist="$HOME/Library/LaunchAgents/com.unstablestudios.claude-memory.plist"
 [ -f "$plist" ] || exit 0
 launchctl bootout "gui/$(id -u)/com.unstablestudios.claude-memory" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$plist"
+# bootout returns before the agent is gone, and bootstrap fails (error 5) until it is.
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null && exit 0
+  sleep 1
+done
+echo "claude-memory: couldn't load $plist; run: launchctl bootstrap gui/$(id -u) $plist" >&2
+exit 1
 {{- else if eq .chezmoi.os "linux" -}}
 # units: {{ include "dot_config/systemd/user/claude-memory.service" | sha256sum }} {{ include "dot_config/systemd/user/claude-memory.timer" | sha256sum }}
 command -v systemctl >/dev/null 2>&1 || exit 0
 systemctl --user daemon-reload 2>/dev/null || exit 0
 systemctl --user enable --now claude-memory.timer
+# Without lingering, user timers stop when the last login session ends.
+[ "$(loginctl show-user "$(id -un)" -p Linger --value 2>/dev/null)" = yes ] ||
+  echo "claude-memory: the timer runs only while you're logged in; for always: sudo loginctl enable-linger $(id -un)"
 {{- end }}

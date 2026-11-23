@@ -17,8 +17,9 @@ claude-memory status   what's synced, what isn't, and memories waiting to be mer
 ```
 
 A memory changed on two machines keeps this machine's copy and saves the other as
-`<name>.conflict-<host>.md`. The next session start lists those files, so the session asks to
-merge them. `~/.local/state/claude-memory.log` has the background syncs' output.
+`<name>.conflict-<host>.md`, on this machine only (the repo ignores them, so the same conflict
+isn't merged on both). The next session start lists those files, so the session asks to merge
+them. `~/.local/state/claude-memory.log` has the background syncs' output.
 
 ## Constraints
 
@@ -40,48 +41,64 @@ merge them. `~/.local/state/claude-memory.log` has the background syncs' output.
    `~/.local/share/claude-memory`. Layout: `projects/<rel>/`, where `<rel>` is Claude Code's
    project folder name with this machine's home prefix (`-Users-mkhnsn-`, `-home-mkhnsn-`)
    removed: `src-github-com-unstable-studios-mister-handy`, and `-local-share-chezmoi` for the
-   chezmoi source. The encoding can't be reversed, so only the prefix is rewritten. Every
-   project folder under the home folder is synced by name, whether or not that repo is cloned
-   on this machine. Not synced: projects outside the home folder (`/private/tmp`, scratch dirs)
-   and `~` itself, whose project settings file would be `~/.claude/settings.local.json`, the
-   user settings folder.
+   chezmoi source. The encoding can't be reversed, so only the prefix is rewritten. The repo
+   carries every synced project, cloned on this machine or not. Not synced: projects without a
+   checkout that reads the repo (below), projects outside the home folder (`/private/tmp`,
+   scratch dirs), and `~` itself, whose project settings file would be
+   `~/.claude/settings.local.json`, the user settings folder. Their memories stay in
+   `~/.claude/projects`, and `claude-memory status` lists them.
 2. **Point Claude Code at the clone**: `autoMemoryDirectory`, which Claude Code reads from any
    settings scope, project and local included, under the same workspace trust rule as hooks
    ([code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)). `claude-memory
    sync` writes it into `.claude/settings.local.json` of `~/src`, every git repo up to three
    levels under it (flat `~/src/<repo>` and ghq's `~/src/github.com/<owner>/<repo>`) and the
    chezmoi source, set to `~/.local/share/claude-memory/projects/<rel>`. Other keys in the file
-   are kept, a different `autoMemoryDirectory` someone set is left alone, and the file is added
-   to the repo's `.git/info/exclude` if it isn't ignored already. Memories still in the default
-   `~/.claude/projects/<project>/memory` move into the clone on each sync. Not symlinks: Claude
+   are kept, a different `autoMemoryDirectory` someone set is left alone, a file that's committed
+   to the repo or a symlinked `.claude` is skipped, and the file is added to the repo's
+   `.git/info/exclude` if it isn't ignored already. If Claude Code wrote the file while the
+   sync was writing it (a permission rule), the sync leaves it for next time. Only the checkouts
+   that read the repo have their memories moved in from the default
+   `~/.claude/projects/<project>/memory`, on each sync; a session anywhere else keeps its
+   memories where Claude Code looks for them. The setting is only honored in a folder you've
+   trusted, the same as hooks. Not symlinks: Claude
    Code refuses to write into a folder that is a symbolic link ("Refusing to write into
    symlinked directory", [code.claude.com/docs/en/errors](https://code.claude.com/docs/en/errors)).
-   - A session in a worktree (`.claude/worktrees/…`, a scratch checkout) has no
-     `settings.local.json`, so it reads and writes the default folder; the next sync moves what
-     it saved.
+   - A session in a git worktree of a checkout uses the main checkout's `settings.local.json`
+     ([code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)), so it reads
+     the repo too.
 3. **When**:
    - `SessionStart` (matcher `startup|resume`, 6 s timeout) runs `claude-memory hook-start`:
-     commit local changes, fetch (4 s limit; offline is fine), merge, and print the files
+     commit local changes, fetch (3 s limit; offline is fine), merge, and print the files
      waiting to be merged.
    - `SessionEnd` runs `claude-memory hook-end`, which starts `sync` in the background and returns
      at once: SessionEnd hooks share a 1.5 s budget
      ([code.claude.com/docs/en/hooks](https://code.claude.com/docs/en/hooks)).
    - A launchd agent (`com.unstablestudios.claude-memory`) on macOS and a systemd user timer
      (`claude-memory.timer`) on Linux run `sync` every 30 minutes, for long sessions, crashed
-     ones and machines left on. `run_onchange_after_claude-memory-timer.sh` loads them.
+     ones and machines left on. `run_onchange_after_claude-memory-timer.sh` loads them. On
+     Linux the timer runs only while you're logged in unless lingering is on
+     (`sudo loginctl enable-linger $USER`; the script says so).
    - `sync` is: commit local changes (`<host>: <n> memories`), fetch, merge, move new memories
      in, point checkouts at the repo, commit, push. Committing first means a crash never leaves
      changes that block the next merge. A lock (`mkdir ~/.local/state/claude-memory.lock`; macOS
-     has no `flock`) keeps two sessions and the timer from running git at once; a lock older
-     than 10 minutes is removed.
+     has no `flock`) keeps two sessions and the timer from running git at once. A lock older
+     than 10 minutes is renamed away (only one process can win that) and removed; the lock is
+     released on SIGTERM, when a hook times out; and git's own lock files older than a minute
+     are removed while holding it, since only a killed git leaves them.
    - Hooks, agent and timer are in the dotfiles and do nothing until the clone exists.
 4. **Conflicts**: merges, not rebases, so "ours" is always this machine. Two merge drivers
    (`.gitattributes` in the repo, set up in `.git/config` by `claude-memory` on every run):
-   - `MEMORY.md`: three-way on index lines (`- [`): this machine's text, minus entries the other
-     machine removed, plus entries it added. An entry both machines changed is kept twice.
+   - `MEMORY.md`: three-way on index lines (`- [`, `* [`, `1. [`): this machine's text, minus
+     entries the other machine removed, plus entries it added. An entry both machines changed is
+     kept twice. If the other side also added headings or prose, its whole file is saved as
+     `MEMORY.conflict-<host>.md` too.
    - Other memory files changed on both machines keep this machine's version and save the other
-     as `<name>.conflict-<host>.md`, `<host>` from the other machine's commit message.
-   - One side deleted a file the other changed: the changed file is kept.
+     as `<name>.conflict-<host>.md`, `<host>` from the other machine's newest commit message.
+   - Anything the drivers don't settle (a driver that fails, one side deleting what the other
+     changed, the repo's own files): this machine's version is kept, or whichever exists, and
+     the other machine's memory is saved as a conflict copy.
+   - Two machines that each made the first commit in the empty repo merge as unrelated
+     histories.
 5. **Access**: on a Mac the clone uses HTTPS with `gh auth git-credential`, so a background sync
    never waits on a 1Password SSH approval. echo-turbine uses a deploy key for this repo only
    (`~/.ssh/claude-memory`, read-write), set as the clone's `core.sshCommand`. Commits in the
