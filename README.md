@@ -263,7 +263,8 @@ The prefix is `C-a`; with tmux nested on a Mac, `C-a C-a` reaches the inner one.
 
 ## Git, SSH, and Signing
 
-- SSH authentication uses the 1Password SSH agent on supported platforms
+- SSH authentication uses the 1Password SSH agent on supported platforms; git over SSH in
+  Claude Code and SSH sessions uses the same per-machine fallback key as signing
 - Git commit signing uses SSH keys: 1Password locally, a per-machine fallback key in Claude
   Code and SSH sessions
 - `~/.config/git/allowed_signers` is rebuilt from the GitHub account's signing keys on each apply

@@ -27,8 +27,8 @@ fi
 # fails in those sessions (git-ssh uses this key there): checked against the public list at
 # github.com/<user>.keys, and skipped when GitHub can't be reached.
 fallback_pub="$HOME/.ssh/id_ed25519_remote.pub"
-if [[ -f "$fallback_pub" ]]; then
-  fallback_key="$(awk '{print $2}' "$fallback_pub")"
+fallback_key="$(awk '{print $2}' "$fallback_pub" 2>/dev/null || true)"
+if [[ -n "$fallback_key" ]]; then  # an empty key would match any list
   if ! grep -qF "$fallback_key" "$HOME/.config/git/allowed_signers" 2>/dev/null; then
     items+=("Git signing: add this machine's fallback key to GitHub as a signing key: gh auth refresh -h github.com -s admin:ssh_signing_key && gh ssh-key add $fallback_pub --type signing --title \"${HOSTNAME%%.*} fallback\", then chezmoi apply")
   fi
@@ -36,6 +36,9 @@ if [[ -f "$fallback_pub" ]]; then
      ! grep -qF "$fallback_key" <<<"$auth_keys"; then
     items+=("Git over SSH: add this machine's fallback key to GitHub as an authentication key, or SSH remotes fail in Claude Code and SSH sessions: gh auth refresh -h github.com -s admin:public_key && gh ssh-key add $fallback_pub --type authentication --title \"${HOSTNAME%%.*} fallback\"")
   fi
+fi
+if [[ -f "$fallback_pub" && -z "$fallback_key" ]]; then
+  items+=("Git: $fallback_pub has no key in it; make the fallback key again: rm -f ~/.ssh/id_ed25519_remote ~/.ssh/id_ed25519_remote.pub && ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519_remote -C remote-signing-${HOSTNAME%%.*}, then chezmoi apply")
 fi
 {{ end -}}
 
