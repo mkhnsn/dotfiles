@@ -325,7 +325,7 @@ signed in with access to that repo, and skips quietly otherwise.
 
 `mac-setup` walks a Mac through the whole setup and checks each step: MDM enrollment,
 FileVault, profiles and the Ninja agent, the escrowed secrets in 1Password, Command Line
-Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, the Claude Code MCP tokens (Home Assistant, Cloudflare read-only), dotfiles and Brewfile, `gh` and Doppler sign-in,
+Tools, Homebrew, the 1Password CLI, SSH agent and browser integration, the Claude Code MCP tokens (Home Assistant, Cloudflare read-only), dotfiles and Brewfile, `gh` and Doppler sign-in, Doppler set up in every repo with a `doppler.yaml`,
 the computer name (renamed in SimpleMDM), Desktop & Documents in iCloud,
 Tailscale (name and tag), Remote Login, BetterTouchTool (preset, snapping, MCP server), Raycast (Cloud
 Sync, weekly exports, the settings that stay on each Mac, and the echo-m365 sign-in its Generate TAP command needs: the
@@ -361,7 +361,11 @@ of installing it, and `run_once_02-tailscale` leaves Tailscale to the playbook. 
 On servers, `gh` and Doppler mustn't carry your personal logins (an always-on Mac has no
 FileVault): `mac-setup` flags a GitHub web login or classic token and any Doppler login
 that isn't a service token, and offers to sign them out. Use a fine-grained GitHub token or a Doppler service
-token scoped to what runs there, or none. Secrets in the dotfiles come from a 1Password
+token scoped to what runs there, or none. On workstations, each folder in our repos (`github.com/unstable-studios` and
+`github.com/mkhnsn` under the ghq root) with a `doppler.yaml` needs `doppler setup` before
+`doppler run` works there. `mac-setup` finds the ones whose project or config isn't what the file
+names and runs `doppler setup` in each, also through the `~/src/<repo>` links `gget` makes, since
+Doppler matches the path you `cd` through. Secrets in the dotfiles come from a 1Password
 service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
 
 ## Workstation apps and macOS settings
