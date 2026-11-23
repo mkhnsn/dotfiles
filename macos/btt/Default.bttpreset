@@ -747,6 +747,7 @@
           },
           "BTTMenuItems" : [
             {
+              "BTTAdditionalConfiguration" : "Menu Item: Header",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -774,6 +775,7 @@
               "BTTUUID" : "84A6384F-8B83-5513-B929-9FA14ECB4CF4"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: mic-mute",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -813,6 +815,7 @@
               "BTTUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: keep-awake",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -852,6 +855,7 @@
               "BTTUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: mode-next",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -891,6 +895,7 @@
               "BTTUUID" : "91285391-A0F4-513D-B4FF-52AC4BBDCC44"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: hints-next",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -930,6 +935,7 @@
               "BTTUUID" : "DDA79F0B-2216-517D-9579-360E857E53BB"
             },
             {
+              "BTTAdditionalConfiguration" : "Menu Item: hints-mute",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
@@ -1022,6 +1028,90 @@
           "BTTTriggerTypeDescription" : "Hints: the daily hints (hints app)",
           "BTTTriggerTypeDescriptionReadOnly" : "Active App Did Change",
           "BTTUUID" : "6B27761E-0AD2-5BBB-8DBA-BCF362A40789"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTTriggerParentUUID" : "3C6E5D99-6C6E-5452-81E6-E3E2DDBBD956",
+              "BTTUUID" : "817A87BB-986D-586B-8DB7-5AB9C999BDB8"
+            }
+          ],
+          "BTTGestureNotes" : "Hints: lid closed (hints setup)",
+          "BTTOrder" : 24,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerType" : 683,
+          "BTTTriggerTypeDescription" : "Hints: lid closed (hints setup)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Did Close Macbook Lid",
+          "BTTUUID" : "3C6E5D99-6C6E-5452-81E6-E3E2DDBBD956"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTTriggerParentUUID" : "D8D262EE-C928-5511-A869-DBAEEA9076EF",
+              "BTTUUID" : "D15E2F7A-989D-5DD4-8D25-80824A3F0640"
+            }
+          ],
+          "BTTGestureNotes" : "Hints: lid opened (hints setup)",
+          "BTTOrder" : 25,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerType" : 684,
+          "BTTTriggerTypeDescription" : "Hints: lid opened (hints setup)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Did Open Macbook Lid",
+          "BTTUUID" : "D8D262EE-C928-5511-A869-DBAEEA9076EF"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTTriggerParentUUID" : "B190DA9E-B9A6-55C3-AA90-8CC6A2DA659D",
+              "BTTUUID" : "6F1BCC89-DBD5-5C3E-89A2-7F49EF75CF0F"
+            }
+          ],
+          "BTTGestureNotes" : "Hints: screen connected (hints setup)",
+          "BTTOrder" : 26,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerType" : 792,
+          "BTTTriggerTypeDescription" : "Hints: screen connected (hints setup)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Screen/Display Did Connect",
+          "BTTUUID" : "B190DA9E-B9A6-55C3-AA90-8CC6A2DA659D"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "(sleep 2; \"$HOME/.local/bin/hints\" setup) >/dev/null 2>&1 &",
+              "BTTTriggerParentUUID" : "7E90FA63-E96E-523A-A972-BB2D9DB0F99D",
+              "BTTUUID" : "ECAAD527-795D-5838-B528-85274FE728ED"
+            }
+          ],
+          "BTTGestureNotes" : "Hints: screen disconnected (hints setup)",
+          "BTTOrder" : 27,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerType" : 793,
+          "BTTTriggerTypeDescription" : "Hints: screen disconnected (hints setup)",
+          "BTTTriggerTypeDescriptionReadOnly" : "Screen/Display Did Disconnect",
+          "BTTUUID" : "7E90FA63-E96E-523A-A972-BB2D9DB0F99D"
         }
       ]
     },
@@ -1142,5 +1232,5 @@
   ],
   "BTTPresetName" : "Default",
   "BTTPresetSnapAreas" : [],
-  "BTTPresetUUID" : "4D8B7B7C-FDC8-4C9C-A47C-8F0D4D9F94CB"
+  "BTTPresetUUID" : "A4012450-0979-46F1-92D8-C7D6C92663DC"
 }

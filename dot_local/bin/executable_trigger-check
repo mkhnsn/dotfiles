@@ -7,8 +7,9 @@ then fires the named trigger (action 248), so every surface runs the same thing.
 
 It also generates the hints' pieces (#144): the cheat sheet, a floating menu named "Hints" with
 a row per trigger (Hyper+H, the cheat-sheet trigger, toggles it); the named trigger hints-close,
-which closes BTT notifications titled "Hint…"; and an Active App Did Change trigger running
-`hints app`.
+which closes BTT notifications titled "Hint…"; an Active App Did Change trigger running
+`hints app`; and screen connect/disconnect and lid open/close triggers running `hints setup`,
+which updates the cheat sheet's rows to the surfaces this setup has (#152).
 
 The generator owns, in the preset's global triggers, every named trigger, every keyboard
 trigger that fires a named trigger and the hints' pieces; anything else is left alone. It updates triggers in place by
@@ -191,7 +192,9 @@ def wanted(triggers):
 # The hints' pieces (#144), with fixed UUIDs.
 MENU = "Hints"
 HINTS_NAMES = {"hints-close", "hints-next", "hints-mute"}  # generated here; not for triggers.toml
-INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-change")}
+SETUP_EVENTS = {792: "screen connected", 793: "screen disconnected", 683: "lid closed", 684: "lid opened"}
+INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-change")} | {
+    uid("hints", "setup", str(e)) for e in SETUP_EVENTS}
 ROW_H, GAP, PAD, WIDTH = 30, 2, 6, 460
 
 
@@ -207,9 +210,29 @@ SURFACE_NAMES = {"streamdeck": "Stream Deck", "knob": "knob", "mouse": "mouse", 
                  "ipad": "iPad"}
 
 
+def row_html(text, header=False):
+    color = "rgba(255,255,255,0.6)" if header else "white"
+    return ("<html><body style='text-align:left;'><span style='font-size:14px; "
+            f"color:{color}; font-family:-apple-system;'>{text}</span></body></html>")
+
+
+def row_text(t, surfaces=None):
+    """A trigger's cheat-sheet row: its key, what it does, its apps and its other surfaces (all of
+    them, or only those in `surfaces`: what this setup has; `hints setup` passes those)."""
+    more = ", ".join(SURFACE_NAMES[s] for s in t.get("fires", [])
+                     if s in SURFACE_NAMES and (surfaces is None or s in surfaces))
+    where = f" ({', '.join(t['apps'])})" if t.get("apps") else ""
+    return (f"<b>{html.escape(key_label(t))}</b>&nbsp;&nbsp;{html.escape(t['action'])}{html.escape(where)}"
+            + (f"<span style='color:rgba(255,255,255,0.6);'> · {html.escape(more)}</span>" if more else ""))
+
+
+def cheat_sheet_rows(triggers):
+    """The triggers that get a row (all but the cheat sheet's own)."""
+    return [t for t in triggers if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") != MENU]
+
+
 def row(n, name, text, script, menu_uuid, header=False):
     iid = uid("hints", "menu", name)
-    color = "rgba(255,255,255,0.6)" if header else "white"
     item = {"BTTTriggerType": 773, "BTTTriggerClass": "BTTTriggerTypeFloatingMenu",
             "BTTOrder": n, "BTTTriggerParentUUID": menu_uuid, "BTTUUID": iid, "BTTMenuName": name,
             "BTTMenuAvailability": 0,
@@ -220,8 +243,7 @@ def row(n, name, text, script, menu_uuid, header=False):
                               "BTTMenuItemBackgroundColor": "0, 0, 0, 0",
                               "BTTMenuItemBackgroundColorHover": "0, 0, 0, 0" if header else "10, 132, 255, 255",
                               "BTTMenuItemCornerRadius": 7, "BTTMenuTextOffsetX": 10,
-                              "BTTMenuAttributedText": "<html><body style='text-align:left;'><span style='font-size:14px; "
-                                                       f"color:{color}; font-family:-apple-system;'>{text}</span></body></html>"}}
+                              "BTTMenuAttributedText": row_html(text, header)}}
     if script:
         item["BTTMenuItemActions"] = [shell_action(script, iid, uid("hints", "menu", name, "action"), 0)]
     return item
@@ -232,14 +254,8 @@ def hints_pieces(triggers):
     own = [t for t in triggers if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") == MENU]
     title = (key_label(own[0]) + " · " if own else "") + "what you can do"
     rows = [row(0, "Header", html.escape(title), None, menu_uuid, header=True)]
-    for t in triggers:
-        if t in own:
-            continue  # the cheat sheet's own key
-        more = ", ".join(SURFACE_NAMES[s] for s in t.get("fires", []) if s in SURFACE_NAMES)
-        where = f" ({', '.join(t['apps'])})" if t.get("apps") else ""
-        text = (f"<b>{html.escape(key_label(t))}</b>&nbsp;&nbsp;{html.escape(t['action'])}{html.escape(where)}"
-                + (f"<span style='color:rgba(255,255,255,0.6);'> · {html.escape(more)}</span>" if more else ""))
-        rows.append(row(len(rows), t["name"], text, f'"$HOME/.local/bin/trigger" {t["name"]} menu', menu_uuid))
+    for t in cheat_sheet_rows(triggers):
+        rows.append(row(len(rows), t["name"], row_text(t), f'"$HOME/.local/bin/trigger" {t["name"]} menu', menu_uuid))
     rows.append(row(len(rows), "hints-next", "Next hint", '"$HOME/.local/bin/hints" next', menu_uuid))
     rows.append(row(len(rows), "hints-mute", "Mute these hints", '"$HOME/.local/bin/hints" mute', menu_uuid))
     height = 2 * PAD + len(rows) * ROW_H + (len(rows) - 1) * GAP
@@ -270,7 +286,15 @@ def hints_pieces(triggers):
            "BTTGestureNotes": "Hints: the daily hints (hints app)",
            "BTTActionsToExecute": [shell_action('"$HOME/.local/bin/hints" app >/dev/null 2>&1 &', app_uuid,
                                                 uid("hints", "app-change", "action"), 0)]}
-    return [menu, close, app]
+    setup = []
+    for event, what in sorted(SETUP_EVENTS.items()):
+        sid = uid("hints", "setup", str(event))
+        # A moment's wait: the display list settles after the event.
+        setup.append({"BTTTriggerType": event, "BTTTriggerClass": "BTTTriggerTypeOtherTriggers", "BTTUUID": sid,
+                      "BTTGestureNotes": f"Hints: {what} (hints setup)",
+                      "BTTActionsToExecute": [shell_action('(sleep 2; "$HOME/.local/bin/hints" setup) >/dev/null 2>&1 &',
+                                                           sid, uid("hints", "setup", str(event), "action"), 0)]})
+    return [menu, close, app] + setup
 
 
 def generated(t):

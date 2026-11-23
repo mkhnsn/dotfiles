@@ -513,9 +513,20 @@ Hyper key.
   (`~/.local/state/triggers.log`), isn't hinted again (until the log is trimmed). BTT closes
   each hint after 4 seconds, while its banner is still up, so none pile up in Notification Center.
   Focus and Do Not Disturb silence them like any notification.
+- **Setups**: docked with the lid closed, docked with the lid open, or laptop only, read from the
+  online displays, sleeping and mirrored ones included (an external one means docked; the
+  built-in one awake means the lid is open; no displays at all is left alone). BTT runs
+  `hints setup` when a screen connects or disconnects and when the lid opens or closes; `hints app`
+  keeps the rows current after a dock with no event or a BTT restart. The cheat sheet's rows then name only the
+  surfaces this setup has (no Stream Deck on the laptop), and so do the hints. The first 3 times
+  in each setup a hint says what works there (`hints mute setup` stops those); the first run on a
+  Mac only notes where it is.
 - `hints next` shows one now; `hints mute` stops the kind of hint shown last today (an app's, or
-  `general`), or else the app in front's, `hints unmute <bundle-id|general>` brings it back; `hints off` / `hints on` for all of
+  `general` or `setup`), or else the app in front's, `hints unmute <bundle-id|general|setup>`
+  brings it back; `hints off` / `hints on` for all of
   them (the cheat sheet stays); `hints status`. State: `~/.local/state/hints.json`.
+- Raycast's **Search Triggers** (`triggers [words]`, a script command in `~/.local/bin`) lists
+  the triggers matching every word, with their keys, other surfaces and hints.
 - BTT runs `hints app` when the app in front changes; it needs Python 3.11 (Homebrew's: BTT's PATH
   finds macOS's 3.9, so `hints` switches to `/opt/homebrew/bin/python3`).
 

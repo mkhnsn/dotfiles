@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+# Required parameters:
+# @raycast.schemaVersion 1
+# @raycast.title Search Triggers
+# @raycast.mode fullOutput
+# Optional parameters:
+# @raycast.packageName Dotfiles
+# @raycast.icon ⌨️
+# @raycast.argument1 { "type": "text", "placeholder": "search (empty for all)", "optional": true }
+# @raycast.description Search the BTT named triggers: keys, what they do, other surfaces
+"""triggers: search the BTT named triggers in macos/btt/triggers.toml.
+
+  triggers [words]   every trigger whose name, action, hint, keys or apps contain all the words
+
+Prints its key (Hyper+K), what it does, its other surfaces and apps. Hyper+H shows the same list
+as a cheat sheet you can click; `trigger <name>` runs one. Python 3.11+ (tomllib).
+"""
+import importlib.machinery, importlib.util, os, sys
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    # Raycast and BTT may run scripts with macOS's Python 3.9 (no tomllib).
+    if not os.environ.get("TRIGGERS_REEXEC"):
+        os.environ["TRIGGERS_REEXEC"] = "1"
+        for py in ("/opt/homebrew/bin/python3", "/usr/local/bin/python3"):
+            if os.path.exists(py) and os.path.realpath(py) != os.path.realpath(sys.executable):
+                os.execv(py, [py, *sys.argv])
+    sys.exit("triggers: needs Python 3.11 or later (brew install python)")
+
+
+def trigger_check():
+    here = os.path.dirname(os.path.realpath(__file__))
+    for name in ("trigger-check", "executable_trigger-check"):
+        path = os.path.join(here, name)
+        if os.path.exists(path):
+            loader = importlib.machinery.SourceFileLoader("trigger_check", path)
+            mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("trigger_check", loader))
+            loader.exec_module(mod)
+            return mod
+    sys.exit("triggers: trigger-check isn't next to triggers")
+
+
+def main():
+    tc = trigger_check()
+    src = os.environ.get("CHEZMOI_SOURCE_DIR") or os.path.expanduser("~/.local/share/chezmoi")
+    try:
+        with open(os.path.join(src, "macos/btt/triggers.toml"), "rb") as f:
+            triggers = tomllib.load(f).get("trigger", [])
+    except OSError:
+        sys.exit(f"triggers: no macos/btt/triggers.toml in {src} (set CHEZMOI_SOURCE_DIR to the dotfiles)")
+    words = " ".join(sys.argv[1:]).lower().split()
+    found = 0
+    for t in triggers:
+        key = tc.key_label(t)
+        hay = " ".join([t["name"], t.get("action", ""), t.get("hint", ""), key, *t.get("keys", []),
+                        *t.get("apps", [])]).lower()
+        if all(w in hay for w in words):
+            more = [tc.SURFACE_NAMES[s] for s in t.get("fires", []) if s in tc.SURFACE_NAMES]
+            extra = "".join([f" · also {', '.join(more)}" if more else "",
+                             f" · in {', '.join(t['apps'])}" if t.get("apps") else ""])
+            print(f"{key:<10} {t['action']}{extra}")
+            print(f"{'':<10} {t['name']}: {t.get('hint', '')}")
+            found += 1
+    if not found:
+        print(f"No trigger matches {' '.join(words)!r}. Hyper+H lists them all.")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
