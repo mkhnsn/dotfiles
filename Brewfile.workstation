@@ -73,6 +73,7 @@ cask "blender"
 cask "lightburn"
 cask "xtool-studio"
 cask "openrocket"
+cask "kicad"
 
 # Hardware and devices
 cask "elgato-stream-deck" # the cask is 7.x; the MCP server needs Stream Deck 8 (beta from elgato.com) over it

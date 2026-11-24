@@ -93,6 +93,37 @@ def artifacts(cask, kind):
     return [f for f in found if f]
 
 
+def suite_folder(suite):
+    for d in app_dirs():
+        folder = os.path.join(d, suite)
+        if os.path.isdir(folder):
+            return folder
+    return None
+
+
+def find_suite_app(suite, names):
+    """The main app in a suite folder (kicad: /Applications/KiCad/KiCad.app):
+    the one named after the cask or the folder. Other apps in it are helpers
+    with their own versions, so they never stand in for it."""
+    folder = suite_folder(suite)
+    try:
+        apps = {e.lower(): e for e in os.listdir(folder)} if folder else {}
+    except OSError:
+        return None
+    for want in names + [suite]:
+        found = apps.get(want.lower() + ".app")
+        if found and os.path.isdir(os.path.join(folder, found)):
+            return os.path.join(folder, found)
+    return None
+
+
+def installed_apps(cask):
+    """(path, in_suite) for copies already on disk of the apps an app or suite cask installs."""
+    paths = [(find_app(os.path.basename(a)), False) for a in artifacts(cask, "app")]
+    paths += [(find_suite_app(os.path.basename(s), cask.get("name", [])), True) for s in artifacts(cask, "suite")]
+    return [(p, in_suite) for p, in_suite in paths if p]
+
+
 def version_key(v):
     """Comparable form of a version: "v2.0.4" < "2.0.12", "1.2.11" < "1.10.21"."""
     return [int(n) for n in re.findall(r"\d+", v)]
@@ -118,22 +149,23 @@ def explain(token, cask, brewfile_name):
         return False, f"{token}: Homebrew doesn't know this cask. Check its name in {brewfile_name}"
     cver = str(cask.get("version", "")).split(",")[0]
     keep = f"To keep yours, remove cask \"{token}\" from {brewfile_name}"
-    for app in artifacts(cask, "app"):
-        path = find_app(os.path.basename(app))
-        if not path:
-            continue
+    for path, in_suite in installed_apps(cask):
         have = app_version(path)
         name = os.path.basename(path)[:-4]
         was = f"{name} {have}" if have else name
         if have and cver not in ("", "latest") and version_key(have) > version_key(cver):
             return True, (f"{token}: {was} is installed outside Homebrew and is newer than the cask ({cver}), "
                           f"so it's skipped here until the cask catches up")
-        if have and cver not in ("", "latest") and version_key(have) == version_key(cver):
+        # Not for suites: --adopt compares the whole folder there, and any stray file fails it.
+        if not in_suite and have and cver not in ("", "latest") and version_key(have) == version_key(cver):
             return False, (f"{token}: {was} is installed outside Homebrew. "
                            f"To let Homebrew manage it: brew install --cask --adopt {token}. {keep}")
         return False, (f"{token}: {was} is installed outside Homebrew" + (f" (cask: {cver})" if cver not in ("", "latest") else "")
                        + f". To let Homebrew replace and manage it: brew install --cask --force {token}. {keep}")
-    if artifacts(cask, "app"):
+    for folder in [f for s in artifacts(cask, "suite") for f in [suite_folder(os.path.basename(s))] if f]:
+        return False, (f"{token}: {folder} exists but its app is missing, and Homebrew won't install over the folder. "
+                       f"To replace it: brew install --cask --force {token}")
+    if artifacts(cask, "app") or artifacts(cask, "suite"):
         return False, f"{token}: not installed. Install it: brew install --cask {token} (the error says why if it fails)"
     # pkg and installer casks: find the app from the paths their uninstall removes.
     paths = installer_apps(cask) + [p for n in cask.get("name", []) for p in [find_app(n)] if p]
