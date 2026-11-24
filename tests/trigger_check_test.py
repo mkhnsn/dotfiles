@@ -45,6 +45,8 @@ class Fixture(unittest.TestCase):
                       "BTTActionsToExecute": [{"BTTPredefinedActionType": 21, "BTTUUID": "OTHER-A"}]}
         self.preset({"BTTPresetContent": [{"BTTAppBundleIdentifier": "BT.G", "BTTTriggers": [self.other]}]})
         self.toml(GOOD)
+        with open(os.path.join(self.d, "macos/btt/symbols.toml"), "w") as f:  # as --measure writes it
+            f.write('[width]\n"cup.and.saucer.fill" = 25\n"video" = 23\n"arrow.up.and.down" = 14\n')
 
     def tearDown(self):
         shutil.rmtree(self.d)
@@ -490,6 +492,11 @@ keys = ["⌃⌥⇧⌘↑"]
             p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\n' + bad))
             self.assertTrue(any("invalid: trigger keep-awake" in x for x in p), (bad, p))
 
+    def test_an_icon_needs_a_measured_width(self):
+        os.remove(os.path.join(self.d, "macos/btt/symbols.toml"))
+        p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\nicon = "cup.and.saucer.fill"'))
+        self.assertTrue(any("unmeasured: trigger keep-awake" in x and "--measure" in x for x in p), p)
+
     def test_a_split_group_is_reported(self):
         extra = '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\ngroup = "mac"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n'
         p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\ngroup = "Mac"').replace(
@@ -513,17 +520,23 @@ keys = ["⌃⌥⇧⌘↑"]
         _, menu, _, _ = self.hints_parts()
         self.assertEqual([r["BTTMenuName"] for r in menu["BTTMenuItems"]], names)  # hints-next isn't second
 
-    def test_row_names_are_unique_and_rows_with_no_icon_line_up(self):
-        self.toml(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\nicon = "cup.and.saucer.fill"'))
-        self.run_check("--write")
+    def test_row_names_are_unique_and_icons_share_a_box(self):
+        self.toml(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\nicon = "cup.and.saucer.fill"')
+                  + '\n[[trigger]]\nname = "tall"\naction = "Tall"\nhint = "x"\nicon = "arrow.up.and.down"\n'
+                    'run = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n')
+        self.assertEqual(self.run_check("--write").returncode, 0)
         _, menu, _, _ = self.hints_parts()
         rows = {r["BTTMenuName"]: r for r in menu["BTTMenuItems"]}
         self.assertEqual(len(rows), len(menu["BTTMenuItems"]))
-        icon, plain = rows["keep-awake"]["BTTMenuConfig"], rows["mic-mute"]["BTTMenuConfig"]
-        self.assertEqual((icon["BTTMenuItemSFSymbolStyle"], icon["BTTMenuItemImageWidth"], icon["BTTMenuTextOffsetX"]), (1, tc.ICON, 10))
-        self.assertEqual(plain["BTTMenuTextOffsetX"], 10 + tc.ICON + tc.ICON_GAP)
-        self.assertEqual(rows["hints-next"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], 10 + tc.ICON + tc.ICON_GAP)
-        self.assertEqual(rows["Header"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], 10)
+        wide, narrow, plain = (rows[n]["BTTMenuConfig"] for n in ("keep-awake", "tall", "mic-mute"))
+        self.assertEqual(wide["BTTMenuItemSFSymbolStyle"], 1)
+        # the box is the widest icon (25): the narrow one (14) sits in its middle, and every
+        # row's text starts at the box's far edge, with or without an icon
+        self.assertEqual((wide["BTTMenuItemImageOffsetX"], wide["BTTMenuTextOffsetX"]), (0, tc.TEXT_X))
+        self.assertEqual((narrow["BTTMenuItemImageOffsetX"], narrow["BTTMenuTextOffsetX"]), (5.5, tc.TEXT_X + 11))
+        self.assertEqual(plain["BTTMenuTextOffsetX"], tc.TEXT_X + 25 + tc.NO_ICON)
+        self.assertEqual(rows["hints-next"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], tc.TEXT_X + 25 + tc.NO_ICON)
+        self.assertEqual(rows["Header"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], tc.TEXT_X)
         # a re-created row has its own action, not the old row's
         acts = [a["BTTUUID"] for r in menu["BTTMenuItems"] for a in r.get("BTTMenuItemActions", [])]
         self.assertEqual(len(acts), len(set(acts)))
