@@ -132,7 +132,8 @@ def hints_module():
     for name in ("hints", "executable_hints"):
         path = os.path.join(here, name)
         if os.path.exists(path):
-            sys.dont_write_bytecode = True  # no __pycache__ next to the deployed tools (BTT and Raycast run these without the shell\'s PYTHONDONTWRITEBYTECODE)
+            # Python would cache the sibling in __pycache__ next to it (~/.local/bin).
+            sys.dont_write_bytecode = True
             loader = importlib.machinery.SourceFileLoader("hints_mod", path)
             mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("hints_mod", loader))
             loader.exec_module(mod)
