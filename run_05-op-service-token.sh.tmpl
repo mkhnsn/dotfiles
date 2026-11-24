@@ -1,0 +1,24 @@
+{{ if and .full_setup (eq (.op_mode | default "account") "service") -}}
+#!/usr/bin/env bash
+# Service-account boxes (Linux, WSL and macOS servers): save the 1Password token so
+# later `chezmoi apply` runs and fresh shells (env.zsh sources the file) can read
+# secrets without exporting it again. Runs every apply, so a token exported after the
+# first apply is still saved; it never overwrites a file that has content. The file is
+# written whole and then moved into place, so an interrupted write can't leave a partial
+# one behind.
+set -euo pipefail
+
+TOKEN_ENV="$HOME/.config/op/service-account.env"
+if [[ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" && ! -s "$TOKEN_ENV" ]]; then
+  mkdir -p "$HOME/.config/op"
+  chmod 700 "$HOME/.config/op"
+  (
+    umask 077
+    tmp="$(mktemp "$TOKEN_ENV.XXXXXX")"
+    trap 'rm -f "$tmp"' EXIT
+    printf 'export OP_SERVICE_ACCOUNT_TOKEN=%q\n' "$OP_SERVICE_ACCOUNT_TOKEN" > "$tmp"
+    mv -f "$tmp" "$TOKEN_ENV"
+  )
+  echo "1Password: saved service-account token to $TOKEN_ENV (0600)"
+fi
+{{ end -}}

@@ -48,7 +48,7 @@ fi
 # ---- 1Password CLI / chezmoi integration ----
 # Headless/WSL boxes authenticate with a service-account token instead of the
 # desktop app. Persist it in ~/.config/op/service-account.env (0600, gitignored,
-# written by run_once_05-1password) so `chezmoi apply` works in fresh shells.
+# written by run_05-op-service-token) so `chezmoi apply` works in fresh shells.
 [[ -r "$HOME/.config/op/service-account.env" ]] && \
   source "$HOME/.config/op/service-account.env"
 
