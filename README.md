@@ -512,7 +512,21 @@ so Hyper+V can be the camera in each call app.
 Now: Hyper+M mic mute (also ⌃⌥⌘M, the Stream Deck's Mic key), Hyper+V camera in Zoom, Teams
 and Chrome for Meet (also ⌃⌥⌘V, the Stream Deck's Camera key; each sends that app's own video
 shortcut), Hyper+K Keep Awake (`keep-awake`, caffeinate until pressed again), Hyper+H the
-cheat sheet. `trigger-check --list` prints them.
+cheat sheet, and the window keys below. `trigger-check --list` prints them.
+
+Windows (the window in front; the ⌃⌥ keys are the ones Raycast used, which the Stream Deck's
+window buttons send):
+
+| Hyper | Also | Window |
+|---|---|---|
+| ← / → | ⌃⌥← / ⌃⌥→ | Left half / right half |
+| ↩ | ⌃⌥↩ | Maximize |
+| 1 / 2 / 3 | ⌃⌥D / F / G | Left / center / right third |
+| 4 / 5 | ⌃⌥E / T | Left / right two thirds |
+| ↑ | ⌃⌥⇧↩ | Full height, same width |
+| ↓ | | Center, same size |
+| [ / ] | ⌃⌥⇧← / ⌃⌥⇧→ | One desktop left / right |
+| N | | Next display |
 
 ### Hints
 

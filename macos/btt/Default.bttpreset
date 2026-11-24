@@ -174,250 +174,6 @@
       },
       "BTTTriggers" : [
         {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Maximize Window Left Half",
-              "BTTPredefinedActionType" : 19,
-              "BTTTriggerParentUUID" : "EA79733B-7319-46FF-9850-873C39D0035B",
-              "BTTUUID" : "8B812F5E-F62D-4462-962A-177CAD6C57A7"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: left half",
-          "BTTOrder" : 0,
-          "BTTShortcutKeyCode" : 123,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 9175040,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "EA79733B-7319-46FF-9850-873C39D0035B"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Maximize Window Right Half",
-              "BTTPredefinedActionType" : 20,
-              "BTTTriggerParentUUID" : "71093549-4B3C-4D89-AE53-BC6042886744",
-              "BTTUUID" : "BF0868D9-F0BA-464A-86E6-96BD6AC559D6"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: right half",
-          "BTTOrder" : 1,
-          "BTTShortcutKeyCode" : 124,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 9175040,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "71093549-4B3C-4D89-AE53-BC6042886744"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Maximize Window",
-              "BTTPredefinedActionType" : 21,
-              "BTTTriggerParentUUID" : "4045D814-CB3A-4BE5-A99E-98BF57709FF4",
-              "BTTUUID" : "2D713DB4-744D-4335-AC09-0FD422211CFC"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: maximize",
-          "BTTOrder" : 2,
-          "BTTShortcutKeyCode" : 36,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 786432,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "4045D814-CB3A-4BE5-A99E-98BF57709FF4"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Resize window to Left Third",
-              "BTTPredefinedActionType" : 108,
-              "BTTTriggerParentUUID" : "2EA98EC0-81D1-4969-B5B8-BB3910F6BC8F",
-              "BTTUUID" : "56A97C79-0983-4504-B71A-E7745E3FFBEA"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: left third",
-          "BTTOrder" : 3,
-          "BTTShortcutKeyCode" : 2,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 786432,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "2EA98EC0-81D1-4969-B5B8-BB3910F6BC8F"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Resize window to Middle Third",
-              "BTTPredefinedActionType" : 109,
-              "BTTTriggerParentUUID" : "51E7DFF4-836E-42A6-891C-B17B036AD097",
-              "BTTUUID" : "8F28317E-856C-4C33-A550-7498902708F2"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: center third",
-          "BTTOrder" : 4,
-          "BTTShortcutKeyCode" : 3,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 786432,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "51E7DFF4-836E-42A6-891C-B17B036AD097"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Resize window to Right Third",
-              "BTTPredefinedActionType" : 110,
-              "BTTTriggerParentUUID" : "DEE0C9BF-0605-4EE8-BA27-DEBA5FE6AAB5",
-              "BTTUUID" : "818EB5C9-18D3-4A12-86E8-F3BDB4314F75"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: right third",
-          "BTTOrder" : 5,
-          "BTTShortcutKeyCode" : 5,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 786432,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "DEE0C9BF-0605-4EE8-BA27-DEBA5FE6AAB5"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Resize window to Left Two Thirds",
-              "BTTPredefinedActionType" : 174,
-              "BTTTriggerParentUUID" : "261CA17D-2D30-414F-9B27-7F8FDCB730DC",
-              "BTTUUID" : "6A7D75AE-128D-4B64-9081-0266462819FE"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: left two thirds",
-          "BTTOrder" : 6,
-          "BTTShortcutKeyCode" : 14,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 786432,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "261CA17D-2D30-414F-9B27-7F8FDCB730DC"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Resize window to Right Two Thirds",
-              "BTTPredefinedActionType" : 175,
-              "BTTTriggerParentUUID" : "FED0EA5C-381F-4D50-9420-6529D98C17CB",
-              "BTTUUID" : "F5506086-4FA7-4353-BC69-DDBF66AE2BAC"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: right two thirds",
-          "BTTOrder" : 7,
-          "BTTShortcutKeyCode" : 17,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 786432,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "FED0EA5C-381F-4D50-9420-6529D98C17CB"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTActionMoveResizeConfig" : "{\"BTTMoveResizeVersion\":3,\"BTTActiveOrHoveredWindow\":0,\"BTTScreensToMove\":0,\"BTTOriginDisplay\":1,\"BTTDirectionToMove\":0,\"BTTChangeXOrigin\":0,\"BTTChangeYOrigin\":1,\"BTTOriginToUse\":1,\"BTTScreenOrigin\":1,\"BTTChangeYOriginRelative\":0,\"BTTNewYAbsolute\":0,\"BTTChangeWindowWidth\":0,\"BTTChangeWindowHeight\":1,\"BTTChangeHeightRelative\":1,\"BTTNewWindowHeightRelative\":100,\"BTTNewWindowHeightAbsoluteAddition\":0,\"BTTUseVisibleFrame\":1,\"BTTCareForStageManager\":0}",
-              "BTTActionMoveResizeName" : "Maximize height",
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Move  or  Resize Window to Custom Position and Size",
-              "BTTPredefinedActionType" : 251,
-              "BTTTriggerParentUUID" : "65A67CB4-FBE2-4363-A163-20C3325C799D",
-              "BTTUUID" : "9152263F-2A68-4725-8DB5-8321F07D7DC4"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: maximize height",
-          "BTTOrder" : 8,
-          "BTTShortcutKeyCode" : 36,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 917504,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "65A67CB4-FBE2-4363-A163-20C3325C799D"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Move Window One Space or Desktop Left",
-              "BTTPredefinedActionType" : 151,
-              "BTTTriggerParentUUID" : "94E79892-AB63-4CFC-9177-1935EA6A9950",
-              "BTTUUID" : "3A99F21D-1AED-49D9-AA34-E00F865D06A2"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: one space left",
-          "BTTOrder" : 9,
-          "BTTShortcutKeyCode" : 123,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 9306112,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "94E79892-AB63-4CFC-9177-1935EA6A9950"
-        },
-        {
-          "BTTActionsToExecute" : [
-            {
-              "BTTIsPureAction" : true,
-              "BTTOrder" : 0,
-              "BTTPredefinedActionName" : "Move Window One Space or Desktop Right",
-              "BTTPredefinedActionType" : 152,
-              "BTTTriggerParentUUID" : "60337335-050D-460A-BF6B-C94AB174B5C6",
-              "BTTUUID" : "7D7AD9C0-E463-4703-A3AD-B58819D315F1"
-            }
-          ],
-          "BTTAutoAdaptToKeyboardLayout" : 0,
-          "BTTGestureNotes" : "Window: one space right",
-          "BTTOrder" : 10,
-          "BTTShortcutKeyCode" : 124,
-          "BTTShortcutKeyboardType" : 0,
-          "BTTShortcutModifierKeys" : 9306112,
-          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
-          "BTTTriggerOnDown" : 1,
-          "BTTTriggerType" : 0,
-          "BTTUUID" : "60337335-050D-460A-BF6B-C94AB174B5C6"
-        },
-        {
           "BTTActionCategoryKeyReleaseAfterLongPress" : [
             {
               "BTTIsPureAction" : true,
@@ -875,7 +631,7 @@
             "BTTMenuCloseOnOutsideClick" : 1,
             "BTTMenuDisableDrag" : 1,
             "BTTMenuElementIdentifier" : "Hints",
-            "BTTMenuFrameHeight" : 170,
+            "BTTMenuFrameHeight" : 586,
             "BTTMenuFrameWidth" : 460,
             "BTTMenuHorizontalSpacing" : 2,
             "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
@@ -1131,6 +887,461 @@
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+←</b>&nbsp;&nbsp;Window: left half</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-left-half menu",
+                  "BTTTriggerParentUUID" : "31616950-3E2A-52A8-B994-201AA07EAE16",
+                  "BTTUUID" : "2CE0CF8D-908C-5C45-B163-939B8720D6AE"
+                }
+              ],
+              "BTTMenuName" : "window-left-half",
+              "BTTOrder" : 20,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "31616950-3E2A-52A8-B994-201AA07EAE16"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+→</b>&nbsp;&nbsp;Window: right half</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-right-half menu",
+                  "BTTTriggerParentUUID" : "8252C53A-92F8-51DC-9F5C-F733F85E165E",
+                  "BTTUUID" : "8B14C9DB-B106-5F7E-ACF6-C975D6BE1676"
+                }
+              ],
+              "BTTMenuName" : "window-right-half",
+              "BTTOrder" : 21,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "8252C53A-92F8-51DC-9F5C-F733F85E165E"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+↩</b>&nbsp;&nbsp;Window: maximize</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-maximize menu",
+                  "BTTTriggerParentUUID" : "FFEBFD18-DAF0-5D7B-B275-4EA108F862AA",
+                  "BTTUUID" : "A5260C0A-BBBC-53C4-828C-E32257B9F79A"
+                }
+              ],
+              "BTTMenuName" : "window-maximize",
+              "BTTOrder" : 22,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "FFEBFD18-DAF0-5D7B-B275-4EA108F862AA"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+1</b>&nbsp;&nbsp;Window: left third</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-left-third menu",
+                  "BTTTriggerParentUUID" : "586D0551-1507-50BD-BAE7-D51D7C65D2FE",
+                  "BTTUUID" : "C0B4138C-0624-5AC0-9960-8AA36E6857FA"
+                }
+              ],
+              "BTTMenuName" : "window-left-third",
+              "BTTOrder" : 23,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "586D0551-1507-50BD-BAE7-D51D7C65D2FE"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+2</b>&nbsp;&nbsp;Window: center third</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-center-third menu",
+                  "BTTTriggerParentUUID" : "6760C2CC-A029-58EF-A9CF-01219B74BE59",
+                  "BTTUUID" : "1415C44B-7586-5808-92B4-DD160C32BA16"
+                }
+              ],
+              "BTTMenuName" : "window-center-third",
+              "BTTOrder" : 24,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "6760C2CC-A029-58EF-A9CF-01219B74BE59"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+3</b>&nbsp;&nbsp;Window: right third</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-right-third menu",
+                  "BTTTriggerParentUUID" : "0BB9BA2D-83C8-5A0F-B049-793770C392B0",
+                  "BTTUUID" : "B2F51E02-0C6F-5036-ACC0-304B233BCBD9"
+                }
+              ],
+              "BTTMenuName" : "window-right-third",
+              "BTTOrder" : 25,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "0BB9BA2D-83C8-5A0F-B049-793770C392B0"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+4</b>&nbsp;&nbsp;Window: left two thirds</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-left-two-thirds menu",
+                  "BTTTriggerParentUUID" : "C06EE0DA-929D-5368-86CD-D06140AAAB4A",
+                  "BTTUUID" : "54BAB840-876E-5C50-821F-40F03B08E379"
+                }
+              ],
+              "BTTMenuName" : "window-left-two-thirds",
+              "BTTOrder" : 26,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "C06EE0DA-929D-5368-86CD-D06140AAAB4A"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+5</b>&nbsp;&nbsp;Window: right two thirds</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-right-two-thirds menu",
+                  "BTTTriggerParentUUID" : "EE089112-ACE5-5524-B008-558A3EBDF635",
+                  "BTTUUID" : "72748D42-0AA8-5AFA-ACFE-F9F91D7093BA"
+                }
+              ],
+              "BTTMenuName" : "window-right-two-thirds",
+              "BTTOrder" : 27,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "EE089112-ACE5-5524-B008-558A3EBDF635"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+↑</b>&nbsp;&nbsp;Window: full height</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-full-height menu",
+                  "BTTTriggerParentUUID" : "F9425CDA-4025-5AE5-845A-D4A0F434C472",
+                  "BTTUUID" : "51D3C793-1CB0-55BB-8FF1-BBBFE2FBA088"
+                }
+              ],
+              "BTTMenuName" : "window-full-height",
+              "BTTOrder" : 28,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "F9425CDA-4025-5AE5-845A-D4A0F434C472"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+↓</b>&nbsp;&nbsp;Window: center</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-center menu",
+                  "BTTTriggerParentUUID" : "E2828EB8-522C-5A2E-B07C-7CDD270C3763",
+                  "BTTUUID" : "4280F66C-639D-58E1-BF1D-2E6B7FAE8807"
+                }
+              ],
+              "BTTMenuName" : "window-center",
+              "BTTOrder" : 29,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "E2828EB8-522C-5A2E-B07C-7CDD270C3763"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+[</b>&nbsp;&nbsp;Window: one desktop left</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-desktop-left menu",
+                  "BTTTriggerParentUUID" : "0FF01A0F-E577-5132-B745-3CE84965D949",
+                  "BTTUUID" : "87F00AC6-4167-5113-AAD3-FE4E03550A8B"
+                }
+              ],
+              "BTTMenuName" : "window-desktop-left",
+              "BTTOrder" : 30,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "0FF01A0F-E577-5132-B745-3CE84965D949"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+]</b>&nbsp;&nbsp;Window: one desktop right</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-desktop-right menu",
+                  "BTTTriggerParentUUID" : "759BC147-9A25-5A7D-8E31-2684EC2D8411",
+                  "BTTUUID" : "AD81A7D7-8352-5DC2-8BBD-C47CE9EACB4A"
+                }
+              ],
+              "BTTMenuName" : "window-desktop-right",
+              "BTTOrder" : 31,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "759BC147-9A25-5A7D-8E31-2684EC2D8411"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+N</b>&nbsp;&nbsp;Window: next display</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-next-display menu",
+                  "BTTTriggerParentUUID" : "26730042-4B2C-52A7-8753-3DCBD6BDF1BE",
+                  "BTTUUID" : "76921095-3E94-5717-A284-6C0CE471D9F7"
+                }
+              ],
+              "BTTMenuName" : "window-next-display",
+              "BTTOrder" : 32,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "26730042-4B2C-52A7-8753-3DCBD6BDF1BE"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Next hint</span></body></html>",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
@@ -1151,16 +1362,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
-                  "BTTTriggerParentUUID" : "649C887D-8B4E-5951-9DB3-BF6A9EF3F671",
+                  "BTTTriggerParentUUID" : "8AE44CDD-2930-54CE-949B-AC2052CF5AEA",
                   "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
                 }
               ],
               "BTTMenuName" : "hints-next",
-              "BTTOrder" : 18,
+              "BTTOrder" : 33,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "649C887D-8B4E-5951-9DB3-BF6A9EF3F671"
+              "BTTUUID" : "8AE44CDD-2930-54CE-949B-AC2052CF5AEA"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1186,16 +1397,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
-                  "BTTTriggerParentUUID" : "E7D5B3A9-5D82-5FBC-B586-EA82D7CEFD47",
+                  "BTTTriggerParentUUID" : "F7598756-7FA7-5B3D-BF36-9767CEA9B917",
                   "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
                 }
               ],
               "BTTMenuName" : "hints-mute",
-              "BTTOrder" : 19,
+              "BTTOrder" : 34,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "E7D5B3A9-5D82-5FBC-B586-EA82D7CEFD47"
+              "BTTUUID" : "F7598756-7FA7-5B3D-BF36-9767CEA9B917"
             }
           ],
           "BTTMenuName" : "Hints",
@@ -1206,6 +1417,986 @@
           "BTTTriggerTypeDescription" : "Hints: cheat sheet (generated from triggers.toml)",
           "BTTTriggerTypeDescriptionReadOnly" : "Floating Menu",
           "BTTUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 19,
+              "BTTTriggerParentUUID" : "F5C33C6F-48CD-5D4B-9FB9-700662209542",
+              "BTTUUID" : "2DA7FC9C-023D-51C5-B1AD-31E84F8F8BA2"
+            }
+          ],
+          "BTTGestureNotes" : "Window: left half",
+          "BTTNamedTriggerAIDescription" : "Hyper+← puts the window in the left half of the screen",
+          "BTTOrder" : 32,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-left-half",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "F5C33C6F-48CD-5D4B-9FB9-700662209542"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-left-half key",
+              "BTTTriggerParentUUID" : "B65D633F-EFB9-507C-B113-C5353A3C628C",
+              "BTTUUID" : "BBDF519F-2615-5A6F-8D12-152F72078A19"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-left-half",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "B65D633F-EFB9-507C-B113-C5353A3C628C",
+              "BTTUUID" : "0FE51369-005E-5142-8E32-AB60D9533ECE"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: left half",
+          "BTTOrder" : 33,
+          "BTTShortcutKeyCode" : 123,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 10354688,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "B65D633F-EFB9-507C-B113-C5353A3C628C"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-left-half key",
+              "BTTTriggerParentUUID" : "17C76273-2F5F-5EEC-ADE4-A612763D8107",
+              "BTTUUID" : "5B158E81-CDE0-5D6D-B507-91AF0E97D9B6"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-left-half",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "17C76273-2F5F-5EEC-ADE4-A612763D8107",
+              "BTTUUID" : "ECB67718-FCD0-5CA8-909D-05A7B1B89AD4"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: left half",
+          "BTTOrder" : 34,
+          "BTTShortcutKeyCode" : 123,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 9175040,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "17C76273-2F5F-5EEC-ADE4-A612763D8107"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 20,
+              "BTTTriggerParentUUID" : "B7CE15FD-2A45-565F-942E-5202F940A6F2",
+              "BTTUUID" : "6311057F-8061-513D-A70F-847AF2170B37"
+            }
+          ],
+          "BTTGestureNotes" : "Window: right half",
+          "BTTNamedTriggerAIDescription" : "Hyper+→ puts the window in the right half of the screen",
+          "BTTOrder" : 35,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-right-half",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "B7CE15FD-2A45-565F-942E-5202F940A6F2"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-right-half key",
+              "BTTTriggerParentUUID" : "1E3A21BF-B3DB-52EB-9181-5AD0E0DA9AD5",
+              "BTTUUID" : "A00EC19E-3161-555F-92F1-B4B429F0A055"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-right-half",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "1E3A21BF-B3DB-52EB-9181-5AD0E0DA9AD5",
+              "BTTUUID" : "8850FA52-0CD4-5AFC-880D-A23C5368A01D"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: right half",
+          "BTTOrder" : 36,
+          "BTTShortcutKeyCode" : 124,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 10354688,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "1E3A21BF-B3DB-52EB-9181-5AD0E0DA9AD5"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-right-half key",
+              "BTTTriggerParentUUID" : "D0CC95F4-FC22-5133-9F7B-F2A9498FAA52",
+              "BTTUUID" : "79EDAB72-00CC-53D1-AE87-7FBAC21F57B4"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-right-half",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "D0CC95F4-FC22-5133-9F7B-F2A9498FAA52",
+              "BTTUUID" : "95870BE2-6D96-5E77-94E0-9A96ED9290F4"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: right half",
+          "BTTOrder" : 37,
+          "BTTShortcutKeyCode" : 124,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 9175040,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "D0CC95F4-FC22-5133-9F7B-F2A9498FAA52"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 21,
+              "BTTTriggerParentUUID" : "75A4C3BC-368F-52EB-AA0A-DD8F8005C5CD",
+              "BTTUUID" : "16BFC60F-2CD8-5EED-831F-D65114E8B975"
+            }
+          ],
+          "BTTGestureNotes" : "Window: maximize",
+          "BTTNamedTriggerAIDescription" : "Hyper+↩ makes the window fill the screen",
+          "BTTOrder" : 38,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-maximize",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "75A4C3BC-368F-52EB-AA0A-DD8F8005C5CD"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-maximize key",
+              "BTTTriggerParentUUID" : "5E751285-85A2-5602-A555-2A1365368C7E",
+              "BTTUUID" : "14C9DCF4-F04F-5FB6-8644-EA85FA2E90E4"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-maximize",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "5E751285-85A2-5602-A555-2A1365368C7E",
+              "BTTUUID" : "56753C73-8497-5B55-BEE8-18B8408C0E8A"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: maximize",
+          "BTTOrder" : 39,
+          "BTTShortcutKeyCode" : 36,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "5E751285-85A2-5602-A555-2A1365368C7E"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-maximize key",
+              "BTTTriggerParentUUID" : "5390B3AE-3B05-5229-B470-0DCA39A755B4",
+              "BTTUUID" : "E4B55018-5B50-5E2D-8577-6256B84921AE"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-maximize",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "5390B3AE-3B05-5229-B470-0DCA39A755B4",
+              "BTTUUID" : "856A6EB0-5946-5F55-B84B-7B7487F1D6C1"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: maximize",
+          "BTTOrder" : 40,
+          "BTTShortcutKeyCode" : 36,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 786432,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "5390B3AE-3B05-5229-B470-0DCA39A755B4"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 108,
+              "BTTTriggerParentUUID" : "AF5EE349-92D3-5697-A23C-54CDDD9991CB",
+              "BTTUUID" : "4BF33927-A187-55EE-B84A-BC922C89ECBF"
+            }
+          ],
+          "BTTGestureNotes" : "Window: left third",
+          "BTTNamedTriggerAIDescription" : "Hyper+1 puts the window in the left third of the screen",
+          "BTTOrder" : 41,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-left-third",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "AF5EE349-92D3-5697-A23C-54CDDD9991CB"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-left-third key",
+              "BTTTriggerParentUUID" : "FB70FBA1-7D4E-5E35-9751-C7B2923A6C32",
+              "BTTUUID" : "A88BDF78-7ACC-52F5-AA6B-3CFB29B85A20"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-left-third",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "FB70FBA1-7D4E-5E35-9751-C7B2923A6C32",
+              "BTTUUID" : "CF2CE4BD-04B0-5AD7-AB56-28DF7D0AE648"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: left third",
+          "BTTOrder" : 42,
+          "BTTShortcutKeyCode" : 18,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "FB70FBA1-7D4E-5E35-9751-C7B2923A6C32"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-left-third key",
+              "BTTTriggerParentUUID" : "39E2BEFC-50AA-5C3E-ACC4-B89CCEDD8AF6",
+              "BTTUUID" : "2D2282B0-2B96-5FC9-9731-0A13EA1C6F80"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-left-third",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "39E2BEFC-50AA-5C3E-ACC4-B89CCEDD8AF6",
+              "BTTUUID" : "19E8F98A-766D-5B1B-A80D-DD8A84EA9A55"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: left third",
+          "BTTOrder" : 43,
+          "BTTShortcutKeyCode" : 2,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 786432,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "39E2BEFC-50AA-5C3E-ACC4-B89CCEDD8AF6"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 109,
+              "BTTTriggerParentUUID" : "F5E0A175-CE6B-56FC-91A9-BD69C4262ACF",
+              "BTTUUID" : "7785DC79-27F3-56C2-97CC-D1500C3848AC"
+            }
+          ],
+          "BTTGestureNotes" : "Window: center third",
+          "BTTNamedTriggerAIDescription" : "Hyper+2 puts the window in the center third of the screen",
+          "BTTOrder" : 44,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-center-third",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "F5E0A175-CE6B-56FC-91A9-BD69C4262ACF"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-center-third key",
+              "BTTTriggerParentUUID" : "CD2F901B-8904-5E18-B9C7-F5B39B92EB2F",
+              "BTTUUID" : "00208EBA-A65B-519E-AB8D-250612349E66"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-center-third",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "CD2F901B-8904-5E18-B9C7-F5B39B92EB2F",
+              "BTTUUID" : "E9FCC5A7-F3C1-5271-83FC-24A8D00DCC6A"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: center third",
+          "BTTOrder" : 45,
+          "BTTShortcutKeyCode" : 19,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "CD2F901B-8904-5E18-B9C7-F5B39B92EB2F"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-center-third key",
+              "BTTTriggerParentUUID" : "B1DF7232-EF5E-5117-96AB-5350360ABCFF",
+              "BTTUUID" : "38EE43C0-4707-506A-AEE5-317949085FA9"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-center-third",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "B1DF7232-EF5E-5117-96AB-5350360ABCFF",
+              "BTTUUID" : "B280C0A0-4A8A-5957-8E19-8383CA0051B9"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: center third",
+          "BTTOrder" : 46,
+          "BTTShortcutKeyCode" : 3,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 786432,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "B1DF7232-EF5E-5117-96AB-5350360ABCFF"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 110,
+              "BTTTriggerParentUUID" : "EA890492-3CDD-5F7B-841C-2D42E4928A9A",
+              "BTTUUID" : "D44159C8-8651-5E60-94E9-81AFCB2B682D"
+            }
+          ],
+          "BTTGestureNotes" : "Window: right third",
+          "BTTNamedTriggerAIDescription" : "Hyper+3 puts the window in the right third of the screen",
+          "BTTOrder" : 47,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-right-third",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "EA890492-3CDD-5F7B-841C-2D42E4928A9A"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-right-third key",
+              "BTTTriggerParentUUID" : "CD8FD746-F728-582A-B2DF-1ABCF4D85623",
+              "BTTUUID" : "47925221-A1EF-5336-B3AA-634F2FF5F355"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-right-third",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "CD8FD746-F728-582A-B2DF-1ABCF4D85623",
+              "BTTUUID" : "50CD1F16-334D-5F6C-9735-96DEA7CE41EF"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: right third",
+          "BTTOrder" : 48,
+          "BTTShortcutKeyCode" : 20,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "CD8FD746-F728-582A-B2DF-1ABCF4D85623"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-right-third key",
+              "BTTTriggerParentUUID" : "D5AD3031-190A-5C45-8F14-3F7498CA0498",
+              "BTTUUID" : "AAF58266-80E7-56F7-A31A-517399A1E4F3"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-right-third",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "D5AD3031-190A-5C45-8F14-3F7498CA0498",
+              "BTTUUID" : "B81958B2-7276-524A-A2D6-0E4122C2E723"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: right third",
+          "BTTOrder" : 49,
+          "BTTShortcutKeyCode" : 5,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 786432,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "D5AD3031-190A-5C45-8F14-3F7498CA0498"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 174,
+              "BTTTriggerParentUUID" : "1939EE0D-66F1-5E96-ABF8-9CDDD9816083",
+              "BTTUUID" : "2489709B-D846-5186-A398-3FB91BE05393"
+            }
+          ],
+          "BTTGestureNotes" : "Window: left two thirds",
+          "BTTNamedTriggerAIDescription" : "Hyper+4 puts the window in the left two thirds of the screen",
+          "BTTOrder" : 50,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-left-two-thirds",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "1939EE0D-66F1-5E96-ABF8-9CDDD9816083"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-left-two-thirds key",
+              "BTTTriggerParentUUID" : "71DD3C06-B776-5C8D-85D9-EA04FF5DE852",
+              "BTTUUID" : "CD51F9CB-A4A3-5EC1-B894-4A898D7A9E47"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-left-two-thirds",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "71DD3C06-B776-5C8D-85D9-EA04FF5DE852",
+              "BTTUUID" : "741F8B4C-E9C2-5F1F-9E70-CFCD5D25F722"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: left two thirds",
+          "BTTOrder" : 51,
+          "BTTShortcutKeyCode" : 21,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "71DD3C06-B776-5C8D-85D9-EA04FF5DE852"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-left-two-thirds key",
+              "BTTTriggerParentUUID" : "3726D4A3-ED67-57AE-A29C-4793E424F85E",
+              "BTTUUID" : "E974E8CD-096B-5802-B14E-B7C31655D887"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-left-two-thirds",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "3726D4A3-ED67-57AE-A29C-4793E424F85E",
+              "BTTUUID" : "28EADB7F-5865-5E01-9E98-9A6EED528B2B"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: left two thirds",
+          "BTTOrder" : 52,
+          "BTTShortcutKeyCode" : 14,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 786432,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "3726D4A3-ED67-57AE-A29C-4793E424F85E"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 175,
+              "BTTTriggerParentUUID" : "BE47D5A9-4660-52F5-BD4C-7CAD91FB94C3",
+              "BTTUUID" : "6492C83A-6B5E-5487-B7DD-8A9971C85BBA"
+            }
+          ],
+          "BTTGestureNotes" : "Window: right two thirds",
+          "BTTNamedTriggerAIDescription" : "Hyper+5 puts the window in the right two thirds of the screen",
+          "BTTOrder" : 53,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-right-two-thirds",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "BE47D5A9-4660-52F5-BD4C-7CAD91FB94C3"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-right-two-thirds key",
+              "BTTTriggerParentUUID" : "EAE7F28E-3C2F-5909-927F-D8CD551E2A95",
+              "BTTUUID" : "8E7327B4-88AE-59DE-9067-4B99E3726E1E"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-right-two-thirds",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "EAE7F28E-3C2F-5909-927F-D8CD551E2A95",
+              "BTTUUID" : "F2B4E71D-6201-538F-AEEF-ABF4347223C6"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: right two thirds",
+          "BTTOrder" : 54,
+          "BTTShortcutKeyCode" : 23,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "EAE7F28E-3C2F-5909-927F-D8CD551E2A95"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-right-two-thirds key",
+              "BTTTriggerParentUUID" : "0513D527-FB3F-56E9-8C46-C3ACBFB37177",
+              "BTTUUID" : "AB8D38AC-2CDE-5670-B3E8-DBF879F59230"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-right-two-thirds",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "0513D527-FB3F-56E9-8C46-C3ACBFB37177",
+              "BTTUUID" : "57637422-379A-53BB-8307-DC3D8BC06041"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: right two thirds",
+          "BTTOrder" : 55,
+          "BTTShortcutKeyCode" : 17,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 786432,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "0513D527-FB3F-56E9-8C46-C3ACBFB37177"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTActionMoveResizeConfig" : "{\"BTTMoveResizeVersion\":3,\"BTTActiveOrHoveredWindow\":0,\"BTTScreensToMove\":0,\"BTTOriginDisplay\":1,\"BTTDirectionToMove\":0,\"BTTChangeXOrigin\":0,\"BTTChangeYOrigin\":1,\"BTTOriginToUse\":1,\"BTTScreenOrigin\":1,\"BTTChangeYOriginRelative\":0,\"BTTNewYAbsolute\":0,\"BTTChangeWindowWidth\":0,\"BTTChangeWindowHeight\":1,\"BTTChangeHeightRelative\":1,\"BTTNewWindowHeightRelative\":100,\"BTTNewWindowHeightAbsoluteAddition\":0,\"BTTUseVisibleFrame\":1,\"BTTCareForStageManager\":0}",
+              "BTTActionMoveResizeName" : "Full height",
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 251,
+              "BTTTriggerParentUUID" : "EBDEB4E2-08EE-5D48-A5C3-702FFAC30AD1",
+              "BTTUUID" : "A9FE02F9-B407-5B0B-8A5B-F1B75EECA973"
+            }
+          ],
+          "BTTGestureNotes" : "Window: full height",
+          "BTTNamedTriggerAIDescription" : "Hyper+↑ makes the window as tall as the screen, keeping its width",
+          "BTTOrder" : 56,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-full-height",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "EBDEB4E2-08EE-5D48-A5C3-702FFAC30AD1"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-full-height key",
+              "BTTTriggerParentUUID" : "CA256D0E-C9EB-540F-9FFB-4BD460DE7059",
+              "BTTUUID" : "13D40EF5-240F-51E3-899A-AA65DB708809"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-full-height",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "CA256D0E-C9EB-540F-9FFB-4BD460DE7059",
+              "BTTUUID" : "D66DCA37-62D1-5DE3-A2CD-4B65725F5B95"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: full height",
+          "BTTOrder" : 57,
+          "BTTShortcutKeyCode" : 126,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 10354688,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "CA256D0E-C9EB-540F-9FFB-4BD460DE7059"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-full-height key",
+              "BTTTriggerParentUUID" : "0AD3CFC2-92F9-5761-B011-A88CEFE804C8",
+              "BTTUUID" : "131603C4-11E5-5F93-9B5E-D47958853369"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-full-height",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "0AD3CFC2-92F9-5761-B011-A88CEFE804C8",
+              "BTTUUID" : "05423F9D-BBDA-5C45-803B-125B643A1AC1"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: full height",
+          "BTTOrder" : 58,
+          "BTTShortcutKeyCode" : 36,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 917504,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "0AD3CFC2-92F9-5761-B011-A88CEFE804C8"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 97,
+              "BTTTriggerParentUUID" : "8A5C66F7-CA12-5610-9855-994D138166CB",
+              "BTTUUID" : "05A299C7-469F-5C8A-AAC2-641B55704672"
+            }
+          ],
+          "BTTGestureNotes" : "Window: center",
+          "BTTNamedTriggerAIDescription" : "Hyper+↓ centers the window without resizing it",
+          "BTTOrder" : 59,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-center",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "8A5C66F7-CA12-5610-9855-994D138166CB"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-center key",
+              "BTTTriggerParentUUID" : "C0E16E06-8318-5D8F-8955-C6ACCF2637DB",
+              "BTTUUID" : "2E9B6B72-EF52-503C-8C43-A30A7EBE491A"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-center",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "C0E16E06-8318-5D8F-8955-C6ACCF2637DB",
+              "BTTUUID" : "7CB7953A-6528-5C60-8986-E7D66CD3F18E"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: center",
+          "BTTOrder" : 60,
+          "BTTShortcutKeyCode" : 125,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 10354688,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "C0E16E06-8318-5D8F-8955-C6ACCF2637DB"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 151,
+              "BTTTriggerParentUUID" : "E3AD05F4-089A-5ABC-B6B4-1CCC7FC9917C",
+              "BTTUUID" : "533C9B3F-586C-56F9-BD3A-3A22F25B07DB"
+            }
+          ],
+          "BTTGestureNotes" : "Window: one desktop left",
+          "BTTNamedTriggerAIDescription" : "Hyper+[ moves the window one desktop to the left",
+          "BTTOrder" : 61,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-desktop-left",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "E3AD05F4-089A-5ABC-B6B4-1CCC7FC9917C"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-desktop-left key",
+              "BTTTriggerParentUUID" : "A74AC0A0-F87D-565B-9FC2-A141B29B85B3",
+              "BTTUUID" : "DB79274B-2F04-53F2-85B3-7261D4E1FED7"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-desktop-left",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "A74AC0A0-F87D-565B-9FC2-A141B29B85B3",
+              "BTTUUID" : "D4F7D84E-7C93-5A93-B6A8-E98BFAD64AE0"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: one desktop left",
+          "BTTOrder" : 62,
+          "BTTShortcutKeyCode" : 33,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "A74AC0A0-F87D-565B-9FC2-A141B29B85B3"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-desktop-left key",
+              "BTTTriggerParentUUID" : "FA9511B2-6212-5556-81A4-1419389E2DB5",
+              "BTTUUID" : "55D6C6D7-A79E-5F18-A49B-2E27732DB5BC"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-desktop-left",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "FA9511B2-6212-5556-81A4-1419389E2DB5",
+              "BTTUUID" : "2A553719-8B3A-5992-A648-86919569700B"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: one desktop left",
+          "BTTOrder" : 63,
+          "BTTShortcutKeyCode" : 123,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 9306112,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "FA9511B2-6212-5556-81A4-1419389E2DB5"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 152,
+              "BTTTriggerParentUUID" : "C9F7CFF1-9AC4-52CC-99D9-478E53E75DAF",
+              "BTTUUID" : "22C8C7BE-E13B-527D-8A7B-89C089A035DA"
+            }
+          ],
+          "BTTGestureNotes" : "Window: one desktop right",
+          "BTTNamedTriggerAIDescription" : "Hyper+] moves the window one desktop to the right",
+          "BTTOrder" : 64,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-desktop-right",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "C9F7CFF1-9AC4-52CC-99D9-478E53E75DAF"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-desktop-right key",
+              "BTTTriggerParentUUID" : "0AA8312F-D444-57EC-8153-E90EB09DDB72",
+              "BTTUUID" : "BC240C77-5B45-5ADC-AD7F-CC287D943588"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-desktop-right",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "0AA8312F-D444-57EC-8153-E90EB09DDB72",
+              "BTTUUID" : "CBAB0C1F-750E-5D76-A161-701D99F9794D"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: one desktop right",
+          "BTTOrder" : 65,
+          "BTTShortcutKeyCode" : 30,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "0AA8312F-D444-57EC-8153-E90EB09DDB72"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-desktop-right key",
+              "BTTTriggerParentUUID" : "EA745F06-20CA-5BA2-859F-5168A27B8D3A",
+              "BTTUUID" : "E2E577E3-ED4E-5832-880B-82724076AF32"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-desktop-right",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "EA745F06-20CA-5BA2-859F-5168A27B8D3A",
+              "BTTUUID" : "C524CB84-AC0D-58A1-968D-34352D328585"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: one desktop right",
+          "BTTOrder" : 66,
+          "BTTShortcutKeyCode" : 124,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 9306112,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "EA745F06-20CA-5BA2-859F-5168A27B8D3A"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 47,
+              "BTTTriggerParentUUID" : "74993BCD-6650-51B9-9E4A-94EA520AC94D",
+              "BTTUUID" : "6DED7405-787E-5CAD-A0D6-8B40B55D6A6E"
+            }
+          ],
+          "BTTGestureNotes" : "Window: next display",
+          "BTTNamedTriggerAIDescription" : "Hyper+N moves the window to the next display",
+          "BTTOrder" : 67,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "window-next-display",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "74993BCD-6650-51B9-9E4A-94EA520AC94D"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only window-next-display key",
+              "BTTTriggerParentUUID" : "4100C407-9D7F-59E6-B622-3CF79E06BCA2",
+              "BTTUUID" : "7EE577A9-3B39-5201-8D23-B0FB5CAA280B"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "window-next-display",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "4100C407-9D7F-59E6-B622-3CF79E06BCA2",
+              "BTTUUID" : "23FD64E5-4478-5D4C-AA8A-B6A02DA0DD0C"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Window: next display",
+          "BTTOrder" : 68,
+          "BTTShortcutKeyCode" : 45,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "4100C407-9D7F-59E6-B622-3CF79E06BCA2"
         }
       ]
     },

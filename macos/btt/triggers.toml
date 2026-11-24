@@ -12,7 +12,8 @@
 # hint     one line, shown as a hint notification (`hints`); name its Hyper key
 # run      a command in ~/.local/bin, or
 # btt      a BTT action instead: { action = <BTTPredefinedActionType>, data = { ... } }; `fields`
-#          for an action's own top-level keys (Send Shortcut to Specific App, 128)
+#          for an action's own top-level keys (Send Shortcut to Specific App, 128; Move or
+#          Resize Window to Custom Position and Size, 251)
 # keys     the keys that fire it. Every trigger has a Hyper key (⌃⌥⇧⌘ + key, Caps Lock held):
 #          the keyboard is the one surface in every setup. Extra keys are for senders that type
 #          a shortcut (the Stream Deck's existing keys).
@@ -79,3 +80,96 @@ action = "Cheat sheet: every trigger, its keys, the next hint"
 hint = "Hyper+H shows every trigger and its keys; click one to run it"
 btt = { action = 388, data = { BTTMenuActionMenuID = "Hints" } }
 keys = ["⌃⌥⇧⌘H"]
+
+# Windows: act on the window in front. The ⌃⌥ keys are the ones Raycast used, kept for the
+# Stream Deck's window buttons, which send them.
+[[trigger]]
+name = "window-left-half"
+action = "Window: left half"
+hint = "Hyper+← puts the window in the left half of the screen"
+btt = { action = 19 }
+keys = ["⌃⌥⇧⌘←", "⌃⌥←"]
+
+[[trigger]]
+name = "window-right-half"
+action = "Window: right half"
+hint = "Hyper+→ puts the window in the right half of the screen"
+btt = { action = 20 }
+keys = ["⌃⌥⇧⌘→", "⌃⌥→"]
+
+[[trigger]]
+name = "window-maximize"
+action = "Window: maximize"
+hint = "Hyper+↩ makes the window fill the screen"
+btt = { action = 21 }
+keys = ["⌃⌥⇧⌘↩", "⌃⌥↩"]
+
+[[trigger]]
+name = "window-left-third"
+action = "Window: left third"
+hint = "Hyper+1 puts the window in the left third of the screen"
+btt = { action = 108 }
+keys = ["⌃⌥⇧⌘1", "⌃⌥D"]
+
+[[trigger]]
+name = "window-center-third"
+action = "Window: center third"
+hint = "Hyper+2 puts the window in the center third of the screen"
+btt = { action = 109 }
+keys = ["⌃⌥⇧⌘2", "⌃⌥F"]
+
+[[trigger]]
+name = "window-right-third"
+action = "Window: right third"
+hint = "Hyper+3 puts the window in the right third of the screen"
+btt = { action = 110 }
+keys = ["⌃⌥⇧⌘3", "⌃⌥G"]
+
+[[trigger]]
+name = "window-left-two-thirds"
+action = "Window: left two thirds"
+hint = "Hyper+4 puts the window in the left two thirds of the screen"
+btt = { action = 174 }
+keys = ["⌃⌥⇧⌘4", "⌃⌥E"]
+
+[[trigger]]
+name = "window-right-two-thirds"
+action = "Window: right two thirds"
+hint = "Hyper+5 puts the window in the right two thirds of the screen"
+btt = { action = 175 }
+keys = ["⌃⌥⇧⌘5", "⌃⌥T"]
+
+[[trigger]]
+name = "window-full-height"
+action = "Window: full height"
+hint = "Hyper+↑ makes the window as tall as the screen, keeping its width"
+btt = { action = 251, fields = { BTTActionMoveResizeName = "Full height", BTTActionMoveResizeConfig = '{"BTTMoveResizeVersion":3,"BTTActiveOrHoveredWindow":0,"BTTScreensToMove":0,"BTTOriginDisplay":1,"BTTDirectionToMove":0,"BTTChangeXOrigin":0,"BTTChangeYOrigin":1,"BTTOriginToUse":1,"BTTScreenOrigin":1,"BTTChangeYOriginRelative":0,"BTTNewYAbsolute":0,"BTTChangeWindowWidth":0,"BTTChangeWindowHeight":1,"BTTChangeHeightRelative":1,"BTTNewWindowHeightRelative":100,"BTTNewWindowHeightAbsoluteAddition":0,"BTTUseVisibleFrame":1,"BTTCareForStageManager":0}' } }
+keys = ["⌃⌥⇧⌘↑", "⌃⌥⇧↩"]
+
+[[trigger]]
+name = "window-center"
+action = "Window: center"
+hint = "Hyper+↓ centers the window without resizing it"
+btt = { action = 97 }
+keys = ["⌃⌥⇧⌘↓"]
+
+[[trigger]]
+name = "window-desktop-left"
+action = "Window: one desktop left"
+hint = "Hyper+[ moves the window one desktop to the left"
+btt = { action = 151 }
+keys = ["⌃⌥⇧⌘[", "⌃⌥⇧←"]
+
+[[trigger]]
+name = "window-desktop-right"
+action = "Window: one desktop right"
+hint = "Hyper+] moves the window one desktop to the right"
+btt = { action = 152 }
+keys = ["⌃⌥⇧⌘]", "⌃⌥⇧→"]
+
+[[trigger]]
+name = "window-next-display"
+action = "Window: next display"
+hint = "Hyper+N moves the window to the next display"
+btt = { action = 47 }
+keys = ["⌃⌥⇧⌘N"]

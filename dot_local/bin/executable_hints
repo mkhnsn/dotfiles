@@ -351,10 +351,11 @@ def cmd_status(_, state):
     print(f"muted: {', '.join(state['muted']) or 'nothing'}")
     print(f"setup: {detect_setup() or 'unknown'}")
     triggers, counts = load_triggers(), fired_counts()
+    width = max((len(t["name"]) for t in triggers), default=0)
     for t in triggers:
         n = counts.get(t["name"], 0)
         known = " (known)" if n >= KNOWN_AFTER else ""
-        print(f"  {t['name']:<16} shown {state['seen'].get(t['name'], 0)}, fired {n}{known}")
+        print(f"  {t['name']:<{width}} shown {state['seen'].get(t['name'], 0)}, fired {n}{known}")
 
 
 def main():

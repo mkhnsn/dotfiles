@@ -36,7 +36,11 @@ KEYS = {"A": 0, "S": 1, "D": 2, "F": 3, "H": 4, "G": 5, "Z": 6, "X": 7, "C": 8, 
         "6": 22, "5": 23, "=": 24, "9": 25, "7": 26, "-": 27, "8": 28, "0": 29, "]": 30, "O": 31,
         "U": 32, "[": 33, "I": 34, "P": 35, "↩": 36, "L": 37, "J": 38, "'": 39, "K": 40, ";": 41,
         "\\": 42, ",": 43, "/": 44, "N": 45, "M": 46, ".": 47, "⇥": 48, "Space": 49, "`": 50,
-        "F13": 105, "F14": 107, "F15": 113, "F16": 106, "F17": 64, "F18": 79, "F19": 80, "F20": 90}
+        "F13": 105, "F14": 107, "F15": 113, "F16": 106, "F17": 64, "F18": 79, "F19": 80, "F20": 90,
+        "←": 123, "→": 124, "↓": 125, "↑": 126}
+# macOS reports Fn with the arrow keys, so BTT stores it in their modifier flags (shortcut-check
+# treats it as implied).
+FN, ARROWS = 1 << 23, {123, 124, 125, 126}
 # Hyper keys owned elsewhere (macos/shortcuts.toml): Bartender, the ops menu,
 # macOS sysdiagnose.
 RESERVED = {"B", "/", "Space", ".", ","}
@@ -169,15 +173,23 @@ def validate(src, triggers):
     return problems
 
 
+def pressed(t):
+    """A keyboard trigger's (key code, modifiers), without the Fn that arrows may or may not carry
+    (BTT's own recorder stores it; a trigger written as JSON may not)."""
+    code, flags = t.get("BTTShortcutKeyCode"), t.get("BTTShortcutModifierKeys") or 0
+    return code, flags & ~FN if code in ARROWS else flags
+
+
 def shell_action(script, parent, uuid_, order):
     return {"BTTIsPureAction": True, "BTTOrder": order, "BTTPredefinedActionType": 206,
              "BTTShellTaskActionConfig": "/bin/bash:::-c:::-:::",
             "BTTShellTaskActionScript": script, "BTTTriggerParentUUID": parent, "BTTUUID": uuid_}
 
 
-# A BTT action's own top-level keys that `fields` may set (Send Shortcut to Specific App, 128).
+# A BTT action's own top-level keys that `fields` may set (Send Shortcut to Specific App, 128;
+# Move or Resize Window to Custom Position and Size, 251).
 ACTION_FIELDS = {"BTTShortcutToSend", "BTTShortcutApp", "BTTShortcutAppUnderCursor", "BTTShortcutSwitchToAppFirst",
-                 "BTTLayoutIndependentActionChar"}
+                 "BTTLayoutIndependentActionChar", "BTTActionMoveResizeName", "BTTActionMoveResizeConfig"}
 
 
 def wanted(triggers):
@@ -212,7 +224,8 @@ def wanted(triggers):
                              "BTTUUID": uid("key", n, k, "fire") if scope == GLOBAL else uid("key", n, k, scope, "fire")}],
                         "BTTAutoAdaptToKeyboardLayout": 0, "BTTGestureNotes": t["action"], "BTTOrder": order,
                         "BTTShortcutKeyCode": code, "BTTShortcutKeyboardType": 0,
-                        "BTTShortcutModifierKeys": flags, "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
+                        "BTTShortcutModifierKeys": flags | (FN if code in ARROWS else 0),
+                        "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
                         "BTTTriggerOnDown": 1, "BTTTriggerType": 0, "BTTUUID": kid}))
             order += 1
     return out + [(GLOBAL, p) for p in hints_pieces(triggers)]
@@ -405,11 +418,9 @@ def generate(preset, triggers):
         keep = {w["BTTUUID"] for w in new}
         dropped += [t.get("BTTTriggerName") or t.get("BTTGestureNotes") or t.get("BTTUUID")
                     for t in current if generated(t) and t.get("BTTUUID") not in keep]
-        mine = {(w.get("BTTShortcutKeyCode"), w.get("BTTShortcutModifierKeys")) for w in new
-                if w.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"}
+        mine = {pressed(w) for w in new if w.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"}
         CLASHES.extend(f"{t.get('BTTGestureNotes') or t.get('BTTUUID')} ({scope})" for t in kept
-                       if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"
-                       and (t.get("BTTShortcutKeyCode"), t.get("BTTShortcutModifierKeys")) in mine)
+                       if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut" and pressed(t) in mine)
         # In BTT's order, as it exports them.
         section["BTTTriggers"] = sorted(kept + new, key=lambda t: t.get("BTTOrder", 0))
     return preset, dropped
@@ -430,8 +441,9 @@ def main():
     triggers = load(src)
     problems = validate(src, triggers)
     if a.list:
+        width = max((len(t['name']) for t in triggers), default=0)
         for t in triggers:
-            print(f"{t['name']:<16} {', '.join(t.get('keys', [])):<20} {t['action']}")
+            print(f"{t['name']:<{width}} {', '.join(t.get('keys', [])):<20} {t['action']}")
     if problems:
         print("\n".join(problems))
         print(f"{len(problems)} problem(s)")
