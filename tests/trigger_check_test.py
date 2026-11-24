@@ -530,17 +530,17 @@ keys = ["⌃⌥⇧⌘↑"]
         self.assertEqual(len(rows), len(menu["BTTMenuItems"]))
         wide, narrow, plain = (rows[n]["BTTMenuConfig"] for n in ("keep-awake", "tall", "mic-mute"))
         self.assertEqual(wide["BTTMenuItemSFSymbolStyle"], 1)
-        # the box is the widest icon (25): the narrow one (14) sits in its middle, and every
-        # row's text starts at the box's far edge, with or without an icon
-        self.assertEqual((wide["BTTMenuItemImageOffsetX"], wide["BTTMenuTextOffsetX"]), (0, tc.TEXT_X))
-        self.assertEqual((narrow["BTTMenuItemImageOffsetX"], narrow["BTTMenuTextOffsetX"]), (5.5, tc.TEXT_X + 11))
-        self.assertEqual(plain["BTTMenuTextOffsetX"], tc.TEXT_X + 25 + tc.NO_ICON)
-        self.assertEqual(rows["hints-next"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], tc.TEXT_X + 25 + tc.NO_ICON)
+        # the box is the widest icon (25), indented under the headers' text: the narrow one (14)
+        # sits in its middle, and every row's text starts after the box, with or without an icon
+        self.assertEqual((wide["BTTMenuItemImageOffsetX"], wide["BTTMenuTextOffsetX"]), (tc.ICON_X, tc.ICON_TEXT))
+        self.assertEqual((narrow["BTTMenuItemImageOffsetX"], narrow["BTTMenuTextOffsetX"]), (tc.ICON_X + 5.5, tc.ICON_TEXT + 11))
+        self.assertEqual(plain["BTTMenuTextOffsetX"], 25 + tc.NO_ICON)
+        self.assertEqual(rows["hints-next"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], 25 + tc.NO_ICON)
         self.assertEqual(rows["Header"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], tc.TEXT_X)
         # whole numbers as ints, as BTT exports them: an export mustn't make the preset stale
         text = self.preset_text()
-        self.assertIn('"BTTMenuItemImageOffsetX" : 0,', text)
-        self.assertIn('"BTTMenuItemImageOffsetX" : 5.5,', text)
+        self.assertIn(f'"BTTMenuItemImageOffsetX" : {tc.ICON_X},', text)
+        self.assertIn(f'"BTTMenuItemImageOffsetX" : {tc.ICON_X + 5.5},', text)
         self.assertNotRegex(text, r'OffsetX" : \d+\.0\b')
         # a re-created row has its own action, not the old row's
         acts = [a["BTTUUID"] for r in menu["BTTMenuItems"] for a in r.get("BTTMenuItemActions", [])]

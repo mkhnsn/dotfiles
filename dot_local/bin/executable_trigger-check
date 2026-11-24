@@ -313,9 +313,12 @@ INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-chang
     uid("hints", "setup", str(e)) for e in SETUP_EVENTS}
 ROW_H, GAP, PAD, WIDTH = 30, 2, 6, 500  # wide enough for the longest row with its icon
 TEXT_X = 10  # a row's text offset
-# What a row without an icon needs on top of the box to line up. BTT leaves a gap after an icon but
-# starts an icon row further left, and the two cancel: 0 lines up on screen (1 was a point right).
-NO_ICON = 0
+# Set by eye on screen (2026-11-24), since BTT's own margins around an icon aren't documented:
+# with these, an icon's left edge sits under the headers' text, the row text starts about 12 pt
+# after a typical icon, and rows without an icon start their text at the same place.
+ICON_X = 13  # the icon box's indent
+ICON_TEXT = 12  # an icon row's text offset, on top of the box's spare width
+NO_ICON = 12  # a row without an icon: its text offset, on top of the box's width
 
 
 def key_label(t):
@@ -398,10 +401,10 @@ def row(n, name, text, script, menu_uuid, header=False, shown=True, uuid_key=Non
         item["BTTMenuConfig"].update(BTTMenuItemIconType=2, BTTMenuItemSFSymbolName=icon, BTTMenuItemIconPosition=0,
                                      BTTMenuItemSFSymbolStyle=1, BTTMenuItemIconColor1="255, 255, 255, 217",
                                      BTTMenuItemResizeImage=2, BTTMenuItemImageWidth=ICON_POINTS,
-                                     BTTMenuItemImageHeight=ICON_POINTS, BTTMenuItemImageOffsetX=num(spare / 2),
-                                     BTTMenuTextOffsetX=num(TEXT_X + spare))
+                                     BTTMenuItemImageHeight=ICON_POINTS, BTTMenuItemImageOffsetX=num(ICON_X + spare / 2),
+                                     BTTMenuTextOffsetX=num(ICON_TEXT + spare))
     elif box and not header:
-        item["BTTMenuConfig"]["BTTMenuTextOffsetX"] = num(TEXT_X + box + NO_ICON)  # in line with the icon rows' text
+        item["BTTMenuConfig"]["BTTMenuTextOffsetX"] = num(box + NO_ICON)  # in line with the icon rows' text
     if script:
         # The action's UUID follows its row's: a row made anew gets its own action.
         item["BTTMenuItemActions"] = [shell_action(script, iid, uid("hints", "menu", name, "action") if not uuid_key
