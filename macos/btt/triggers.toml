@@ -18,8 +18,9 @@
 #          the keyboard is the one surface in every setup. Extra keys are for senders that type
 #          a shortcut (the Stream Deck's existing keys).
 # fires    other surfaces bound to it: streamdeck, knob, mouse, touch, ipad
-# group    the cheat sheet's section for its row (optional): rows with the same group, next to each
-#          other in this file, sit under one header
+# group    the cheat sheet's section for its row (optional): a group's triggers, kept together
+#          in this file, sit under one header. A trigger without one, after a group, sits
+#          under that group's header too: put ungrouped triggers first.
 # icon     an SF Symbol name shown at the left of its row (optional), like "mic.slash"
 # apps     bundle IDs it belongs to (optional; empty means every app). Its keys then work only in
 #          those apps (the same key can do something else elsewhere), its cheat-sheet row shows
