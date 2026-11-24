@@ -899,13 +899,15 @@ test_skip_for_good_at_each_prompt() {
   # FileVault: x. gh: x. Widgets: n to the action, then x.
   printf 'x\nx\nn\nx\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_rc 0; assert_has "All done."
+  assert_rc 0; assert_lacks "All done."; assert_has "Nothing left to do."
+  assert_has "3 step(s) skipped, not asking"
   assert_has "won't ask again (mac-setup --unskip to undo)"
   [ "$(ls "$skips" | wc -l | tr -d ' ')" = 3 ] || fail "want 3 skips, got: $(ls "$skips" 2>&1)"
   [ -f "$XDG_STATE_HOME/mac-setup/widgets" ] && fail "a skip was saved as a confirmation"
   : > "$T/answers"                                   # a later run asks nothing
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_rc 0; assert_has "All done."; assert_lacks "Do it now?"; assert_lacks "Done?"; assert_lacks "Enter to re-check"
+  assert_rc 0; assert_lacks "All done."; assert_has "3 step(s) skipped, not asking"
+  assert_lacks "Do it now?"; assert_lacks "Done?"; assert_lacks "Enter to re-check"
   assert_has "– FileVault on (skipped, not asking)"
   assert_has "– GitHub CLI signed in (skipped, not asking)"
   assert_has "– Desktop widgets placed (skipped, not asking)"
@@ -936,9 +938,18 @@ test_reset_forgets_skips_too() {
   stub fdesetup 'echo "FileVault is Off."'
   printf 'x\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  [ -n "$(ls "$XDG_STATE_HOME/mac-setup/skipped" 2>/dev/null)" ] || fail "no skip was saved"
   run "$SCRIPT" --reset
   run "$SCRIPT" --status
   assert_open "FileVault on"; assert_open "Ninja Remote Screen Recording approved"
+}
+
+test_skip_that_cannot_be_saved_stays_open() {
+  stub fdesetup 'echo "FileVault is Off."'
+  mkdir -p "$XDG_STATE_HOME/mac-setup"; : > "$XDG_STATE_HOME/mac-setup/skipped"   # a file where the folder goes
+  printf 'x\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_rc 0; assert_has "skipped for this run only"; assert_has "1 step(s) left."; assert_lacks "won't ask again"
 }
 
 test_guided_skip_leaves_step_open() {

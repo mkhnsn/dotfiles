@@ -11,7 +11,7 @@
 #   mac-setup --unskip   ask again about the steps you answered "don't ask again" to
 #   mac-setup --reset    forget those and the steps you confirmed by hand
 #
-# At any prompt, x skips the step and stops asking about it on this Mac.
+# At a step's prompt, x skips the step and stops asking about it on this Mac.
 # Both kinds of answer are remembered per Mac in ~/.local/state/mac-setup.
 # Runbook: unstable-studios/echo-core docs/devices/README.md (New Mac runbook).
 # Bash 3.2-compatible (stock macOS).
@@ -84,8 +84,9 @@ confirmed() { [ -f "$STATE_DIR/$(state_key "$1")" ] || [ -f "$STATE_DIR/${1%%:*}
 # "Don't ask again" answers, one file per step id, in their own folder so a step id can
 # never be mistaken for a confirmation.
 skipped()   { [ -f "$STATE_DIR/skipped/$(state_key "$1")" ]; }
-skip_for_good() { mkdir -p "$STATE_DIR/skipped" && touch "$STATE_DIR/skipped/$(state_key "$1")"
-                  printf "    %sskipped, won't ask again (mac-setup --unskip to undo)%s\n" "$D" "$R"; }
+skip_for_good() { if mkdir -p "$STATE_DIR/skipped" && touch "$STATE_DIR/skipped/$(state_key "$1")"; then
+                    printf "    %sskipped, won't ask again (mac-setup --unskip to undo)%s\n" "$D" "$R"
+                  else printf "    couldn't save that in %s; skipped for this run only\n" "$STATE_DIR/skipped"; return 1; fi; }
 workstation() { [ "$ROLE" = workstation ]; }
 
 # Apps with no Homebrew cask: app bundle | where to get it | download file name (extended
@@ -793,7 +794,7 @@ run_step() {
   while :; do
     if "check_$base" "$item"; then printf '  %s✓%s %s\n' "$G" "$R" "$title"; return 0; fi
     # Skipped for good: shown, so it isn't forgotten, but not asked about or counted.
-    if skipped "$id"; then printf '  %s– %s (skipped, not asking)%s\n' "$D" "$title" "$R"; return 0; fi
+    if skipped "$id"; then printf '  %s– %s (skipped, not asking)%s\n' "$D" "$title" "$R"; SKIPS=$((SKIPS+1)); return 0; fi
     if [ "$MODE" = status ]; then printf '  %s○%s %s\n' "$Y" "$R" "$title"; return 1; fi
 
     printf '\n  %s→ %s%s\n' "$B" "$title" "$R"
@@ -803,7 +804,7 @@ run_step() {
       case "$ans" in
         n|N) ;;
         s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;;
-        x|X) skip_for_good "$id"; return 0 ;;
+        x|X) skip_for_good "$id" || return 1; SKIPS=$((SKIPS+1)); return 0 ;;
         q|Q) exit 1 ;;
         *) "act_$base" "$item" <&3 ;;
       esac
@@ -811,10 +812,10 @@ run_step() {
     case "$MANUAL" in
       *" $base "*)
         ask "    Done? [y/N/x=don't ask again/q] "
-        case "$ans" in y|Y) touch "$STATE_DIR/$(state_key "$id")" ;; x|X) skip_for_good "$id"; return 0 ;; q|Q) exit 1 ;; *) return 1 ;; esac ;;
+        case "$ans" in y|Y) touch "$STATE_DIR/$(state_key "$id")" ;; x|X) skip_for_good "$id" || return 1; SKIPS=$((SKIPS+1)); return 0 ;; q|Q) exit 1 ;; *) return 1 ;; esac ;;
       *)
         ask "    Enter to re-check, s to skip, x to not ask again, q to quit: "
-        case "$ans" in s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;; x|X) skip_for_good "$id"; return 0 ;; q|Q) exit 1 ;; esac ;;
+        case "$ans" in s|S) printf '    %sskipped%s\n' "$D" "$R"; return 1 ;; x|X) skip_for_good "$id" || return 1; SKIPS=$((SKIPS+1)); return 0 ;; q|Q) exit 1 ;; esac ;;
     esac
   done
 }
@@ -822,7 +823,7 @@ run_step() {
 printf '%smac-setup%s  %s (%s), %s\n' "$B" "$R" "$(scutil --get ComputerName 2>/dev/null)" "$SERIAL" "$(sw_vers -productVersion)"
 printf '%sRole: %s (is_server in ~/.config/chezmoi/chezmoi.toml; change it and run chezmoi apply)%s\n' "$D" "$ROLE" "$R"
 workstation || printf '%sWorkstation-only steps are left out.%s\n' "$D" "$R"
-left=0 phase_prev=""
+left=0 phase_prev="" SKIPS=0
 while IFS='|' read -r id title phase; do
   applies "${id%%:*}" || continue
   [ "$phase" != "$phase_prev" ] && printf '\n%s%s%s\n' "$D" "$phase" "$R" && phase_prev="$phase"
@@ -832,7 +833,11 @@ $STEPS
 EOF
 
 echo
-if [ "$left" -eq 0 ]; then
+# Skipped steps aren't left to do, but a run with skips never reads as fully done.
+[ "$SKIPS" -eq 0 ] || printf '%s%d step(s) skipped, not asking: mac-setup --unskip to go through them.%s\n' "$D" "$SKIPS" "$R"
+if [ "$left" -eq 0 ] && [ "$SKIPS" -gt 0 ]; then
+  printf '%sNothing left to do.%s\n' "$G" "$R"
+elif [ "$left" -eq 0 ]; then
   printf '%sAll done.%s Soak for a week or two: a Ninja Backup run completes, a restore works, alerts arrive.\n' "$G" "$R"
 else
   printf '%s%d step(s) left.%s Run mac-setup again any time.\n' "$Y" "$left" "$R"

@@ -348,8 +348,10 @@ can, and re-checks before moving on. Re-run it any time; `mac-setup --status` on
 For apps with no Homebrew cask it opens the download page, waits for the file in `~/Downloads`
 (or uses one already there) and installs it: the `.app` from a `.zip` or `.dmg` goes to
 `/Applications`, a `.pkg` runs through `installer`, and anything else opens in Finder.
-Answer `x` at any prompt to skip a step and not be asked about it again on that Mac; it stays
-in the list, marked as skipped, and isn't counted as left. `mac-setup --unskip` asks about those
+
+Answer `x` at a step's prompt to skip it and not be asked about it again on that Mac; it stays
+in the list, marked as skipped, and isn't counted as left, but the run then ends with
+"Nothing left to do" and a count of skipped steps instead of "All done". `mac-setup --unskip` asks about those
 again, and `mac-setup --reset` also forgets the steps confirmed by hand.
 
 Steps that can only be confirmed by hand are remembered in `~/.local/state/mac-setup`. Multi-part
