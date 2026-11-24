@@ -542,6 +542,9 @@ keys = ["⌃⌥⇧⌘↑"]
         self.assertIn('"BTTMenuItemImageOffsetX" : 0,', text)
         self.assertIn('"BTTMenuItemImageOffsetX" : 5.5,', text)
         self.assertNotRegex(text, r'OffsetX" : \d+\.0\b')
+        # a re-created row has its own action, not the old row's
+        acts = [a["BTTUUID"] for r in menu["BTTMenuItems"] for a in r.get("BTTMenuItemActions", [])]
+        self.assertEqual(len(acts), len(set(acts)))
 
     def test_a_broken_symbols_file_reads_as_unmeasured(self):
         with open(os.path.join(self.d, "macos/btt/symbols.toml"), "wb") as f:
@@ -556,9 +559,6 @@ keys = ["⌃⌥⇧⌘↑"]
         r = subprocess.run([sys.executable, "-I", os.path.join(REPO, "dot_local/bin/executable_trigger-check"), "--source", ""],
                            cwd=self.d, capture_output=True, text=True, env=dict(os.environ, CHEZMOI_SOURCE_DIR="", PATH="/nonexistent"))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)  # the same preset as with the path given
-        # a re-created row has its own action, not the old row's
-        acts = [a["BTTUUID"] for r in menu["BTTMenuItems"] for a in r.get("BTTMenuItemActions", [])]
-        self.assertEqual(len(acts), len(set(acts)))
 
     def test_menu_rows_keep_btts_order(self):
         self.run_check("--write")
