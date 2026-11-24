@@ -18,6 +18,10 @@
 #          the keyboard is the one surface in every setup. Extra keys are for senders that type
 #          a shortcut (the Stream Deck's existing keys).
 # fires    other surfaces bound to it: streamdeck, knob, mouse, touch, ipad
+# group    the cheat sheet's section for its row (optional): a group's triggers, kept together
+#          in this file, sit under one header. A trigger without one, after a group, sits
+#          under that group's header too: put ungrouped triggers first.
+# icon     an SF Symbol name shown at the left of its row (optional), like "mic.slash"
 # apps     bundle IDs it belongs to (optional; empty means every app). Its keys then work only in
 #          those apps (the same key can do something else elsewhere), its cheat-sheet row shows
 #          only there, and its hint shows the first time each day you switch to one of them;
@@ -31,6 +35,8 @@
 
 [[trigger]]
 name = "mic-mute"
+group = "Calls"
+icon = "mic.slash"
 action = "Mic: toggle mute (all apps)"
 hint = "Hyper+M mutes or unmutes the mic in every app"
 btt = { action = 585, data = { BTTMicMuteAlsoSetVolume = false, BTTMicMuteApplyToAllInputDevices = true } }
@@ -42,6 +48,8 @@ fires = ["streamdeck"]
 # zoom step), since its default ⇧⌘V is Raycast's Clipboard History.
 [[trigger]]
 name = "camera-zoom"
+group = "Calls"
+icon = "video"
 action = "Camera: Zoom video on/off"
 hint = "In a Zoom call, Hyper+V turns your camera on or off"
 btt = { action = 128, fields = { BTTShortcutToSend = "59,55,56,9", BTTShortcutApp = "active app", BTTShortcutAppUnderCursor = "active app", BTTShortcutSwitchToAppFirst = "0", BTTLayoutIndependentActionChar = "active app" } }
@@ -51,6 +59,8 @@ apps = ["us.zoom.xos"]
 
 [[trigger]]
 name = "camera-teams"
+group = "Calls"
+icon = "video"
 action = "Camera: Teams video on/off (sends ⇧⌘O)"
 hint = "In a Teams call, Hyper+V turns your camera on or off"
 btt = { action = 128, fields = { BTTShortcutToSend = "55,56,31", BTTShortcutApp = "active app", BTTShortcutAppUnderCursor = "active app", BTTShortcutSwitchToAppFirst = "0", BTTLayoutIndependentActionChar = "active app" } }
@@ -60,6 +70,8 @@ apps = ["com.microsoft.teams2"]
 
 [[trigger]]
 name = "camera-meet"
+group = "Calls"
+icon = "video"
 action = "Camera: Meet video on/off (sends ⌘E)"
 hint = "In a Meet call in Chrome, Hyper+V turns your camera on or off"
 btt = { action = 128, fields = { BTTShortcutToSend = "55,14", BTTShortcutApp = "active app", BTTShortcutAppUnderCursor = "active app", BTTShortcutSwitchToAppFirst = "0", BTTLayoutIndependentActionChar = "active app" } }
@@ -69,6 +81,8 @@ apps = ["com.google.Chrome"]
 
 [[trigger]]
 name = "keep-awake"
+group = "Mac"
+icon = "cup.and.saucer.fill"
 action = "Keep Awake: toggle (display and system stay on)"
 hint = "Hyper+K keeps the Mac and its display awake until you press it again"
 run = "keep-awake toggle"
@@ -85,6 +99,8 @@ keys = ["⌃⌥⇧⌘H"]
 # Stream Deck's window buttons, which send them.
 [[trigger]]
 name = "window-left-half"
+group = "Windows"
+icon = "rectangle.lefthalf.filled"
 action = "Window: left half"
 hint = "Hyper+← puts the window in the left half of the screen"
 btt = { action = 19 }
@@ -92,6 +108,8 @@ keys = ["⌃⌥⇧⌘←", "⌃⌥←"]
 
 [[trigger]]
 name = "window-right-half"
+group = "Windows"
+icon = "rectangle.righthalf.filled"
 action = "Window: right half"
 hint = "Hyper+→ puts the window in the right half of the screen"
 btt = { action = 20 }
@@ -99,6 +117,8 @@ keys = ["⌃⌥⇧⌘→", "⌃⌥→"]
 
 [[trigger]]
 name = "window-maximize"
+group = "Windows"
+icon = "arrow.up.left.and.arrow.down.right"
 action = "Window: maximize"
 hint = "Hyper+↩ makes the window fill the screen"
 btt = { action = 21 }
@@ -106,6 +126,8 @@ keys = ["⌃⌥⇧⌘↩", "⌃⌥↩"]
 
 [[trigger]]
 name = "window-left-third"
+group = "Windows"
+icon = "rectangle.leftthird.inset.filled"
 action = "Window: left third"
 hint = "Hyper+1 puts the window in the left third of the screen"
 btt = { action = 108 }
@@ -113,6 +135,8 @@ keys = ["⌃⌥⇧⌘1", "⌃⌥D"]
 
 [[trigger]]
 name = "window-center-third"
+group = "Windows"
+icon = "rectangle.center.inset.filled"
 action = "Window: center third"
 hint = "Hyper+2 puts the window in the center third of the screen"
 btt = { action = 109 }
@@ -120,6 +144,8 @@ keys = ["⌃⌥⇧⌘2", "⌃⌥F"]
 
 [[trigger]]
 name = "window-right-third"
+group = "Windows"
+icon = "rectangle.rightthird.inset.filled"
 action = "Window: right third"
 hint = "Hyper+3 puts the window in the right third of the screen"
 btt = { action = 110 }
@@ -127,6 +153,8 @@ keys = ["⌃⌥⇧⌘3", "⌃⌥G"]
 
 [[trigger]]
 name = "window-left-two-thirds"
+group = "Windows"
+icon = "rectangle.lefthalf.inset.filled"
 action = "Window: left two thirds"
 hint = "Hyper+4 puts the window in the left two thirds of the screen"
 btt = { action = 174 }
@@ -134,6 +162,8 @@ keys = ["⌃⌥⇧⌘4", "⌃⌥E"]
 
 [[trigger]]
 name = "window-right-two-thirds"
+group = "Windows"
+icon = "rectangle.righthalf.inset.filled"
 action = "Window: right two thirds"
 hint = "Hyper+5 puts the window in the right two thirds of the screen"
 btt = { action = 175 }
@@ -141,6 +171,8 @@ keys = ["⌃⌥⇧⌘5", "⌃⌥T"]
 
 [[trigger]]
 name = "window-full-height"
+group = "Windows"
+icon = "arrow.up.and.down"
 action = "Window: full height"
 hint = "Hyper+↑ makes the window as tall as the screen, keeping its width"
 btt = { action = 251, fields = { BTTActionMoveResizeName = "Full height", BTTActionMoveResizeConfig = '{"BTTMoveResizeVersion":3,"BTTActiveOrHoveredWindow":0,"BTTScreensToMove":0,"BTTOriginDisplay":1,"BTTDirectionToMove":0,"BTTChangeXOrigin":0,"BTTChangeYOrigin":1,"BTTOriginToUse":1,"BTTScreenOrigin":1,"BTTChangeYOriginRelative":0,"BTTNewYAbsolute":0,"BTTChangeWindowWidth":0,"BTTChangeWindowHeight":1,"BTTChangeHeightRelative":1,"BTTNewWindowHeightRelative":100,"BTTNewWindowHeightAbsoluteAddition":0,"BTTUseVisibleFrame":1,"BTTCareForStageManager":0}' } }
@@ -148,6 +180,8 @@ keys = ["⌃⌥⇧⌘↑", "⌃⌥⇧↩"]
 
 [[trigger]]
 name = "window-center"
+group = "Windows"
+icon = "scope"
 action = "Window: center"
 hint = "Hyper+↓ centers the window without resizing it"
 btt = { action = 97 }
@@ -155,6 +189,8 @@ keys = ["⌃⌥⇧⌘↓"]
 
 [[trigger]]
 name = "window-desktop-left"
+group = "Windows"
+icon = "arrow.left.square"
 action = "Window: one desktop left"
 hint = "Hyper+[ moves the window one desktop to the left"
 btt = { action = 151 }
@@ -162,6 +198,8 @@ keys = ["⌃⌥⇧⌘[", "⌃⌥⇧←"]
 
 [[trigger]]
 name = "window-desktop-right"
+group = "Windows"
+icon = "arrow.right.square"
 action = "Window: one desktop right"
 hint = "Hyper+] moves the window one desktop to the right"
 btt = { action = 152 }
@@ -169,6 +207,8 @@ keys = ["⌃⌥⇧⌘]", "⌃⌥⇧→"]
 
 [[trigger]]
 name = "window-next-display"
+group = "Windows"
+icon = "display.2"
 action = "Window: next display"
 hint = "Hyper+N moves the window to the next display"
 btt = { action = 47 }

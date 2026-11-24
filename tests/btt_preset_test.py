@@ -39,6 +39,15 @@ class Preset(unittest.TestCase):
         self.data = json.loads(self.text)
         self.general = self.data["BTTGeneralSettings"]
 
+    def test_cheat_sheet_rows_have_unique_names(self):
+        # hints updates rows by name; an import that left old rows beside new ones would show here
+        # after the next btt-sync export.
+        menus = [t for sec in self.data["BTTPresetContent"] for t in sec.get("BTTTriggers", [])
+                 if t.get("BTTTriggerType") == 767 and t.get("BTTMenuName") == "Hints"]
+        self.assertEqual(len(menus), 1)
+        names = [r.get("BTTMenuName") for r in menus[0].get("BTTMenuItems", [])]
+        self.assertEqual(sorted(names), sorted(set(names)))
+
     def test_normalized(self):
         want = json.dumps(self.data, indent=2, separators=(",", " : "), ensure_ascii=False, sort_keys=True) + "\n"
         self.assertEqual(self.text, want, "run btt-sync normalize")

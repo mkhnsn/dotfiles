@@ -7,7 +7,8 @@ only works there (and the same key can do something else in another app). A key 
 then fires the named trigger (action 248), so every surface runs the same thing.
 
 It also generates the hints' pieces (#144): the cheat sheet, a floating menu named "Hints" with
-a row per trigger (Hyper+H, the cheat-sheet trigger, toggles it); the named trigger hints-close,
+a row per trigger (Hyper+H, the cheat-sheet trigger, toggles it), under a header row per `group`
+and with the trigger's `icon` (an SF Symbol) at its left; the named trigger hints-close,
 which closes BTT notifications titled "Hint…"; an Active App Did Change trigger running
 `hints app`; and screen connect/disconnect and lid open/close triggers running `hints setup`,
 which updates the cheat sheet's rows to the surfaces this setup has (#152).
@@ -156,6 +157,10 @@ def validate(src, triggers):
                 key = k.replace("⌃", "").replace("⌥", "").replace("⇧", "").replace("⌘", "")
                 if key in RESERVED:
                     problems.append(f"reserved: {where}: Hyper+{key} belongs elsewhere (see macos/shortcuts.toml)")
+        if "group" in t and not (isinstance(t["group"], str) and t["group"] and t["group"] == t["group"].strip()):
+            problems.append(f"invalid: {where}: group must be text with no space around it, like \"Windows\"")
+        if "icon" in t and not (isinstance(t["icon"], str) and re.fullmatch(r"[a-z0-9]+(\.[a-z0-9]+)*", t["icon"])):
+            problems.append(f"invalid: {where}: icon must be an SF Symbol name, like \"rectangle.lefthalf.filled\"")
         apps = t.get("apps", [])
         if not isinstance(apps, list) or not all(isinstance(x, str) and x for x in apps):
             problems.append(f"invalid: {where}: apps must be a list of bundle IDs, like [\"us.zoom.xos\"]")
@@ -170,6 +175,14 @@ def validate(src, triggers):
         for setup in SETUPS:
             if not any(setup in SURFACES[s] for s in surfaces):
                 problems.append(f"unreachable: {where}: nothing fires it {setup}")
+    # A group's rows sit together under one header: its triggers must be next to each other.
+    seen = {}
+    for group, members in grouped([t for t in triggers if isinstance(t, dict)]):
+        if group and group.lower() in seen:
+            problems.append(f"invalid: trigger {members[0].get('name', '?')}: group {group!r} is split "
+                            f"(also at {seen[group.lower()]}); keep a group's triggers together, spelled the same")
+        elif group:
+            seen[group.lower()] = members[0].get("name", "?")
     return problems
 
 
@@ -238,6 +251,7 @@ SETUP_EVENTS = {792: "screen connected", 793: "screen disconnected", 683: "lid c
 INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-change")} | {
     uid("hints", "setup", str(e)) for e in SETUP_EVENTS}
 ROW_H, GAP, PAD, WIDTH = 30, 2, 6, 460
+ICON, ICON_GAP = 16, 8  # an icon's size, and the space BTT leaves after it
 
 
 def key_label(t):
@@ -269,12 +283,35 @@ def row_text(t, surfaces=None):
 
 def cheat_sheet_rows(triggers):
     """The triggers that get a row (all but the cheat sheet's own)."""
-    return [t for t in triggers if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") != MENU]
+    def own(t):  # tolerant: validate() runs this on entries that may be malformed
+        btt = t.get("btt") if isinstance(t.get("btt"), dict) else {}
+        return (btt.get("data") if isinstance(btt.get("data"), dict) else {}).get("BTTMenuActionMenuID") == MENU
+    return [t for t in triggers if not own(t)]
 
 
-def row(n, name, text, script, menu_uuid, header=False, shown=True, uuid_key=None):
+def group_header(group):
+    """The name of a group's header row (not a valid trigger name, so it can't clash with one)."""
+    return f"Group: {group}"
+
+
+def grouped(triggers):
+    """The cheat sheet's trigger rows in order, as (group or None, [triggers]): a new entry each
+    time the group changes, so a group's rows sit together under its header."""
+    out = []
+    for t in cheat_sheet_rows(triggers):
+        g = t.get("group") if isinstance(t.get("group"), str) else None
+        if out and out[-1][0] == g:
+            out[-1][1].append(t)
+        else:
+            out.append((g, [t]))
+    return out
+
+
+def row(n, name, text, script, menu_uuid, header=False, shown=True, uuid_key=None, icon=None, indent=False):
     """A cheat-sheet row. App rows start hidden: `hints app` shows the front app's."""
-    iid = uid("hints", "menu", name) if uuid_key is None else uid("hints", "menu", name, uuid_key)
+    # "v2": the scheme where a row's UUID includes the rows before it (so no row made before it
+    # keeps its UUID, and with it an old place). The first row has none before it and keeps its own.
+    iid = uid("hints", "menu", name) if not uuid_key else uid("hints", "menu", "v2", name, uuid_key)
     item = {"BTTTriggerType": 773, "BTTTriggerClass": "BTTTriggerTypeFloatingMenu",
             "BTTOrder": n, "BTTTriggerParentUUID": menu_uuid, "BTTUUID": iid, "BTTMenuName": name,
             "BTTMenuAvailability": 0,
@@ -286,8 +323,18 @@ def row(n, name, text, script, menu_uuid, header=False, shown=True, uuid_key=Non
                               "BTTMenuItemBackgroundColorHover": "0, 0, 0, 0" if header else "10, 132, 255, 255",
                               "BTTMenuItemCornerRadius": 7, "BTTMenuTextOffsetX": 10,
                               "BTTMenuAttributedText": row_html(text, header)}}
+    if icon:
+        # Hierarchical (1): the style that takes a custom color. A fixed size, so every icon is
+        # the same width and the text after it lines up.
+        item["BTTMenuConfig"].update(BTTMenuItemIconType=2, BTTMenuItemSFSymbolName=icon, BTTMenuItemIconPosition=0,
+                                     BTTMenuItemSFSymbolStyle=1, BTTMenuItemIconColor1="255, 255, 255, 217",
+                                     BTTMenuItemResizeImage=2, BTTMenuItemImageWidth=ICON, BTTMenuItemImageHeight=ICON)
+    elif indent:
+        item["BTTMenuConfig"]["BTTMenuTextOffsetX"] = 10 + ICON + ICON_GAP  # in line with the rows that have an icon
     if script:
-        item["BTTMenuItemActions"] = [shell_action(script, iid, uid("hints", "menu", name, "action"), 0)]
+        # The action's UUID follows its row's: a row made anew gets its own action.
+        item["BTTMenuItemActions"] = [shell_action(script, iid, uid("hints", "menu", name, "action") if not uuid_key
+                                                   else uid("hints", "menu", "v2", name, uuid_key, "action"), 0)]
     return item
 
 
@@ -295,15 +342,24 @@ def hints_pieces(triggers):
     menu_uuid = uid("hints", "menu")
     own = [t for t in triggers if t.get("btt", {}).get("data", {}).get("BTTMenuActionMenuID") == MENU]
     title = (key_label(own[0]) + " · " if own else "") + "what you can do"
-    rows = [row(0, "Header", html.escape(title), None, menu_uuid, header=True)]
-    for t in cheat_sheet_rows(triggers):
-        rows.append(row(len(rows), t["name"], row_text(t), f'"$HOME/.local/bin/trigger" {t["name"]} menu', menu_uuid,
-                        shown=not t.get("apps")))
-    # The hint controls stay last: BTT keeps an existing row's place, so they get new UUIDs (new
-    # rows, placed after the rest) whenever the trigger rows change.
-    after = ",".join(r["BTTMenuName"] for r in rows)
+    # BTT keeps an existing row's place and puts new rows after the rest. So a row's UUID includes
+    # the rows before it: when a row is added or moved, it and every row after it are new rows,
+    # which land in order (and the hint controls stay last).
+    rows = []
+
+    def add(name, text, script, **kw):
+        rows.append(row(len(rows), name, text, script, menu_uuid, uuid_key=",".join(r["BTTMenuName"] for r in rows), **kw))
+
+    icons = any(isinstance(t.get("icon"), str) for t in cheat_sheet_rows(triggers))  # rows without one are indented
+    add("Header", html.escape(title), None, header=True)
+    for group, members in grouped(triggers):
+        if group:  # shown while any of its rows is: `hints app` shows the header with an app's rows
+            add(group_header(group), html.escape(group), None, header=True, shown=any(not t.get("apps") for t in members))
+        for t in members:
+            add(t["name"], row_text(t), f'"$HOME/.local/bin/trigger" {t["name"]} menu', shown=not t.get("apps"),
+                icon=t.get("icon") if isinstance(t.get("icon"), str) else None, indent=icons)
     for name, text, cmd in (("hints-next", "Next hint", "next"), ("hints-mute", "Mute these hints", "mute")):
-        rows.append(row(len(rows), name, text, f'"$HOME/.local/bin/hints" {cmd}', menu_uuid, uuid_key=after))
+        add(name, text, f'"$HOME/.local/bin/hints" {cmd}', indent=icons)
     # It sizes to the rows shown (content sizing); rows have a fixed width, so only the height moves.
     shown = [r for r in rows if r["BTTMenuConfig"]["BTTMenuItemVisibleWhileActive"]]
     height = 2 * PAD + len(shown) * ROW_H + (len(shown) - 1) * GAP

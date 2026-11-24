@@ -381,6 +381,11 @@ def refresh_rows(setup, triggers, state, app=None):
             payload.update(BTTMenuItemVisibleWhileActive=shown, BTTMenuItemVisibleWhileInactive=shown)
         if payload:
             rows.append((t["name"], payload))
+    # A group of app rows only: its header shows with them.
+    for group, members in TC.grouped(triggers):
+        if group and all(t.get("apps") for t in members) and (fresh or have.get("app") != app):
+            shown = int(any(app in t["apps"] for t in members))
+            rows.append((TC.group_header(group), {"BTTMenuItemVisibleWhileActive": shown, "BTTMenuItemVisibleWhileInactive": shown}))
     if update_cheat_sheet(rows):
         state["rows"] = want
 
