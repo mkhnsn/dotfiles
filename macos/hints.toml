@@ -1,0 +1,83 @@
+# Hints that aren't BTT triggers. `hints` shows them with the triggers' hints (macos/btt/triggers.toml)
+# and the shortcut registry's (macos/shortcuts.toml), one a day in general and one a day per app.
+# Their use can't be measured, so each stops after it has been shown 3 times. `hints check`
+# (and `make test`) fails on a bad entry.
+#
+# [[tip]]   name   lowercase, digits and dashes; unique
+#           text   the hint, one line: lead with the keys or the command
+#           apps   bundle IDs it belongs to (optional; without it, it's a general hint)
+# [shell]   apps   terminal apps: each alias in dot_config/shell/aliases.zsh is a hint there
+#           skip   alias names to leave out
+
+[shell]
+apps = ["com.mitchellh.ghostty", "com.apple.Terminal"]
+skip = ["l", "la", "g"]
+
+# ---- Terminal ----------------------------------------------------------------------------------
+[[tip]]
+name = "shell-cproj"
+text = "In the shell, c picks a project from your repos and GitHub, and cds into it (cloning it first if needed)"
+apps = ["com.mitchellh.ghostty", "com.apple.Terminal"]
+
+[[tip]]
+name = "tmux-cheat-sheet"
+text = "In tmux, C-a ? shows its keys, grouped"
+apps = ["com.mitchellh.ghostty", "com.apple.Terminal"]
+
+# ---- Chrome ------------------------------------------------------------------------------------
+[[tip]]
+name = "chrome-reopen-tab"
+text = "⇧⌘T reopens the tab you just closed"
+apps = ["com.google.Chrome"]
+
+[[tip]]
+name = "chrome-search-tabs"
+text = "⇧⌘A searches your open tabs"
+apps = ["com.google.Chrome"]
+
+[[tip]]
+name = "chrome-address-bar"
+text = "⌘L jumps to the address bar"
+apps = ["com.google.Chrome"]
+
+# ---- VS Code Insiders --------------------------------------------------------------------------
+[[tip]]
+name = "vscode-quick-open"
+text = "⌘P opens a file by name"
+apps = ["com.microsoft.VSCodeInsiders"]
+
+[[tip]]
+name = "vscode-command-palette"
+text = "⇧⌘P runs any command by name"
+apps = ["com.microsoft.VSCodeInsiders"]
+
+[[tip]]
+name = "vscode-next-match"
+text = "⌘D adds the next match of the selection, to edit them together"
+apps = ["com.microsoft.VSCodeInsiders"]
+
+[[tip]]
+name = "vscode-move-line"
+text = "⌥↑ and ⌥↓ move the current line up or down"
+apps = ["com.microsoft.VSCodeInsiders"]
+
+[[tip]]
+name = "vscode-terminal"
+text = "⌃` shows or hides the terminal"
+apps = ["com.microsoft.VSCodeInsiders"]
+
+# ---- Slack -------------------------------------------------------------------------------------
+[[tip]]
+name = "slack-jump"
+text = "⌘K jumps to a channel or person"
+apps = ["com.tinyspeck.slackmacgap"]
+
+[[tip]]
+name = "slack-unreads"
+text = "⇧⌘A shows all unread messages"
+apps = ["com.tinyspeck.slackmacgap"]
+
+[[tip]]
+name = "slack-shortcuts"
+text = "⌘/ lists every Slack shortcut"
+apps = ["com.tinyspeck.slackmacgap"]

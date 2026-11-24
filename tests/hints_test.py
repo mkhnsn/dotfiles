@@ -165,6 +165,70 @@ class Hints(unittest.TestCase):
         self.run_hints("on")
         self.assertTrue(self.state_json()["enabled"])
 
+    # ---- hints that aren't triggers: the shortcut registry, hints.toml, shell aliases ----
+    def more_sources(self):
+        os.makedirs(os.path.join(self.src, "dot_config/shell"))
+        with open(os.path.join(self.src, "macos/shortcuts.toml"), "w") as f:
+            f.write('[[shortcut]]\nkeys = "⇧⌘V"\nowner = "raycast"\naction = "Clipboard History"\n'
+                    '[[shortcut]]\nkeys = "⌘Q"\nowner = "app-menus"\naction = "Quit"\n'
+                    '[[shortcut]]\nkeys = "⌃⇧⌘V"\nowner = "zoom"\nscope = "us.zoom.xos"\naction = "Video"\nhint = false\n')
+        with open(os.path.join(self.src, "macos/hints.toml"), "w") as f:
+            f.write('[shell]\napps = ["com.apple.Terminal"]\nskip = ["g"]\n'
+                    '[[tip]]\nname = "reopen"\ntext = "⇧⌘T reopens the tab you just closed"\napps = ["com.google.Chrome"]\n')
+        with open(os.path.join(self.src, "dot_config/shell/aliases.zsh"), "w") as f:
+            f.write("alias g='git'\nif x; then\n  alias ll='eza -al'\nelse\n  alias ll='ls -al'\nfi\nalias -s md=markless\n")
+
+    def bodies(self):
+        return [s.split(" | ", 1)[1] for s in self.shown()]
+
+    def test_sources_take_turns_and_stock_shortcuts_are_left_out(self):
+        self.more_sources()
+        self.front("com.apple.Finder", "Finder")
+        for _ in range(4):
+            self.run_hints("next")
+        # a trigger, then the registry's one general entry, then the next triggers: never ⌘Q
+        self.assertEqual(self.bodies(), ["Hyper+M mutes the mic · Hyper+H for all", "⇧⌘V  Clipboard History · Raycast",
+                                         "Hyper+K keeps the Mac awake · Hyper+H for all",
+                                         "Hyper+M mutes the mic · Hyper+H for all"])
+
+    def test_app_hints_come_from_tips_and_aliases(self):
+        self.more_sources()
+        self.front("com.google.Chrome", "Chrome")
+        self.run_hints("next")
+        self.front("com.apple.Terminal", "Terminal")
+        self.run_hints("next")
+        self.assertEqual(self.shown(), ["Hint: Chrome | ⇧⌘T reopens the tab you just closed",
+                                        "Hint: Terminal | In the shell, ll runs: eza -al"])  # g skipped, first ll wins
+
+    def test_unmeasured_hints_stop_after_three_showings(self):
+        self.more_sources()
+        self.front("com.google.Chrome", "Chrome")
+        with open(os.path.join(self.state, "hints.json"), "w") as f:
+            json.dump({"seen": {"tip:reopen": 3}}, f)
+        self.run_hints("app")
+        self.assertEqual(self.bodies(), ["Hyper+M mutes the mic · Hyper+H for all"])  # the general one only
+        self.assertIn("tips: 1 hints, 0 being shown, 1 done", self.run_hints("status").stdout)
+
+    def test_hint_false_and_a_bad_tips_file(self):
+        self.more_sources()
+        self.front("us.zoom.xos", "zoom.us")
+        self.run_hints("next")
+        self.assertEqual(self.bodies(), ["Hyper+V turns the Zoom camera on or off · Hyper+H for all"])
+        self.assertEqual(self.run_hints("check").stdout, "ok: 3 hints besides the triggers\n")
+        with open(os.path.join(self.src, "macos/hints.toml"), "a") as f:
+            f.write('[[tip]]\nname = "Bad Name"\napps = "chrome"\n')
+        r = self.run_hints("check")
+        self.assertEqual(r.returncode, 1)
+        for want in ("name must be lowercase", "needs text", "apps must be a list"):
+            self.assertIn(want, r.stderr)
+        self.run_hints("next")  # a bad file gives no tips, and the other hints still show
+        self.assertEqual(len(self.shown()), 2)
+
+    def test_repo_hints_file_is_valid(self):
+        env = dict(os.environ, CHEZMOI_SOURCE_DIR=REPO, XDG_STATE_HOME=self.state)
+        r = subprocess.run([sys.executable, "-I", HINTS, "check"], env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
     def test_status_lists_known_triggers(self):
         self.fired("mic-mute", 3)
         out = self.run_hints("status").stdout

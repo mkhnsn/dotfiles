@@ -7,6 +7,8 @@
 #          raycast | macos-default | app-menus | <app>   entered by hand (source = "manual")
 # scope    "global", or an app's bundle ID
 # accepted a known, temporary conflict: the reason. It's reported as a warning, not a failure.
+# hint     false leaves the entry out of the daily hints (`hints` shows every entry but the
+#          macos-default and app-menus ones)
 #
 # Each job has one owner, the best tool for it; an app can own several jobs. Owners now: window
 # management BTT (drag-to-snap, the ⌃⌥ keys, modifier move/resize), the Caps Lock Hyper key and
@@ -139,6 +141,7 @@ keys = "⌃⇧⌘V"
 owner = "zoom"
 scope = "us.zoom.xos"
 action = "Start/Stop Video (BTT's camera key sends this)"
+hint = false  # Hyper+V is the key to learn (trigger camera-zoom)
 
 # ---- AltTab (macos/prefs/com.lwouis.alt-tab-macos.plist) --------------------------------------
 # Shortcut 1 replaces the macOS app switcher; shortcut 2 is AltTab's default.
