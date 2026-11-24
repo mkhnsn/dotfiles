@@ -19,7 +19,7 @@ The window work goes through System Events (Accessibility): whatever runs this (
 terminal) needs Accessibility access. State: ~/.local/state/layouts.json. Python 3.11+ standard
 library only.
 """
-import ctypes, ctypes.util, datetime, importlib.machinery, importlib.util, json, os, subprocess, sys, tempfile, time
+import ctypes, ctypes.util, datetime, importlib.machinery, importlib.util, json, os, re, subprocess, sys, tempfile, time
 
 if sys.version_info < (3, 11):
     # BTT runs scripts with a bare PATH, which finds macOS's Python 3.9; `hints` needs 3.11.
@@ -59,6 +59,8 @@ def capture(apps, displays):
     for app in apps:
         wins = []
         for w in app["windows"]:
+            if not w.get("position") or not w.get("size"):
+                continue  # its frame couldn't be read
             frame = [*w["position"], *w["size"]]
             d = display_for(frame, displays)
             dx, dy = d["bounds"][:2]
@@ -110,7 +112,7 @@ def plan(layout, live, displays):
         pairs, left = match([w["title"] for w in app["windows"]], [w["title"] for w in current])
         for i, j in pairs:
             w = app["windows"][i]
-            moves.append({"bundle": app["bundle"], "index": j, "title": current[j]["title"],
+            moves.append({"bundle": app["bundle"], "name": app["name"], "index": j, "title": current[j]["title"],
                           "frame": place(w["frame"], w["display"], displays)})
         for i in left:
             skipped.append(f"{app['name']}: {app['windows'][i]['title'] or 'untitled window'}")
@@ -179,124 +181,144 @@ def live_displays():
     cf.CFUUIDCreateString.restype = ctypes.c_void_p
     cf.CFUUIDCreateString.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
     cf.CFStringGetCString.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_long, ctypes.c_uint32]
+    cf.CFStringGetCString.restype = ctypes.c_bool  # Boolean: one byte
     cf.CFRelease.argtypes = [ctypes.c_void_p]
     ids, n = (ctypes.c_uint32 * 16)(), ctypes.c_uint32()
     if cg.CGGetActiveDisplayList(16, ids, ctypes.byref(n)) != 0:
-        sys.exit("layout: can't read the displays")
+        fail("can't read the displays")
     main = cg.CGMainDisplayID()
     out = []
     for i in range(n.value):
         uuid, text = cs.CGDisplayCreateUUIDFromDisplayID(ids[i]), str(ids[i])
         if uuid:
             s = cf.CFUUIDCreateString(None, uuid)
-            buf = ctypes.create_string_buffer(64)
-            if cf.CFStringGetCString(s, buf, 64, 0x08000100):  # kCFStringEncodingUTF8
-                text = buf.value.decode()
-            cf.CFRelease(s)
+            if s:
+                buf = ctypes.create_string_buffer(64)
+                if cf.CFStringGetCString(s, buf, 64, 0x08000100):  # kCFStringEncodingUTF8
+                    text = buf.value.decode()
+                cf.CFRelease(s)
             cf.CFRelease(uuid)
         r = cg.CGDisplayBounds(ids[i])
         out.append({"uuid": text, "bounds": [r.x, r.y, r.w, r.h], "main": ids[i] == main})
     return out
 
 
-JXA_READ = r'''function run(argv) {
+# One filter for both scripts, so a window's index means the same in each: an app's standard
+# windows, minus full-screen and minimized ones. Reading p.windows() is the first call that needs
+# Accessibility, so that error is thrown on rather than read as "no windows".
+JXA_COMMON = r'''
+function denied(e) { return /assistive|-1719|-25211/.test(String(e)); }
+function standard(p) {
+  let list;
+  try { list = p.windows(); } catch (e) { if (denied(e)) throw e; return []; }
+  return list.filter(w => {
+    let skip = false, sub = "";
+    try { skip = w.attributes.byName("AXFullScreen").value(); } catch (e) {}
+    try { skip = skip || w.attributes.byName("AXMinimized").value(); } catch (e) {}
+    try { sub = w.subrole(); } catch (e) {}
+    return !skip && !(sub && sub !== "AXStandardWindow");
+  });
+}
+'''
+
+# {running: [bundle IDs of every app with a Dock presence], apps: [{bundle, name, windows}]}. A
+# window whose frame can't be read stays in the list (position null) so indexes line up with
+# JXA_MOVE. Only the first process of a bundle counts, as in JXA_MOVE.
+JXA_READ = JXA_COMMON + r'''function run(argv) {
   const only = argv.length ? JSON.parse(argv[0]) : null;
   const se = Application("System Events");
-  const out = [];
+  if (!se.uiElementsEnabled()) throw new Error("not allowed assistive access");
+  const running = [], apps = [];
   for (const p of se.processes.whose({backgroundOnly: false})()) {
     let bundle;
     try { bundle = p.bundleIdentifier(); } catch (e) { continue; }
-    if (!bundle || (only && !only.includes(bundle))) continue;
-    const windows = [];
-    let list = [];
-    try { list = p.windows(); } catch (e) { continue; }
-    for (const w of list) {
-      try {
-        let skip = false;
-        try { skip = w.attributes.byName("AXFullScreen").value(); } catch (e) {}
-        try { skip = skip || w.attributes.byName("AXMinimized").value(); } catch (e) {}
-        let sub = "";
-        try { sub = w.subrole(); } catch (e) {}
-        if (skip || (sub && sub !== "AXStandardWindow")) continue;
-        windows.push({title: w.name() || "", position: w.position(), size: w.size()});
-      } catch (e) {}
-    }
-    if (windows.length) out.push({bundle: bundle, name: p.name(), windows: windows});
+    if (!bundle || running.includes(bundle)) continue;
+    running.push(bundle);
+    if (only && !only.includes(bundle)) continue;
+    const windows = standard(p).map(w => {
+      try { return {title: w.name() || "", position: w.position(), size: w.size()}; }
+      catch (e) { if (denied(e)) throw e; return {title: "", position: null, size: null}; }
+    });
+    if (windows.length) apps.push({bundle: bundle, name: p.name(), windows: windows});
   }
-  return JSON.stringify(out);
+  return JSON.stringify({running: running, apps: apps});
 }'''
 
 # Windows are addressed by index among the app's standard windows, as JXA_READ listed them; the
-# title is checked so a window that moved in the list isn't placed by mistake.
-JXA_MOVE = r'''function run(argv) {
+# title is checked so a window that changed since then isn't placed by mistake.
+JXA_MOVE = JXA_COMMON + r'''function run(argv) {
   const moves = JSON.parse(argv[0]);
   const se = Application("System Events");
-  const out = [];
+  const lists = {}, out = [];
   for (const m of moves) {
+    const label = m.name + ": " + (m.title || "untitled window");
     try {
-      const p = se.processes.whose({bundleIdentifier: m.bundle})()[0];
-      const list = p.windows().filter(w => {
-        try {
-          let skip = false;
-          try { skip = w.attributes.byName("AXFullScreen").value(); } catch (e) {}
-          try { skip = skip || w.attributes.byName("AXMinimized").value(); } catch (e) {}
-          let sub = "";
-          try { sub = w.subrole(); } catch (e) {}
-          return !skip && !(sub && sub !== "AXStandardWindow");
-        } catch (e) { return false; }
-      });
-      const w = list[m.index];
-      if (!w || (w.name() || "") !== m.title) { out.push(m.bundle + ": " + (m.title || "untitled window") + " (moved)"); continue; }
+      if (!(m.bundle in lists)) lists[m.bundle] = standard(se.processes.whose({bundleIdentifier: m.bundle})()[0]);
+      const w = lists[m.bundle][m.index];
+      if (!w || (w.name() || "") !== m.title) { out.push(label + " (changed since it was read)"); continue; }
       const [x, y, width, height] = m.frame.map(Math.round);
       // Position first, so the size fits on the target display; then again, since a window
       // moved onto a smaller display may have been pushed back.
       w.position = [x, y];
       w.size = [width, height];
       w.position = [x, y];
-    } catch (e) { out.push(m.bundle + ": " + (m.title || "untitled window") + " (" + e.message + ")"); }
+    } catch (e) { if (denied(e)) throw e; out.push(label + " (" + e.message + ")"); }
   }
   return JSON.stringify(out);
 }'''
 
 
-def osascript(script, *args, timeout=60):
+def osascript(script, *args, timeout=90):
     if os.environ.get("LAYOUT_WINDOWS"):  # tests: the live windows, and nothing is moved
         return os.environ["LAYOUT_WINDOWS"] if script is JXA_READ else "[]"
-    r = subprocess.run(["osascript", "-l", "JavaScript", "-e", script, *args], capture_output=True, text=True, timeout=timeout)
+    try:
+        r = subprocess.run(["osascript", "-l", "JavaScript", "-e", script, *args],
+                           capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        fail("System Events didn't answer (an app may be hung)")
     if r.returncode != 0:
         msg = r.stderr.strip()
-        if "assistive" in msg or "-1719" in msg or "-25211" in msg:
-            sys.exit("layout: needs Accessibility access (System Settings > Privacy & Security > Accessibility) "
-                     "for the app running it")
-        sys.exit(f"layout: {msg or 'System Events failed'}")
+        if re.search(r"assistive|-1719|-25211", msg):
+            fail("needs Accessibility access for the app running it (System Settings > Privacy & Security > Accessibility)")
+        if "-1743" in msg:
+            fail("needs permission to control System Events (System Settings > Privacy & Security > Automation)")
+        fail(msg or "System Events failed")
     return r.stdout
 
 
 def live_windows(bundles=None):
-    return json.loads(osascript(JXA_READ, *([json.dumps(bundles)] if bundles else [])) or "[]")
+    """(running bundle IDs, apps with windows on this desktop). In tests LAYOUT_WINDOWS is just
+    the apps, all running."""
+    data = json.loads(osascript(JXA_READ, *([json.dumps(bundles)] if bundles else [])) or "{}")
+    if isinstance(data, list):
+        return {a["bundle"] for a in data}, data
+    return set(data.get("running", [])), data.get("apps", [])
 
 
-def launch(layout, live):
-    """Open the saved apps that aren't running and wait for their windows. Returns the live windows."""
-    running = {a["bundle"] for a in live}
+def launch(layout, running, live):
+    """Open the saved apps that aren't running and wait for their windows. Returns (live windows,
+    apps that wouldn't open)."""
     missing = [a for a in layout if a["bundle"] not in running]
     if not missing or os.environ.get("LAYOUT_WINDOWS"):
-        return live
+        return live, []
+    want, failed = {}, []
     for a in missing:
-        subprocess.run(["open", "-g", "-b", a["bundle"]], capture_output=True)
-    want = {a["bundle"]: len(a["windows"]) for a in missing}
+        if subprocess.run(["open", "-g", "-b", a["bundle"]], capture_output=True).returncode == 0:
+            want[a["bundle"]] = len(a["windows"])
+        else:
+            failed.append(a["name"])
     end = time.monotonic() + LAUNCH_WAIT
-    while time.monotonic() < end:
+    while want and time.monotonic() < end:
         time.sleep(0.5)
-        got = {a["bundle"]: len(a["windows"]) for a in live_windows(list(want))}
+        got = {a["bundle"]: len(a["windows"]) for a in live_windows(list(want))[1]}
         if all(got.get(b, 0) >= n for b, n in want.items()):
             break
-    return live_windows()
+    return live_windows()[1], failed
 
 
 def ask(prompt, default=""):
     """A name from a dialog (no terminal, e.g. from BTT)."""
-    script = ('on run argv\n'
+    script = ('on run argv\nactivate\n'
               'display dialog (item 1 of argv) default answer (item 2 of argv) with title "Layouts"\n'
               'return text returned of result\nend run')
     r = subprocess.run(["osascript", "-e", script, prompt, default], capture_output=True, text=True)
@@ -304,7 +326,7 @@ def ask(prompt, default=""):
 
 
 def choose(names):
-    script = ('on run argv\n'
+    script = ('on run argv\nactivate\n'
               'set picked to choose from list argv with title "Layouts" with prompt "Restore a layout"\n'
               'if picked is false then return ""\nreturn item 1 of picked\nend run')
     r = subprocess.run(["osascript", "-e", script, *names], capture_output=True, text=True)
@@ -322,6 +344,13 @@ def notify(text):
                         "-e", "end run", text], capture_output=True)
 
 
+def fail(msg):
+    """Stop with an error, shown as a notification too when no terminal is watching."""
+    if DIALOG and not os.environ.get("LAYOUT_WINDOWS"):
+        notify(f"layout: {msg}")
+    sys.exit(f"layout: {msg}")
+
+
 # ---- commands ---------------------------------------------------------------------------------
 def cmd_save(name):
     global DIALOG
@@ -333,7 +362,7 @@ def cmd_save(name):
         return 1
     setup = detect_setup()
     displays = live_displays()
-    layout = capture(live_windows(), displays)
+    layout = capture(live_windows()[1], displays)
     if not layout:
         notify("layout: no windows to save on this desktop")
         return 1
@@ -350,6 +379,9 @@ def find(saved, name):
     """A saved layout by name: exact, then the one name starting with it (case-insensitive)."""
     if name in saved:
         return name
+    exact = [n for n in saved if n.lower() == name.lower()]
+    if len(exact) == 1:
+        return exact[0]
     hits = [n for n in saved if n.lower().startswith(name.lower())]
     return hits[0] if len(hits) == 1 else None
 
@@ -363,8 +395,10 @@ def cmd_restore(name):
         return 1
     layout = saved[key]["apps"]
     displays = live_displays()
-    live = launch(layout, live_windows())
+    running, live = live_windows()
+    live, unopened = launch(layout, running, live)
     moves, skipped = plan(layout, live, displays)
+    skipped += [f"{n}: couldn't open it" for n in unopened]
     failed = json.loads(osascript(JXA_MOVE, json.dumps(moves)) or "[]") if moves else []
     placed = len(moves) - len(failed)
     notify(f"Restored {key}: {placed} window{'s' if placed != 1 else ''}"

@@ -48,6 +48,16 @@ class Pure(unittest.TestCase):
         self.assertEqual(pairs, [(0, 0)])
         self.assertEqual(left, [1, 2])
 
+    def test_capture_skips_a_window_it_couldnt_read(self):
+        apps = [{"bundle": "com.a", "name": "a", "windows": [{"title": "x", "position": None, "size": None}]}]
+        self.assertEqual(L.capture(apps, [WIDE]), [])
+
+    def test_find_exact_any_case_then_unique_prefix(self):
+        saved = {"focus": 1, "focus 2": 2, "deep work": 3}
+        self.assertEqual(L.find(saved, "Focus"), "focus")
+        self.assertEqual(L.find(saved, "deep"), "deep work")
+        self.assertIsNone(L.find(saved, "f"))
+
     def test_place_on_its_display(self):
         self.assertEqual(L.place([80, 100, 800, 600], "SIDE", [WIDE, SIDE]), [5200, 100, 800, 600])
 
@@ -59,7 +69,7 @@ class Pure(unittest.TestCase):
                             app("com.gone", ("x", 0, 0, 10, 10))], [WIDE])
         live = [app("com.a", ("two", 9, 9, 9, 9)), app("com.extra", ("y", 1, 1, 1, 1))]
         moves, skipped = L.plan(layout, live, [WIDE])
-        self.assertEqual(moves, [{"bundle": "com.a", "index": 0, "title": "two", "frame": [100, 0, 100, 100]}])
+        self.assertEqual(moves, [{"bundle": "com.a", "name": "a", "index": 0, "title": "two", "frame": [100, 0, 100, 100]}])
         self.assertEqual(sorted(skipped), ["a: one", "gone: x"])
 
 
