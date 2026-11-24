@@ -631,7 +631,7 @@
             "BTTMenuCloseOnOutsideClick" : 1,
             "BTTMenuDisableDrag" : 1,
             "BTTMenuElementIdentifier" : "Hints",
-            "BTTMenuFrameHeight" : 586,
+            "BTTMenuFrameHeight" : 682,
             "BTTMenuFrameWidth" : 460,
             "BTTMenuHorizontalSpacing" : 2,
             "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
@@ -684,20 +684,47 @@
               "BTTUUID" : "84A6384F-8B83-5513-B929-9FA14ECB4CF4"
             },
             {
-              "BTTAdditionalConfiguration" : "Menu Item: mic-mute",
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:rgba(255,255,255,0.6); font-family:-apple-system;'>Calls</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuName" : "Group: Calls",
+              "BTTOrder" : 35,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "E2BCDE7C-7815-5194-A21A-45A07B14E052"
+            },
+            {
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+M</b>&nbsp;&nbsp;Mic: toggle mute (all apps)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
-                "BTTMenuElementIdentifier" : "mic-mute",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "mic.slash",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -706,38 +733,38 @@
                 {
                   "BTTIsPureAction" : true,
                   "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" mic-mute menu",
-                  "BTTTriggerParentUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8",
+                  "BTTTriggerParentUUID" : "88E5F94E-7007-593A-954D-16147FEC1C05",
                   "BTTUUID" : "36BD9817-7947-52DF-9BC7-7B2C9F0F8FCD"
                 }
               ],
               "BTTMenuName" : "mic-mute",
-              "BTTOrder" : 1,
+              "BTTOrder" : 36,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: mic-mute",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "991CD005-0488-5C61-BC73-02957AEC53E8"
+              "BTTUUID" : "88E5F94E-7007-593A-954D-16147FEC1C05"
             },
             {
-              "BTTAdditionalConfiguration" : "Menu Item: camera-zoom",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+V</b>&nbsp;&nbsp;Camera: Zoom video on/off<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
-                "BTTMenuElementIdentifier" : "camera-zoom",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "video",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 0,
                 "BTTMenuItemVisibleWhileInactive" : 0,
                 "BTTMenuTextOffsetX" : 10
@@ -746,38 +773,38 @@
                 {
                   "BTTIsPureAction" : true,
                   "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" camera-zoom menu",
-                  "BTTTriggerParentUUID" : "8425EDD4-CA67-5DC9-94F7-891248A0FA44",
+                  "BTTTriggerParentUUID" : "AE8E8132-A8B4-57F1-B545-8E3783BDA033",
                   "BTTUUID" : "C4D4761B-C59D-544B-A28F-59978C32B79A"
                 }
               ],
               "BTTMenuName" : "camera-zoom",
-              "BTTOrder" : 2,
+              "BTTOrder" : 37,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: camera-zoom",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "8425EDD4-CA67-5DC9-94F7-891248A0FA44"
+              "BTTUUID" : "AE8E8132-A8B4-57F1-B545-8E3783BDA033"
             },
             {
-              "BTTAdditionalConfiguration" : "Menu Item: camera-teams",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+V</b>&nbsp;&nbsp;Camera: Teams video on/off (sends ⇧⌘O)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
-                "BTTMenuElementIdentifier" : "camera-teams",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "video",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 0,
                 "BTTMenuItemVisibleWhileInactive" : 0,
                 "BTTMenuTextOffsetX" : 10
@@ -786,38 +813,38 @@
                 {
                   "BTTIsPureAction" : true,
                   "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" camera-teams menu",
-                  "BTTTriggerParentUUID" : "90FEDD82-7DBF-5F23-84D8-54A0929C7DD8",
+                  "BTTTriggerParentUUID" : "BE61AE3A-FE88-5F39-ADE7-7B305AADAAD6",
                   "BTTUUID" : "C98FDF51-CEF2-53E2-880C-141AE2E7435B"
                 }
               ],
               "BTTMenuName" : "camera-teams",
-              "BTTOrder" : 3,
+              "BTTOrder" : 38,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: camera-teams",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "90FEDD82-7DBF-5F23-84D8-54A0929C7DD8"
+              "BTTUUID" : "BE61AE3A-FE88-5F39-ADE7-7B305AADAAD6"
             },
             {
-              "BTTAdditionalConfiguration" : "Menu Item: camera-meet",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+V</b>&nbsp;&nbsp;Camera: Meet video on/off (sends ⌘E)<span style='color:rgba(255,255,255,0.6);'> · Stream Deck</span></span></body></html>",
-                "BTTMenuElementIdentifier" : "camera-meet",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "video",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 0,
                 "BTTMenuItemVisibleWhileInactive" : 0,
                 "BTTMenuTextOffsetX" : 10
@@ -826,32 +853,27 @@
                 {
                   "BTTIsPureAction" : true,
                   "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" camera-meet menu",
-                  "BTTTriggerParentUUID" : "8982BC67-5EAC-5617-9420-236A28713257",
+                  "BTTTriggerParentUUID" : "422A8756-67F3-5F14-A340-B49478469C59",
                   "BTTUUID" : "F95BD49D-05D2-5ED6-9DDE-63CC5DCEA1D7"
                 }
               ],
               "BTTMenuName" : "camera-meet",
-              "BTTOrder" : 4,
+              "BTTOrder" : 39,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: camera-meet",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "8982BC67-5EAC-5617-9420-236A28713257"
+              "BTTUUID" : "422A8756-67F3-5F14-A340-B49478469C59"
             },
             {
-              "BTTAdditionalConfiguration" : "Menu Item: keep-awake",
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
-                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+K</b>&nbsp;&nbsp;Keep Awake: toggle (display and system stay on)</span></body></html>",
-                "BTTMenuElementIdentifier" : "keep-awake",
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:rgba(255,255,255,0.6); font-family:-apple-system;'>Mac</span></body></html>",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
-                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundColorHover" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
@@ -862,26 +884,76 @@
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
               },
+              "BTTMenuName" : "Group: Mac",
+              "BTTOrder" : 40,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "95029EDA-65F1-5452-A0B5-42D2AEC01E6C"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+K</b>&nbsp;&nbsp;Keep Awake: toggle (display and system stay on)</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "cup.and.saucer.fill",
+                "BTTMenuItemSFSymbolStyle" : 0,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
               "BTTMenuItemActions" : [
                 {
                   "BTTIsPureAction" : true,
                   "BTTOrder" : 0,
-                  "BTTPredefinedActionName" : "Execute Shell Script  or  Task",
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" keep-awake menu",
-                  "BTTTriggerParentUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317",
+                  "BTTTriggerParentUUID" : "7EB3EC54-6C8F-54F6-B757-AC61F72BA5FA",
                   "BTTUUID" : "13D50ABD-2C33-5E89-9DAA-DB76781AABAB"
                 }
               ],
               "BTTMenuName" : "keep-awake",
-              "BTTOrder" : 5,
+              "BTTOrder" : 41,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
-              "BTTTriggerName" : "Menu Item: keep-awake",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTTriggerTypeDescriptionReadOnly" : "Standard Item",
-              "BTTUUID" : "DB504E30-6E51-5D06-9831-36F8EEF96317"
+              "BTTUUID" : "7EB3EC54-6C8F-54F6-B757-AC61F72BA5FA"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:rgba(255,255,255,0.6); font-family:-apple-system;'>Windows</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 10
+              },
+              "BTTMenuName" : "Group: Windows",
+              "BTTOrder" : 42,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "A0948F72-36AE-5B28-88C1-7FE5DCFDC1CF"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -892,10 +964,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.lefthalf.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -907,16 +984,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-left-half menu",
-                  "BTTTriggerParentUUID" : "31616950-3E2A-52A8-B994-201AA07EAE16",
+                  "BTTTriggerParentUUID" : "96FB5A3F-75BA-55BB-96A1-0D6FB089AC77",
                   "BTTUUID" : "2CE0CF8D-908C-5C45-B163-939B8720D6AE"
                 }
               ],
               "BTTMenuName" : "window-left-half",
-              "BTTOrder" : 20,
+              "BTTOrder" : 43,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "31616950-3E2A-52A8-B994-201AA07EAE16"
+              "BTTUUID" : "96FB5A3F-75BA-55BB-96A1-0D6FB089AC77"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -927,10 +1004,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.righthalf.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -942,16 +1024,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-right-half menu",
-                  "BTTTriggerParentUUID" : "8252C53A-92F8-51DC-9F5C-F733F85E165E",
+                  "BTTTriggerParentUUID" : "3392CA76-3984-5617-8AE8-A82F25A2AEEF",
                   "BTTUUID" : "8B14C9DB-B106-5F7E-ACF6-C975D6BE1676"
                 }
               ],
               "BTTMenuName" : "window-right-half",
-              "BTTOrder" : 21,
+              "BTTOrder" : 44,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "8252C53A-92F8-51DC-9F5C-F733F85E165E"
+              "BTTUUID" : "3392CA76-3984-5617-8AE8-A82F25A2AEEF"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -962,10 +1044,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "arrow.up.left.and.arrow.down.right",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -977,16 +1064,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-maximize menu",
-                  "BTTTriggerParentUUID" : "FFEBFD18-DAF0-5D7B-B275-4EA108F862AA",
+                  "BTTTriggerParentUUID" : "F0BDAB9E-5C08-589A-B19E-DE85A4A3138D",
                   "BTTUUID" : "A5260C0A-BBBC-53C4-828C-E32257B9F79A"
                 }
               ],
               "BTTMenuName" : "window-maximize",
-              "BTTOrder" : 22,
+              "BTTOrder" : 45,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "FFEBFD18-DAF0-5D7B-B275-4EA108F862AA"
+              "BTTUUID" : "F0BDAB9E-5C08-589A-B19E-DE85A4A3138D"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -997,10 +1084,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.leftthird.inset.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1012,16 +1104,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-left-third menu",
-                  "BTTTriggerParentUUID" : "586D0551-1507-50BD-BAE7-D51D7C65D2FE",
+                  "BTTTriggerParentUUID" : "B12310E7-33B5-5414-8998-6147F6E1C807",
                   "BTTUUID" : "C0B4138C-0624-5AC0-9960-8AA36E6857FA"
                 }
               ],
               "BTTMenuName" : "window-left-third",
-              "BTTOrder" : 23,
+              "BTTOrder" : 46,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "586D0551-1507-50BD-BAE7-D51D7C65D2FE"
+              "BTTUUID" : "B12310E7-33B5-5414-8998-6147F6E1C807"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1032,10 +1124,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.center.inset.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1047,16 +1144,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-center-third menu",
-                  "BTTTriggerParentUUID" : "6760C2CC-A029-58EF-A9CF-01219B74BE59",
+                  "BTTTriggerParentUUID" : "DCBC8856-DB3F-578D-9297-3BDABA8148EA",
                   "BTTUUID" : "1415C44B-7586-5808-92B4-DD160C32BA16"
                 }
               ],
               "BTTMenuName" : "window-center-third",
-              "BTTOrder" : 24,
+              "BTTOrder" : 47,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "6760C2CC-A029-58EF-A9CF-01219B74BE59"
+              "BTTUUID" : "DCBC8856-DB3F-578D-9297-3BDABA8148EA"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1067,10 +1164,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.rightthird.inset.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1082,16 +1184,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-right-third menu",
-                  "BTTTriggerParentUUID" : "0BB9BA2D-83C8-5A0F-B049-793770C392B0",
+                  "BTTTriggerParentUUID" : "86E48BB9-5314-595E-B5E0-E3A03232E31E",
                   "BTTUUID" : "B2F51E02-0C6F-5036-ACC0-304B233BCBD9"
                 }
               ],
               "BTTMenuName" : "window-right-third",
-              "BTTOrder" : 25,
+              "BTTOrder" : 48,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "0BB9BA2D-83C8-5A0F-B049-793770C392B0"
+              "BTTUUID" : "86E48BB9-5314-595E-B5E0-E3A03232E31E"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1102,10 +1204,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.lefthalf.inset.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1117,16 +1224,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-left-two-thirds menu",
-                  "BTTTriggerParentUUID" : "C06EE0DA-929D-5368-86CD-D06140AAAB4A",
+                  "BTTTriggerParentUUID" : "424E947B-7CCB-520B-99F4-759CB80F44C1",
                   "BTTUUID" : "54BAB840-876E-5C50-821F-40F03B08E379"
                 }
               ],
               "BTTMenuName" : "window-left-two-thirds",
-              "BTTOrder" : 26,
+              "BTTOrder" : 49,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "C06EE0DA-929D-5368-86CD-D06140AAAB4A"
+              "BTTUUID" : "424E947B-7CCB-520B-99F4-759CB80F44C1"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1137,10 +1244,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "rectangle.righthalf.inset.filled",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1152,16 +1264,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-right-two-thirds menu",
-                  "BTTTriggerParentUUID" : "EE089112-ACE5-5524-B008-558A3EBDF635",
+                  "BTTTriggerParentUUID" : "AEA6BF8F-67F8-5242-906E-3F99E5449695",
                   "BTTUUID" : "72748D42-0AA8-5AFA-ACFE-F9F91D7093BA"
                 }
               ],
               "BTTMenuName" : "window-right-two-thirds",
-              "BTTOrder" : 27,
+              "BTTOrder" : 50,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "EE089112-ACE5-5524-B008-558A3EBDF635"
+              "BTTUUID" : "AEA6BF8F-67F8-5242-906E-3F99E5449695"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1172,10 +1284,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "arrow.up.and.down",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1187,16 +1304,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-full-height menu",
-                  "BTTTriggerParentUUID" : "F9425CDA-4025-5AE5-845A-D4A0F434C472",
+                  "BTTTriggerParentUUID" : "B195BE49-D5B4-52AD-B711-88F3931E6CE6",
                   "BTTUUID" : "51D3C793-1CB0-55BB-8FF1-BBBFE2FBA088"
                 }
               ],
               "BTTMenuName" : "window-full-height",
-              "BTTOrder" : 28,
+              "BTTOrder" : 51,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "F9425CDA-4025-5AE5-845A-D4A0F434C472"
+              "BTTUUID" : "B195BE49-D5B4-52AD-B711-88F3931E6CE6"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1207,10 +1324,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "scope",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1222,16 +1344,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-center menu",
-                  "BTTTriggerParentUUID" : "E2828EB8-522C-5A2E-B07C-7CDD270C3763",
+                  "BTTTriggerParentUUID" : "53F7E9DD-675D-5B8D-B2B4-40311E71D5AC",
                   "BTTUUID" : "4280F66C-639D-58E1-BF1D-2E6B7FAE8807"
                 }
               ],
               "BTTMenuName" : "window-center",
-              "BTTOrder" : 29,
+              "BTTOrder" : 52,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "E2828EB8-522C-5A2E-B07C-7CDD270C3763"
+              "BTTUUID" : "53F7E9DD-675D-5B8D-B2B4-40311E71D5AC"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1242,10 +1364,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "arrow.left.square",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1257,16 +1384,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-desktop-left menu",
-                  "BTTTriggerParentUUID" : "0FF01A0F-E577-5132-B745-3CE84965D949",
+                  "BTTTriggerParentUUID" : "0D1D62A4-0E66-5BE1-8B99-5B22935101AA",
                   "BTTUUID" : "87F00AC6-4167-5113-AAD3-FE4E03550A8B"
                 }
               ],
               "BTTMenuName" : "window-desktop-left",
-              "BTTOrder" : 30,
+              "BTTOrder" : 53,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "0FF01A0F-E577-5132-B745-3CE84965D949"
+              "BTTUUID" : "0D1D62A4-0E66-5BE1-8B99-5B22935101AA"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1277,10 +1404,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "arrow.right.square",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1292,16 +1424,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-desktop-right menu",
-                  "BTTTriggerParentUUID" : "759BC147-9A25-5A7D-8E31-2684EC2D8411",
+                  "BTTTriggerParentUUID" : "6694E3A3-7089-5311-AE45-1059D0C902B2",
                   "BTTUUID" : "AD81A7D7-8352-5DC2-8BBD-C47CE9EACB4A"
                 }
               ],
               "BTTMenuName" : "window-desktop-right",
-              "BTTOrder" : 31,
+              "BTTOrder" : 54,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "759BC147-9A25-5A7D-8E31-2684EC2D8411"
+              "BTTUUID" : "6694E3A3-7089-5311-AE45-1059D0C902B2"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1312,10 +1444,15 @@
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
                 "BTTMenuItemMaxHeight" : 30,
                 "BTTMenuItemMaxWidth" : 448,
                 "BTTMenuItemMinHeight" : 30,
                 "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemSFSymbolName" : "display.2",
+                "BTTMenuItemSFSymbolStyle" : 0,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -1327,16 +1464,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" window-next-display menu",
-                  "BTTTriggerParentUUID" : "26730042-4B2C-52A7-8753-3DCBD6BDF1BE",
+                  "BTTTriggerParentUUID" : "CBACB612-87B8-500A-8910-203C9121D993",
                   "BTTUUID" : "76921095-3E94-5717-A284-6C0CE471D9F7"
                 }
               ],
               "BTTMenuName" : "window-next-display",
-              "BTTOrder" : 32,
+              "BTTOrder" : 55,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "26730042-4B2C-52A7-8753-3DCBD6BDF1BE"
+              "BTTUUID" : "CBACB612-87B8-500A-8910-203C9121D993"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1362,16 +1499,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
-                  "BTTTriggerParentUUID" : "8AE44CDD-2930-54CE-949B-AC2052CF5AEA",
+                  "BTTTriggerParentUUID" : "CB71D4E9-6C99-54DD-AE21-BF096AB6CB9D",
                   "BTTUUID" : "36BACEE7-7B1E-5F14-8899-E208E1FB208D"
                 }
               ],
               "BTTMenuName" : "hints-next",
-              "BTTOrder" : 33,
+              "BTTOrder" : 56,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "8AE44CDD-2930-54CE-949B-AC2052CF5AEA"
+              "BTTUUID" : "CB71D4E9-6C99-54DD-AE21-BF096AB6CB9D"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1397,16 +1534,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
-                  "BTTTriggerParentUUID" : "F7598756-7FA7-5B3D-BF36-9767CEA9B917",
+                  "BTTTriggerParentUUID" : "5F9A7A32-A330-5C64-BBFF-2CD25B7DB1A3",
                   "BTTUUID" : "B6E157CD-1DD9-51F2-BCAF-B6314C237A9D"
                 }
               ],
               "BTTMenuName" : "hints-mute",
-              "BTTOrder" : 34,
+              "BTTOrder" : 57,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "F7598756-7FA7-5B3D-BF36-9767CEA9B917"
+              "BTTUUID" : "5F9A7A32-A330-5C64-BBFF-2CD25B7DB1A3"
             }
           ],
           "BTTMenuName" : "Hints",
