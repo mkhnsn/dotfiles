@@ -95,6 +95,24 @@ class Explain(unittest.TestCase):
         self.assertFalse(self.skip(kicad))
         self.assertTrue(self.skip(cask("kicad", "9.0.1", suite="KiCad", name="KiCad")), "newer than the cask")
 
+    def test_suite_same_version_suggests_force_not_adopt(self):
+        app(self.apps, "KiCad/kicad", "10.0.8")  # matched whatever the case
+        line = self.why(cask("kicad", "10.0.8", suite="KiCad", name="KiCad"))
+        self.assertIn("brew install --cask --force kicad", line)
+        self.assertNotIn("--adopt", line)
+
+    def test_suite_matched_by_folder_name(self):
+        app(self.apps, "KiCad/KiCad", "9.0.2")
+        self.assertIn("KiCad 9.0.2 is installed outside Homebrew", self.why(cask("kicad", "10.0.8", suite="KiCad", name="KiCad EDA")))
+
+    def test_suite_helper_apps_never_stand_in_for_the_main_app(self):
+        kicad = cask("kicad", "10.0.8", suite="KiCad", name="KiCad")
+        app(self.apps, "KiCad/Bitmap2Component", "99.0")
+        line = self.why(kicad)
+        self.assertIn("exists but its app is missing", line)
+        self.assertIn("brew install --cask --force kicad", line)
+        self.assertFalse(self.skip(kicad), "a helper's version never skips the cask")
+
     def test_fixable_ones_are_not_skipped(self):
         app(self.apps, "UTM", "4.7.4")
         self.assertFalse(self.skip(cask("utm", "5.0.9", "UTM")), "an older copy has a fix (--force), so it's reported")
