@@ -153,6 +153,38 @@ test_header_shows_role() {
   assert_has "Role: server"
 }
 
+# A step for the other role is left out: not ticked, not open, not counted, no empty phase.
+test_other_role_steps_are_left_out() {
+  stub fdesetup 'echo "FileVault is Off."'
+  stub mac-defaults 'exit 1'
+  run "$SCRIPT_SERVER" --status
+  # The sandbox's Tailscale tag is a workstation's, so that one server step is open.
+  assert_open "Tailscale tag tag:echo-core"; assert_has "1 step(s) left."
+  assert_lacks "FileVault on"; assert_lacks "macOS settings and Dock"
+  assert_has "Workstation-only steps are left out."
+  printf '%s\n' "$OUT" | grep -qx 'Settings' && fail "empty phase shown: Settings"
+  run "$SCRIPT" --status
+  assert_rc 1; assert_open "FileVault on"; assert_open "macOS settings and Dock"
+  assert_has "2 step(s) left."
+  assert_lacks "Workstation-only steps are left out."; assert_lacks "No Tailscale app"
+  printf '%s\n' "$OUT" | grep -qx 'Settings' || fail "missing phase: Settings"
+}
+
+# With a service account there is no desktop app to sign in to: the token must work.
+test_onepassword_service_account() {
+  stub op 'case "$1" in whoami) exit 0 ;; account) exit 0 ;; esac'   # no accounts listed
+  run "$SCRIPT_SERVER" --status
+  assert_open "1Password CLI connected"
+  MAC_SETUP_OP_MODE=service run "$SCRIPT_SERVER" --status
+  assert_done "1Password CLI connected"
+  stub op 'case "$1" in whoami) exit 1 ;; account) echo "URL ACCOUNT" ;; esac'   # a listed account doesn't count
+  MAC_SETUP_OP_MODE=service run "$SCRIPT_SERVER" --status
+  assert_open "1Password CLI connected"
+  printf 'n\nq\n' > "$T/answers"
+  MAC_SETUP_OP_MODE=service MAC_SETUP_TTY="$T/answers" run "$SCRIPT_SERVER"
+  assert_has "OP_SERVICE_ACCOUNT_TOKEN"; assert_lacks "Integrate with 1Password CLI"
+}
+
 test_root_is_flagged() {
   stub id '[ "${1:-}" = -u ] && echo 0'
   run "$SCRIPT" --status
@@ -168,17 +200,17 @@ test_not_enrolled() {
 test_filevault_off() {
   stub fdesetup 'echo "FileVault is Off."'
   run "$SCRIPT" --status
-  assert_open "FileVault on (workstations)"
+  assert_open "FileVault on"
 }
 
 test_server_skips_filevault_and_escrow() {
   stub fdesetup 'echo "FileVault is Off."'
   rm -f "$XDG_STATE_HOME/mac-setup/escrow"
   run "$SCRIPT_SERVER" --status
-  assert_done "FileVault on (workstations)"; assert_done "FileVault key saved to 1Password"
-  assert_done "Activation Lock code saved to 1Password"
+  assert_lacks "FileVault on"; assert_lacks "FileVault key saved to 1Password"
+  assert_lacks "Activation Lock code saved to 1Password"
   run "$SCRIPT" --status
-  assert_open "FileVault on (workstations)"
+  assert_open "FileVault on"
 }
 
 test_profiles_need_both() {
@@ -316,7 +348,7 @@ test_server_flags_tailscale_app() {
   run "$SCRIPT_SERVER" --status
   assert_open "No Tailscale app (servers use tailscaled)"
   run "$SCRIPT" --status
-  assert_done "No Tailscale app (servers use tailscaled)"
+  assert_lacks "No Tailscale app (servers use tailscaled)"
 }
 
 test_server_tailscale_points_to_playbook() {
@@ -382,7 +414,7 @@ test_streamdeck_7_is_flagged() {
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
   assert_has "Stream Deck is 7.x"
   run "$SCRIPT_SERVER" --status
-  assert_done "Stream Deck 8 installed (for its MCP server)"
+  assert_lacks "Stream Deck 8 installed (for its MCP server)"
 }
 
 test_btt_preset_missing() {
@@ -523,7 +555,7 @@ test_m365_admin_signed_in() {
 test_m365_admin_not_on_servers() {
   echo '{"username":"daily@example.com","tenantId":"tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
   run "$SCRIPT_SERVER" --status
-  assert_done "Generate TAP: echo-m365 signed in as its admin account"
+  assert_lacks "Generate TAP: echo-m365 signed in as its admin account"
 }
 
 test_manual_steps_start_open() {
@@ -635,7 +667,7 @@ test_op_ssh_agent_off() {
   run "$SCRIPT" --status
   assert_open "1Password SSH agent on"
   run "$SCRIPT_SERVER" --status
-  assert_done "1Password SSH agent on"
+  assert_lacks "1Password SSH agent on"
 }
 
 test_app_prefs_differ_lists_apps() {
@@ -646,7 +678,7 @@ test_app_prefs_differ_lists_apps() {
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
   assert_has "com.surteesstudios.Bartender: ProfileSettings"
   run "$SCRIPT_SERVER" --status
-  assert_done "Saved app settings applied"
+  assert_lacks "Saved app settings applied"
 }
 
 test_spacemouse_settings_differ() {
@@ -654,7 +686,7 @@ test_spacemouse_settings_differ() {
   run "$SCRIPT" --status
   assert_open "SpaceMouse settings applied"
   run "$SCRIPT_SERVER" --status
-  assert_done "SpaceMouse settings applied"
+  assert_lacks "SpaceMouse settings applied"
 }
 
 test_gridfinity_missing() {
@@ -694,11 +726,11 @@ test_server_skips_workstation_steps() {
   stub mac-defaults 'echo "  Dock: dockutil not installed"; exit 1'
   stub brew "case \"\$*\" in *Brewfile.workstation*) exit 1 ;; --prefix) echo $T/brew ;; esac; exit 0"
   run "$SCRIPT_SERVER" --status
-  assert_done "Workstation apps installed"; assert_done "HueForge installed"
-  assert_done "gridfinity-studio installed"; assert_done "Slack signed in or activated"
-  assert_done "Default browser is Chrome"
-  assert_done "BetterTouchTool installed from folivora.ai"
-  assert_done "macOS settings and Dock"; assert_done "Desktop widgets placed"
+  assert_lacks "Workstation apps installed"; assert_lacks "HueForge installed"
+  assert_lacks "gridfinity-studio installed"; assert_lacks "Slack signed in or activated"
+  assert_lacks "Default browser is Chrome"
+  assert_lacks "BetterTouchTool installed from folivora.ai"
+  assert_lacks "macOS settings and Dock"; assert_lacks "Desktop widgets placed"
 }
 
 # ---- mac-defaults ------------------------------------------------------------------
@@ -905,7 +937,7 @@ test_ninja_backup_needs_lockhart() {
   run "$SCRIPT" --status
   assert_open "Ninja Backup deployed to this Mac"
   run "$SCRIPT_SERVER" --status
-  assert_done "Ninja Backup deployed to this Mac"
+  assert_lacks "Ninja Backup deployed to this Mac"
 }
 
 test_chezmoi_stale_config_template() {
@@ -943,7 +975,7 @@ test_icloud_docs_needs_both_links() {
   run "$SCRIPT" --status
   assert_open "Desktop & Documents in iCloud"
   run "$SCRIPT_SERVER" --status
-  assert_done "Desktop & Documents in iCloud"
+  assert_lacks "Desktop & Documents in iCloud"
 }
 
 test_icloud_optimize_storage_must_be_off() {
@@ -953,7 +985,7 @@ test_icloud_optimize_storage_must_be_off() {
   run "$SCRIPT" --status
   assert_open "iCloud keeps files downloaded"
   run "$SCRIPT_SERVER" --status
-  assert_done "iCloud keeps files downloaded"
+  assert_lacks "iCloud keeps files downloaded"
 }
 
 test_license_confirmations_saved_as_licence_still_count() {
@@ -970,7 +1002,7 @@ test_time_machine_needs_a_destination() {
   run "$SCRIPT" --status
   assert_open "Time Machine backs up to echo-nas"
   run "$SCRIPT_SERVER" --status
-  assert_done "Time Machine backs up to echo-nas"
+  assert_lacks "Time Machine backs up to echo-nas"
 }
 
 test_vms_must_be_excluded_from_time_machine() {
@@ -981,7 +1013,7 @@ test_vms_must_be_excluded_from_time_machine() {
   run "$SCRIPT" --status
   assert_open "Virtual machines kept out of Time Machine"
   run "$SCRIPT_SERVER" --status
-  assert_done "Virtual machines kept out of Time Machine"
+  assert_lacks "Virtual machines kept out of Time Machine"
 }
 
 test_time_machine_action_uses_1password_and_clipboard() {
@@ -1016,7 +1048,7 @@ test_replaced_apps_must_be_gone() {
   run "$SCRIPT" --status
   assert_open "Replaced apps removed"
   run "$SCRIPT_SERVER" --status
-  assert_done "Replaced apps removed"
+  assert_lacks "Replaced apps removed"
 }
 
 test_replaced_casks_must_be_uninstalled() {
@@ -1039,7 +1071,7 @@ test_colima_and_ollama_must_run() {
   assert_open "Docker engine (Colima) runs at login"
   assert_open "Ollama server runs at login"
   run "$SCRIPT_SERVER" --status
-  assert_done "Docker engine (Colima) runs at login"
+  assert_lacks "Docker engine (Colima) runs at login"
 }
 
 test_colima_running_but_not_at_login() {
@@ -1065,8 +1097,8 @@ test_claude_ha_steps() {
   assert_done "Cloudflare read-only token in the Keychain"
   stub security 'exit 44'
   run "$SCRIPT_SERVER" --status
-  assert_done "Claude Code reports sessions to Home Assistant"
-  assert_done "Cloudflare read-only token in the Keychain"
+  assert_lacks "Claude Code reports sessions to Home Assistant"
+  assert_lacks "Cloudflare read-only token in the Keychain"
 }
 
 test_claude_memory_step() {
@@ -1076,7 +1108,7 @@ test_claude_memory_step() {
   run "$SCRIPT" --status
   assert_open "Claude Code memories synced (claude-memory)"
   run "$SCRIPT_SERVER" --status
-  assert_done "Claude Code memories synced (claude-memory)"
+  assert_lacks "Claude Code memories synced (claude-memory)"
 }
 
 test_claude_code_memories_restored() {
@@ -1179,7 +1211,7 @@ test_doppler_repos_signs_in_first_and_skips_servers() {
   run "$SCRIPT" --status
   assert_done "Doppler set up in each repo with a doppler.yaml"
   run "$SCRIPT_SERVER" --status
-  assert_done "Doppler set up in each repo with a doppler.yaml"
+  assert_lacks "Doppler set up in each repo with a doppler.yaml"
 }
 
 # ---- Run -------------------------------------------------------------------------

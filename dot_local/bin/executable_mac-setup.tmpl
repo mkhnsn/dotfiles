@@ -29,6 +29,9 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # From chezmoi data (set on `chezmoi init`).
 HOSTNAME_WANT="{{ .hostname }}"
+# "service": 1Password through a service-account token, with no desktop app to sign in to.
+# MAC_SETUP_OP_MODE overrides it (tests).
+OP_MODE="${MAC_SETUP_OP_MODE:-{{ dig "op_mode" "account" . }}}"
 {{- if dig "is_server" false . }}
 TAG_WANT="tag:echo-core"
 ROLE="server"
@@ -174,7 +177,7 @@ default_browser() {
 check_user()       { [ "$(id -u)" -ne 0 ] && [ -n "${HOME:-}" ]; }
 check_mdm()        { profiles status -type enrollment 2>/dev/null | grep -q "MDM enrollment: Yes"; }
 # Servers run without FileVault so they recover from restarts unattended (echo-core two-machine plan).
-check_filevault()  { workstation || return 0; fdesetup status 2>/dev/null | grep -q "FileVault is On"; }
+check_filevault()  { fdesetup status 2>/dev/null | grep -q "FileVault is On"; }
 PROFILES_WANT="macOS: Firewall|macOS: NinjaOne privacy permissions|macOS: Terminal privacy permissions"
 profiles_missing() { local p n; p="$(system_profiler SPConfigurationProfileDataType 2>/dev/null)"
                      printf '%s\n' "$PROFILES_WANT" | tr '|' '\n' | while read -r n; do printf '%s' "$p" | grep -qF "$n" || echo "$n"; done; }
@@ -183,33 +186,35 @@ check_profiles()   { [ -z "$(profiles_missing)" ]; }
 # -> "MikeBook-Pro"); chezmoi's hostname data is the local-hostname form.
 check_hostname()   { [ "$(scutil --get LocalHostName 2>/dev/null)" = "$(printf '%s' "$HOSTNAME_WANT" | tr ' ' '-')" ]; }
 check_ninja()      { pgrep -f NinjaRMMAgent/programfiles/ninjarmm-macagent >/dev/null; }
-check_escrow()     { workstation || return 0; confirmed "escrow:$1"; }
+check_escrow()     { confirmed "escrow:$1"; }
 # Ninja Backup installs lockhart only once backup is deployed to the device in Ninja.
 LOCKHART="/Applications/NinjaRMMAgent/programfiles/lockhart/bin/lockhart"
-check_ninja_backup(){ workstation || return 0; [ -x "${MAC_SETUP_LOCKHART:-$LOCKHART}" ]; }
-check_ninja_backup_run(){ workstation || return 0; check_ninja_backup && confirmed ninja_backup_run; }
+check_ninja_backup(){ [ -x "${MAC_SETUP_LOCKHART:-$LOCKHART}" ]; }
+check_ninja_backup_run(){ check_ninja_backup && confirmed ninja_backup_run; }
 # Ask Homebrew's own doctor checks, which are what make it refuse stale tools.
 check_clt()        { xcode-select -p >/dev/null 2>&1 || return 1
                      command -v brew >/dev/null 2>&1 || return 0
                      brew doctor check_for_installed_developer_tools check_if_supported_sdk_available >/dev/null 2>&1; }
 check_brew()       { command -v brew >/dev/null 2>&1; }
 check_rosetta()    { [ "$(uname -m)" != arm64 ] || arch -x86_64 /usr/bin/true 2>/dev/null; }
-check_onepassword(){ command -v op >/dev/null 2>&1 && op account list 2>/dev/null | grep -q .; }
+op_service()       { [ "$OP_MODE" = service ]; }
+check_onepassword(){ command -v op >/dev/null 2>&1 || return 1
+                     if op_service; then op whoami >/dev/null 2>&1; else op account list 2>/dev/null | grep -q .; fi; }
 OP_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-check_op_ssh()     { workstation || return 0; [ -e "$OP_AGENT" ]; }
+check_op_ssh()     { [ -e "$OP_AGENT" ]; }
 # Claude Code <-> Home Assistant: session hooks post to a webhook (URL from 1Password), and the
 # homeassistant MCP server (~/.local/bin/ha-mcp, read-only) is registered for every project.
 CLAUDE_HA_URL_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/claude-ha/webhook-url"
 CLAUDE_HA_REF="op://Infrastructure/HA webhook - Claude sessions/credential"
-check_claude_ha()  { workstation || return 0; [ -s "$CLAUDE_HA_URL_FILE" ]; }
+check_claude_ha()  { [ -s "$CLAUDE_HA_URL_FILE" ]; }
 # Claude Code memories sync through a private repo (claude-memory, docs/claude-memory-sync.md).
-check_claude_memory() { workstation || return 0; [ -d "${CLAUDE_MEMORY_DIR:-$HOME/.local/share/claude-memory}/.git" ]; }
-check_ha_mcp()     { workstation || return 0; grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null &&
+check_claude_memory() { [ -d "${CLAUDE_MEMORY_DIR:-$HOME/.local/share/claude-memory}/.git" ]; }
+check_ha_mcp()     { grep -q '"homeassistant"' "$HOME/.claude.json" 2>/dev/null &&
                        security find-generic-password -s ha-mcp -a echo-homeassistant >/dev/null 2>&1; }
 # Cloudflare's API MCP server reads a read-only token from the Keychain (cf-mcp-headers); the
 # next chezmoi apply registers the server at user scope (docs/cloudflare-mcp.md).
-check_cf_mcp()     { workstation || return 0; security find-generic-password -s cf-mcp -a cloudflare-readonly >/dev/null 2>&1; }
-check_op_browser() { workstation || return 0; confirmed "op_browser:$1"; }
+check_cf_mcp()     { security find-generic-password -s cf-mcp -a cloudflare-readonly >/dev/null 2>&1; }
+check_op_browser() { confirmed "op_browser:$1"; }
 # After a dotfiles update changes .chezmoi.toml.tmpl, chezmoi warns until `chezmoi init` runs.
 chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep -q "config file template has changed"; }
 check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] && ! chezmoi_config_stale &&
@@ -223,9 +228,9 @@ check_gh()         { if workstation; then gh auth status >/dev/null 2>&1; else !
 # With Desktop & Documents in iCloud on, iCloud Drive's Desktop and Documents are links to the
 # home folders; off, they're plain folders (or missing) and the home folders stay local.
 ICLOUD_DRIVE="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
-check_icloud_docs(){ workstation || return 0; local d
+check_icloud_docs(){ local d
                      for d in Desktop Documents; do [ "$(readlink "$ICLOUD_DRIVE/$d" 2>/dev/null)" = "$HOME/$d" ] || return 1; done; }
-check_icloud_local(){ workstation || return 0; [ "$(defaults read com.apple.bird optimize-storage 2>/dev/null)" != 1 ]; }
+check_icloud_local(){ [ "$(defaults read com.apple.bird optimize-storage 2>/dev/null)" != 1 ]; }
 # Servers: no personal Doppler login or personal token; only service tokens/accounts. Scope "/"
 # both here and in act_doppler, so the check and the sign-out see the same token.
 doppler_personal() { local t; t="$(doppler me --json --scope / 2>/dev/null | sed -n 's/.*"type": *"\([^"]*\)".*/\1/p' | head -1)"
@@ -275,12 +280,12 @@ doppler_unset_dirs() { local run d p proj conf scope
                            fi
                          done
                        done; }
-check_doppler_repos(){ workstation || return 0; [ -z "$(doppler_yaml_dirs)" ] && return 0
+check_doppler_repos(){ [ -z "$(doppler_yaml_dirs)" ] && return 0
                        doppler me >/dev/null 2>&1 && [ -z "$(doppler_unset_dirs)" ]; }
 check_tailscale()  { ts_json | grep -Eq '"BackendState": *"Running"'; }
 # Servers run the open-source tailscaled from the echo-core playbook (decision 0006); the app
 # only connects after someone signs in, and the two variants can't run side by side.
-check_ts_app()     { workstation || [ ! -d "$APPS/Tailscale.app" ]; }
+check_ts_app()     { [ ! -d "$APPS/Tailscale.app" ]; }
 # The console machine name is the first label of DNSName (HostName is the OS hostname).
 check_ts_name()    { [ "$(ts_json | sed -n 's/.*"DNSName": *"\([^."]*\)\..*/\1/p' | head -1)" = "$(lower "$HOSTNAME_WANT")" ]; }
 check_ts_tag()     { ts_json | grep -q "\"$TAG_WANT\""; }
@@ -294,9 +299,9 @@ check_ssh_server() { ssh_listening && dscl . -read /Groups/com.apple.access_ssh 
 # accounts can't use it. The action moves it to /Applications.
 btt_user_copy()    { [ -d "$HOME/Applications/BetterTouchTool.app" ] && [ ! -d "$APPS/BetterTouchTool.app" ] &&
                      [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
-check_btt()        { workstation || return 0; [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
+check_btt()        { [ -d "$APPS/BetterTouchTool.app" ] && [ ! -d "$(brew --prefix 2>/dev/null)/Caskroom/bettertouchtool" ]; }
 # BTT's master "Enable window snapping" switch isn't part of presets; it's stored only when off.
-check_btt_snapping(){ workstation || return 0; [ "$(defaults read com.hegenberg.BetterTouchTool windowSnappingEnabled 2>/dev/null)" != 0 ]; }
+check_btt_snapping(){ [ "$(defaults read com.hegenberg.BetterTouchTool windowSnappingEnabled 2>/dev/null)" != 0 ]; }
 # The preset's global keyboard shortcuts (keys and modifiers) and move/resize modifier keys that
 # BTT doesn't match: none imported yet, or an import from before the preset changed. Prints how
 # many are missing.
@@ -317,8 +322,8 @@ def flag(k):
 g = preset.get("BTTGeneralSettings", {})
 mods = {m + j: g.get(m + j) in (True, 1) for m in ("control", "opt", "shift", "cmd") for j in ("Move", "Resize")}
 print(len(want - have) + sum(flag(k) != v for k, v in mods.items()))' "$(chezmoi source-path)/macos/btt/Default.bttpreset" 2>/dev/null || echo 1; }
-check_btt_preset() { workstation || return 0; pgrep -x BetterTouchTool >/dev/null && [ "$(btt_missing)" = 0 ]; }
-check_btt_mcp()    { workstation || return 0; nc -z -G 2 127.0.0.1 64832 >/dev/null 2>&1; }
+check_btt_preset() { pgrep -x BetterTouchTool >/dev/null && [ "$(btt_missing)" = 0 ]; }
+check_btt_mcp()    { nc -z -G 2 127.0.0.1 64832 >/dev/null 2>&1; }
 # BTT's Hyper key needs Caps Lock to reach it: a keyboard whose Caps Lock is remapped in System
 # Settings (Modifier Keys, e.g. to No Action) sends BTT nothing. System Settings stores that as
 # com.apple.keyboard.modifiermapping.<vendor>-<product>-0 in the current host's global domain.
@@ -353,11 +358,11 @@ for r in rows:
     n = (r[a:b] if a > 0 and b > a else "").strip().removesuffix("(null)").strip()
     if n and ids in remapped: known.setdefault(ids, n)
 print("\n".join(sorted(known.values())))' 2>/dev/null || echo "a keyboard (couldn't check)"; }
-check_capslock()   { workstation || return 0; [ -z "$(capslock_remapped)" ]; }
-check_raycast_sync(){ workstation || return 0; confirmed raycast_sync; }
-check_raycast_local(){ workstation || return 0; confirmed raycast_local; }
-check_zoom()       { workstation || return 0; confirmed zoom; }
-check_bartender_keys(){ workstation || return 0; confirmed bartender_keys; }
+check_capslock()   { [ -z "$(capslock_remapped)" ]; }
+check_raycast_sync(){ confirmed raycast_sync; }
+check_raycast_local(){ confirmed raycast_local; }
+check_zoom()       { confirmed zoom; }
+check_bartender_keys(){ confirmed bartender_keys; }
 # Raycast's Generate TAP runs echo-m365's New-Tap.ps1, which needs that repo's saved Graph
 # sign-in (~/.mg/mg.authrecord.<TenantId>.json) to be its AdminAccount. Both come from the
 # repo's tenant.psd1; the record holds the account name, not a token.
@@ -365,17 +370,17 @@ check_bartender_keys(){ workstation || return 0; confirmed bartender_keys; }
 ECHO_M365="${MAC_SETUP_ECHO_M365:-$(find-repo echo-m365 2>/dev/null | sed -n 's/.*→ //p' | head -1)}"
 ECHO_M365="${ECHO_M365:-${GHQ_ROOT:-$HOME/src}/github.com/unstable-studios/echo-m365}"
 m365_setting()     { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" "$ECHO_M365/tenant.psd1" 2>/dev/null | head -1; }
-check_m365_admin() { workstation || return 0; local tid admin
+check_m365_admin() { local tid admin
                      tid="$(m365_setting TenantId)" admin="$(m365_setting AdminAccount)"
                      [ -n "$tid" ] && [ -n "$admin" ] &&
                        tr -d ' \t\n' < "$HOME/.mg/mg.authrecord.$tid.json" 2>/dev/null | grep -qiF "\"username\":\"$admin\""; }
-check_widgets()    { workstation || return 0; confirmed widgets; }
+check_widgets()    { confirmed widgets; }
 check_remote()     { confirmed remote; }
 # Casks whose app is already installed in a way Homebrew can't take over (see brew-why).
 ws_skip()          { command -v brew-why >/dev/null 2>&1 && brew-why --skip --brewfile "$(chezmoi source-path)/Brewfile.workstation" 2>/dev/null; }
-check_ws_apps()    { workstation || return 0
+check_ws_apps()    {
                      HOMEBREW_BUNDLE_CASK_SKIP="$(ws_skip)" brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.workstation" >/dev/null 2>&1; }
-check_vendor()     { workstation || return 0; [ -d "$APPS/$1.app" ]; }
+check_vendor()     { [ -d "$APPS/$1.app" ]; }
 # Apps replaced by another: Rectangle (window management is BTT), Bartender 6 (Bartender 7 shares
 # its settings file), Docker Desktop (Colima + the docker CLI).
 REPLACED_APPS="Rectangle|Bartender 6|Docker"
@@ -384,51 +389,51 @@ replaced_present() { local IFS='|' a; for a in $REPLACED_APPS; do [ -d "$APPS/$a
 # dangling zsh completion breaks compinit).
 REPLACED_CASKS="rectangle docker-desktop docker"  # docker: docker-desktop's old name
 replaced_casks()   { local c room; room="$(brew --prefix 2>/dev/null)/Caskroom"; for c in $REPLACED_CASKS; do [ -d "$room/$c" ] && echo "$c"; done; }
-check_replaced()   { workstation || return 0; [ -z "$(replaced_present)" ] && [ -z "$(replaced_casks)" ]; }
+check_replaced()   { [ -z "$(replaced_present)" ] && [ -z "$(replaced_casks)" ]; }
 # "Runs at login" is Homebrew's launch agent for colima; colima status alone also passes for a
 # one-off `colima start`, and fails for a minute or two while the first start builds the VM.
 colima_at_login()  { brew services info colima --json 2>/dev/null | grep -Eq '"registered": *true'; }
-check_containers() { workstation || return 0; colima_at_login && colima status >/dev/null 2>&1; }
-check_ollama()     { workstation || return 0; ollama list >/dev/null 2>&1; }
-check_gridfinity() { workstation || return 0; [ -d "$APPS/gridfinity-studio.app" ]; }
+check_containers() { colima_at_login && colima status >/dev/null 2>&1; }
+check_ollama()     { ollama list >/dev/null 2>&1; }
+check_gridfinity() { [ -d "$APPS/gridfinity-studio.app" ]; }
 # Confirmations saved before the US spelling ("licence:<app>", "licences") still count.
-check_hueforge_plugins() { workstation || return 0; confirmed hueforge_plugins; }
-check_license()    { workstation || return 0; confirmed "license:$1" || confirmed "licence:$1" || confirmed licences; }
-check_app_prefs()  { workstation || return 0; app-prefs check >/dev/null 2>&1; }
-check_spacemouse() { workstation || return 0; 3dx-sync check >/dev/null 2>&1; }
+check_hueforge_plugins() { confirmed hueforge_plugins; }
+check_license()    { confirmed "license:$1" || confirmed "licence:$1" || confirmed licences; }
+check_app_prefs()  { app-prefs check >/dev/null 2>&1; }
+check_spacemouse() { 3dx-sync check >/dev/null 2>&1; }
 EXPORTS_DIR="${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}/Apps/Mac app exports"
-check_onedrive()   { workstation || return 0; [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}" ]; }
+check_onedrive()   { [ -d "${MAC_SETUP_ONEDRIVE:-$HOME/Library/CloudStorage/OneDrive-UnstableStudios}" ]; }
 # Each Mac schedules its own exports (the schedule doesn't sync) into its own folder, so one Mac's
 # backups don't count for another and auto-delete doesn't prune another Mac's files.
 RAYCAST_EXPORTS="$EXPORTS_DIR/Raycast/$HOSTNAME_WANT"
-check_raycast_backup(){ workstation || return 0; [ -n "$(find "$RAYCAST_EXPORTS" -name '*.rayconfig' -mtime -8 2>/dev/null | head -1)" ]; }
+check_raycast_backup(){ [ -n "$(find "$RAYCAST_EXPORTS" -name '*.rayconfig' -mtime -8 2>/dev/null | head -1)" ]; }
 # Claude Code counts as restored once any project memory is here (or you confirmed there was none).
-check_export()     { workstation || return 0; confirmed "export:$1" && return 0
+check_export()     { confirmed "export:$1" && return 0
                      case "$1" in
                        "Claude Code") [ -n "$(find "$HOME/.claude/projects" -path '*/memory/*.md' 2>/dev/null | head -1)" ] ;;
                        *) confirmed app_exports ;;
                      esac; }
-check_vm()         { workstation || return 0; confirmed vm; }
+check_vm()         { confirmed vm; }
 # Homebrew's cask is Stream Deck 7.x; its MCP server (Claude Code's StreamDeck) needs 8, a beta
 # installed over it from elgato.com. Same signal as the apply summary: the MCP helper exists.
 # The major version (from the app's Info.plist, XML) is only for the help text.
 streamdeck_major() { sed -n '/CFBundleShortVersionString/{n;s/.*<string>\([0-9]*\).*/\1/p;}' "$APPS/Elgato Stream Deck.app/Contents/Info.plist" 2>/dev/null; }
-check_streamdeck() { workstation || return 0; [ -x "$APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp" ]; }
+check_streamdeck() { [ -x "$APPS/Elgato Stream Deck.app/Contents/Helpers/streamdeck-mcp" ]; }
 # Dock and Finder for daily use; dockutil comes from Brewfile.workstation, which servers skip.
-check_defaults()   { workstation || return 0; mac-defaults --check >/dev/null 2>&1; }
+check_defaults()   { mac-defaults --check >/dev/null 2>&1; }
 # Time Machine to echo-nas: the fast local restore (Ninja Backup is the off-site copy).
 # destinationinfo works without Full Disk Access; latestbackup doesn't.
 # A destination alone isn't enough: tmutil setdestination leaves automatic backups off. The
 # setting needs Full Disk Access to read; when it can't be read, the destination check stands.
 TM_PREFS="${MAC_SETUP_TM_PREFS:-/Library/Preferences/com.apple.TimeMachine}"
-check_timemachine(){ workstation || return 0; tmutil destinationinfo 2>/dev/null | grep -q '^Name' || return 1
+check_timemachine(){ tmutil destinationinfo 2>/dev/null | grep -q '^Name' || return 1
                      local auto; auto="$(defaults read "$TM_PREFS" AutoBackup 2>/dev/null)"
                      [ "$auto" != 0 ]; }
 # VM disks change constantly, so every hourly backup would re-copy them. The valuable data
 # (VCarve) has its own copy (~/VCarve/Backup); the VM rebuilds from Intune. A sticky
 # exclusion on the folder covers VMs added later.
-check_tm_no_vms()  { workstation || return 0; [ ! -d "$HOME/Parallels" ] || tmutil isexcluded "$HOME/Parallels" 2>/dev/null | grep -q '^\[Excluded\]'; }
-check_browser()    { workstation || return 0; [ "$(default_browser)" = com.google.chrome ]; }
+check_tm_no_vms()  { [ ! -d "$HOME/Parallels" ] || tmutil isexcluded "$HOME/Parallels" 2>/dev/null | grep -q '^\[Excluded\]'; }
+check_browser()    { [ "$(default_browser)" = com.google.chrome ]; }
 
 # ---- Help: what to do when a check fails ------------------------------------------
 
@@ -447,7 +452,8 @@ help_escrow()     { case "$1" in
 help_clt()        { echo "Command Line Tools missing or stale (Homebrew refuses old ones)."; }
 help_brew()       { echo "Homebrew isn't installed."; }
 help_rosetta()     { echo "Rosetta isn't installed. Parallels' setup and Intel-only apps need it."; }
-help_onepassword(){ echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
+help_onepassword(){ op_service && { echo "1Password CLI can't sign in with the service account token. This shell needs OP_SERVICE_ACCOUNT_TOKEN: new shells read it from ~/.config/op/service-account.env, which chezmoi apply writes when the token is exported. Check the token still has access to the Automation vault."; return; }
+                    echo "1Password app and CLI integration: sign in to 1Password, then Settings > Developer > Integrate with 1Password CLI. The first time op runs, macOS asks to let your terminal access data from other apps: allow it (MDM can't pre-approve this one)."; }
 help_op_ssh()      { echo "Turn on the 1Password SSH agent (git signs commits through it): 1Password > Settings > Developer > Use the SSH agent."; }
 help_claude_memory() { echo "Clone the private claude-memory repo (over HTTPS with your gh login), move this Mac's Claude Code memories into it and point each checkout under ~/src at it, so memories stay in sync with echo-turbine."; }
 help_claude_ha()   { echo "Write the Home Assistant webhook URL that Claude Code's session hooks post to (desk panel, phone alerts), from 1Password: Infrastructure > HA webhook - Claude sessions."; }
@@ -544,7 +550,8 @@ act_clt() {
 }
 act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && eval "$(/opt/homebrew/bin/brew shellenv)"; }
 act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
-act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; }
+act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli
+                    if op_service; then echo "    Export OP_SERVICE_ACCOUNT_TOKEN in this shell, run chezmoi apply, then re-check."; else open -a 1Password; fi; }
 act_op_ssh()       { open -a 1Password; }
 act_claude_memory() { "$HOME/.local/bin/claude-memory" init; }
 act_claude_ha()    {
@@ -690,7 +697,7 @@ act_widgets()     { open "x-apple.systempreferences:com.apple.Desktop-Settings.e
 
 STEPS="user|Running as your own user|Basics
 mdm|Enrolled in SimpleMDM|MDM
-filevault|FileVault on (workstations)|MDM
+filevault|FileVault on|MDM
 profiles|MDM profiles installed|MDM
 hostname|Computer name is $HOSTNAME_WANT|MDM
 ninja|NinjaOne agent running|MDM
@@ -755,6 +762,15 @@ timemachine|Time Machine backs up to echo-nas|Settings
 tm_no_vms|Virtual machines kept out of Time Machine|Settings
 browser|Default browser is Chrome|Settings"
 
+# Steps for one role only. The other role's run leaves them out: they aren't checked,
+# shown or counted. Listed by base id, so "export" covers every "export:<app>" step.
+WORKSTATION_ONLY=" filevault escrow ninja_backup ninja_backup_run op_ssh claude_ha claude_memory ha_mcp cf_mcp op_browser icloud_docs icloud_local doppler_repos btt btt_snapping btt_preset btt_mcp capslock raycast_sync raycast_local zoom bartender_keys m365_admin widgets ws_apps vendor replaced containers ollama gridfinity hueforge_plugins license app_prefs spacemouse onedrive raycast_backup export vm streamdeck defaults timemachine tm_no_vms browser "
+SERVER_ONLY=" ts_app "
+applies() {
+  if workstation; then case "$SERVER_ONLY" in *" $1 "*) return 1 ;; esac
+  else case "$WORKSTATION_ONLY" in *" $1 "*) return 1 ;; esac; fi
+}
+
 MANUAL=" escrow remote ninja_backup_run license hueforge_plugins op_browser export vm raycast_sync raycast_local zoom bartender_keys widgets "   # steps confirmed by hand, remembered in $STATE_DIR
 
 has_fn() { type "$1" >/dev/null 2>&1; }
@@ -793,8 +809,10 @@ run_step() {
 
 printf '%smac-setup%s  %s (%s), %s\n' "$B" "$R" "$(scutil --get ComputerName 2>/dev/null)" "$SERIAL" "$(sw_vers -productVersion)"
 printf '%sRole: %s (is_server in ~/.config/chezmoi/chezmoi.toml; change it and run chezmoi apply)%s\n' "$D" "$ROLE" "$R"
+workstation || printf '%sWorkstation-only steps are left out.%s\n' "$D" "$R"
 left=0 phase_prev=""
 while IFS='|' read -r id title phase; do
+  applies "${id%%:*}" || continue
   [ "$phase" != "$phase_prev" ] && printf '\n%s%s%s\n' "$D" "$phase" "$R" && phase_prev="$phase"
   run_step "$id" "$title" || left=$((left+1))
 done <<EOF
