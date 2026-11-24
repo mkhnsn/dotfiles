@@ -6,7 +6,7 @@
 .DESCRIPTION
     Run this ONCE from *Windows PowerShell* (not WSL). It installs the tools that
     the client doc expects on the Windows side and that the WSL dotfiles then shim
-    into WSL (Podman / Helm / oc). chezmoi (running in WSL) deliberately does NOT
+    into WSL (Podman / oc; Helm 3 is installed natively in WSL). chezmoi (running in WSL) deliberately does NOT
     install Windows software — this script keeps that boundary explicit.
 
     The repo lives in WSL; from Windows you can run this via:
@@ -131,4 +131,4 @@ Write-Host "       crc setup"
 Write-Host "       crc start"
 Write-Host "  4. In WSL, add the apps-crc.testing hosts entries (doc section 7) using 'crc ip'."
 Write-Host ""
-Info "Done. In WSL, run 'chezmoi apply' so podman/helm/oc get symlinked from these Windows binaries."
+Info "Done. In WSL, run 'chezmoi apply' so podman/oc get symlinked from these Windows binaries."

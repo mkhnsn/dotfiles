@@ -6,29 +6,25 @@ set -euo pipefail
 {{ template "todo.sh" }}
 
 # OpenShift client dev toolchain (opt-in via the `dev_openshift` flag): only what the
-# client's builds need on top of the general dev tools from run_install-packages.
+# client's builds need on top of the general dev tools from run_linux-dev-tools.
 #   - Installs Node 22 + Node 24 (the versions the client repos pin) and Helm 3.x INSIDE WSL.
 #   - On WSL, symlinks Podman / oc to the FIPS-approved Windows binaries
 #     (does not install them — see scripts/windows-client.ps1 for the Windows side).
 #     Helm is installed natively at v3.x because the Windows (winget) Helm is v4.x,
 #     which breaks Helm-3 charts.
-# run_after_ (every apply, after run_install-packages has installed fnm): idempotent, each
+# run_after_ (every apply, after run_linux-dev-tools has installed fnm): idempotent, each
 # step guarded so it retries cleanly.
 
-SUDO=""
-if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
-  command -v sudo >/dev/null 2>&1 && SUDO="sudo"
-fi
 mkdir -p "$HOME/.local/bin"
 
 note() { printf '[dev-openshift] %s\n' "$*"; }
 
 # ---- Node 22 and 24, the versions the client repos pin ----
-# fnm, a default Node, pnpm, Python and Ansible are general dev tools: run_install-packages
+# fnm, a default Node, pnpm, Python and Ansible are general dev tools: run_linux-dev-tools
 # installs them on every full-setup Linux machine, and on these.
 export PATH="$HOME/.local/bin:$PATH"
 if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env)" 2>/dev/null || true
+  eval "$(fnm env --shell bash 2>/dev/null)" || true
   for v in 22 24; do
     if ! fnm list 2>/dev/null | grep -q "v$v\\."; then
       note "installing Node $v"
@@ -37,18 +33,19 @@ if command -v fnm >/dev/null 2>&1; then
   done
   fnm default 22 >/dev/null 2>&1 || true
 else
-  todo "dev-openshift: fnm is missing, so Node 22 and 24 aren't installed (run_install-packages installs it; see its todo)"
+  todo "dev-openshift: fnm is missing, so Node 22 and 24 aren't installed (run_linux-dev-tools installs it)"
 fi
 
 # ---- Helm 3.x (native; the Windows/winget Helm is 4.x, which breaks Helm-3 charts) ----
 if ! { command -v helm >/dev/null 2>&1 && helm version --short 2>/dev/null | grep -q '^v3\.'; }; then
   note "installing Helm 3.x into ~/.local/bin"
-  helm_tag="$(curl -fsSL 'https://api.github.com/repos/helm/helm/releases?per_page=40' 2>/dev/null | grep -oE '"tag_name": *"v3\.[0-9]+\.[0-9]+"' | head -1 | grep -oE 'v3\.[0-9.]+')"
+  helm_tag="$(curl -fsSL 'https://api.github.com/repos/helm/helm/releases?per_page=40' 2>/dev/null | grep -oE '"tag_name": *"v3\.[0-9]+\.[0-9]+"' | head -1 | grep -oE 'v3\.[0-9.]+' || true)"
   if [[ -n "$helm_tag" ]]; then
     helm_tmp="$(mktemp -d)"
-    if curl -fsSL "https://get.helm.sh/helm-${helm_tag}-linux-amd64.tar.gz" | tar -xz -C "$helm_tmp" 2>/dev/null; then
+    case "$(uname -m)" in aarch64|arm64) helm_arch="arm64" ;; *) helm_arch="amd64" ;; esac
+    if curl -fsSL "https://get.helm.sh/helm-${helm_tag}-linux-${helm_arch}.tar.gz" | tar -xz -C "$helm_tmp" 2>/dev/null; then
       rm -f "$HOME/.local/bin/helm"   # drop any stale winget Helm 4 symlink
-      install -m 0755 "$helm_tmp/linux-amd64/helm" "$HOME/.local/bin/helm"
+      install -m 0755 "$helm_tmp/linux-${helm_arch}/helm" "$HOME/.local/bin/helm"
       note "installed Helm $helm_tag"
     fi
     rm -rf "$helm_tmp"

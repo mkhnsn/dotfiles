@@ -142,8 +142,8 @@ Two notes:
 
 #### General dev tools on Linux
 
-On full-setup Linux machines (and `dev_openshift` ones), `run_install-packages.sh.tmpl` installs
-the tools macOS gets from the `Brewfile`:
+On full-setup Linux machines (and `dev_openshift` ones), `run_linux-dev-tools.sh.tmpl` installs
+the tools macOS gets from the `Brewfile` (every apply; each step retries until its tool is there):
 
 - **Node.js** via [`fnm`](https://github.com/Schniz/fnm) in `~/.local/bin` (`env.zsh` wires up
   `fnm env --use-on-cd`), with the current LTS as the default unless one is already set.
@@ -175,7 +175,7 @@ When on, **inside WSL/Linux**:
 
 The Windows side is a separate, explicit step — run **`scripts/windows-client.ps1`** once from
 **Windows PowerShell** (the repo is reachable at `\\wsl$\<distro>\home\<you>\.local\share\chezmoi\`).
-It installs Podman, Podman Desktop, Helm, Git for Windows (winget) and `oc` (public mirror).
+It installs Podman, Podman Desktop, Git for Windows (winget) and `oc` (public mirror); Helm is not installed on Windows.
 **CRC and its FIPS bundle** need a Red Hat pull secret and are printed as manual steps.
 
 ---

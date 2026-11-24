@@ -51,15 +51,16 @@
 {{-   $opMode = .op_mode -}}
 {{- end }}
 
-{{- /* OpenShift client dev toolchain: opt-in. Installs Node/Python/Ansible in WSL and
-       shims Podman/Helm/oc to the Windows .exe. Env var seeds on first init, then persists. */ -}}
+{{- /* OpenShift client dev toolchain: opt-in. Only what that client work needs: Node 22/24
+       pins and Helm 3 in WSL, Podman/oc shims to the Windows .exe, its credentials and
+       workspace. Env var seeds on first init, then persists. */ -}}
 {{- $devOpenshift := false -}}
 {{- if hasKey . "dev_openshift" -}}
 {{-   $devOpenshift = .dev_openshift -}}
 {{- else if env "DOTFILES_OPENSHIFT" -}}
 {{-   $devOpenshift = true -}}
 {{- else -}}
-{{-   $devOpenshift = promptBool "OpenShift dev toolchain? (Node, Python, Ansible, Podman/Helm/oc shims) (y/N, default: No)" -}}
+{{-   $devOpenshift = promptBool "OpenShift client toolchain? (Node 22/24, Helm 3, Podman/oc shims, client credentials) (y/N, default: No)" -}}
 {{- end }}
 
 {{- /* Work git identity for a specific repo tree (opt-in via dev_openshift). Prompted

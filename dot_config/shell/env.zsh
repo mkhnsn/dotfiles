@@ -39,7 +39,7 @@ if command -v ghq >/dev/null 2>&1; then
   mkdir -p "$GHQ_ROOT" 2>/dev/null || true
 fi
 
-# fnm (Node version manager): installed on Linux by run_install-packages
+# fnm (Node version manager): installed on Linux by run_linux-dev-tools
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --use-on-cd --shell zsh)"
 fi
@@ -320,4 +320,6 @@ export LESS_TERMCAP_md=$'\e[1m'   # bold
 export LESS_TERMCAP_me=$'\e[0m'   # reset
 
 # ---- OpenShift client engagement: only deployed on dev_openshift machines ----
-[[ -r "$HOME/.config/shell/openshift.zsh" ]] && source "$HOME/.config/shell/openshift.zsh"
+if [[ -r "$HOME/.config/shell/openshift.zsh" ]]; then
+  source "$HOME/.config/shell/openshift.zsh"
+fi
