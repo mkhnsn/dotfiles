@@ -364,7 +364,9 @@ Things to know on a FileVault Mac:
 - Claude Code may ask for access to other apps' data after each update (it runs from a
   versioned path). Deny it: nothing in this setup needs it.
 
-The Tailscale tag it expects is `tag:echo-core` on servers (`is_server`) and
+On a server (`is_server`) it leaves out the workstation-only steps (FileVault, apps, licenses,
+iCloud, Time Machine and the like) and checks 1Password through the service account token.
+The Tailscale tag it expects is `tag:echo-core` on servers and
 `tag:echo-admin` otherwise. Servers run the open-source `tailscaled` set up by
 echo-core's playbook (decision 0006), so `mac-setup` flags the Tailscale app there instead
 of installing it, and `run_once_02-tailscale` leaves Tailscale to the playbook. The full runbook is in `unstable-studios/echo-core`
