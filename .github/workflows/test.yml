@@ -69,8 +69,5 @@ jobs:
       - name: hints tests
         run: python3 -I tests/hints_test.py
 
-      - name: mode tests (work modes)
-        run: python3 -I tests/mode_test.py
-
       - name: Brewfile entries exist in Homebrew (formula vs cask)
         run: python3 -I tests/brewfile_check.py

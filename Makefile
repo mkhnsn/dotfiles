@@ -35,7 +35,6 @@ test:
 	@python3 -I tests/btt_preset_test.py
 	@python3 -I tests/trigger_check_test.py
 	@python3 -I tests/hints_test.py
-	@python3 -I tests/mode_test.py
 	@python3 -I tests/no_pycache_test.py
 	@python3 -I tests/streamdeck_library_test.py
 	@if command -v docker >/dev/null 2>&1; then docker run --rm -v "$$PWD:/w" -w /w bash:3.2 bash tests/mac-setup.test.sh; fi

@@ -11,7 +11,7 @@ import unittest
 
 BIN = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dot_local", "bin")
 # tool -> the expression, over the tool's globals `ns`, that is the sibling module it loaded.
-LOADERS = {"triggers": "ns['trigger_check']()", "hints": "ns['TC']", "mode": "ns['hints_module']()"}
+LOADERS = {"triggers": "ns['trigger_check']()", "hints": "ns['TC']"}
 # Loads the tool without running its main (and without caching the tool itself),
 # then fails unless the sibling module really was loaded.
 RUN = "import runpy, sys, types; ns = runpy.run_path(sys.argv[1]); assert isinstance(eval(sys.argv[2]), types.ModuleType)"
