@@ -6,12 +6,14 @@
 # [[tip]]   name   lowercase, digits and dashes; unique
 #           text   the hint, one line: lead with the keys or the command
 #           apps   bundle IDs it belongs to (optional; without it, it's a general hint)
-# [shell]   apps   terminal apps: each alias in dot_config/shell/aliases.zsh is a hint there
-#           skip   alias names to leave out
+# [shell]   apps     terminal apps the alias hints show in
+#           aliases  the aliases in dot_config/shell/aliases.zsh worth a hint, in the order to show
+#                    them ("In the shell, gst runs: git status -sb")
+# One bad entry here drops every tip and alias hint until it's fixed; `hints check` says which.
 
 [shell]
 apps = ["com.mitchellh.ghostty", "com.apple.Terminal"]
-skip = ["l", "la", "g"]
+aliases = ["gst", "gl", "gsw", "gup", "gpf", "gca", "ll", "treee"]
 
 # ---- Terminal ----------------------------------------------------------------------------------
 [[tip]]

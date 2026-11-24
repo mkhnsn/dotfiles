@@ -548,11 +548,13 @@ Hyper key.
 - **More than triggers**: hints also come from the shortcut registry (`macos/shortcuts.toml`:
   every entry but the stock macOS and app-menu ones; `hint = false` leaves one out), from tips
   written by hand in `macos/hints.toml` (`[[tip]]` with `name`, `text` and optional `apps`), and
-  from the shell aliases in `dot_config/shell/aliases.zsh`, shown in the terminal apps that
-  `hints.toml` lists under `[shell]`. The sources take turns, so one doesn't crowd out the rest.
+  from the shell aliases that `hints.toml` names under `[shell] aliases` (from
+  `dot_config/shell/aliases.zsh`), shown in the terminal apps it lists. In each scope (general,
+  or an app) the sources take turns, so one doesn't crowd out the rest.
   Their use can't be measured, so each of these stops after it has been shown 3 times.
-  `hints check` validates `hints.toml`; `hints status` counts each source. The cheat sheet stays
-  triggers only.
+  `hints check` validates `hints.toml`; one bad entry there drops every tip and alias hint until
+  it's fixed, and the trigger hints carry on. `hints status` counts each source. The cheat sheet
+  stays triggers only.
 - **Setups**: docked with the lid closed, docked with the lid open, or laptop only, read from the
   online displays, sleeping and mirrored ones included (an external one means docked; the
   built-in one awake means the lid is open; no displays at all is left alone). BTT runs

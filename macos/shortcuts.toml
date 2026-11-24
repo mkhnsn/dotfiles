@@ -149,6 +149,7 @@ hint = false  # Hyper+V is the key to learn (trigger camera-zoom)
 keys = "⌘⇥"
 owner = "alttab"
 action = "Window switcher (replaces the macOS app switcher)"
+hint = false  # used all day already
 
 [[shortcut]]
 keys = "⌥`"
@@ -162,6 +163,7 @@ action = "Window switcher, current app"
 keys = "⌘Space"
 owner = "raycast"
 action = "Open Raycast (Spotlight's shortcut is off in macOS)"
+hint = false  # used all day already
 
 [[shortcut]]
 keys = "⌃⌘Space"
