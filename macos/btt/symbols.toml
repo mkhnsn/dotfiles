@@ -9,6 +9,7 @@
 "cup.and.saucer.fill" = 25
 "display.2" = 30
 "mic.slash" = 16
+"rectangle.3.group" = 26
 "rectangle.center.inset.filled" = 23
 "rectangle.lefthalf.filled" = 23
 "rectangle.lefthalf.inset.filled" = 23
@@ -17,4 +18,5 @@
 "rectangle.righthalf.inset.filled" = 23
 "rectangle.rightthird.inset.filled" = 23
 "scope" = 21
+"square.and.arrow.down" = 18
 "video" = 23

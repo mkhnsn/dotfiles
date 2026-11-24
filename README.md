@@ -528,6 +528,31 @@ window buttons send):
 | [ / ] | ⌃⌥⇧← / ⌃⌥⇧→ | One desktop left / right |
 | N | | Next display |
 
+### Layouts
+
+Arrange a desktop's windows by hand, then save it under a name and put it back later. Nothing is
+defined in a file. `layout` (`~/.local/bin`):
+
+| Hyper | Command | What it does |
+|---|---|---|
+| S | `layout save [name]` | Saves where every window on this desktop is (asks for a name without one) |
+| L | `layout pick` | Lists the saved layouts; the one you choose is restored |
+| | `layout restore <name>` | Restores one: its name in any case, or a unique start of it |
+| | `layout list`, `layout rm <name>` | Lists them, forgets one |
+
+- **Per setup**: docked with the lid open, docked with it closed, and the laptop alone each have
+  their own layouts, since positions differ. The setup is read from the displays, as `hints` does.
+- **Restore**: launches a saved app that isn't running (only those: a running app whose windows
+  are on another desktop is left alone) and waits up to 10 s for its windows. An app's windows
+  are matched by title first, then in order. Windows it can't find, and apps that won't open, are
+  listed as skipped; windows the layout doesn't know about stay where they are. From Hyper+S and
+  Hyper+L, results and errors (like missing Accessibility access) show as notifications.
+- **Displays**: each window is saved relative to its display (by UUID), so rearranging displays
+  doesn't break a layout. A window whose display is gone goes to the main display, kept inside it.
+- **Limits**: the current desktop only (no moving windows between desktops); full-screen and
+  minimized windows are skipped. It works through System Events, so whatever runs it (BTT, a
+  terminal) needs Accessibility access. Saved in `~/.local/state/layouts.json`.
+
 ### Hints
 
 The controls teach themselves from the same file: each trigger's `hint` is one line naming its

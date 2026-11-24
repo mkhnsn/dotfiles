@@ -631,7 +631,7 @@
             "BTTMenuCloseOnOutsideClick" : 1,
             "BTTMenuDisableDrag" : 1,
             "BTTMenuElementIdentifier" : "Hints",
-            "BTTMenuFrameHeight" : 682,
+            "BTTMenuFrameHeight" : 746,
             "BTTMenuFrameWidth" : 500,
             "BTTMenuHorizontalSpacing" : 2,
             "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
@@ -1551,6 +1551,94 @@
               "BTTMenuAvailability" : 0,
               "BTTMenuConfig" : {
                 "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+S</b>&nbsp;&nbsp;Layouts: save this desktop&#x27;s windows under a name</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
+                "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 19,
+                "BTTMenuItemImageWidth" : 16,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 488,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 488,
+                "BTTMenuItemResizeImage" : 2,
+                "BTTMenuItemSFSymbolName" : "square.and.arrow.down",
+                "BTTMenuItemSFSymbolStyle" : 1,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 24
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" layout-save menu",
+                  "BTTTriggerParentUUID" : "BEE29217-38E5-551B-84AE-1ED91F8D16CB",
+                  "BTTUUID" : "C0545561-6296-5B8A-8784-63A5CDAAC220"
+                }
+              ],
+              "BTTMenuName" : "layout-save",
+              "BTTOrder" : 81,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "BEE29217-38E5-551B-84AE-1ED91F8D16CB"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
+                "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'><b>Hyper+L</b>&nbsp;&nbsp;Layouts: pick a saved layout and put its windows back</span></body></html>",
+                "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
+                "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
+                "BTTMenuItemBackgroundType" : 4,
+                "BTTMenuItemCornerRadius" : 7,
+                "BTTMenuItemIconColor1" : "255, 255, 255, 217",
+                "BTTMenuItemIconPosition" : 0,
+                "BTTMenuItemIconType" : 2,
+                "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 15,
+                "BTTMenuItemImageWidth" : 16,
+                "BTTMenuItemMaxHeight" : 30,
+                "BTTMenuItemMaxWidth" : 488,
+                "BTTMenuItemMinHeight" : 30,
+                "BTTMenuItemMinWidth" : 488,
+                "BTTMenuItemResizeImage" : 2,
+                "BTTMenuItemSFSymbolName" : "rectangle.3.group",
+                "BTTMenuItemSFSymbolStyle" : 1,
+                "BTTMenuItemVisibleWhileActive" : 1,
+                "BTTMenuItemVisibleWhileInactive" : 1,
+                "BTTMenuTextOffsetX" : 16
+              },
+              "BTTMenuItemActions" : [
+                {
+                  "BTTIsPureAction" : true,
+                  "BTTOrder" : 0,
+                  "BTTPredefinedActionType" : 206,
+                  "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+                  "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" layout-restore menu",
+                  "BTTTriggerParentUUID" : "E9B8228B-DD1A-5367-814E-7756EF585A2A",
+                  "BTTUUID" : "0AE5860D-0BFC-5D36-8080-5F2594DE70E9"
+                }
+              ],
+              "BTTMenuName" : "layout-restore",
+              "BTTOrder" : 82,
+              "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
+              "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
+              "BTTTriggerType" : 773,
+              "BTTUUID" : "E9B8228B-DD1A-5367-814E-7756EF585A2A"
+            },
+            {
+              "BTTMenuAvailability" : 0,
+              "BTTMenuConfig" : {
+                "BTTMenuAlwaysUseLightMode" : 1,
                 "BTTMenuAttributedText" : "<html><body style='text-align:left;'><span style='font-size:14px; color:white; font-family:-apple-system;'>Next hint</span></body></html>",
                 "BTTMenuItemBackgroundColor" : "0, 0, 0, 0",
                 "BTTMenuItemBackgroundColorHover" : "10, 132, 255, 255",
@@ -1571,16 +1659,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" next",
-                  "BTTTriggerParentUUID" : "568E5FB6-8C7E-533C-91EB-FE9AB31EAFD8",
-                  "BTTUUID" : "9AD40175-30A9-59B4-906B-30EB96C3EFBA"
+                  "BTTTriggerParentUUID" : "97B48EFA-6A6E-5A5E-B67E-0941EFA471FC",
+                  "BTTUUID" : "A7E87A00-3BD4-5BD8-9E6B-4FC8B7D99FFE"
                 }
               ],
               "BTTMenuName" : "hints-next",
-              "BTTOrder" : 79,
+              "BTTOrder" : 83,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "568E5FB6-8C7E-533C-91EB-FE9AB31EAFD8"
+              "BTTUUID" : "97B48EFA-6A6E-5A5E-B67E-0941EFA471FC"
             },
             {
               "BTTMenuAvailability" : 0,
@@ -1606,16 +1694,16 @@
                   "BTTPredefinedActionType" : 206,
                   "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
                   "BTTShellTaskActionScript" : "\"$HOME/.local/bin/hints\" mute",
-                  "BTTTriggerParentUUID" : "F91ADC3F-EAEA-57F7-BC4B-8839B0B7FE02",
-                  "BTTUUID" : "E550B0B7-A575-54B4-8B2E-1976EA089BD9"
+                  "BTTTriggerParentUUID" : "CDDB05F9-DD26-59E4-8988-D20554EFFE7F",
+                  "BTTUUID" : "CF91D764-7927-557D-B8DF-E481A8B9BEDD"
                 }
               ],
               "BTTMenuName" : "hints-mute",
-              "BTTOrder" : 80,
+              "BTTOrder" : 84,
               "BTTTriggerClass" : "BTTTriggerTypeFloatingMenu",
               "BTTTriggerParentUUID" : "03FA5A81-6DA1-548F-BDDA-30CE65BE5B8E",
               "BTTTriggerType" : 773,
-              "BTTUUID" : "F91ADC3F-EAEA-57F7-BC4B-8839B0B7FE02"
+              "BTTUUID" : "CDDB05F9-DD26-59E4-8988-D20554EFFE7F"
             }
           ],
           "BTTMenuName" : "Hints",
@@ -2606,6 +2694,108 @@
           "BTTTriggerOnDown" : 1,
           "BTTTriggerType" : 0,
           "BTTUUID" : "4100C407-9D7F-59E6-B622-3CF79E06BCA2"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/layout\" save",
+              "BTTTriggerParentUUID" : "ADDA45FA-8E91-597E-9336-59307923F325",
+              "BTTUUID" : "70BC06A6-0D33-51A2-BFA0-9F21AE09B4A9"
+            }
+          ],
+          "BTTGestureNotes" : "Layouts: save this desktop's windows under a name",
+          "BTTNamedTriggerAIDescription" : "Hyper+S saves where this desktop's windows are, under a name you choose",
+          "BTTOrder" : 69,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "layout-save",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "ADDA45FA-8E91-597E-9336-59307923F325"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only layout-save key",
+              "BTTTriggerParentUUID" : "47136B29-E495-5D1F-963C-E33813FE0307",
+              "BTTUUID" : "CDDF8391-3853-592D-ACE7-6BACCCE373D8"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "layout-save",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "47136B29-E495-5D1F-963C-E33813FE0307",
+              "BTTUUID" : "992DDC8E-0CB4-59E6-A678-109DEC01F4BF"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Layouts: save this desktop's windows under a name",
+          "BTTOrder" : 70,
+          "BTTShortcutKeyCode" : 1,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "47136B29-E495-5D1F-963C-E33813FE0307"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "exec \"$HOME/.local/bin/layout\" pick",
+              "BTTTriggerParentUUID" : "6C25EB1B-A962-5946-BB2E-95F74957C5C3",
+              "BTTUUID" : "EE5C0292-8753-5403-8CD6-28FD0630F1C5"
+            }
+          ],
+          "BTTGestureNotes" : "Layouts: pick a saved layout and put its windows back",
+          "BTTNamedTriggerAIDescription" : "Hyper+L puts a saved window layout back; Hyper+S saves one",
+          "BTTOrder" : 71,
+          "BTTTriggerClass" : "BTTTriggerTypeOtherTriggers",
+          "BTTTriggerName" : "layout-restore",
+          "BTTTriggerType" : 643,
+          "BTTUUID" : "6C25EB1B-A962-5946-BB2E-95F74957C5C3"
+        },
+        {
+          "BTTActionsToExecute" : [
+            {
+              "BTTIsPureAction" : true,
+              "BTTOrder" : 0,
+              "BTTPredefinedActionType" : 206,
+              "BTTShellTaskActionConfig" : "/bin/bash:::-c:::-:::",
+              "BTTShellTaskActionScript" : "\"$HOME/.local/bin/trigger\" --log-only layout-restore key",
+              "BTTTriggerParentUUID" : "F4854346-9F13-59A9-A35D-57B96D01FE30",
+              "BTTUUID" : "D8E17751-14B8-5E7B-9C71-CC02C3787791"
+            },
+            {
+              "BTTIsPureAction" : true,
+              "BTTNamedTriggerToTrigger" : "layout-restore",
+              "BTTOrder" : 1,
+              "BTTPredefinedActionType" : 248,
+              "BTTTriggerParentUUID" : "F4854346-9F13-59A9-A35D-57B96D01FE30",
+              "BTTUUID" : "34A559B5-0E7B-521D-8506-24C6B650B48F"
+            }
+          ],
+          "BTTAutoAdaptToKeyboardLayout" : 0,
+          "BTTGestureNotes" : "Layouts: pick a saved layout and put its windows back",
+          "BTTOrder" : 72,
+          "BTTShortcutKeyCode" : 37,
+          "BTTShortcutKeyboardType" : 0,
+          "BTTShortcutModifierKeys" : 1966080,
+          "BTTTriggerClass" : "BTTTriggerTypeKeyboardShortcut",
+          "BTTTriggerOnDown" : 1,
+          "BTTTriggerType" : 0,
+          "BTTUUID" : "F4854346-9F13-59A9-A35D-57B96D01FE30"
         }
       ]
     },

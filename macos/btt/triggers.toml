@@ -214,3 +214,22 @@ action = "Window: next display"
 hint = "Hyper+N moves the window to the next display"
 btt = { action = 47 }
 keys = ["⌃⌥⇧⌘N"]
+
+# Layouts: windows arranged by hand, saved under a name per setup and put back (`layout`).
+[[trigger]]
+name = "layout-save"
+group = "Windows"
+icon = "square.and.arrow.down"
+action = "Layouts: save this desktop's windows under a name"
+hint = "Hyper+S saves where this desktop's windows are, under a name you choose"
+run = "layout save"
+keys = ["⌃⌥⇧⌘S"]
+
+[[trigger]]
+name = "layout-restore"
+group = "Windows"
+icon = "rectangle.3.group"
+action = "Layouts: pick a saved layout and put its windows back"
+hint = "Hyper+L puts a saved window layout back; Hyper+S saves one"
+run = "layout pick"
+keys = ["⌃⌥⇧⌘L"]
