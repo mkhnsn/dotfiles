@@ -23,10 +23,9 @@ Fails when:
   unreachable  a setup (docked with the lid closed or open, laptop only) has no surface for it;
                every trigger needs a Hyper key (⌃⌥⇧⌘ + key), the keyboard being in every setup
   reserved     a Hyper key another tool owns
-  stale        the preset doesn't match triggers.toml (run `trigger-check --write`)
-
   unmeasured   an `icon` has no width in macos/btt/symbols.toml (run `trigger-check --measure`
                on a Mac)
+  stale        the preset doesn't match triggers.toml (run `trigger-check --write`)
 
 Icons: BTT draws an SF Symbol at its natural width, which differs per symbol, and puts the text
 right after it. So each icon is centered in a box as wide as the widest one and the text is
@@ -86,10 +85,16 @@ def symbol_widths(src):
     try:
         with open(os.path.join(src, SYMBOLS), "rb") as f:
             w = tomllib.load(f).get("width", {})
-    except (OSError, tomllib.TOMLDecodeError):
+    except (OSError, ValueError):  # missing, not UTF-8 or not TOML: every icon is then unmeasured
         return {}
-    return {k: v for k, v in w.items() if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0} \
+    return {k: v for k, v in w.items() if isinstance(v, (int, float)) and not isinstance(v, bool) and 0 < v < 1000} \
         if isinstance(w, dict) else {}
+
+
+def num(x):
+    """A number as BTT exports it: whole values as ints (8, not 8.0), so an export doesn't differ."""
+    x = round(x, 1)
+    return int(x) if x == int(x) else x
 
 
 def measure(src, triggers):
@@ -98,11 +103,15 @@ def measure(src, triggers):
     js = ("ObjC.import('AppKit'); var c=$.NSImageSymbolConfiguration.configurationWithPointSizeWeight(%d,0);"
           "JSON.stringify(%s.map(function(n){var i=$.NSImage.imageWithSystemSymbolNameAccessibilityDescription(n,$());"
           "return i.isNil()?null:i.imageWithSymbolConfiguration(c).size.width;}))" % (ICON_POINTS, json.dumps(names)))
+    if sys.platform != "darwin":
+        sys.exit("trigger-check: --measure needs macOS (it asks AppKit for each symbol's width)")
     try:
         r = subprocess.run(["osascript", "-l", "JavaScript", "-e", js], capture_output=True, text=True, timeout=30)
         widths = json.loads(r.stdout)
-    except (OSError, ValueError, subprocess.TimeoutExpired):
-        sys.exit("trigger-check: --measure needs macOS (it asks AppKit for each symbol's width)")
+    except subprocess.TimeoutExpired:
+        sys.exit("trigger-check: couldn't measure the icons: osascript didn't answer")
+    except ValueError:
+        sys.exit(f"trigger-check: couldn't measure the icons: {r.stderr.strip() or 'no answer from osascript'}")
     missing = [n for n, w in zip(names, widths) if w is None]
     if missing:
         sys.exit(f"trigger-check: no SF Symbol named {', '.join(missing)} on this Mac")
@@ -304,7 +313,9 @@ INTERNAL = {uid("hints", "menu"), uid("hints", "close"), uid("hints", "app-chang
     uid("hints", "setup", str(e)) for e in SETUP_EVENTS}
 ROW_H, GAP, PAD, WIDTH = 30, 2, 6, 500  # wide enough for the longest row with its icon
 TEXT_X = 10  # a row's text offset
-NO_ICON = 0  # what a row without an icon needs on top of the box to line up (checked on screen)
+# What a row without an icon needs on top of the box to line up. BTT leaves a gap after an icon but
+# starts an icon row further left, and the two cancel: 0 lines up on screen (1 was a point right).
+NO_ICON = 0
 
 
 def key_label(t):
@@ -387,10 +398,10 @@ def row(n, name, text, script, menu_uuid, header=False, shown=True, uuid_key=Non
         item["BTTMenuConfig"].update(BTTMenuItemIconType=2, BTTMenuItemSFSymbolName=icon, BTTMenuItemIconPosition=0,
                                      BTTMenuItemSFSymbolStyle=1, BTTMenuItemIconColor1="255, 255, 255, 217",
                                      BTTMenuItemResizeImage=2, BTTMenuItemImageWidth=ICON_POINTS,
-                                     BTTMenuItemImageHeight=ICON_POINTS, BTTMenuItemImageOffsetX=round(spare / 2, 1),
-                                     BTTMenuTextOffsetX=round(TEXT_X + spare, 1))
+                                     BTTMenuItemImageHeight=ICON_POINTS, BTTMenuItemImageOffsetX=num(spare / 2),
+                                     BTTMenuTextOffsetX=num(TEXT_X + spare))
     elif box and not header:
-        item["BTTMenuConfig"]["BTTMenuTextOffsetX"] = round(TEXT_X + box + NO_ICON, 1)  # in line with the icon rows' text
+        item["BTTMenuConfig"]["BTTMenuTextOffsetX"] = num(TEXT_X + box + NO_ICON)  # in line with the icon rows' text
     if script:
         # The action's UUID follows its row's: a row made anew gets its own action.
         item["BTTMenuItemActions"] = [shell_action(script, iid, uid("hints", "menu", name, "action") if not uuid_key
@@ -410,7 +421,7 @@ def hints_pieces(triggers):
     def add(name, text, script, **kw):
         rows.append(row(len(rows), name, text, script, menu_uuid, uuid_key=",".join(r["BTTMenuName"] for r in rows), **kw))
 
-    widths = symbol_widths(SOURCE[0]) if SOURCE[0] else {}
+    widths = symbol_widths(SOURCE[0]) if SOURCE[0] is not None else {}  # "" is the current directory
     used = [widths.get(t["icon"], ICON_POINTS) for t in cheat_sheet_rows(triggers) if isinstance(t.get("icon"), str)]
     box = max(used, default=0)  # every icon is centered in a box this wide
     add("Header", html.escape(title), None, header=True)
@@ -556,8 +567,12 @@ def main():
     ap.add_argument("--list", action="store_true", help="print the triggers and their keys")
     ap.add_argument("--measure", action="store_true", help="measure the icons' widths into macos/btt/symbols.toml (macOS)")
     a = ap.parse_args()
-    src = a.source or os.environ.get("CHEZMOI_SOURCE_DIR") or subprocess.run(
-        ["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+    src = a.source or os.environ.get("CHEZMOI_SOURCE_DIR")
+    if not src:
+        try:
+            src = subprocess.run(["chezmoi", "source-path"], capture_output=True, text=True).stdout.strip()
+        except OSError:
+            src = ""  # no chezmoi: the current directory
     SOURCE[0] = src
     triggers = load(src)
     if a.measure:

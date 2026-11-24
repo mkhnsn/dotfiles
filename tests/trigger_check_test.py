@@ -537,6 +537,25 @@ keys = ["⌃⌥⇧⌘↑"]
         self.assertEqual(plain["BTTMenuTextOffsetX"], tc.TEXT_X + 25 + tc.NO_ICON)
         self.assertEqual(rows["hints-next"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], tc.TEXT_X + 25 + tc.NO_ICON)
         self.assertEqual(rows["Header"]["BTTMenuConfig"]["BTTMenuTextOffsetX"], tc.TEXT_X)
+        # whole numbers as ints, as BTT exports them: an export mustn't make the preset stale
+        text = self.preset_text()
+        self.assertIn('"BTTMenuItemImageOffsetX" : 0,', text)
+        self.assertIn('"BTTMenuItemImageOffsetX" : 5.5,', text)
+        self.assertNotRegex(text, r'OffsetX" : \d+\.0\b')
+
+    def test_a_broken_symbols_file_reads_as_unmeasured(self):
+        with open(os.path.join(self.d, "macos/btt/symbols.toml"), "wb") as f:
+            f.write(b"\xff\xfe not utf-8")
+        p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\nicon = "cup.and.saucer.fill"'))
+        self.assertTrue(any("unmeasured: trigger keep-awake" in x for x in p), p)
+
+    def test_the_current_directory_as_source_still_finds_the_widths(self):
+        self.toml(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\nicon = "arrow.up.and.down"').replace(
+            'name = "mic-mute"', 'name = "mic-mute"\nicon = "cup.and.saucer.fill"'))
+        self.assertEqual(self.run_check("--write").returncode, 0)
+        r = subprocess.run([sys.executable, "-I", os.path.join(REPO, "dot_local/bin/executable_trigger-check"), "--source", ""],
+                           cwd=self.d, capture_output=True, text=True, env=dict(os.environ, CHEZMOI_SOURCE_DIR="", PATH="/nonexistent"))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)  # the same preset as with the path given
         # a re-created row has its own action, not the old row's
         acts = [a["BTTUUID"] for r in menu["BTTMenuItems"] for a in r.get("BTTMenuItemActions", [])]
         self.assertEqual(len(acts), len(set(acts)))
