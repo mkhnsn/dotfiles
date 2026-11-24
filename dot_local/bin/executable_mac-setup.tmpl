@@ -550,8 +550,9 @@ act_clt() {
 }
 act_brew()        { /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && eval "$(/opt/homebrew/bin/brew shellenv)"; }
 act_rosetta()      { sudo softwareupdate --install-rosetta --agree-to-license; }
-act_onepassword() { command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli
-                    if op_service; then echo "    Export OP_SERVICE_ACCOUNT_TOKEN in this shell, run chezmoi apply, then re-check."; else open -a 1Password; fi; }
+act_onepassword() { if op_service; then command -v op >/dev/null 2>&1 || brew install --cask 1password-cli
+                      echo "    Export OP_SERVICE_ACCOUNT_TOKEN in this shell, run chezmoi apply, then re-check."
+                    else command -v op >/dev/null 2>&1 || brew install --cask 1password 1password-cli; open -a 1Password; fi; }
 act_op_ssh()       { open -a 1Password; }
 act_claude_memory() { "$HOME/.local/bin/claude-memory" init; }
 act_claude_ha()    {

@@ -183,6 +183,12 @@ test_onepassword_service_account() {
   printf 'n\nq\n' > "$T/answers"
   MAC_SETUP_OP_MODE=service MAC_SETUP_TTY="$T/answers" run "$SCRIPT_SERVER"
   assert_has "OP_SERVICE_ACCOUNT_TOKEN"; assert_lacks "Integrate with 1Password CLI"
+  # Without op, a server gets the CLI alone, not the desktop app.
+  rm -f "$STUBS/op"; : > "$T/brew.log"
+  stub brew "echo \"\$*\" >> $T/brew.log; case \"\$1\" in --prefix) echo $T/brew ;; esac; exit 0"
+  printf 'y\nq\n' > "$T/answers"
+  MAC_SETUP_OP_MODE=service MAC_SETUP_TTY="$T/answers" run "$SCRIPT_SERVER"
+  grep -qx 'install --cask 1password-cli' "$T/brew.log" || fail "brew install: $(grep install "$T/brew.log")"
 }
 
 test_root_is_flagged() {
@@ -555,6 +561,7 @@ test_m365_admin_signed_in() {
 test_m365_admin_not_on_servers() {
   echo '{"username":"daily@example.com","tenantId":"tid-1"}' > "$HOME/.mg/mg.authrecord.tid-1.json"
   run "$SCRIPT_SERVER" --status
+  assert_has "Role: server"; assert_done "Homebrew installed"   # it ran
   assert_lacks "Generate TAP: echo-m365 signed in as its admin account"
 }
 
@@ -726,6 +733,7 @@ test_server_skips_workstation_steps() {
   stub mac-defaults 'echo "  Dock: dockutil not installed"; exit 1'
   stub brew "case \"\$*\" in *Brewfile.workstation*) exit 1 ;; --prefix) echo $T/brew ;; esac; exit 0"
   run "$SCRIPT_SERVER" --status
+  assert_has "Role: server"; assert_done "Homebrew installed"   # it ran
   assert_lacks "Workstation apps installed"; assert_lacks "HueForge installed"
   assert_lacks "gridfinity-studio installed"; assert_lacks "Slack signed in or activated"
   assert_lacks "Default browser is Chrome"
