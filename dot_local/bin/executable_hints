@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""hints: teaches the controls in macos/btt/triggers.toml, one hint at a time.
+"""hints: teaches the controls and shortcuts, one hint at a time.
 
 BTT runs `hints app` whenever the app in front changes. The first time each day it shows one
-general hint (a trigger with no `apps`), and the first time each day you switch to an app it
-shows one hint for that app (a trigger listing it in `apps`). Hints are BTT notifications titled
+general hint (one with no `apps`), and the first time each day you switch to an app it
+shows one hint for that app (one listing it in `apps`). Hints are BTT notifications titled
 "Hint", closed while their banner is up so they don't pile up in Notification Center. Hyper+H
 opens the cheat sheet, whose last rows run `hints next` and `hints mute`.
 
@@ -20,6 +20,16 @@ restarted and reloaded them).
 Which hint: one you haven't been shown yet, then the one shown least. A trigger fired 3 times
 (~/.local/state/triggers.log) is skipped: you know it.
 
+Hints come from four sources. In each scope (general, or an app) they're taken in turn, so one
+source doesn't crowd out the rest:
+  triggers   macos/btt/triggers.toml (their use is logged, so a known one stops)
+  shortcuts  macos/shortcuts.toml, the shortcut registry: every entry but the stock macOS and
+             app-menu ones (`hint = false` on an entry leaves it out)
+  tips       macos/hints.toml, written by hand: [[tip]] name, text, apps (optional)
+  aliases    the ones hints.toml names from dot_config/shell/aliases.zsh, shown in the terminal
+             apps it lists
+Use of the last three can't be measured, so each stops after it has been shown 3 times.
+
   hints app [bundle-id]      the daily hints, for the app in front (BTT runs this)
   hints setup                the setup changed: update the cheat sheet, maybe say what works now
   hints refresh              push the cheat sheet's rows again (btt-sync import runs this)
@@ -31,6 +41,7 @@ Which hint: one you haven't been shown yet, then the one shown least. A trigger 
   hints unmute <bundle-id|general|setup>
   hints on | off             all hints (the cheat sheet stays)
   hints status
+  hints check                macos/hints.toml is valid (tests/hints_test.py runs this)
 
 Runs are serialized with a lock (BTT starts one on every app switch). State:
 ~/.local/state/hints.json. Python 3.11+ standard library only (tomllib).
@@ -53,6 +64,11 @@ STATE = os.path.join(STATE_DIR, "hints.json")
 LOCK = os.path.join(STATE_DIR, "hints.lock")
 LOG = os.path.join(STATE_DIR, "triggers.log")
 KNOWN_AFTER = 3  # fired this many times: no more hints about it
+TIP_SHOWN_ENOUGH = 3  # a hint whose use can't be measured: shown this many times, then no more
+# Shortcut-registry owners whose entries are stock macOS or standard menu items: not worth a hint.
+STOCK_OWNERS = {"macos-default", "app-menus"}
+OWNER_NAMES = {"btt": "BetterTouchTool", "macos": "macOS", "alttab": "AltTab", "raycast": "Raycast",
+               "bartender": "Bartender"}
 CLOSE_AFTER = 4  # seconds: BTT can only close a notification while its banner is up (~5 s)
 GENERAL = "general"
 SETUP = "setup"
@@ -118,6 +134,108 @@ def load_triggers():
         return [t for t in tomllib.load(f).get("trigger", []) if t.get("hint")]
 
 
+def read_toml(path):
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except OSError:
+        return {}
+
+
+def check_tips(cfg):
+    """Problems in macos/hints.toml, as strings."""
+    problems, names = [], set()
+    tips = cfg.get("tip", [])
+    if not isinstance(tips, list) or not all(isinstance(t, dict) for t in tips):
+        return ["tips are [[tip]] tables (two brackets)"]
+    for t in tips:
+        n = t.get("name", "?")
+        if not isinstance(n, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", n):
+            problems.append(f"tip {n}: name must be lowercase letters, digits and dashes")
+        elif n in names:
+            problems.append(f"tip {n}: name used twice")
+        else:
+            names.add(n)
+        if not isinstance(t.get("text"), str) or not t["text"].strip():
+            problems.append(f"tip {n}: needs text")
+        apps = t.get("apps", [])
+        if not isinstance(apps, list) or not all(isinstance(a, str) and a for a in apps):
+            problems.append(f"tip {n}: apps must be a list of bundle IDs, like [\"com.google.Chrome\"]")
+    shell = cfg.get("shell", {})
+    if not isinstance(shell, dict):
+        return problems + ["shell must be a [shell] table"]
+    for key in ("apps", "aliases"):
+        v = shell.get(key, [])
+        if not isinstance(v, list) or not all(isinstance(a, str) and a for a in v):
+            problems.append(f"shell: {key} must be a list of strings")
+    return problems
+
+
+ALIAS = re.compile(r"""^\s*alias\s+([A-Za-z0-9_.+-]+)=(['"])(.*)\2\s*(?:#.*)?$""")
+
+
+def keys_label(keys):
+    return keys.replace("⌃⌥⇧⌘", "Hyper+") if keys.startswith("⌃⌥⇧⌘") and len(keys) > 4 else keys
+
+
+def load_extra(src=None):
+    """Hints that aren't triggers, per source: {source: [{"name", "hint", "apps", "tip": True}]}.
+    A missing or broken file gives no hints from that source, and one bad entry in hints.toml
+    drops its tips and aliases; `hints check` says why."""
+    src = src or source_dir()
+    out = {"shortcuts": [], "tips": [], "aliases": []}
+    try:
+        registry = read_toml(os.path.join(src, "macos/shortcuts.toml")).get("shortcut", [])
+    except tomllib.TOMLDecodeError:
+        registry = []
+    for e in registry if isinstance(registry, list) else []:
+        if not isinstance(e, dict) or not all(isinstance(e.get(k), str) and e[k] for k in ("owner", "keys", "action")):
+            continue
+        scope = e.get("scope", "global")
+        if e["owner"] in STOCK_OWNERS or e.get("hint") is False or not isinstance(scope, str):
+            continue
+        owner = OWNER_NAMES.get(e["owner"], e["owner"].capitalize())
+        out["shortcuts"].append({"name": f"shortcut:{e['owner']}:{e['keys']}" + ("" if scope == "global" else f"@{scope}"),
+                                 "tip": True, "hint": f"{keys_label(e['keys'])}  {e['action']} · {owner}",
+                                 "apps": [] if scope == "global" else [scope]})
+    try:
+        cfg = read_toml(os.path.join(src, "macos/hints.toml"))
+    except tomllib.TOMLDecodeError:
+        cfg = {}
+    if check_tips(cfg):
+        cfg = {}
+    for t in cfg.get("tip", []):
+        out["tips"].append({"name": f"tip:{t['name']}", "tip": True, "hint": t["text"], "apps": t.get("apps", [])})
+    shell = cfg.get("shell", {})
+    if shell.get("apps") and shell.get("aliases"):
+        found = {}
+        try:
+            with open(os.path.join(src, "dot_config/shell/aliases.zsh"), encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    m = ALIAS.match(line.rstrip("\n"))
+                    if m and m.group(3):
+                        found.setdefault(m.group(1), m.group(3))  # the first definition wins (ll with eza)
+        except OSError:
+            pass
+        for name in shell["aliases"]:  # only the ones listed, in that order
+            if name in found:
+                out["aliases"].append({"name": f"alias:{name}", "tip": True, "apps": list(shell["apps"]),
+                                       "hint": f"In the shell, {name} runs: {found[name]}"})
+    return out
+
+
+def load_hints():
+    """Every hint, each marked with its source's number (`candidates` takes the sources in turn).
+    If the other sources can't be read at all, the triggers still give their hints."""
+    triggers = load_triggers()
+    try:
+        extra = list(load_extra().values())
+    except Exception as e:  # BTT runs this on every app switch: never fail on a hand-edited file
+        print(f"hints: only the triggers' hints ({type(e).__name__}: {e}); see hints check", file=sys.stderr)
+        extra = []
+    return [dict(t, src=i) for i, source in enumerate([triggers] + extra) for t in source]
+
+
 def load_state():
     try:
         with open(STATE) as f:
@@ -169,17 +287,24 @@ def front_app():
 
 
 def candidates(triggers, scope):
-    if scope == GENERAL:
-        return [t for t in triggers if not t.get("apps")]
-    return [t for t in triggers if scope in t.get("apps", [])]
+    """A scope's hints, the sources taken in turn (the first of each, then the second of each, ...)
+    so one source doesn't crowd out the rest."""
+    mine = [t for t in triggers if (not t.get("apps") if scope == GENERAL else scope in t.get("apps", []))]
+    by_source = {}
+    for t in mine:
+        by_source.setdefault(t.get("src", 0), []).append(t)
+    lists = [by_source[k] for k in sorted(by_source)]
+    return [l[i] for i in range(max(map(len, lists), default=0)) for l in lists if i < len(l)]
 
 
 def pick(triggers, scope, state, counts):
     """The next hint for a scope (GENERAL or a bundle id), or None."""
-    pool = [t for t in candidates(triggers, scope) if counts.get(t["name"], 0) < KNOWN_AFTER]
+    mine = candidates(triggers, scope)
+    pool = [t for t in mine
+            if (state["seen"].get(t["name"], 0) < TIP_SHOWN_ENOUGH if t.get("tip") else counts.get(t["name"], 0) < KNOWN_AFTER)]
     if not pool:
         return None
-    order = {t["name"]: i for i, t in enumerate(triggers)}
+    order = {t["name"]: i for i, t in enumerate(mine)}
     return min(pool, key=lambda t: (state["seen"].get(t["name"], 0), order[t["name"]]))
 
 
@@ -187,7 +312,8 @@ def show(t, scope, app_name, state, setup=None):
     title = "Hint" if scope == GENERAL else f"Hint: {app_name or scope}"
     have = surfaces_in(setup if setup is not None else detect_setup())
     also = [TC.SURFACE_NAMES[s] for s in t.get("fires", []) if s in TC.SURFACE_NAMES and s in have]
-    body = t["hint"] + (f" (or the {' or '.join(also)})" if also else "") + " · Hyper+H for all"
+    body = t["hint"] if t.get("tip") else (
+        t["hint"] + (f" (or the {' or '.join(also)})" if also else "") + " · Hyper+H for all")
     notify(title, body)
     state["seen"][t["name"]] = state["seen"].get(t["name"], 0) + 1
     state["last"] = {"scope": scope, "on": datetime.date.today().isoformat()}
@@ -217,11 +343,12 @@ def cmd_app(args, state):
     refresh_rows(setup, triggers, state, bundle)
     if not state["enabled"]:
         return  # the cheat sheet stays current with hints off
+    hints = load_hints()
     for scope in (GENERAL, bundle):
         if not scope or scope in state["muted"] or state["shown_on"].get(scope) == today:
             continue
-        t = pick(triggers, scope, state, counts)
-        if scope != GENERAL and not candidates(triggers, scope):
+        t = pick(hints, scope, state, counts)
+        if scope != GENERAL and not candidates(hints, scope):
             continue  # no hints for this app: nothing to remember
         state["shown_on"][scope] = today
         if t:
@@ -310,14 +437,17 @@ def cmd_refresh(_, state):
 
 def cmd_next(args, state):
     bundle, name = (args[0], args[0]) if args else front_app()
-    triggers, counts = load_triggers(), fired_counts()
-    for scope in (bundle, GENERAL):
-        if scope and candidates(triggers, scope):
-            t = pick(triggers, scope, state, counts) or min(
-                candidates(triggers, scope), key=lambda t: state["seen"].get(t["name"], 0))
+    hints, counts = load_hints(), fired_counts()
+    scopes = [sc for sc in (bundle, GENERAL) if sc and candidates(hints, sc)]
+    for scope in scopes:  # one still to learn, the app's first
+        t = pick(hints, scope, state, counts)
+        if t:
             show(t, scope, name, state)
             return
-    print("hints: no hints yet; add a hint to a trigger in triggers.toml")
+    if scopes:  # all known or shown enough: the one shown least, again
+        show(min(candidates(hints, scopes[0]), key=lambda t: state["seen"].get(t["name"], 0)), scopes[0], name, state)
+        return
+    print("hints: no hints yet; add a hint to a trigger in triggers.toml or a tip to hints.toml")
 
 
 def cmd_mute(args, state):
@@ -327,7 +457,7 @@ def cmd_mute(args, state):
         scope = state["last"]["scope"]  # the hint on screen, or the one shown last today
     else:
         bundle = front_app()[0]
-        scope = bundle if bundle and candidates(load_triggers(), bundle) else GENERAL
+        scope = bundle if bundle and candidates(load_hints(), bundle) else GENERAL
     if scope not in state["muted"]:
         state["muted"].append(scope)
     print(f"muted {scope}; hints unmute {scope} brings it back")
@@ -356,14 +486,37 @@ def cmd_status(_, state):
         n = counts.get(t["name"], 0)
         known = " (known)" if n >= KNOWN_AFTER else ""
         print(f"  {t['name']:<{width}} shown {state['seen'].get(t['name'], 0)}, fired {n}{known}")
+    for source, items in load_extra().items():
+        done = sum(state["seen"].get(t["name"], 0) >= TIP_SHOWN_ENOUGH for t in items)
+        started = sum(0 < state["seen"].get(t["name"], 0) < TIP_SHOWN_ENOUGH for t in items)
+        print(f"  {source}: {len(items)} hints, {started} being shown, {done} done")
+
+
+def cmd_check():
+    src = source_dir()
+    try:
+        problems = check_tips(read_toml(os.path.join(src, "macos/hints.toml")))
+    except tomllib.TOMLDecodeError as e:
+        problems = [f"can't read it: {e}"]
+    problems = [f"macos/hints.toml: {p}" for p in problems]
+    names = [t["name"] for items in load_extra(src).values() for t in items]
+    problems += [f"{n}: two hints share this name" for n in sorted({n for n in names if names.count(n) > 1})]
+    shell = read_toml(os.path.join(src, "macos/hints.toml")).get("shell", {}) if not problems else {}
+    problems += [f"macos/hints.toml: shell: no alias {a} in dot_config/shell/aliases.zsh (one per line, quoted)"
+                 for a in shell.get("aliases", []) if f"alias:{a}" not in names]
+    if problems:
+        sys.exit("hints: " + "; ".join(problems))
+    print(f"ok: {len(names)} hints besides the triggers")
 
 
 def main():
     args = sys.argv[1:]
     cmd = args.pop(0) if args else "status"
-    if cmd not in ("app", "setup", "refresh", "next", "mute", "unmute", "status", "on", "off"):
+    if cmd not in ("app", "setup", "refresh", "next", "mute", "unmute", "status", "on", "off", "check"):
         print(next(p for p in __doc__.split("\n\n") if p.startswith("  hints ")))
         sys.exit(2)
+    if cmd == "check":
+        return cmd_check()
     os.makedirs(STATE_DIR, exist_ok=True)
     lock = open(LOCK, "w")
     fcntl.flock(lock, fcntl.LOCK_EX)  # one run at a time: read, decide, show, write

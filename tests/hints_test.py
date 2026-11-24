@@ -165,6 +165,117 @@ class Hints(unittest.TestCase):
         self.run_hints("on")
         self.assertTrue(self.state_json()["enabled"])
 
+    # ---- hints that aren't triggers: the shortcut registry, hints.toml, shell aliases ----
+    def more_sources(self):
+        os.makedirs(os.path.join(self.src, "dot_config/shell"))
+        with open(os.path.join(self.src, "macos/shortcuts.toml"), "w") as f:
+            f.write('[[shortcut]]\nkeys = "⇧⌘V"\nowner = "raycast"\naction = "Clipboard History"\n'
+                    '[[shortcut]]\nkeys = "⌘Q"\nowner = "app-menus"\naction = "Quit"\n'
+                    '[[shortcut]]\nkeys = "⌃⇧⌘V"\nowner = "zoom"\nscope = "us.zoom.xos"\naction = "Video"\nhint = false\n')
+        with open(os.path.join(self.src, "macos/hints.toml"), "w") as f:
+            f.write('[shell]\napps = ["com.apple.Terminal"]\naliases = ["ll"]\n'
+                    '[[tip]]\nname = "reopen"\ntext = "⇧⌘T reopens the tab you just closed"\napps = ["com.google.Chrome"]\n')
+        with open(os.path.join(self.src, "dot_config/shell/aliases.zsh"), "w") as f:
+            f.write("alias g='git'\nif x; then\n  alias ll='eza -al'\nelse\n  alias ll='ls -al'\nfi\nalias -s md=markless\n")
+
+    def bodies(self):
+        return [s.split(" | ", 1)[1] for s in self.shown()]
+
+    def test_sources_take_turns_and_stock_shortcuts_are_left_out(self):
+        self.more_sources()
+        self.front("com.apple.Finder", "Finder")
+        for _ in range(4):
+            self.run_hints("next")
+        # a trigger, then the registry's one general entry, then the next triggers: never ⌘Q
+        self.assertEqual(self.bodies(), ["Hyper+M mutes the mic · Hyper+H for all", "⇧⌘V  Clipboard History · Raycast",
+                                         "Hyper+K keeps the Mac awake · Hyper+H for all",
+                                         "Hyper+M mutes the mic · Hyper+H for all"])
+
+    def test_app_hints_come_from_tips_and_aliases(self):
+        self.more_sources()
+        self.front("com.google.Chrome", "Chrome")
+        self.run_hints("next")
+        self.front("com.apple.Terminal", "Terminal")
+        self.run_hints("next")
+        self.assertEqual(self.shown(), ["Hint: Chrome | ⇧⌘T reopens the tab you just closed",
+                                        "Hint: Terminal | In the shell, ll runs: eza -al"])  # g isn't listed; the first ll wins
+
+    def test_unmeasured_hints_stop_after_three_showings(self):
+        self.more_sources()
+        self.front("com.google.Chrome", "Chrome")
+        with open(os.path.join(self.state, "hints.json"), "w") as f:
+            json.dump({"seen": {"tip:reopen": 3}}, f)
+        self.run_hints("app")
+        self.assertEqual(self.bodies(), ["Hyper+M mutes the mic · Hyper+H for all"])  # the general one only
+        self.assertIn("tips: 1 hints, 0 being shown, 1 done", self.run_hints("status").stdout)
+
+    def test_hint_false_and_a_bad_tips_file(self):
+        self.more_sources()
+        self.front("us.zoom.xos", "zoom.us")
+        self.run_hints("next")
+        self.assertEqual(self.bodies(), ["Hyper+V turns the Zoom camera on or off · Hyper+H for all"])
+        self.assertEqual(self.run_hints("check").stdout, "ok: 3 hints besides the triggers\n")
+        with open(os.path.join(self.src, "macos/hints.toml"), "a") as f:
+            f.write('[[tip]]\nname = "Bad Name"\napps = "chrome"\n')
+        r = self.run_hints("check")
+        self.assertEqual(r.returncode, 1)
+        for want in ("name must be lowercase", "needs text", "apps must be a list"):
+            self.assertIn(want, r.stderr)
+        self.front("com.google.Chrome", "Chrome")
+        self.run_hints("next")  # a bad file gives no tips (Chrome's only hint), and the others still show
+        self.assertEqual(self.bodies()[1:], ["Hyper+M mutes the mic · Hyper+H for all"])
+
+    def test_wrong_shaped_files_never_break_the_triggers_hints(self):
+        self.more_sources()
+        self.front("com.apple.Finder", "Finder")
+        for tips, registry in (('[tip]\nname = "x"\n', None), ('tip = "x"\n', None), ('shell = "x"\n', None),
+                               (None, '[shortcut]\nkeys = "⌘K"\n'), (None, '[[shortcut]]\nkeys = "⌘K"\naction = 5\n'),
+                               (None, '[[shortcut]]\nkeys = ["⌘K"]\nowner = ["a"]\naction = "A"\n')):
+            with self.subTest(tips=tips, registry=registry):
+                for name, text in (("hints.toml", tips), ("shortcuts.toml", registry)):
+                    if text is not None:
+                        with open(os.path.join(self.src, "macos", name), "w") as f:
+                            f.write(text)
+                before = len(self.shown())
+                r = self.run_hints("next")
+                self.assertEqual((r.returncode, len(self.shown())), (0, before + 1), r.stderr)
+                self.assertNotIn("Traceback", self.run_hints("check").stderr)
+
+    def test_sources_take_turns_within_an_app(self):
+        self.more_sources()
+        with open(os.path.join(self.src, "macos/hints.toml"), "a") as f:
+            f.write('[[tip]]\nname = "t1"\ntext = "tip one"\napps = ["com.apple.Terminal"]\n'
+                    '[[tip]]\nname = "t2"\ntext = "tip two"\napps = ["com.apple.Terminal"]\n')
+        with open(os.path.join(self.src, "macos/shortcuts.toml"), "a") as f:
+            f.write('[[shortcut]]\nkeys = "⌃⌥⇧⌘B"\nowner = "bartender"\nscope = "com.apple.Terminal"\naction = "Bar"\n')
+        for _ in range(4):
+            self.run_hints("next")
+        self.assertEqual(self.bodies(), ["Hyper+B  Bar · Bartender", "tip one", "In the shell, ll runs: eza -al", "tip two"])
+
+    def test_showing_a_tip_three_times_retires_it_and_next_moves_on(self):
+        self.more_sources()
+        self.front("com.google.Chrome", "Chrome")
+        for _ in range(4):
+            self.run_hints("next")
+        # the Chrome tip three times, then a general hint: not the retired tip forever
+        self.assertEqual(self.bodies(), ["⇧⌘T reopens the tab you just closed"] * 3 + ["Hyper+M mutes the mic · Hyper+H for all"])
+        self.assertEqual(self.state_json()["seen"]["tip:reopen"], 3)
+
+    def test_check_names_an_alias_that_isnt_in_the_shell_config(self):
+        self.more_sources()
+        with open(os.path.join(self.src, "macos/hints.toml")) as f:
+            text = f.read()
+        with open(os.path.join(self.src, "macos/hints.toml"), "w") as f:
+            f.write(text.replace('aliases = ["ll"]', 'aliases = ["ll", "nope"]'))
+        r = self.run_hints("check")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("no alias nope", r.stderr)
+
+    def test_repo_hints_file_is_valid(self):
+        env = dict(os.environ, CHEZMOI_SOURCE_DIR=REPO, XDG_STATE_HOME=self.state)
+        r = subprocess.run([sys.executable, "-I", HINTS, "check"], env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
     def test_status_lists_known_triggers(self):
         self.fired("mic-mute", 3)
         out = self.run_hints("status").stdout
