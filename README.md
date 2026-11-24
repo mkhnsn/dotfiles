@@ -538,7 +538,11 @@ Hyper key.
   row only while one of those apps is in front (`hints app` shows and hides it, and the panel
   sizes to its rows). Rows sit under a header per `group` (Calls, Mac, Windows) and start with
   the trigger's `icon`, an SF Symbol; a group whose rows are all app rows shows its header with
-  them. The last rows are Next hint
+  them. BTT draws each symbol at its own width with the text straight after it, so every icon is
+  centered in a box as wide as the widest, indented under the headers' text, and the row text
+  starts just after the box; the widths
+  are in `macos/btt/symbols.toml`, written by `trigger-check --measure` on a Mac (run it after
+  giving a trigger a new icon). The last rows are Next hint
   and Mute these hints. `trigger-check` generates it, a BTT floating menu named "Hints". BTT keeps
   an existing row's place, so when a row is added or moved, it and the rows after it are
   generated as new rows and land in order.

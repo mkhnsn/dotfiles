@@ -632,7 +632,7 @@
             "BTTMenuDisableDrag" : 1,
             "BTTMenuElementIdentifier" : "Hints",
             "BTTMenuFrameHeight" : 682,
-            "BTTMenuFrameWidth" : 460,
+            "BTTMenuFrameWidth" : 500,
             "BTTMenuHorizontalSpacing" : 2,
             "BTTMenuItemBackgroundColor" : "28, 28, 30, 200",
             "BTTMenuItemBackgroundType" : 4,
@@ -667,9 +667,9 @@
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -693,9 +693,9 @@
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -720,17 +720,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 20,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "mic.slash",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 26
               },
               "BTTMenuItemActions" : [
                 {
@@ -763,17 +764,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "video",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 0,
                 "BTTMenuItemVisibleWhileInactive" : 0,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -806,17 +808,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "video",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 0,
                 "BTTMenuItemVisibleWhileInactive" : 0,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -849,17 +852,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "video",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 0,
                 "BTTMenuItemVisibleWhileInactive" : 0,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -889,9 +893,9 @@
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -916,17 +920,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 15.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "cup.and.saucer.fill",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 17
               },
               "BTTMenuItemActions" : [
                 {
@@ -956,9 +961,9 @@
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
                 "BTTMenuTextOffsetX" : 10
@@ -983,17 +988,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.lefthalf.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1026,17 +1032,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.righthalf.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1069,17 +1076,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 18.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "arrow.up.left.and.arrow.down.right",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 23
               },
               "BTTMenuItemActions" : [
                 {
@@ -1112,17 +1120,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.leftthird.inset.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1155,17 +1164,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.center.inset.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1198,17 +1208,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.rightthird.inset.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1241,17 +1252,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.lefthalf.inset.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1284,17 +1296,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 16.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "rectangle.righthalf.inset.filled",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 19
               },
               "BTTMenuItemActions" : [
                 {
@@ -1327,17 +1340,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 21,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "arrow.up.and.down",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 28
               },
               "BTTMenuItemActions" : [
                 {
@@ -1370,17 +1384,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 17.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "scope",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 21
               },
               "BTTMenuItemActions" : [
                 {
@@ -1413,17 +1428,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 18.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "arrow.left.square",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 23
               },
               "BTTMenuItemActions" : [
                 {
@@ -1456,17 +1472,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 18.5,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "arrow.right.square",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 23
               },
               "BTTMenuItemActions" : [
                 {
@@ -1499,17 +1516,18 @@
                 "BTTMenuItemIconPosition" : 0,
                 "BTTMenuItemIconType" : 2,
                 "BTTMenuItemImageHeight" : 16,
+                "BTTMenuItemImageOffsetX" : 13,
                 "BTTMenuItemImageWidth" : 16,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemResizeImage" : 2,
                 "BTTMenuItemSFSymbolName" : "display.2",
                 "BTTMenuItemSFSymbolStyle" : 1,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 10
+                "BTTMenuTextOffsetX" : 12
               },
               "BTTMenuItemActions" : [
                 {
@@ -1539,12 +1557,12 @@
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 34
+                "BTTMenuTextOffsetX" : 42
               },
               "BTTMenuItemActions" : [
                 {
@@ -1574,12 +1592,12 @@
                 "BTTMenuItemBackgroundType" : 4,
                 "BTTMenuItemCornerRadius" : 7,
                 "BTTMenuItemMaxHeight" : 30,
-                "BTTMenuItemMaxWidth" : 448,
+                "BTTMenuItemMaxWidth" : 488,
                 "BTTMenuItemMinHeight" : 30,
-                "BTTMenuItemMinWidth" : 448,
+                "BTTMenuItemMinWidth" : 488,
                 "BTTMenuItemVisibleWhileActive" : 1,
                 "BTTMenuItemVisibleWhileInactive" : 1,
-                "BTTMenuTextOffsetX" : 34
+                "BTTMenuTextOffsetX" : 42
               },
               "BTTMenuItemActions" : [
                 {

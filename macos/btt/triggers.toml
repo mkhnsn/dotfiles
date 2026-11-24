@@ -21,7 +21,8 @@
 # group    the cheat sheet's section for its row (optional): a group's triggers, kept together
 #          in this file, sit under one header. A trigger without one, after a group, sits
 #          under that group's header too: put ungrouped triggers first.
-# icon     an SF Symbol name shown at the left of its row (optional), like "mic.slash"
+# icon     an SF Symbol name shown at the left of its row (optional), like "mic.slash". After
+#          adding one, run `trigger-check --measure` on a Mac (its width, for lining icons up)
 # apps     bundle IDs it belongs to (optional; empty means every app). Its keys then work only in
 #          those apps (the same key can do something else elsewhere), its cheat-sheet row shows
 #          only there, and its hint shows the first time each day you switch to one of them;
