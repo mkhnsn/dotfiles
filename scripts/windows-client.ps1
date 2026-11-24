@@ -41,7 +41,7 @@ function Install-WingetPackage($id, $name) {
 # ---- winget packages ----
 Install-WingetPackage 'RedHat.Podman'          'Podman'
 Install-WingetPackage 'RedHat.Podman-Desktop'  'Podman Desktop'
-# Helm is installed NATIVELY in WSL at v3.x by run_dev-openshift.sh -- the winget Helm is v4.x,
+# Helm is installed NATIVELY in WSL at v3.x by run_after_dev-openshift.sh -- the winget Helm is v4.x,
 # which breaks Helm-3 charts -- so it is intentionally NOT installed on Windows.
 Install-WingetPackage 'Git.Git'                'Git for Windows'
 

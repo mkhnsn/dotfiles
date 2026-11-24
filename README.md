@@ -140,26 +140,37 @@ Two notes:
   `-Mono` variant keeps icons single-cell-width, best for terminals. `FONT_FACE` in
   `run_windows-terminal.sh.tmpl` must match the family name shown in the WT font dropdown.
 
+#### General dev tools on Linux
+
+On full-setup Linux machines (and `dev_openshift` ones), `run_install-packages.sh.tmpl` installs
+the tools macOS gets from the `Brewfile`:
+
+- **Node.js** via [`fnm`](https://github.com/Schniz/fnm) in `~/.local/bin` (`env.zsh` wires up
+  `fnm env --use-on-cd`), with the current LTS as the default unless one is already set.
+- **pnpm** as its own executable (`~/.local/share/pnpm-standalone`, linked into `~/.local/bin`).
+- **Python 3** with `venv`/`pip` (`python3-full` on apt).
+- **Ansible**, isolated as a uv tool.
+
 #### OpenShift client dev toolchain (`dev_openshift`)
 
-Opt-in toolchain for the OpenShift client engagement. Enable it at init by answering yes to
+Opt-in additions for the OpenShift client engagement, and nothing else: with it off, a machine
+is missing only what that work needs. Enable it at init by answering yes to
 the "OpenShift dev toolchain?" prompt, seeding `DOTFILES_OPENSHIFT=1` in the env, or setting
-`dev_openshift = true` in the chezmoi config. It's off by default, so personal machines are
-unaffected.
+`dev_openshift = true` in the chezmoi config. It's off by default.
 
-When on, `run_dev-openshift.sh.tmpl` (every apply, idempotent) installs **inside WSL/Linux**:
+When on, **inside WSL/Linux**:
 
-- **Node.js 22 LTS** via [`fnm`](https://github.com/Schniz/fnm) (installed to `~/.local/bin`;
-  `env.zsh` wires up `fnm env --use-on-cd`).
-- **Python 3** with `venv`/`pip` (`python3-full` on apt).
-- **Ansible**, isolated via `uv tool install ansible` (falls back to a `~/.venvs/ansible` venv).
+- `run_after_dev-openshift.sh.tmpl` (every apply, idempotent) installs **Node 22 and 24** with
+  `fnm` (the versions the client repos pin; 22 becomes the default) and **Helm 3.x** natively in
+  `~/.local/bin` (the Windows Helm is 4.x, which breaks Helm 3 charts).
+- On WSL it **symlinks the Windows binaries** `podman` and `oc` into `~/.local/bin` (the
+  FIPS-approved Windows builds; chezmoi shims, it does not install them). Git stays WSL-native
+  on purpose. If a `.exe` isn't found, apply still succeeds and prints a hint.
+- `~/.config/shell/openshift.zsh` (`KUBECONFIG`, `k` and `kubectl` as `oc`, `ansiblevenv`) and
+  `crc-hosts` are deployed.
+- The JFrog credentials, the `~/src/ngde` workspace clone and the work git identity apply.
 
-And on WSL it **symlinks the Windows binaries** into `~/.local/bin` — `podman`, `helm`, `oc` →
-the `.exe` on the Windows PATH (these are the FIPS-approved Windows builds; chezmoi shims, it
-does not install them). Git stays WSL-native on purpose. If a `.exe` isn't found, apply still
-succeeds and prints a hint.
-
-> Path-translation caveat: the shimmed `podman`/`helm`/`oc` are Windows binaries, so paths you
+> Path-translation caveat: the shimmed `podman`/`oc` are Windows binaries, so paths you
 > pass them are Windows paths — use `wslpath -w` when handing them a WSL path.
 
 The Windows side is a separate, explicit step — run **`scripts/windows-client.ps1`** once from

@@ -5,13 +5,15 @@ set -euo pipefail
 
 {{ template "todo.sh" }}
 
-# OpenShift client dev toolchain (opt-in via the `dev_openshift` flag).
-#   - Installs Node 22 LTS + Node 24, Python 3 + venv, Ansible, and Helm 3.x INSIDE WSL.
+# OpenShift client dev toolchain (opt-in via the `dev_openshift` flag): only what the
+# client's builds need on top of the general dev tools from run_install-packages.
+#   - Installs Node 22 + Node 24 (the versions the client repos pin) and Helm 3.x INSIDE WSL.
 #   - On WSL, symlinks Podman / oc to the FIPS-approved Windows binaries
 #     (does not install them — see scripts/windows-client.ps1 for the Windows side).
 #     Helm is installed natively at v3.x because the Windows (winget) Helm is v4.x,
 #     which breaks Helm-3 charts.
-# Plain run_ (every apply): idempotent, each step guarded so it retries cleanly.
+# run_after_ (every apply, after run_install-packages has installed fnm): idempotent, each
+# step guarded so it retries cleanly.
 
 SUDO=""
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
@@ -21,63 +23,21 @@ mkdir -p "$HOME/.local/bin"
 
 note() { printf '[dev-openshift] %s\n' "$*"; }
 
-# ---- Node.js 22 LTS via fnm ----
-if ! command -v fnm >/dev/null 2>&1; then
-  note "installing fnm into ~/.local/bin"
-  curl -fsSL https://fnm.vercel.app/install \
-    | bash -s -- --install-dir "$HOME/.local/bin" --skip-shell >/dev/null 2>&1 || \
-    note "fnm install failed; skipping Node"
-fi
+# ---- Node 22 and 24, the versions the client repos pin ----
+# fnm, a default Node, pnpm, Python and Ansible are general dev tools: run_install-packages
+# installs them on every full-setup Linux machine, and on these.
+export PATH="$HOME/.local/bin:$PATH"
 if command -v fnm >/dev/null 2>&1; then
-  export PATH="$HOME/.local/bin:$PATH"
   eval "$(fnm env)" 2>/dev/null || true
-  if ! fnm list 2>/dev/null | grep -q 'v22\.'; then
-    note "installing Node 22 LTS"
-    fnm install 22 >/dev/null 2>&1 || note "fnm install 22 failed"
-  fi
-  if ! fnm list 2>/dev/null | grep -q 'v24\.'; then
-    note "installing Node 24 (some frontend repos pin it)"
-    fnm install 24 >/dev/null 2>&1 || note "fnm install 24 failed"
-  fi
-  fnm alias default 22 >/dev/null 2>&1 || true
-  # pnpm through corepack, so each repo gets the version its packageManager pins.
-  # Shims go in ~/.local/bin, which stays on PATH whichever Node fnm switches to.
-  if ! command -v pnpm >/dev/null 2>&1; then
-    fnm use default >/dev/null 2>&1 || true
-    if command -v corepack >/dev/null 2>&1; then
-      note "enabling pnpm through corepack"
-      corepack enable --install-directory "$HOME/.local/bin" pnpm || note "corepack enable failed"
-    else
-      todo "dev-openshift: no corepack in Node; install pnpm by hand"
+  for v in 22 24; do
+    if ! fnm list 2>/dev/null | grep -q "v$v\\."; then
+      note "installing Node $v"
+      fnm install "$v" >/dev/null 2>&1 || note "fnm install $v failed"
     fi
-  fi
-fi
-
-# ---- Python 3 (full stdlib + venv) ----
-if ! python3 -c 'import venv, ensurepip' >/dev/null 2>&1; then
-  note "installing python3 + venv support"
-  if command -v apt-get >/dev/null 2>&1; then
-    $SUDO apt-get install -y python3-full python3-venv python3-pip 2>/dev/null || true
-  elif command -v dnf >/dev/null 2>&1; then
-    $SUDO dnf install -y python3 python3-pip 2>/dev/null || true
-  elif command -v pacman >/dev/null 2>&1; then
-    $SUDO pacman -Sy --noconfirm python python-pip 2>/dev/null || true
-  fi
-fi
-
-# ---- Ansible (isolated; uv tool, falling back to a venv) ----
-if ! command -v ansible >/dev/null 2>&1; then
-  if command -v uv >/dev/null 2>&1; then
-    note "installing ansible via uv tool"
-    uv tool install --quiet ansible || note "uv tool install ansible failed"
-  else
-    note "uv not found; installing ansible into ~/.venvs/ansible"
-    if python3 -m venv "$HOME/.venvs/ansible" 2>/dev/null; then
-      "$HOME/.venvs/ansible/bin/pip" install --quiet --upgrade pip ansible || true
-      ln -sf "$HOME/.venvs/ansible/bin/ansible"          "$HOME/.local/bin/ansible"
-      ln -sf "$HOME/.venvs/ansible/bin/ansible-playbook" "$HOME/.local/bin/ansible-playbook"
-    fi
-  fi
+  done
+  fnm default 22 >/dev/null 2>&1 || true
+else
+  todo "dev-openshift: fnm is missing, so Node 22 and 24 aren't installed (run_install-packages installs it; see its todo)"
 fi
 
 # ---- Helm 3.x (native; the Windows/winget Helm is 4.x, which breaks Helm-3 charts) ----
