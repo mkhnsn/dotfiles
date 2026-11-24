@@ -90,62 +90,8 @@ owner = "app-menus"
 action = "Quit"
 
 # ---- BetterTouchTool (macos/btt/Default.bttpreset) ---------------------------------------------
-# Window management: drag-to-snap (BTT settings) and these keys. They're the keys Raycast used,
-# so the Stream Deck window buttons keep working.
-[[shortcut]]
-keys = "⌃⌥←"
-owner = "btt"
-action = "Window: left half"
-
-[[shortcut]]
-keys = "⌃⌥→"
-owner = "btt"
-action = "Window: right half"
-
-[[shortcut]]
-keys = "⌃⌥↩"
-owner = "btt"
-action = "Window: maximize"
-
-[[shortcut]]
-keys = "⌃⌥D"
-owner = "btt"
-action = "Window: left third"
-
-[[shortcut]]
-keys = "⌃⌥F"
-owner = "btt"
-action = "Window: center third"
-
-[[shortcut]]
-keys = "⌃⌥G"
-owner = "btt"
-action = "Window: right third"
-
-[[shortcut]]
-keys = "⌃⌥E"
-owner = "btt"
-action = "Window: left two thirds"
-
-[[shortcut]]
-keys = "⌃⌥T"
-owner = "btt"
-action = "Window: right two thirds"
-
-[[shortcut]]
-keys = "⌃⌥⇧↩"
-owner = "btt"
-action = "Window: maximize height"
-
-[[shortcut]]
-keys = "⌃⌥⇧←"
-owner = "btt"
-action = "Window: one space left"
-
-[[shortcut]]
-keys = "⌃⌥⇧→"
-owner = "btt"
-action = "Window: one space right"
+# Window management: drag-to-snap (BTT settings) and the window triggers' keys, which are in
+# macos/btt/triggers.toml with the other named triggers.
 
 # Hold the modifiers and move the pointer (BTT › Window Snapping & Moving › Moving & Resizing
 # Modifier Keys; read from the preset's general settings).

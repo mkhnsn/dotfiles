@@ -36,7 +36,11 @@ KEYS = {"A": 0, "S": 1, "D": 2, "F": 3, "H": 4, "G": 5, "Z": 6, "X": 7, "C": 8, 
         "6": 22, "5": 23, "=": 24, "9": 25, "7": 26, "-": 27, "8": 28, "0": 29, "]": 30, "O": 31,
         "U": 32, "[": 33, "I": 34, "P": 35, "↩": 36, "L": 37, "J": 38, "'": 39, "K": 40, ";": 41,
         "\\": 42, ",": 43, "/": 44, "N": 45, "M": 46, ".": 47, "⇥": 48, "Space": 49, "`": 50,
-        "F13": 105, "F14": 107, "F15": 113, "F16": 106, "F17": 64, "F18": 79, "F19": 80, "F20": 90}
+        "F13": 105, "F14": 107, "F15": 113, "F16": 106, "F17": 64, "F18": 79, "F19": 80, "F20": 90,
+        "←": 123, "→": 124, "↓": 125, "↑": 126}
+# macOS reports Fn with the arrow keys, so BTT stores it in their modifier flags (shortcut-check
+# treats it as implied).
+FN, ARROWS = 1 << 23, {123, 124, 125, 126}
 # Hyper keys owned elsewhere (macos/shortcuts.toml): Bartender, the ops menu,
 # macOS sysdiagnose.
 RESERVED = {"B", "/", "Space", ".", ","}
@@ -175,9 +179,10 @@ def shell_action(script, parent, uuid_, order):
             "BTTShellTaskActionScript": script, "BTTTriggerParentUUID": parent, "BTTUUID": uuid_}
 
 
-# A BTT action's own top-level keys that `fields` may set (Send Shortcut to Specific App, 128).
+# A BTT action's own top-level keys that `fields` may set (Send Shortcut to Specific App, 128;
+# Move or Resize Window to Custom Position and Size, 251).
 ACTION_FIELDS = {"BTTShortcutToSend", "BTTShortcutApp", "BTTShortcutAppUnderCursor", "BTTShortcutSwitchToAppFirst",
-                 "BTTLayoutIndependentActionChar"}
+                 "BTTLayoutIndependentActionChar", "BTTActionMoveResizeName", "BTTActionMoveResizeConfig"}
 
 
 def wanted(triggers):
@@ -212,7 +217,8 @@ def wanted(triggers):
                              "BTTUUID": uid("key", n, k, "fire") if scope == GLOBAL else uid("key", n, k, scope, "fire")}],
                         "BTTAutoAdaptToKeyboardLayout": 0, "BTTGestureNotes": t["action"], "BTTOrder": order,
                         "BTTShortcutKeyCode": code, "BTTShortcutKeyboardType": 0,
-                        "BTTShortcutModifierKeys": flags, "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
+                        "BTTShortcutModifierKeys": flags | (FN if code in ARROWS else 0),
+                        "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut",
                         "BTTTriggerOnDown": 1, "BTTTriggerType": 0, "BTTUUID": kid}))
             order += 1
     return out + [(GLOBAL, p) for p in hints_pieces(triggers)]

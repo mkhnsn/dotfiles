@@ -205,6 +205,35 @@ class Fixture(unittest.TestCase):
         self.assertEqual(self.run_check().returncode, 1)  # no action/hint: reported
 
     # ---- generation ----
+    def test_arrow_keys_carry_fn_and_window_actions_keep_their_fields(self):
+        self.toml(GOOD + '''
+[[trigger]]
+name = "window-left-half"
+action = "Window: left half"
+hint = "Hyper+← puts the window in the left half"
+btt = { action = 19 }
+keys = ["⌃⌥⇧⌘←", "⌃⌥←"]
+
+[[trigger]]
+name = "window-full-height"
+action = "Window: full height"
+hint = "Hyper+↑ makes the window as tall as the screen"
+btt = { action = 251, fields = { BTTActionMoveResizeName = "Full height", BTTActionMoveResizeConfig = '{"BTTMoveResizeVersion":3}' } }
+keys = ["⌃⌥⇧⌘↑"]
+''')
+        r = self.run_check("--write")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        ts = self.read_preset()["BTTPresetContent"][0]["BTTTriggers"]
+        keys = {(t["BTTShortcutKeyCode"], t["BTTShortcutModifierKeys"]) for t in ts
+                if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut" and t.get("BTTGestureNotes", "").startswith("Window")}
+        # macOS reports Fn with arrows, so BTT stores it; shortcut-check reads it back as implied.
+        self.assertEqual(keys, {(123, tc.HYPER | tc.FN), (123, (1 << 18) | (1 << 19) | tc.FN), (126, tc.HYPER | tc.FN)})
+        self.assertEqual(sc.keys_from_code(123, tc.HYPER | tc.FN), "⌃⌥⇧⌘←")
+        act = next(t for t in ts if t.get("BTTTriggerName") == "window-full-height")["BTTActionsToExecute"][0]
+        self.assertEqual((act["BTTPredefinedActionType"], act["BTTActionMoveResizeName"], act["BTTActionMoveResizeConfig"]),
+                         (251, "Full height", '{"BTTMoveResizeVersion":3}'))
+        self.assertEqual(self.run_check().returncode, 0)
+
     def test_generate_writes_named_and_key_triggers(self):
         r = self.run_check("--write")
         self.assertEqual(r.returncode, 0, r.stdout)
