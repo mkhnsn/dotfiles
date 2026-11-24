@@ -57,6 +57,9 @@ jobs:
       - name: brew-why tests
         run: python3 -I tests/brew_why_test.py
 
+      - name: Tools leave no __pycache__ next to themselves
+        run: python3 -I tests/no_pycache_test.py
+
       - name: BTT preset is normalized and keeps pinned settings
         run: python3 -I tests/btt_preset_test.py
 

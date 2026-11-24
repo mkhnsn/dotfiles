@@ -34,6 +34,7 @@ def trigger_check():
     for name in ("trigger-check", "executable_trigger-check"):
         path = os.path.join(here, name)
         if os.path.exists(path):
+            sys.dont_write_bytecode = True  # no __pycache__ next to the deployed tools (BTT and Raycast run these without the shell\'s PYTHONDONTWRITEBYTECODE)
             loader = importlib.machinery.SourceFileLoader("trigger_check", path)
             mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("trigger_check", loader))
             loader.exec_module(mod)
