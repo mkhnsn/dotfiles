@@ -327,7 +327,7 @@ def hints_pieces(triggers):
         # A moment's wait: the display list settles after the event.
         setup.append({"BTTTriggerType": event, "BTTTriggerClass": "BTTTriggerTypeOtherTriggers", "BTTUUID": sid,
                       "BTTGestureNotes": f"Hints: {what} (hints setup)",
-                      "BTTActionsToExecute": [shell_action('(sleep 2; "$HOME/.local/bin/hints" setup; "$HOME/.local/bin/mode" apply) >/dev/null 2>&1 &',
+                      "BTTActionsToExecute": [shell_action('(sleep 2; "$HOME/.local/bin/hints" setup) >/dev/null 2>&1 &',
                                                            sid, uid("hints", "setup", str(event), "action"), 0)]})
     return [menu, close, app] + setup
 
