@@ -21,7 +21,7 @@ Fails when:
                command that isn't in dot_local/bin
   unreachable  a setup (docked with the lid closed or open, laptop only) has no surface for it;
                every trigger needs a Hyper key (⌃⌥⇧⌘ + key), the keyboard being in every setup
-  reserved     a Hyper key another tool or a later phase owns
+  reserved     a Hyper key another tool owns
   stale        the preset doesn't match triggers.toml (run `trigger-check --write`)
 
 Usage: trigger-check [--source DIR] [--write] [--list]
