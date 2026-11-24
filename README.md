@@ -85,8 +85,9 @@ This is a **persistent install**: `install.sh` clones the repo to chezmoi's sour
 `chezmoi update` work afterward. (Set `DOTFILES_ONESHOT=1` before the curl for a throwaway
 init-apply-purge instead.)
 
-`chezmoi init` sees the token and records `op_mode = "service"`; the token is persisted to
-`~/.config/op/service-account.env` (0600) and sourced by `env.zsh`, so later `chezmoi apply`
+`chezmoi init` sees the token and records `op_mode = "service"`; on Linux, WSL and macOS
+servers alike, `run_05-op-service-token.sh.tmpl` saves the token to
+`~/.config/op/service-account.env` (0600), which `env.zsh` sources, so later `chezmoi apply`
 runs and fresh shells stay authenticated without re-exporting it. `env.zsh` also adds both
 `~/.local/bin` and `~/bin` to PATH, so `chezmoi` is found regardless of where the installer
 placed it.
@@ -113,7 +114,7 @@ chmod 600 ~/.config/op/service-account.env
 exec zsh && op whoami   # reload + confirm the new token works
 ```
 
-`run_once_05` never clobbers an existing `service-account.env`, so editing it directly is
+`run_05-op-service-token` never overwrites an existing `service-account.env`, so editing it directly is
 the rotation path — re-running the installer will not update it. No repo change is needed;
 the token never lives in chezmoi.
 

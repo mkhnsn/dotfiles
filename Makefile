@@ -25,6 +25,7 @@ test:
 	@shellcheck -S warning -s bash tests/*.sh install.sh
 	@/bin/bash tests/mac-setup.test.sh
 	@/bin/bash tests/chezmoiignore.test.sh
+	@/bin/bash tests/op-service-token.test.sh
 	@/bin/bash tests/claude-sync.test.sh
 	@/bin/bash tests/cf-mcp-headers.test.sh
 	@python3 -I tests/claude_memory_test.py

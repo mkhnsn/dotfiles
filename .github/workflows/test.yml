@@ -36,6 +36,9 @@ jobs:
       - name: chezmoiignore tests (1Password files skipped when secrets can't be read)
         run: bash tests/chezmoiignore.test.sh
 
+      - name: 1Password service token tests (saved on any OS)
+        run: bash tests/op-service-token.test.sh
+
       - name: claude-sync tests
         run: bash tests/claude-sync.test.sh
 
