@@ -105,3 +105,10 @@ Library/Application Support/Claude/**
 {{- if or (not .full_setup) $noOp (not (dig "dev_openshift" false .)) }}
 .config/jfrog-env
 {{- end -}}
+
+{{- /* The rest of the OpenShift client engagement: shell setup (oc aliases, KUBECONFIG)
+       and the CRC hosts helper. */ -}}
+{{- if not (dig "dev_openshift" false .) }}
+.config/shell/openshift.zsh
+.local/bin/crc-hosts
+{{- end -}}

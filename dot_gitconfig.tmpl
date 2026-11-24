@@ -48,7 +48,7 @@
 [include]
   path = ~/.gitconfig.local
 
-{{- if and .dev_openshift (hasKey . "work_repo_dir") }}
+{{- if and (dig "dev_openshift" false .) (hasKey . "work_repo_dir") }}
 
 # Work identity (and no commit signing) applied only inside the work repo tree.
 [includeIf "gitdir:{{ .work_repo_dir }}/"]

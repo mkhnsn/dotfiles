@@ -39,7 +39,7 @@ if command -v ghq >/dev/null 2>&1; then
   mkdir -p "$GHQ_ROOT" 2>/dev/null || true
 fi
 
-# fnm (Node version manager) — only present on dev_openshift boxes
+# fnm (Node version manager): installed on Linux by run_linux-dev-tools
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --use-on-cd --shell zsh)"
 fi
@@ -319,10 +319,7 @@ fi
 export LESS_TERMCAP_md=$'\e[1m'   # bold
 export LESS_TERMCAP_me=$'\e[0m'   # reset
 
-# ---- OpenShift Local (CRC): only on dev_openshift machines (oc present) ----
-if command -v oc >/dev/null 2>&1; then
-  export KUBECONFIG="$HOME/.kube/config"   # ~/.kube -> the Windows .kube (symlink)
-  alias k=oc
-  alias kubectl=oc
-  alias ansiblevenv='source ~/ansible-venv/bin/activate'
+# ---- OpenShift client engagement: only deployed on dev_openshift machines ----
+if [[ -r "$HOME/.config/shell/openshift.zsh" ]]; then
+  source "$HOME/.config/shell/openshift.zsh"
 fi

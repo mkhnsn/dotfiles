@@ -63,7 +63,7 @@ Chezmoi templates use Go template syntax with these key variables:
 - `.codespaces` - Boolean for GitHub Codespaces environment
 - `.full_setup` - Boolean; enables 1Password/secrets (seed: `DOTFILES_FULL`)
 - `.op_mode` - `"account"` (desktop app) or `"service"` (token); see Utilities
-- `.dev_openshift` - Boolean; opt-in OpenShift client toolchain (seed: `DOTFILES_OPENSHIFT`). When set, `run_dev-openshift.sh.tmpl` installs Node 22 (fnm)/Python/Ansible in WSL and symlinks `podman`/`helm`/`oc` to the Windows `.exe`; `scripts/windows-client.ps1` handles the Windows side. Read flags with `dig "dev_openshift" false .` (key may be absent pre-init).
+- `.dev_openshift` - Boolean; opt-in OpenShift client toolchain (seed: `DOTFILES_OPENSHIFT`). It adds only what that client work needs: `run_after_dev-openshift.sh.tmpl` installs Node 22 and 24 (fnm) and Helm 3 in WSL and symlinks `podman`/`oc` to the Windows `.exe`, and `~/.config/shell/openshift.zsh`, `crc-hosts`, the JFrog credentials, the NGDE workspace and the work git identity are gated on it. General dev tools (fnm with an LTS Node, pnpm, Python venv, Ansible) come from `run_linux-dev-tools.sh.tmpl` on every full-setup Linux machine, so keep them out of the flag; `scripts/windows-client.ps1` handles the Windows side. Read flags with `dig "dev_openshift" false .` (key may be absent pre-init).
 - Secrets accessed via `{{ secret ... }}` with 1Password
 
 ## External Dependencies

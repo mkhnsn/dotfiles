@@ -64,7 +64,7 @@ done
 
 # Targets a newer dotfiles version renamed or stopped deploying; chezmoi leaves
 # the old copy behind, so flag it.
-for f in .claude/skills/doctor .local/bin/__pycache__; do
+for f in .claude/skills/doctor .local/bin/__pycache__{{ if not (dig "dev_openshift" false .) }} .local/bin/crc-hosts .config/shell/openshift.zsh{{ end }}; do
   if [[ -e "$HOME/$f" ]]; then
     items+=("Stale ~/$f from an older dotfiles version (renamed or no longer deployed); remove it: rm -r ~/$f")
   fi
