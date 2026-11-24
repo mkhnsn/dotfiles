@@ -173,6 +173,13 @@ def validate(src, triggers):
     return problems
 
 
+def pressed(t):
+    """A keyboard trigger's (key code, modifiers), without the Fn that arrows may or may not carry
+    (BTT's own recorder stores it; a trigger written as JSON may not)."""
+    code, flags = t.get("BTTShortcutKeyCode"), t.get("BTTShortcutModifierKeys") or 0
+    return code, flags & ~FN if code in ARROWS else flags
+
+
 def shell_action(script, parent, uuid_, order):
     return {"BTTIsPureAction": True, "BTTOrder": order, "BTTPredefinedActionType": 206,
              "BTTShellTaskActionConfig": "/bin/bash:::-c:::-:::",
@@ -411,11 +418,9 @@ def generate(preset, triggers):
         keep = {w["BTTUUID"] for w in new}
         dropped += [t.get("BTTTriggerName") or t.get("BTTGestureNotes") or t.get("BTTUUID")
                     for t in current if generated(t) and t.get("BTTUUID") not in keep]
-        mine = {(w.get("BTTShortcutKeyCode"), w.get("BTTShortcutModifierKeys")) for w in new
-                if w.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"}
+        mine = {pressed(w) for w in new if w.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"}
         CLASHES.extend(f"{t.get('BTTGestureNotes') or t.get('BTTUUID')} ({scope})" for t in kept
-                       if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut"
-                       and (t.get("BTTShortcutKeyCode"), t.get("BTTShortcutModifierKeys")) in mine)
+                       if t.get("BTTTriggerClass") == "BTTTriggerTypeKeyboardShortcut" and pressed(t) in mine)
         # In BTT's order, as it exports them.
         section["BTTTriggers"] = sorted(kept + new, key=lambda t: t.get("BTTOrder", 0))
     return preset, dropped
@@ -436,8 +441,9 @@ def main():
     triggers = load(src)
     problems = validate(src, triggers)
     if a.list:
+        width = max((len(t['name']) for t in triggers), default=0)
         for t in triggers:
-            print(f"{t['name']:<16} {', '.join(t.get('keys', [])):<20} {t['action']}")
+            print(f"{t['name']:<{width}} {', '.join(t.get('keys', [])):<20} {t['action']}")
     if problems:
         print("\n".join(problems))
         print(f"{len(problems)} problem(s)")

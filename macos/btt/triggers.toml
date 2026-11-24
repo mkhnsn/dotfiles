@@ -12,7 +12,8 @@
 # hint     one line, shown as a hint notification (`hints`); name its Hyper key
 # run      a command in ~/.local/bin, or
 # btt      a BTT action instead: { action = <BTTPredefinedActionType>, data = { ... } }; `fields`
-#          for an action's own top-level keys (Send Shortcut to Specific App, 128)
+#          for an action's own top-level keys (Send Shortcut to Specific App, 128; Move or
+#          Resize Window to Custom Position and Size, 251)
 # keys     the keys that fire it. Every trigger has a Hyper key (⌃⌥⇧⌘ + key, Caps Lock held):
 #          the keyboard is the one surface in every setup. Extra keys are for senders that type
 #          a shortcut (the Stream Deck's existing keys).
@@ -73,9 +74,15 @@ hint = "Hyper+K keeps the Mac and its display awake until you press it again"
 run = "keep-awake toggle"
 keys = ["⌃⌥⇧⌘K"]
 
+[[trigger]]
+name = "cheat-sheet"
+action = "Cheat sheet: every trigger, its keys, the next hint"
+hint = "Hyper+H shows every trigger and its keys; click one to run it"
+btt = { action = 388, data = { BTTMenuActionMenuID = "Hints" } }
+keys = ["⌃⌥⇧⌘H"]
+
 # Windows: act on the window in front. The ⌃⌥ keys are the ones Raycast used, kept for the
 # Stream Deck's window buttons, which send them.
-
 [[trigger]]
 name = "window-left-half"
 action = "Window: left half"
@@ -166,10 +173,3 @@ action = "Window: next display"
 hint = "Hyper+N moves the window to the next display"
 btt = { action = 47 }
 keys = ["⌃⌥⇧⌘N"]
-
-[[trigger]]
-name = "cheat-sheet"
-action = "Cheat sheet: every trigger, its keys, the next hint"
-hint = "Hyper+H shows every trigger and its keys; click one to run it"
-btt = { action = 388, data = { BTTMenuActionMenuID = "Hints" } }
-keys = ["⌃⌥⇧⌘H"]

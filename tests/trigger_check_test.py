@@ -180,6 +180,34 @@ class Fixture(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("conflict: old camera (us.zoom.xos) is a hand-made BTT trigger", r.stdout)
 
+    def test_hand_made_arrow_trigger_clashes_with_or_without_fn(self):
+        arrow = GOOD + '''
+[[trigger]]
+name = "window-left-half"
+action = "Window: left half"
+hint = "Hyper+← puts the window in the left half"
+btt = { action = 19 }
+keys = ["⌃⌥⇧⌘←", "⌃⌥←"]
+'''
+        for flags in (786432, 786432 | tc.FN):  # written as JSON, or recorded in BTT
+            with self.subTest(flags=flags):
+                d = self.read_preset()
+                d["BTTPresetContent"][0]["BTTTriggers"] = [self.other, {
+                    "BTTTriggerClass": "BTTTriggerTypeKeyboardShortcut", "BTTShortcutKeyCode": 123,
+                    "BTTShortcutModifierKeys": flags, "BTTUUID": "HAND", "BTTGestureNotes": "old left half",
+                    "BTTActionsToExecute": [{"BTTPredefinedActionType": 19, "BTTUUID": "HAND-A"}]}]
+                self.preset(d)
+                self.toml(arrow)
+                r = self.run_check("--write")
+                self.assertEqual(r.returncode, 1, r.stdout)
+                self.assertIn("conflict: old left half", r.stdout)
+
+    def test_arrow_key_taken_in_the_shortcut_registry(self):
+        with open(os.path.join(self.d, "macos/shortcuts.toml"), "w") as f:
+            f.write('[[shortcut]]\nkeys = "⌃←"\nowner = "macos-default"\naction = "Move left a space"\nsource = "manual"\n')
+        p = self.problems(GOOD.replace('keys = ["⌃⌥⇧⌘K"]', 'keys = ["⌃⌥⇧⌘K", "⌃←"]'))
+        self.assertTrue(any("⌃← is macos-default's Move left a space" in x for x in p), p)
+
     def test_hint_controls_stay_last_when_a_trigger_is_added(self):
         self.run_check("--write")
         self.toml(GOOD + '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n')

@@ -169,7 +169,7 @@ class Hints(unittest.TestCase):
         self.fired("mic-mute", 3)
         out = self.run_hints("status").stdout
         self.assertIn("hints: on", out)
-        self.assertIn("mic-mute         shown 0, fired 3 (known)", out)
+        self.assertIn("mic-mute   shown 0, fired 3 (known)", out)  # names padded to the longest
 
     @unittest.skipUnless(os.path.exists("/opt/homebrew/bin/python3") and subprocess.run(
         ["/usr/bin/python3", "-c", "import tomllib"], capture_output=True).returncode != 0,
