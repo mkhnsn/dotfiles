@@ -1,0 +1,432 @@
+#!/usr/bin/env python3
+"""layout: save the windows you arranged by hand under a name, and put them back later.
+
+  layout save [name]     save where every window on this desktop is (asks for a name without one)
+  layout restore <name>  put the saved windows back; launches a saved app that isn't running
+  layout pick            choose a saved layout from a list and restore it (Hyper+L)
+  layout list            the saved layouts for this setup
+  layout rm <name>       forget one
+
+A layout is per setup (docked with the lid open or closed, or the laptop alone: positions differ),
+read from the displays like `hints` does. It records each window's app, title, display and frame
+relative to that display, so it survives displays being rearranged; a window whose display is gone
+goes to the main display. Restore matches an app's windows by title first, then in order. Windows
+it can't find are listed as skipped, and windows it doesn't know about are left where they are.
+Only the current desktop: moving windows between desktops is out of scope. Full-screen and
+minimized windows are skipped.
+
+The window work goes through System Events (Accessibility): whatever runs this (BTT, Raycast, a
+terminal) needs Accessibility access. State: ~/.local/state/layouts.json. Python 3.11+ standard
+library only.
+"""
+import ctypes, ctypes.util, datetime, importlib.machinery, importlib.util, json, os, subprocess, sys, tempfile, time
+
+if sys.version_info < (3, 11):
+    # BTT runs scripts with a bare PATH, which finds macOS's Python 3.9; `hints` needs 3.11.
+    if not os.environ.get("LAYOUT_REEXEC"):
+        os.environ["LAYOUT_REEXEC"] = "1"
+        for py in ("/opt/homebrew/bin/python3", "/usr/local/bin/python3"):
+            if os.path.exists(py) and os.path.realpath(py) != os.path.realpath(sys.executable):
+                os.execv(py, [py, *sys.argv])
+    sys.exit("layout: needs Python 3.11 or later (brew install python)")
+
+STATE_DIR = os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state")
+STATE = os.environ.get("LAYOUT_STATE") or os.path.join(STATE_DIR, "layouts.json")
+LAUNCH_WAIT = float(os.environ.get("LAYOUT_LAUNCH_WAIT", "10"))  # seconds for a launched app's windows
+
+
+# ---- pure parts (tested) ----------------------------------------------------------------------
+def display_for(frame, displays):
+    """The display a window is on: the one with most of it, else the main one."""
+    x, y, w, h = frame
+
+    def overlap(d):
+        dx, dy, dw, dh = d["bounds"]
+        return max(0, min(x + w, dx + dw) - max(x, dx)) * max(0, min(y + h, dy + dh) - max(y, dy))
+
+    best = max(displays, key=overlap)
+    return best if overlap(best) > 0 else main_display(displays)
+
+
+def main_display(displays):
+    return next((d for d in displays if d.get("main")), displays[0])
+
+
+def capture(apps, displays):
+    """A layout from the live windows: [{bundle, name, windows: [{title, display, frame}]}], each
+    frame relative to its display's top-left corner."""
+    out = []
+    for app in apps:
+        wins = []
+        for w in app["windows"]:
+            frame = [*w["position"], *w["size"]]
+            d = display_for(frame, displays)
+            dx, dy = d["bounds"][:2]
+            wins.append({"title": w["title"], "display": d["uuid"], "frame": [frame[0] - dx, frame[1] - dy, frame[2], frame[3]]})
+        if wins:
+            out.append({"bundle": app["bundle"], "name": app["name"], "windows": wins})
+    return out
+
+
+def match(saved, current):
+    """Pair saved windows with current ones (lists of titles): same title first, the rest in order.
+    Returns ([(saved index, current index)], [saved indexes left over])."""
+    pairs, used, left = [], set(), []
+    for i, title in enumerate(saved):
+        j = next((j for j, t in enumerate(current) if j not in used and t == title), None)
+        if j is None:
+            left.append(i)
+        else:
+            pairs.append((i, j))
+            used.add(j)
+    rest = [j for j in range(len(current)) if j not in used]
+    still = []
+    for i in left:
+        if rest:
+            pairs.append((i, rest.pop(0)))
+        else:
+            still.append(i)
+    return sorted(pairs), still
+
+
+def place(saved_frame, display_uuid, displays):
+    """Where a saved window goes now: on its display if it's still there, else the main one, kept
+    inside that display."""
+    d = next((d for d in displays if d["uuid"] == display_uuid), None) or main_display(displays)
+    dx, dy, dw, dh = d["bounds"]
+    x, y, w, h = saved_frame
+    w, h = min(w, dw), min(h, dh)
+    x = min(max(x, 0), dw - w)
+    y = min(max(y, 0), dh - h)
+    return [dx + x, dy + y, w, h]
+
+
+def plan(layout, live, displays):
+    """Moves for a restore: ([{bundle, index, title, frame}], [skipped lines])."""
+    by_bundle = {a["bundle"]: a for a in live}
+    moves, skipped = [], []
+    for app in layout:
+        current = by_bundle.get(app["bundle"], {"windows": []})["windows"]
+        pairs, left = match([w["title"] for w in app["windows"]], [w["title"] for w in current])
+        for i, j in pairs:
+            w = app["windows"][i]
+            moves.append({"bundle": app["bundle"], "index": j, "title": current[j]["title"],
+                          "frame": place(w["frame"], w["display"], displays)})
+        for i in left:
+            skipped.append(f"{app['name']}: {app['windows'][i]['title'] or 'untitled window'}")
+    return moves, skipped
+
+
+# ---- state ------------------------------------------------------------------------------------
+def load_state():
+    try:
+        with open(STATE) as f:
+            s = json.load(f)
+    except (OSError, ValueError):
+        s = {}
+    s.setdefault("setups", {})
+    return s
+
+
+def save_state(s):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(STATE), prefix=".layouts.")
+    with os.fdopen(fd, "w") as f:
+        json.dump(s, f, indent=2)
+    os.replace(tmp, STATE)
+
+
+# ---- the Mac ----------------------------------------------------------------------------------
+def hints_module():
+    """hints, next to this script: its setup detection."""
+    here = os.path.dirname(os.path.realpath(__file__))
+    for name in ("hints", "executable_hints"):
+        path = os.path.join(here, name)
+        if os.path.exists(path):
+            sys.dont_write_bytecode = True  # no __pycache__ in ~/.local/bin
+            loader = importlib.machinery.SourceFileLoader("hints_mod", path)
+            mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("hints_mod", loader))
+            loader.exec_module(mod)
+            return mod
+    return None
+
+
+def detect_setup():
+    """docked-open, docked-closed or laptop (HINTS_SETUP overrides it, as in `hints`)."""
+    if os.environ.get("HINTS_SETUP"):
+        return os.environ["HINTS_SETUP"]
+    h = hints_module()
+    return (h.detect_setup() if h else None) or "unknown"
+
+
+class CGRect(ctypes.Structure):
+    _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double), ("w", ctypes.c_double), ("h", ctypes.c_double)]
+
+
+def live_displays():
+    """[{uuid, bounds: [x, y, w, h], main}] for the active displays, in the global top-left
+    coordinates System Events uses. LAYOUT_DISPLAYS (JSON) overrides it (tests)."""
+    if os.environ.get("LAYOUT_DISPLAYS"):
+        return json.loads(os.environ["LAYOUT_DISPLAYS"])
+    cg = ctypes.CDLL(ctypes.util.find_library("CoreGraphics"))
+    cs = ctypes.CDLL(ctypes.util.find_library("ColorSync"))
+    cf = ctypes.CDLL(ctypes.util.find_library("CoreFoundation"))
+    cg.CGDisplayBounds.restype = CGRect
+    cg.CGDisplayBounds.argtypes = [ctypes.c_uint32]
+    cg.CGMainDisplayID.restype = ctypes.c_uint32
+    cs.CGDisplayCreateUUIDFromDisplayID.restype = ctypes.c_void_p
+    cs.CGDisplayCreateUUIDFromDisplayID.argtypes = [ctypes.c_uint32]
+    cf.CFUUIDCreateString.restype = ctypes.c_void_p
+    cf.CFUUIDCreateString.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    cf.CFStringGetCString.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_long, ctypes.c_uint32]
+    cf.CFRelease.argtypes = [ctypes.c_void_p]
+    ids, n = (ctypes.c_uint32 * 16)(), ctypes.c_uint32()
+    if cg.CGGetActiveDisplayList(16, ids, ctypes.byref(n)) != 0:
+        sys.exit("layout: can't read the displays")
+    main = cg.CGMainDisplayID()
+    out = []
+    for i in range(n.value):
+        uuid, text = cs.CGDisplayCreateUUIDFromDisplayID(ids[i]), str(ids[i])
+        if uuid:
+            s = cf.CFUUIDCreateString(None, uuid)
+            buf = ctypes.create_string_buffer(64)
+            if cf.CFStringGetCString(s, buf, 64, 0x08000100):  # kCFStringEncodingUTF8
+                text = buf.value.decode()
+            cf.CFRelease(s)
+            cf.CFRelease(uuid)
+        r = cg.CGDisplayBounds(ids[i])
+        out.append({"uuid": text, "bounds": [r.x, r.y, r.w, r.h], "main": ids[i] == main})
+    return out
+
+
+JXA_READ = r'''function run(argv) {
+  const only = argv.length ? JSON.parse(argv[0]) : null;
+  const se = Application("System Events");
+  const out = [];
+  for (const p of se.processes.whose({backgroundOnly: false})()) {
+    let bundle;
+    try { bundle = p.bundleIdentifier(); } catch (e) { continue; }
+    if (!bundle || (only && !only.includes(bundle))) continue;
+    const windows = [];
+    let list = [];
+    try { list = p.windows(); } catch (e) { continue; }
+    for (const w of list) {
+      try {
+        let skip = false;
+        try { skip = w.attributes.byName("AXFullScreen").value(); } catch (e) {}
+        try { skip = skip || w.attributes.byName("AXMinimized").value(); } catch (e) {}
+        let sub = "";
+        try { sub = w.subrole(); } catch (e) {}
+        if (skip || (sub && sub !== "AXStandardWindow")) continue;
+        windows.push({title: w.name() || "", position: w.position(), size: w.size()});
+      } catch (e) {}
+    }
+    if (windows.length) out.push({bundle: bundle, name: p.name(), windows: windows});
+  }
+  return JSON.stringify(out);
+}'''
+
+# Windows are addressed by index among the app's standard windows, as JXA_READ listed them; the
+# title is checked so a window that moved in the list isn't placed by mistake.
+JXA_MOVE = r'''function run(argv) {
+  const moves = JSON.parse(argv[0]);
+  const se = Application("System Events");
+  const out = [];
+  for (const m of moves) {
+    try {
+      const p = se.processes.whose({bundleIdentifier: m.bundle})()[0];
+      const list = p.windows().filter(w => {
+        try {
+          let skip = false;
+          try { skip = w.attributes.byName("AXFullScreen").value(); } catch (e) {}
+          try { skip = skip || w.attributes.byName("AXMinimized").value(); } catch (e) {}
+          let sub = "";
+          try { sub = w.subrole(); } catch (e) {}
+          return !skip && !(sub && sub !== "AXStandardWindow");
+        } catch (e) { return false; }
+      });
+      const w = list[m.index];
+      if (!w || (w.name() || "") !== m.title) { out.push(m.bundle + ": " + (m.title || "untitled window") + " (moved)"); continue; }
+      const [x, y, width, height] = m.frame.map(Math.round);
+      // Position first, so the size fits on the target display; then again, since a window
+      // moved onto a smaller display may have been pushed back.
+      w.position = [x, y];
+      w.size = [width, height];
+      w.position = [x, y];
+    } catch (e) { out.push(m.bundle + ": " + (m.title || "untitled window") + " (" + e.message + ")"); }
+  }
+  return JSON.stringify(out);
+}'''
+
+
+def osascript(script, *args, timeout=60):
+    if os.environ.get("LAYOUT_WINDOWS"):  # tests: the live windows, and nothing is moved
+        return os.environ["LAYOUT_WINDOWS"] if script is JXA_READ else "[]"
+    r = subprocess.run(["osascript", "-l", "JavaScript", "-e", script, *args], capture_output=True, text=True, timeout=timeout)
+    if r.returncode != 0:
+        msg = r.stderr.strip()
+        if "assistive" in msg or "-1719" in msg or "-25211" in msg:
+            sys.exit("layout: needs Accessibility access (System Settings > Privacy & Security > Accessibility) "
+                     "for the app running it")
+        sys.exit(f"layout: {msg or 'System Events failed'}")
+    return r.stdout
+
+
+def live_windows(bundles=None):
+    return json.loads(osascript(JXA_READ, *([json.dumps(bundles)] if bundles else [])) or "[]")
+
+
+def launch(layout, live):
+    """Open the saved apps that aren't running and wait for their windows. Returns the live windows."""
+    running = {a["bundle"] for a in live}
+    missing = [a for a in layout if a["bundle"] not in running]
+    if not missing or os.environ.get("LAYOUT_WINDOWS"):
+        return live
+    for a in missing:
+        subprocess.run(["open", "-g", "-b", a["bundle"]], capture_output=True)
+    want = {a["bundle"]: len(a["windows"]) for a in missing}
+    end = time.monotonic() + LAUNCH_WAIT
+    while time.monotonic() < end:
+        time.sleep(0.5)
+        got = {a["bundle"]: len(a["windows"]) for a in live_windows(list(want))}
+        if all(got.get(b, 0) >= n for b, n in want.items()):
+            break
+    return live_windows()
+
+
+def ask(prompt, default=""):
+    """A name from a dialog (no terminal, e.g. from BTT)."""
+    script = ('on run argv\n'
+              'display dialog (item 1 of argv) default answer (item 2 of argv) with title "Layouts"\n'
+              'return text returned of result\nend run')
+    r = subprocess.run(["osascript", "-e", script, prompt, default], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def choose(names):
+    script = ('on run argv\n'
+              'set picked to choose from list argv with title "Layouts" with prompt "Restore a layout"\n'
+              'if picked is false then return ""\nreturn item 1 of picked\nend run')
+    r = subprocess.run(["osascript", "-e", script, *names], capture_output=True, text=True)
+    return r.stdout.strip() or None
+
+
+DIALOG = False  # set when a dialog asked for the name: no terminal is watching (BTT)
+
+
+def notify(text):
+    """A line for whoever ran it: printed, and a notification when it was started from a dialog."""
+    print(text)
+    if DIALOG and not os.environ.get("LAYOUT_WINDOWS"):
+        subprocess.run(["osascript", "-e", "on run argv", "-e", 'display notification (item 1 of argv) with title "Layouts"',
+                        "-e", "end run", text], capture_output=True)
+
+
+# ---- commands ---------------------------------------------------------------------------------
+def cmd_save(name):
+    global DIALOG
+    name = (name or "").strip()
+    if not name:
+        DIALOG = True
+        name = ask("Save this desktop's windows as:")
+    if not name:
+        return 1
+    setup = detect_setup()
+    displays = live_displays()
+    layout = capture(live_windows(), displays)
+    if not layout:
+        notify("layout: no windows to save on this desktop")
+        return 1
+    s = load_state()
+    s["setups"].setdefault(setup, {})[name] = {
+        "saved": datetime.datetime.now().isoformat(timespec="seconds"), "apps": layout}
+    save_state(s)
+    count = sum(len(a["windows"]) for a in layout)
+    notify(f"Saved {name} ({setup}): {count} window{'s' if count != 1 else ''} in {len(layout)} app{'s' if len(layout) != 1 else ''}")
+    return 0
+
+
+def find(saved, name):
+    """A saved layout by name: exact, then the one name starting with it (case-insensitive)."""
+    if name in saved:
+        return name
+    hits = [n for n in saved if n.lower().startswith(name.lower())]
+    return hits[0] if len(hits) == 1 else None
+
+
+def cmd_restore(name):
+    setup = detect_setup()
+    saved = load_state()["setups"].get(setup, {})
+    key = find(saved, name)
+    if not key:
+        notify(f"layout: no layout {name!r} for {setup}" + (f" (saved: {', '.join(sorted(saved))})" if saved else ""))
+        return 1
+    layout = saved[key]["apps"]
+    displays = live_displays()
+    live = launch(layout, live_windows())
+    moves, skipped = plan(layout, live, displays)
+    failed = json.loads(osascript(JXA_MOVE, json.dumps(moves)) or "[]") if moves else []
+    placed = len(moves) - len(failed)
+    notify(f"Restored {key}: {placed} window{'s' if placed != 1 else ''}"
+           + (f"; skipped {len(skipped) + len(failed)}" if skipped or failed else ""))
+    for line in skipped + failed:
+        print(f"  skipped {line}")
+    return 0
+
+
+def cmd_pick():
+    global DIALOG
+    DIALOG = True
+    saved = load_state()["setups"].get(detect_setup(), {})
+    if not saved:
+        notify("layout: no saved layouts for this setup (Hyper+S saves one)")
+        return 1
+    name = choose(sorted(saved))
+    return cmd_restore(name) if name else 0
+
+
+def cmd_list():
+    setup = detect_setup()
+    saved = load_state()["setups"].get(setup, {})
+    if not saved:
+        print(f"no layouts for {setup}")
+        return 0
+    for name in sorted(saved):
+        apps = saved[name]["apps"]
+        count = sum(len(a["windows"]) for a in apps)
+        print(f"{name}  {count} windows: {', '.join(a['name'] for a in apps)}  (saved {saved[name]['saved']})")
+    return 0
+
+
+def cmd_rm(name):
+    setup = detect_setup()
+    s = load_state()
+    saved = s["setups"].get(setup, {})
+    if name not in saved:
+        print(f"layout: no layout {name!r} for {setup}", file=sys.stderr)
+        return 1
+    del saved[name]
+    save_state(s)
+    print(f"Removed {name} ({setup})")
+    return 0
+
+
+def main(argv):
+    cmd, args = (argv[0], argv[1:]) if argv else ("", [])
+    name = " ".join(args)
+    if cmd == "save":
+        return cmd_save(name)
+    if cmd == "restore" and name:
+        return cmd_restore(name)
+    if cmd == "pick":
+        return cmd_pick()
+    if cmd == "list":
+        return cmd_list()
+    if cmd == "rm" and name:
+        return cmd_rm(name)
+    print(__doc__.split("\n\n")[1], file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
