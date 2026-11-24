@@ -882,11 +882,63 @@ test_guided_prompts_and_action_output_are_shown() {
   # Two escrow items (Done? y each), then gh (Do it now? y, Enter to re-check).
   printf 'y\ny\ny\n\n' > "$T/answers"
   MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
-  assert_has "Done? [y/N/q]"
-  assert_has "Do it now? [Y/n/s=skip/q=quit]"
+  assert_has "Done? [y/N/x=don't ask again/q]"
+  assert_has "Do it now? [Y/n/s=skip/x=don't ask again/q=quit]"
   assert_has "one-time code: ABCD-1234"
   assert_has "Enter to re-check"
   assert_has "All done."
+}
+
+# x at any of the three prompts skips the step for good on this Mac: later runs show it
+# without asking and don't count it.
+test_skip_for_good_at_each_prompt() {
+  local skips="$XDG_STATE_HOME/mac-setup/skipped"
+  stub gh 'exit 1'                                   # "Do it now?" (the step has an action)
+  stub fdesetup 'echo "FileVault is Off."'           # "Enter to re-check" (no action)
+  rm -f "$XDG_STATE_HOME/mac-setup/widgets"          # "Done?" (confirmed by hand)
+  # FileVault: x. gh: x. Widgets: n to the action, then x.
+  printf 'x\nx\nn\nx\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_rc 0; assert_has "All done."
+  assert_has "won't ask again (mac-setup --unskip to undo)"
+  [ "$(ls "$skips" | wc -l | tr -d ' ')" = 3 ] || fail "want 3 skips, got: $(ls "$skips" 2>&1)"
+  [ -f "$XDG_STATE_HOME/mac-setup/widgets" ] && fail "a skip was saved as a confirmation"
+  : > "$T/answers"                                   # a later run asks nothing
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  assert_rc 0; assert_has "All done."; assert_lacks "Do it now?"; assert_lacks "Done?"; assert_lacks "Enter to re-check"
+  assert_has "– FileVault on (skipped, not asking)"
+  assert_has "– GitHub CLI signed in (skipped, not asking)"
+  assert_has "– Desktop widgets placed (skipped, not asking)"
+  run "$SCRIPT" --status
+  assert_rc 0; assert_lacks "○"; assert_has "– FileVault on (skipped, not asking)"
+}
+
+test_skipped_step_that_now_passes_is_ticked() {
+  stub fdesetup 'echo "FileVault is Off."'
+  printf 'x\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  stub fdesetup 'echo "FileVault is On."'
+  run "$SCRIPT" --status
+  assert_done "FileVault on"; assert_lacks "skipped, not asking"
+}
+
+test_unskip_asks_again_and_keeps_confirmations() {
+  stub fdesetup 'echo "FileVault is Off."'
+  printf 'x\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  run "$SCRIPT" --unskip
+  assert_rc 0; assert_has "Will ask again"
+  run "$SCRIPT" --status
+  assert_rc 1; assert_open "FileVault on"; assert_has "1 step(s) left."   # hand-confirmed steps still done
+}
+
+test_reset_forgets_skips_too() {
+  stub fdesetup 'echo "FileVault is Off."'
+  printf 'x\n' > "$T/answers"
+  MAC_SETUP_TTY="$T/answers" run "$SCRIPT"
+  run "$SCRIPT" --reset
+  run "$SCRIPT" --status
+  assert_open "FileVault on"; assert_open "Ninja Remote Screen Recording approved"
 }
 
 test_guided_skip_leaves_step_open() {
