@@ -276,6 +276,19 @@ class Hints(unittest.TestCase):
         r = subprocess.run([sys.executable, "-I", HINTS, "check"], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
 
+    def test_a_group_of_app_rows_shows_its_header_with_them(self):
+        with open(os.path.join(self.src, "macos/btt/triggers.toml"), "w") as f:
+            f.write(TRIGGERS.replace('name = "zoom-video"', 'name = "zoom-video"\ngroup = "Calls"').replace(
+                'name = "mic-mute"', 'name = "mic-mute"\ngroup = "Mac"'))
+        self.front("us.zoom.xos", "zoom.us")
+        self.run_hints("app")
+        menu = [l for l in self.lines() if l.startswith("MENU | Group: ")]
+        self.assertEqual(len(menu), 1, menu)  # only the all-app group's header is toggled
+        self.assertIn('MENU | Group: Calls | {"BTTMenuItemVisibleWhileActive": 1', menu[0])
+        self.front("com.apple.Finder", "Finder")
+        self.run_hints("app")
+        self.assertIn('MENU | Group: Calls | {"BTTMenuItemVisibleWhileActive": 0', self.lines()[-1])
+
     def test_status_lists_known_triggers(self):
         self.fired("mic-mute", 3)
         out = self.run_hints("status").stdout

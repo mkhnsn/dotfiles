@@ -447,6 +447,46 @@ keys = ["⌃⌥⇧⌘↑"]
         self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]],
                          ["Header", "keep-awake", "hints-next", "hints-mute"])
 
+    def test_groups_get_a_header_and_rows_an_icon(self):
+        grouped = (GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\ngroup = "Mac"\nicon = "cup.and.saucer.fill"')
+                   + '\n[[trigger]]\nname = "zoom-cam"\naction = "Camera"\nhint = "x"\ngroup = "Calls"\nicon = "video"\n'
+                     'run = "keep-awake on"\nkeys = ["⌃⌥⇧⌘V"]\napps = ["us.zoom.xos"]\n')
+        self.toml(grouped)
+        self.assertEqual(self.run_check("--write").returncode, 0)
+        _, menu, _, _ = self.hints_parts()
+        rows = {i["BTTMenuName"]: i for i in menu["BTTMenuItems"]}
+        self.assertEqual(list(rows), ["Header", "Group: Mac", "keep-awake", "mic-mute", "Group: Calls", "zoom-cam",
+                                      "hints-next", "hints-mute"])
+        cfg = rows["keep-awake"]["BTTMenuConfig"]
+        self.assertEqual((cfg["BTTMenuItemIconType"], cfg["BTTMenuItemSFSymbolName"]), (2, "cup.and.saucer.fill"))
+        self.assertNotIn("BTTMenuItemSFSymbolName", rows["mic-mute"]["BTTMenuConfig"])  # no icon given
+        self.assertNotIn("BTTMenuItemActions", rows["Group: Mac"])  # a header does nothing
+        self.assertIn("Mac</span>", rows["Group: Mac"]["BTTMenuConfig"]["BTTMenuAttributedText"])
+        # a group of app rows only starts hidden with them (hints app shows both)
+        self.assertEqual(rows["Group: Calls"]["BTTMenuConfig"]["BTTMenuItemVisibleWhileActive"], 0)
+        self.assertEqual(rows["Group: Mac"]["BTTMenuConfig"]["BTTMenuItemVisibleWhileActive"], 1)
+        self.assertEqual(menu["BTTMenuConfig"]["BTTMenuFrameHeight"], 2 * tc.PAD + 6 * tc.ROW_H + 5 * tc.GAP)
+        self.assertEqual(self.run_check().returncode, 0)
+
+    def test_a_row_added_in_the_middle_lands_in_its_group(self):
+        first = GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\ngroup = "Mac"').replace(
+            'name = "mic-mute"', 'name = "mic-mute"\ngroup = "Calls"')
+        self.toml(first)
+        self.run_check("--write")
+        # BTT keeps an existing row's place, so a new Mac trigger must not end up after Calls
+        late = '\n[[trigger]]\nname = "late"\naction = "Late"\nhint = "x"\ngroup = "Mac"\nrun = "keep-awake on"\nkeys = ["⌃⌥⇧⌘L"]\n'
+        self.toml(first.replace("\n[[trigger]]\nname = \"mic-mute\"", late + "\n[[trigger]]\nname = \"mic-mute\""))
+        self.assertEqual(self.run_check("--write").returncode, 0)
+        _, menu, _, _ = self.hints_parts()
+        self.assertEqual([i["BTTMenuName"] for i in menu["BTTMenuItems"]],
+                         ["Header", "Group: Mac", "keep-awake", "late", "Group: Calls", "mic-mute", "hints-next", "hints-mute"])
+        self.assertEqual([i["BTTOrder"] for i in menu["BTTMenuItems"]], sorted(i["BTTOrder"] for i in menu["BTTMenuItems"]))
+
+    def test_group_and_icon_are_checked(self):
+        p = self.problems(GOOD.replace('name = "keep-awake"', 'name = "keep-awake"\ngroup = ""\nicon = "Not A Symbol"'))
+        self.assertTrue(any("group must be text" in x for x in p), p)
+        self.assertTrue(any("icon must be an SF Symbol name" in x for x in p), p)
+
     def test_menu_rows_keep_btts_order(self):
         self.run_check("--write")
         d = self.read_preset()

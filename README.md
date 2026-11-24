@@ -536,8 +536,12 @@ Hyper key.
 - **Cheat sheet**: Hyper+H opens a panel with a row per trigger (its key, what it does, the other
   surfaces that fire it); clicking a row runs it (logged as `menu`). A trigger with `apps` has a
   row only while one of those apps is in front (`hints app` shows and hides it, and the panel
-  sizes to its rows). The last rows are Next hint
-  and Mute these hints. `trigger-check` generates it, a BTT floating menu named "Hints".
+  sizes to its rows). Rows sit under a header per `group` (Calls, Mac, Windows) and start with
+  the trigger's `icon`, an SF Symbol; a group whose rows are all app rows shows its header with
+  them. The last rows are Next hint
+  and Mute these hints. `trigger-check` generates it, a BTT floating menu named "Hints". BTT keeps
+  an existing row's place, so when a row is added or moved, it and the rows after it are
+  generated as new rows and land in order.
 - **Hint of the day**: the first time each day you switch to any app, a notification titled
   "Hint" shows one general hint (a trigger without `apps`). The first switch to an app that a
   trigger lists in `apps` brings one hint for that app. Unseen hints come first, then the least
