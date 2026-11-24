@@ -66,6 +66,8 @@ def trigger_check():
     for name in ("trigger-check", "executable_trigger-check"):
         path = os.path.join(here, name)
         if os.path.exists(path):
+            # Python would cache the sibling in __pycache__ next to it (~/.local/bin).
+            sys.dont_write_bytecode = True
             loader = importlib.machinery.SourceFileLoader("trigger_check", path)
             mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("trigger_check", loader))
             loader.exec_module(mod)
