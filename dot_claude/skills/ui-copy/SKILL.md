@@ -31,10 +31,11 @@ Guide, GOV.UK content design and Apple's Human Interface Guidelines.
    now may be inaccurate."
 8. **Buttons are verbs, labels are nouns.** Headings name the thing: "Share
    links", not "Sharing your library with others".
-9. **A button that opens something ends in "…".** Another page, a sheet or
-   a question: "Delete account…", "Edit…". A button that acts at once has
-   none: "Save", "Log out". Use the one character, not three periods.
-   Icon-only buttons, and Cancel, Close and Done, have none.
+9. **A button that needs more from the person ends in "…".** A
+   confirmation, or a form for one of the app's features: "Delete
+   account…", "Edit…", "New note…". A button that acts at once has none:
+   "Save". Nor does one that only goes somewhere: "Log in", "Log out",
+   "Settings", "Acknowledgments". Use the one character, not three periods.
 10. **Errors say what happened and what to do.** "Couldn't reach the server.
     Your changes are saved here and sync when you're back online."
 11. **Confirmations state the consequence once.** "Delete 'Shop' and its
@@ -70,8 +71,8 @@ Read each string and ask:
   aside? Split it or cut it.
 - Does it explain how the system works? Move that out.
 - Is it still true in every case the code allows?
-- Does a button open a page, a sheet or a question? It ends in "…". Does
-  it only sometimes ask? Then only when it will.
+- Does a button ask for a confirmation or open a form before anything
+  happens? It ends in "…". Does it only go to another screen? It doesn't.
 
 ## References
 
