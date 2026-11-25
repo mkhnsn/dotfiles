@@ -4,18 +4,47 @@ The goal is the app on Mike's phone. Internal testers only: no beta
 review, no screenshots, no store description. The App Store submission is
 separate and later.
 
-**Status of this file:** a record. `rabbithole-apple` uploaded 0.1.0 (101)
-this way in November 2026, on the first tag, and it installed from
-TestFlight. Copy its `scripts/testflight`,
-`.github/workflows/testflight.yml` and `Config/TestFlight-ExportOptions.plist`,
-and read its README's "TestFlight" section first.
+**Status of this file:** part record, part plan. `rabbithole-apple`
+uploaded 0.1.0 and 0.1.1 in November 2026 with the archive and export
+commands below, from a workflow a tag started, and both installed from
+TestFlight. It then moved to release-please and the org's shared
+workflows, described here. That chain has run on `main` without a release.
+It has not uploaded a build yet. Copy its `.github/workflows/release.yml`,
+`release-please-config.json`, `.release-please-manifest.json` and
+`Config/TestFlight-ExportOptions.plist`, and read its README's "TestFlight"
+section first.
 
-## How it works
+## How a release goes out
 
-- A tag `vX.Y.Z` runs the workflow, which runs
-  `scripts/testflight X.Y.Z <build>`.
+Like every other Unstable Studios repo: release-please, through the org's
+shared workflows in `unstable-studios/.github`. Don't write a
+tag-triggered workflow or an upload script in the app repo.
+
+- `release.yml` runs on each push to `main`. Its first job calls the
+  shared `release-please.yml` with the org secret `GH_PAT_RELEASEPLEASE`,
+  which opens or updates a release PR. Use that token, not
+  `GITHUB_TOKEN`: CI then runs on the release PR, and the repository
+  needs no "Allow GitHub Actions to create pull requests" setting.
+- Merging the release PR tags `vX.Y.Z` and cuts a GitHub Release. A
+  second job, chained off `release_created`, calls the shared
+  `publish-testflight.yml` with the project, the scheme, the version and
+  the tag as `ref`, so the build is the tagged commit even if `main` has
+  moved on.
+- `workflow_dispatch` uploads what is on `main` under the last released
+  version, as a new build.
+- release-please config: `release-type` `simple`,
+  `include-component-in-tag` false, `bump-minor-pre-major` true, and an
+  extra file with the generic updater on the xcconfig line
+  `MARKETING_VERSION = 0.1.1 // x-release-please-version`. Start the
+  manifest at the last tag's version. An existing `vX.Y.Z` tag is enough
+  for it to pick up from.
+- A `feat`, `fix`, `perf` or `revert` commit makes a release. `ci`,
+  `docs`, `test` and `chore` alone open no release PR.
+
+## What the shared upload does
+
 - `xcodebuild archive` with automatic signing, then
-  `xcodebuild -exportArchive` with an options plist: `method`
+  `xcodebuild -exportArchive` with the repo's options plist: `method`
   `app-store-connect`, `destination` `upload`, `signingStyle` `automatic`,
   `manageAppVersionAndBuildNumber` false, `testFlightInternalTestingOnly`
   true. `xcodebuild -help` lists every key for the installed Xcode. Check
@@ -23,18 +52,23 @@ and read its README's "TestFlight" section first.
 - Signing is cloud signing: no certificate or profile in CI. Both commands
   take `-allowProvisioningUpdates` and the three `-authenticationKey…`
   flags with an App Store Connect **team** key whose role is **Admin**.
-- The version comes from the tag. The build number is
-  `run number × 100 + run attempt`, so a re-run never reuses one. Both are
-  set on the command line so the app and every extension match, which
-  App Store Connect requires. Renaming the workflow file restarts the run
-  number at 1, which is refused for a version already uploaded.
+- The build number is the upload time in UTC to the minute
+  (`202611251630`), so it only goes up. Don't use the run number: it
+  restarts when a workflow file is renamed or replaced, and App Store
+  Connect refuses a build number it has seen for that version. Version
+  and build are set on the command line so the app and every extension
+  match, which App Store Connect requires.
 - The app's Info.plist sets `ITSAppUsesNonExemptEncryption` to `NO` when it
   only uses HTTPS and the system's cryptography. Without it every build
   waits on a question.
-- The job runs in a GitHub environment named `testflight`, limited to `v*`
-  tags. A tag runs the workflow as it is at the tagged commit, so the
-  environment is what limits who can use the key. Required reviewers
-  aren't available for a private repo on the Team plan.
+- The job runs in a GitHub environment named `testflight`, limited to the
+  branch `main`. The upload runs for the push to `main`, not for the tag,
+  so a tag rule refuses it. The environment is what limits who can use
+  the key. Required reviewers aren't available for a private repo on the
+  Team plan.
+- An extension added later needs no visit to the developer site when the
+  key is Admin: `-allowProvisioningUpdates` registered the widget
+  extension's App ID on its first upload.
 
 ## Where the key lives
 
@@ -91,8 +125,8 @@ crop out terminals and anything with a key in it.
    distribution needs it
    (https://developer.apple.com/videos/play/wwdc2021/10204/). Only an
    Admin key was tried. The `.p8` downloads once.
-7. **GitHub environment** `testflight`, with a tag rule `v*`. Before the
-   sync, so the sync has a target.
+7. **GitHub environment** `testflight`, with a deployment rule for the
+   branch `main`. Before the sync, so the sync has a target.
 8. **Doppler** config, three values and the sync, as above.
 9. **Internal testing group** in the app record's TestFlight tab, with
    himself in it and automatic distribution on. Then the TestFlight app on
@@ -101,9 +135,15 @@ crop out terminals and anything with a key in it.
 ## Limits
 
 - Never read, print or ask for the key or any secret's value. Names only.
-- Pushing a tag needs Mike's go-ahead each time. So do merging and
-  running `scripts/testflight` with a key.
-- Merge the workflow before tagging: the tag runs what is at that commit.
+- Merging a release PR uploads a build. It needs Mike's go-ahead each
+  time, like any merge. So does running the workflow by hand.
+- Never push a tag or edit `CHANGELOG.md`, the manifest or the
+  `x-release-please-version` line by hand.
+- Look for an org shared workflow before writing one, and for the org's
+  secrets (`gh api orgs/unstable-studios/actions/secrets`, names only).
+  The first version of this used `GITHUB_TOKEN` because one repo did.
+- Confirm a PR reports merged before deleting its branch. Deleting the
+  branch of a PR whose merge failed closes it.
 - Wait for CI on the head you are merging. A rebased head has no checks
   for the first seconds, and `gh pr checks --watch` returns at once.
 - You can't see App Store Connect. After "Upload succeeded", say that
