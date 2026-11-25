@@ -34,7 +34,8 @@ in its own repo, and nothing in it is secret.
    5. App icon and the acknowledgments screen
    6. Delete my account (`references/account-deletion.md`)
    7. Share extension (`references/share-extension.md`), then widgets and
-      App Intents (not yet built in the first app; no reference file)
+      App Intents (built in the first app, not yet checked on a phone; no
+      reference file)
    8. Internal TestFlight (`references/testflight.md`)
 5. **App Store submission** is separate and later: screenshots, privacy
    answers, payment rules, review.

@@ -6,7 +6,7 @@ separate and later.
 
 **Status of this file:** part record, part plan. `rabbithole-apple`
 uploaded 0.1.0 and 0.1.1 in November 2026 with the archive and export
-commands below, from a workflow a tag started, and both installed from
+commands below, from a workflow a tag started, and 0.1.0 installed from
 TestFlight. It then moved to release-please and the org's shared
 workflows, described here. That chain has run on `main` without a release.
 It has not uploaded a build yet. Copy its `.github/workflows/release.yml`,
@@ -66,9 +66,13 @@ tag-triggered workflow or an upload script in the app repo.
   so a tag rule refuses it. The environment is what limits who can use
   the key. Required reviewers aren't available for a private repo on the
   Team plan.
-- An extension added later needs no visit to the developer site when the
-  key is Admin: `-allowProvisioningUpdates` registered the widget
-  extension's App ID on its first upload.
+- An extension with no capabilities needs no visit to the developer site
+  when the key is Admin: the first upload with the widget extension
+  succeeded with its App ID never registered by hand. One with a
+  capability, such as an App Group, is still step 3 below.
+- The shared workflow defaults to the runner label `xcode-27` and
+  `/Applications/Xcode_27.2.app`. Pass `runs-on` and `xcode-path` when an
+  app needs another Xcode.
 
 ## Where the key lives
 
@@ -111,8 +115,8 @@ crop out terminals and anything with a key in it.
    alone).
 2. **App Group.** Identifiers, filter App Groups, add `group.<bundle id>`.
    Then the App ID > Configure next to App Groups > select the group.
-3. **Each extension** gets its own App ID (`<bundle id>.share`) with the
-   same group assigned.
+3. **Each extension that has a capability** gets its own App ID
+   (`<bundle id>.share`) with the same group assigned.
 4. **A device** registered to the team. The archive is signed for
    development first, which needs one.
 5. **App record.** App Store Connect > Apps > + > New App: iOS, English
