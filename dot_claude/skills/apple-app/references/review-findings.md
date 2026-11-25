@@ -38,7 +38,8 @@ case nearby, say so in the PR and ask.
 
 - A second window keeps its own model and may keep syncing after the
   first has stopped.
-- The app and an extension renew tokens independently.
+- An extension must never renew the token: stopped halfway, it uses up
+  the rotating refresh token and logs the app out.
 - A request started under one login finishing under the next.
 
 ## Layout and accessibility

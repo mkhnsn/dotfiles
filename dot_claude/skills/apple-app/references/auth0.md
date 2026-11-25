@@ -14,8 +14,9 @@ Mike's go-ahead. The first app's web project has a working one (SKILL.md,
 - A public client: authentication method `none`, no secret.
 - Grants: `authorization_code` and `refresh_token`.
 - Rotating refresh tokens, with a 30-day lifetime and a 30 s reuse
-  leeway. The leeway matters: the app and an extension are separate
-  processes and can renew at the same moment.
+  leeway. The leeway covers a renewal whose answer is slow to store.
+  It is not a license for two processes to renew: only the app does, and
+  an extension never (`share-extension.md`).
 - If the helper has no option for the lifetime, the leeway or the
   `mobile` block, patch the generated resource. Check whether the helper
   has gained them before copying a patch.

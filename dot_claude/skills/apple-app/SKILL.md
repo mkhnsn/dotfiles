@@ -9,10 +9,11 @@ The shape that worked for the first Unstable Studios iPhone app, built
 November 2026 (see "Where to look"). Use it unless the project gives a
 reason not to, and say so when you depart from it.
 
-What that app had proved when this was written: scaffold, login, the main
-screen, offline sync, icon, licenses and account deletion, on iPhone. Not
-yet built there: extensions, the TestFlight upload, and the Mac beyond a build that
-compiles. Those parts of this skill are a plan, not a record.
+What that app has proved: scaffold, login, the main screen, offline sync,
+icon, licenses, account deletion, a share extension and an internal
+TestFlight upload, on iPhone. Not yet built there: widgets, App Intents,
+and the Mac beyond a build that compiles. Those parts of this skill are a
+plan, not a record.
 
 The web project is the server. The app is a second client of the same API,
 in its own repo, and nothing in it is secret.
@@ -31,10 +32,9 @@ in its own repo, and nothing in it is secret.
    4. Offline store and sync (`references/offline-sync.md`)
    5. App icon and the acknowledgments screen
    6. Delete my account (`references/account-deletion.md`)
-   7. Share extension, widgets, App Intents (not yet built in the first app;
-      no reference file)
-   8. Internal TestFlight (`references/testflight.md`; the upload was not
-      yet built in the first app)
+   7. Share extension (`references/share-extension.md`), then widgets and
+      App Intents (not yet built in the first app; no reference file)
+   8. Internal TestFlight (`references/testflight.md`)
 5. **App Store submission** is separate and later: screenshots, privacy
    answers, payment rules, review.
 
@@ -104,8 +104,10 @@ Load the one the step needs:
   the API must offer.
 - `references/account-deletion.md`: Apple's requirement, the flow, and the
   failures to handle.
-- `references/testflight.md`: what Mike sets up in his Apple account, and
-  the upload workflow.
+- `references/share-extension.md`: the target, what an extension may and
+  may not do with the store and the session.
+- `references/testflight.md`: the upload workflow, where the key lives,
+  and what Mike sets up by hand, in order.
 - `references/review-findings.md`: what code review caught on the first app.
   Read before opening a PR.
 
