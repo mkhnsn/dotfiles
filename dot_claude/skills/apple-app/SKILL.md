@@ -11,9 +11,10 @@ reason not to, and say so when you depart from it.
 
 What that app has proved: scaffold, login, the main screen, offline sync,
 icon, licenses, account deletion, a share extension and an internal
-TestFlight upload, on iPhone. Not yet built there: widgets, App Intents,
-and the Mac beyond a build that compiles. Those parts of this skill are a
-plan, not a record.
+TestFlight upload, on iPhone. Built and uploaded but not yet checked on a
+phone: a widget and an "Add a note" App Intent. Not yet built there: the
+Mac beyond a build that compiles. Those parts of this skill are a plan,
+not a record.
 
 The web project is the server. The app is a second client of the same API,
 in its own repo, and nothing in it is secret.
@@ -33,7 +34,8 @@ in its own repo, and nothing in it is secret.
    5. App icon and the acknowledgments screen
    6. Delete my account (`references/account-deletion.md`)
    7. Share extension (`references/share-extension.md`), then widgets and
-      App Intents (not yet built in the first app; no reference file)
+      App Intents (built in the first app, not yet checked on a phone; no
+      reference file)
    8. Internal TestFlight (`references/testflight.md`)
 5. **App Store submission** is separate and later: screenshots, privacy
    answers, payment rules, review.
@@ -65,7 +67,7 @@ Put each to him as a question with a recommendation. Don't assume.
 - Deploying or releasing the web project, and changing Doppler or DNS.
 - Any change on the shared Auth0 tenant.
 - Anything in his Apple account. He does those by hand: give exact values.
-- Pushing a tag, uploading a build, submitting for review.
+- Merging a release PR, uploading a build, submitting for review.
 - Merging a PR.
 
 ## Rules that held throughout
@@ -106,8 +108,8 @@ Load the one the step needs:
   failures to handle.
 - `references/share-extension.md`: the target, what an extension may and
   may not do with the store and the session.
-- `references/testflight.md`: the upload workflow, where the key lives,
-  and what Mike sets up by hand, in order.
+- `references/testflight.md`: release-please and the shared upload
+  workflow, where the key lives, and what Mike sets up by hand, in order.
 - `references/review-findings.md`: what code review caught on the first app.
   Read before opening a PR.
 
