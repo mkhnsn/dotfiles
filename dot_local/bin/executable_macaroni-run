@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+# macaroni-run — run a command on echo-macaroni against a copy of this repo
+#
+# For dev loops that shouldn't take over this Mac: build an app, run its
+# end-to-end tests, open its window. echo-macaroni is headless (nobody is
+# signed in), and GUI apps still get a window and the GPU there.
+#
+#   macaroni-run pnpm test:e2e      # sync the working tree, then run this there
+#   macaroni-run --shell            # sync, then a shell in the copy
+#   macaroni-run --fetch e2e/.results   # copy a path back from the remote copy
+#   macaroni-run --clean            # delete the remote copy
+#
+# What it does:
+# - Copies the repo's working tree (uncommitted changes included) to
+#   ~/work/<repo>-<id> in the _dev account, one copy per checkout or worktree
+#   on this Mac. node_modules goes along, so nothing is installed there and
+#   no registry token lives on the server; both Macs are Apple silicon. Other
+#   git-ignored paths (build output, test results) are left alone on both
+#   sides, and .git stays here.
+# - Runs the command in the same subdirectory you're in, with Homebrew on PATH.
+#   Its exit status is this script's.
+#
+# It logs in over Tailscale SSH as _dev: no key, no sudo there. Only admin
+# devices get in (echo-core's tailnet policy).
+#
+# MACARONI_HOST overrides the host (default echo-macaroni), MACARONI_USER the
+# account (default _dev).
+set -euo pipefail
+
+host=${MACARONI_HOST:-echo-macaroni}
+user=${MACARONI_USER:-_dev}
+remote_path=/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+usage() {
+  sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'
+}
+
+mode=run
+case "${1:-}" in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  --shell | --clean)
+    mode=${1#--}
+    shift
+    ;;
+  --fetch)
+    mode=fetch
+    shift
+    if [[ $# -ne 1 ]]; then
+      echo "usage: macaroni-run --fetch <path in the repo>" >&2
+      exit 2
+    fi
+    ;;
+  --)
+    shift
+    ;;
+  -*)
+    echo "macaroni-run: unknown option $1" >&2
+    exit 2
+    ;;
+esac
+if [[ $mode == run && $# -eq 0 ]]; then
+  usage >&2
+  exit 2
+fi
+
+if ! root=$(git rev-parse --show-toplevel 2>/dev/null); then
+  echo "macaroni-run: not in a git repository" >&2
+  exit 1
+fi
+sub=$(git rev-parse --show-prefix)
+
+# One remote copy per checkout: worktrees and parallel sessions each get their own.
+id=$(printf '%s:%s' "$(hostname -s)" "$root" | shasum -a 256 | cut -c1-8)
+name=$(basename "$root" | tr -c 'A-Za-z0-9._\n-' '_')
+dir=work/$name-$id
+
+# One connection for the sync and the command.
+ssh_opts=(
+  -o ControlMaster=auto
+  -o "ControlPath=$HOME/.ssh/macaroni-run-%C"
+  -o ControlPersist=120
+  -o ConnectTimeout=10
+)
+target=$user@$host
+
+# Quoted for the remote shell.
+q() { printf '%q' "$1"; }
+
+if [[ $mode == clean ]]; then
+  # shellcheck disable=SC2029  # expanded here on purpose
+  ssh "${ssh_opts[@]}" "$target" "rm -rf -- \"\$HOME\"/$(q "$dir")"
+  echo "Removed $target:~/$dir"
+  exit 0
+fi
+
+if [[ $mode == fetch ]]; then
+  path=${1%/}
+  case "/$path/" in
+    */../* | //*)
+      echo "macaroni-run: --fetch takes a path inside the repo" >&2
+      exit 2
+      ;;
+  esac
+  mkdir -p "$root/$sub$(dirname "$path")"
+  rsync -a -e "ssh ${ssh_opts[*]}" "$target:$dir/$sub$path" "$root/$sub$(dirname "$path")/"
+  echo "Fetched $sub$path"
+  exit 0
+fi
+
+# Git-ignored paths stay out of the sync (and are kept on the remote side), except
+# node_modules, which is mirrored.
+excludes=$(mktemp)
+trap 'rm -f "$excludes"' EXIT
+{
+  echo '/.git'
+  git -C "$root" ls-files --others --ignored --exclude-standard --directory |
+    grep -v '\(^\|/\)node_modules/' | sed -e 's|/$||' -e 's|^|/|' || true
+} >"$excludes"
+
+# shellcheck disable=SC2029
+ssh "${ssh_opts[@]}" "$target" "mkdir -p \"\$HOME\"/$(q "$dir")"
+rsync -a --delete --exclude-from="$excludes" -e "ssh ${ssh_opts[*]}" "$root/" "$target:$dir/"
+
+remote="cd \"\$HOME\"/$(q "$dir/$sub") && export PATH=$remote_path"
+if [[ $mode == shell ]]; then
+  exec ssh -t "${ssh_opts[@]}" "$target" "$remote && exec \"\${SHELL:-/bin/zsh}\" -l"
+fi
+
+cmd=
+for arg in "$@"; do
+  cmd+=" $(q "$arg")"
+done
+tty=()
+[[ -t 0 && -t 1 ]] && tty=(-t)
+# shellcheck disable=SC2029
+exec ssh "${tty[@]}" "${ssh_opts[@]}" "$target" "$remote && exec$cmd"
