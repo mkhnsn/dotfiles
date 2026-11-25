@@ -4,15 +4,17 @@ The goal is the app on Mike's phone. Internal testers only: no beta
 review, no screenshots, no store description. The App Store submission is
 separate and later.
 
-**Status of this file:** part record, part plan. `rabbithole-apple`
-uploaded 0.1.0 and 0.1.1 in November 2026 with the archive and export
-commands below, from a workflow a tag started. Both installed from
-TestFlight, the second as an automatic update. It then moved to release-please and the org's shared
-workflows, described here. That chain has run on `main` without a release.
-It has not uploaded a build yet. Copy its `.github/workflows/release.yml`,
-`release-please-config.json`, `.release-please-manifest.json` and
-`Config/TestFlight-ExportOptions.plist`, and read its README's "TestFlight"
-section first.
+**Status of this file:** a record. `rabbithole-apple` uploaded 0.1.0 and
+0.1.1 in November 2026 with the archive and export commands below, from a
+workflow a tag started. Both installed from TestFlight, the second as an
+automatic update. It then moved to release-please and the org's shared
+workflows, described here, and 0.2.0 went out that way on the first try:
+a `feat` merged, release-please opened the release PR, and merging it
+tagged the version and uploaded the build. Whether that build installed
+was not confirmed when this was written. Copy its
+`.github/workflows/release.yml`, `release-please-config.json`,
+`.release-please-manifest.json` and `Config/TestFlight-ExportOptions.plist`,
+and read its README's "TestFlight" section first.
 
 ## How a release goes out
 
@@ -39,7 +41,8 @@ tag-triggered workflow or an upload script in the app repo.
   manifest at the last tag's version. An existing `vX.Y.Z` tag is enough
   for it to pick up from.
 - A `feat`, `fix`, `perf` or `revert` commit makes a release. `ci`,
-  `docs`, `test` and `chore` alone open no release PR.
+  `docs`, `test` and `chore` alone open no release PR. Below 1.0 a `feat`
+  bumps the minor version (0.1.1 to 0.2.0) and a `fix` the patch.
 
 ## What the shared upload does
 
