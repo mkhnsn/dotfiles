@@ -6,8 +6,8 @@ separate and later.
 
 **Status of this file:** part record, part plan. `rabbithole-apple`
 uploaded 0.1.0 and 0.1.1 in November 2026 with the archive and export
-commands below, from a workflow a tag started, and 0.1.0 installed from
-TestFlight. It then moved to release-please and the org's shared
+commands below, from a workflow a tag started. Both installed from
+TestFlight, the second as an automatic update. It then moved to release-please and the org's shared
 workflows, described here. That chain has run on `main` without a release.
 It has not uploaded a build yet. Copy its `.github/workflows/release.yml`,
 `release-please-config.json`, `.release-please-manifest.json` and
