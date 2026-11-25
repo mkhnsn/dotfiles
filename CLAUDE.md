@@ -98,6 +98,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | `/reviews` | `skills/reviews/SKILL.md` | Check open PRs you authored for review comments, approvals, and requested changes |
 | `/ui-copy` | `skills/ui-copy/SKILL.md` | Rules for UI text; topic files in `references/` (add new topics there and index them in SKILL.md) |
 | `/deck-copy` | `skills/deck-copy/SKILL.md` | Rules for slide text and speaker notes; AI tells and rewrites in `references/` |
+| `/apple-app` | `skills/apple-app/SKILL.md` | Adding a native iOS and Mac app to an Unstable Studios project: design, scaffold, Auth0, offline sync, account deletion, TestFlight; one topic per file in `references/` |
 
 ### Custom Agents
 
