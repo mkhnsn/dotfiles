@@ -42,8 +42,8 @@ Guide, GOV.UK content design and Apple's Human Interface Guidelines.
 12. **Empty states: what goes here, and one action.**
 13. **Plain words, the person's words.** Code terms only where the person
     types them.
-14. **Sentence case.** No trailing period on headings, buttons or labels.
-    Numerals for numbers ("3 printers").
+14. **Sentence case.** No trailing period on headings, buttons or labels
+    (rule 9's "…" is not one). Numerals for numbers ("3 printers").
 15. **Cut, then cut again.** Remove every word that doesn't change what the
     reader does next.
 
