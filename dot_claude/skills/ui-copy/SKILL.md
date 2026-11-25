@@ -33,9 +33,12 @@ Guide, GOV.UK content design and Apple's Human Interface Guidelines.
    links", not "Sharing your library with others".
 9. **A button that needs more from the person ends in "…".** A
    confirmation, or a form for one of the app's features: "Delete
-   account…", "Edit…", "New note…". A button that acts at once has none:
-   "Save". Nor does one that only goes somewhere: "Log in", "Log out",
-   "Settings", "Acknowledgments". Use the one character, not three periods.
+   account…", "Edit…". A button that acts at once has none: "Save". Nor
+   does one that only goes somewhere: "Log in", "Log out",
+   "Acknowledgments". Use the one character, not three periods. On an
+   Apple platform, Apple's style wins where it differs: "New note" has
+   none and "Settings…" has one
+   (https://developer.apple.com/design/human-interface-guidelines/menus#Labels).
 10. **Errors say what happened and what to do.** "Couldn't reach the server.
     Your changes are saved here and sync when you're back online."
 11. **Confirmations state the consequence once.** "Delete 'Shop' and its
