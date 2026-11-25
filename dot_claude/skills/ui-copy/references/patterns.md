@@ -25,7 +25,9 @@ Say what's needed, beside the field: "Use a dot for decimals (0.45)." Not
 - "Delete "Shop" and its history for everyone in "Makerspace"? This can't be undone."
 - "Leave "Makerspace"? You keep copies of its libraries, without later changes."
 
-The button repeats the verb: "Delete library", not "OK".
+The button repeats the verb: "Delete library", not "OK". It acts at once,
+so it has no "…". The button that opened the question does: "Delete
+library…".
 
 ## Success
 

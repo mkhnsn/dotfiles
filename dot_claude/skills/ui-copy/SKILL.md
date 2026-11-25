@@ -31,16 +31,20 @@ Guide, GOV.UK content design and Apple's Human Interface Guidelines.
    now may be inaccurate."
 8. **Buttons are verbs, labels are nouns.** Headings name the thing: "Share
    links", not "Sharing your library with others".
-9. **Errors say what happened and what to do.** "Couldn't reach the server.
-   Your changes are saved here and sync when you're back online."
-10. **Confirmations state the consequence once.** "Delete 'Shop' and its
+9. **A button that opens something ends in "…".** Another page, a sheet or
+   a question: "Delete account…", "Edit…". A button that acts at once has
+   none: "Save", "Log out". Use the one character, not three periods.
+   Icon-only buttons, and Cancel, Close and Done, have none.
+10. **Errors say what happened and what to do.** "Couldn't reach the server.
+    Your changes are saved here and sync when you're back online."
+11. **Confirmations state the consequence once.** "Delete 'Shop' and its
     history for everyone in 'Makerspace'? This can't be undone."
-11. **Empty states: what goes here, and one action.**
-12. **Plain words, the person's words.** Code terms only where the person
+12. **Empty states: what goes here, and one action.**
+13. **Plain words, the person's words.** Code terms only where the person
     types them.
-13. **Sentence case.** No trailing period on headings, buttons or labels.
+14. **Sentence case.** No trailing period on headings, buttons or labels.
     Numerals for numbers ("3 printers").
-14. **Cut, then cut again.** Remove every word that doesn't change what the
+15. **Cut, then cut again.** Remove every word that doesn't change what the
     reader does next.
 
 **Don't cut meaning.** Shorter must still be true and complete: keep who is
@@ -66,6 +70,8 @@ Read each string and ask:
   aside? Split it or cut it.
 - Does it explain how the system works? Move that out.
 - Is it still true in every case the code allows?
+- Does a button open a page, a sheet or a question? It ends in "…". Does
+  it only sometimes ask? Then only when it will.
 
 ## References
 
