@@ -26,7 +26,8 @@ and read its README's "TestFlight" section first.
 - The version comes from the tag. The build number is
   `run number × 100 + run attempt`, so a re-run never reuses one. Both are
   set on the command line so the app and every extension match, which
-  App Store Connect requires.
+  App Store Connect requires. Renaming the workflow file restarts the run
+  number at 1, which is refused for a version already uploaded.
 - The app's Info.plist sets `ITSAppUsesNonExemptEncryption` to `NO` when it
   only uses HTTPS and the system's cryptography. Without it every build
   waits on a question.
@@ -52,9 +53,16 @@ In Doppler, synced to GitHub, like every other Unstable Studios repo.
 - Doppler will list the other config's secrets as "missing" in each. Tell
   him to dismiss them, both ways.
 
-Afterward, check the names landed (names only):
-`gh secret list --env testflight`, `gh variable list --env testflight`, and
-that nothing with an `ASC_` name is at repository level or in the web repo.
+Afterward, check the names landed. Names only: a plain
+`gh variable list` prints values.
+
+```bash
+gh secret list --env testflight --json name -q '.[].name'
+gh variable list --env testflight --json name -q '.[].name'
+```
+
+Check too that nothing with an `ASC_` name is at repository level or in
+the web repo.
 
 ## What Mike does by hand
 
@@ -63,20 +71,26 @@ and don't ask for any value back. He may send screenshots: tell him to
 crop out terminals and anything with a key in it.
 
 1. **App ID.** developer.apple.com > Certificates, Identifiers & Profiles >
-   Identifiers > +. Explicit bundle ID. Enable only the capabilities the
-   entitlements file declares (Rabbithole: App Groups alone).
+   Identifiers > +. Explicit bundle ID, description is the app's name
+   (Continue stays disabled until it has text). Enable only the
+   capabilities the entitlements file declares (Rabbithole: App Groups
+   alone).
 2. **App Group.** Identifiers, filter App Groups, add `group.<bundle id>`.
    Then the App ID > Configure next to App Groups > select the group.
 3. **Each extension** gets its own App ID (`<bundle id>.share`) with the
    same group assigned.
 4. **A device** registered to the team. The archive is signed for
    development first, which needs one.
-5. **App record.** App Store Connect > Apps > + > New App. The name must
-   be unique on the App Store, 30 characters at most ("Rabbithole by
-   Unstable Studios"). The name under the icon is unchanged.
+5. **App record.** App Store Connect > Apps > + > New App: iOS, English
+   (U.S.), the bundle ID from the dropdown, a private SKU, Full Access.
+   The name must be unique on the App Store, 30 characters at most
+   ("Rabbithole by Unstable Studios"). The name under the icon is
+   unchanged.
 6. **Team API key.** Users and Access > Integrations > App Store Connect
-   API > Team Keys > Generate. Role **Admin**: a Developer key can upload
-   but can't cloud sign. The `.p8` downloads once.
+   API > Team Keys > Generate. Role **Admin**: cloud signing for
+   distribution needs it
+   (https://developer.apple.com/videos/play/wwdc2021/10204/). Only an
+   Admin key was tried. The `.p8` downloads once.
 7. **GitHub environment** `testflight`, with a tag rule `v*`. Before the
    sync, so the sync has a target.
 8. **Doppler** config, three values and the sync, as above.
@@ -86,8 +100,9 @@ crop out terminals and anything with a key in it.
 
 ## Limits
 
-- Never read, print or ask for the key file's contents. Names only.
-- Pushing a tag needs Mike's go-ahead each time. So does merging.
+- Never read, print or ask for the key or any secret's value. Names only.
+- Pushing a tag needs Mike's go-ahead each time. So do merging and
+  running `scripts/testflight` with a key.
 - Merge the workflow before tagging: the tag runs what is at that commit.
 - Wait for CI on the head you are merging. A rebased head has no checks
   for the first seconds, and `gh pr checks --watch` returns at once.

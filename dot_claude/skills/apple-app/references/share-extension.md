@@ -1,8 +1,9 @@
 # Share extension
 
-What `rabbithole-apple` built (November 2026) and what review caught. It
-was tried on a phone from Safari and Chrome. Read that repo's README
-"Share sheet" section and its `RabbitholeShare/` folder before copying.
+What `rabbithole-apple` built (November 2026) and what review caught.
+Mike tried it on his phone from Chrome, and it was tried from Safari in
+the simulator. Read that repo's README "Share sheet" section and its
+`RabbitholeShare/` folder before copying.
 
 ## Shape
 
@@ -14,22 +15,27 @@ was tried on a phone from Safari and Chrome. Read that repo's README
 - `APPLICATION_EXTENSION_API_ONLY = YES`.
 - `NSExtensionActivationRule` as a dictionary: text, and one web URL.
   Never `TRUEPREDICATE`: Apple rejects it.
-- No form. It saves at once, says "Saved to <App>" and closes. iOS shows
-  an extension's view as a full sheet whatever its background.
+- No form. It saves at once, says "Saved to <App>" and closes. In the
+  iOS 27 simulator the extension's view came up as a full sheet with an
+  opaque background, though the view's own background was clear.
 
 ## What it may do
 
 - Write one item into the account's store in the App Group, marked with
   where it came from, then try to upload that one item. Never the full
   sync: the app may be syncing the same file.
-- Close when the upload is done or after a few seconds, whichever is
-  first, and only once. Whatever is unfinished, the app's next sync must
+- Close when the upload is done (but not before the confirmation has
+  been up about a second) or after 5 seconds, whichever is first, and
+  only once. Whatever is unfinished, the app's next sync must
   be able to finish.
 - Read the session. **Never renew the token.** Refresh tokens rotate, and
   an extension stopped mid-renewal uses one up without storing the next,
-  which logs the app out. Upload only with a token that hasn't expired
-  (ask the credentials manager with no renewal margin) and otherwise
-  leave the item for the app.
+  which logs the app out. Upload only with a stored token that has a
+  minute left, and otherwise leave the item for the app. With Auth0.swift
+  that is two steps, and both are needed: check
+  `hasValid(minTTL: 60)` first, then read with `credentials(minTTL: 0)`.
+  The read alone renews an expired token, and with its default margin it
+  renews one that is about to expire.
 - Never log in, log out, erase local data or act on a refused token.
 - With nobody logged in, say so and save nothing.
 
@@ -48,9 +54,11 @@ was tried on a phone from Safari and Chrome. Read that repo's README
 
 ## Server
 
-A new source value needs adding to the server's list. Send it anyway:
-an unknown source should fall back, not fail. Keep the app's own model
-from decoding the source into a closed enum.
+A new source value needs adding to the server's list. Check what the
+server does with a source it doesn't know before the app sends one.
+Rabbithole's stores it as `web`, so the app could ship first. A server
+that refuses it must be released first. Keep the app's own model from
+decoding the source into a closed enum.
 
 ## Check on a device
 
