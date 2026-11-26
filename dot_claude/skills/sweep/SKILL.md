@@ -123,7 +123,6 @@ The orchestrator manages the workers; it doesn't just collect their output.
 **Limits, set in Checkpoint A** (defaults in brackets; the user can change them):
 - Concurrent workers [3].
 - Issues per batch [3]. A worker reports after each batch, which is the natural evaluation point.
-- PRs merged per repo this run [6]. Past that, the rest of the plan waits for the next run.
 - Fix/review rounds per PR [2]. After that, comment the state on the PR and stop that PR.
 - Wall-clock for the run [none]. If the user sets one, stop handing out batches when 80% has
   passed and go to wrap-up.
@@ -149,7 +148,8 @@ checkpoints. If usage is running ahead of the plan, cut concurrency to 1–2 and
 in-flight PRs before starting new issues.
 
 **Stop the run** when every repo has finished its plan or hit a limit, or the user says so.
-Don't start work outside the approved plan; new ideas found mid-run become issues.
+The approved plan sets how many PRs there are; there's no separate PR cap. Don't start work
+outside it; new ideas found mid-run become issues for the next run.
 
 ## Notifications
 
