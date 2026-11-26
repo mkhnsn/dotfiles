@@ -151,6 +151,25 @@ in-flight PRs before starting new issues.
 The approved plan sets how many PRs there are; there's no separate PR cap. Don't start work
 outside it; new ideas found mid-run become issues for the next run.
 
+## Model selection
+
+Set `model` on every Agent call; agent definitions don't pin one, so they otherwise inherit the
+orchestrator's.
+
+| Role | Model | Why |
+|---|---|---|
+| Orchestrator | the session's (run it on Opus) | planning, evaluation and merge calls |
+| Inventory and note lookup (Explore) | `haiku` | read-only listing and search |
+| Note triage into issues | `sonnet` | judgment on scope and placement, low risk |
+| Worker | `sonnet` | routine issues |
+| Worker, hard batch | `opus` | architecture, cross-cutting changes, sync/concurrency, security, unclear specs |
+| Reviewer | `opus` | review is where quality is bought; keep it strong and independent |
+
+Pick the worker model per batch in Checkpoint A's plan. Escalate a repo's worker to `opus` when
+a `sonnet` batch fails evaluation (no mergeable PR, repeated review findings, scope drift) and
+re-run that batch; don't drop back within the run. When usage runs ahead of plan, cut
+concurrency before downgrading the reviewer.
+
 ## Notifications
 
 Send a push notification (PushNotification; load it with ToolSearch if deferred) when:
