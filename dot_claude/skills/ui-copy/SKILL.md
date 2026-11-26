@@ -31,16 +31,24 @@ Guide, GOV.UK content design and Apple's Human Interface Guidelines.
    now may be inaccurate."
 8. **Buttons are verbs, labels are nouns.** Headings name the thing: "Share
    links", not "Sharing your library with others".
-9. **Errors say what happened and what to do.** "Couldn't reach the server.
-   Your changes are saved here and sync when you're back online."
-10. **Confirmations state the consequence once.** "Delete 'Shop' and its
+9. **A button that needs more from the person ends in "…".** A
+   confirmation, or a form for one of the app's features: "Delete
+   account…", "Edit…". A button that acts at once has none: "Save". Nor
+   does one that only goes somewhere: "Log in", "Log out",
+   "Acknowledgments". Use the one character, not three periods. On an
+   Apple platform, Apple's style wins where it differs: "New note" has
+   none and "Settings…" has one
+   (https://developer.apple.com/design/human-interface-guidelines/menus#Labels).
+10. **Errors say what happened and what to do.** "Couldn't reach the server.
+    Your changes are saved here and sync when you're back online."
+11. **Confirmations state the consequence once.** "Delete 'Shop' and its
     history for everyone in 'Makerspace'? This can't be undone."
-11. **Empty states: what goes here, and one action.**
-12. **Plain words, the person's words.** Code terms only where the person
+12. **Empty states: what goes here, and one action.**
+13. **Plain words, the person's words.** Code terms only where the person
     types them.
-13. **Sentence case.** No trailing period on headings, buttons or labels.
-    Numerals for numbers ("3 printers").
-14. **Cut, then cut again.** Remove every word that doesn't change what the
+14. **Sentence case.** No trailing period on headings, buttons or labels
+    (rule 9's "…" is not one). Numerals for numbers ("3 printers").
+15. **Cut, then cut again.** Remove every word that doesn't change what the
     reader does next.
 
 **Don't cut meaning.** Shorter must still be true and complete: keep who is
@@ -66,6 +74,8 @@ Read each string and ask:
   aside? Split it or cut it.
 - Does it explain how the system works? Move that out.
 - Is it still true in every case the code allows?
+- Does a button ask for a confirmation or open a form before anything
+  happens? It ends in "…". Does it only go to another screen? It doesn't.
 
 ## References
 
