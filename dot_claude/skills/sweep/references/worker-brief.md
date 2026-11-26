@@ -14,10 +14,10 @@ You may get further batches, fix-ups and post-merge rebases by message after you
 Read the repo's CLAUDE.md before starting.
 
 For each issue:
-1. Comment on the issue that work started; assign it with `--assignee @me` if that's the repo's
+1. Comment on the issue that work started; assign it with `gh issue edit <n> --add-assignee @me` if that's the repo's
    habit; apply labels and milestone if missing.
 2. Make a worktree for the branch, never work in the main checkout:
-   `git -C <path> worktree add ../<repo>.sweep/<branch> -b <type>/<short-description> <base>`,
+   `git -C <path> worktree add ~/.cache/sweep/<repo>/<branch> -b <type>/<short-description> <base>`,
    where `<base>` is `origin/main` or the parent branch for a stacked PR.
 3. Make the change in atomic conventional commits; stage explicit paths only. Update every doc
    that mentions what changed. Fix build, lint and runtime warnings you hit.
@@ -36,8 +36,12 @@ Before pushing more commits to an existing PR branch, check the PR is still open
 (`gh pr view <n> --json state`). If it merged, start a new branch from main.
 
 After a stack parent merges and you're asked to rebase the child:
-`git rebase --onto origin/main <parent-head-sha> <child-branch>`, then
-`git push --force-with-lease`. Report the new head SHA.
+in the child's worktree, `git fetch origin && git rebase --onto origin/main <parent-base-sha>`
+(the merge-base the orchestrator gives you), then `git push --force-with-lease`. Report the new
+head SHA.
+
+After a PR merges and you're told so, remove its worktree and local branch
+(`git worktree remove <path>`, `git branch -D <branch>`).
 
 Rules:
 - Never merge, approve or edit release-please PRs.

@@ -12,8 +12,8 @@ ask which repos (one question, nothing else). Merging is approved only by the us
 merge item in Checkpoint A, and covers only the PRs this run opens; release PRs need their own
 yes in Checkpoint B.
 
-Works from the CLI and the desktop app: it uses only the Agent tool, SendMessage, TaskStop,
-PushNotification and `gh`. In the app, a long repo may instead go to its own session if the user
+Works from the CLI and the desktop app: it uses the Agent tool, SendMessage, TaskStop,
+PushNotification, ToolSearch, the Rabbithole MCP, `gh`, and `get_usage` where the app has it. In the app, a long repo may instead go to its own session if the user
 asks.
 
 ## Ground rules
@@ -31,20 +31,25 @@ asks.
    `git add <paths>`, PR body says `Closes #N`. Stack PRs when one change builds on another: the
    child's base is the parent branch. After the parent merges, GitHub retargets the child to
    main (the parent branch is deleted on merge); the worker then runs
-   `git rebase --onto origin/main <parent-head-sha> <child-branch>`, pushes with
+   `git fetch origin && git rebase --onto origin/main <parent-base-sha>` in the child's worktree
+   (`<parent-base-sha>` is `git merge-base <child> <parent>`, recorded in the run log before the
+   parent merges), pushes with
    `--force-with-lease`, and the child goes through CI and review again.
 3. **Independent review per PR.** A fresh `reviewer` subagent gets the repo path, the PR number
    and `gh pr diff <n> -R <owner>/<repo>`, never the author's summary or conclusions. Fix real
    findings, test a specific claim before dismissing it, re-review until clear. Record the
    outcome and the reviewed head SHA in a PR comment.
 4. **Merge gate.** Merge only when review is clear on the current head and every check passed:
-   - After a push, wait for checks to register (`gh pr checks <n> --json name` non-empty; poll
+   - After a push, wait for checks to register (`gh pr checks <n> -R <owner>/<repo> --json name` non-empty; poll
      every 20 s, up to 5 min). "No checks" is never green.
-   - Then `gh pr checks <n> --watch --fail-fast -i 20` with `run_in_background`, and confirm with
-     `gh pr checks <n> --json name,bucket` that every bucket is `pass` or `skipping`. Exit code 8
+   - Then `gh pr checks <n> -R <owner>/<repo> --watch --fail-fast -i 20` with `run_in_background`, and confirm with
+     `gh pr checks <n> -R <owner>/<repo> --json name,bucket` that every bucket is `pass` or `skipping`. Exit code 8
      means pending, not done.
-   - Merge with `gh pr merge <n> --<method> --match-head-commit <reviewed-sha> --delete-branch`,
-     using the repo's allowed method. No `--auto`: the gate has already waited, and an armed
+   - Before merging a stack parent, record each child's `git merge-base <child> <parent>`.
+   - Merge with `gh pr merge <n> -R <owner>/<repo> --<method> --match-head-commit <reviewed-sha>
+     --delete-branch`, using the repo's allowed method. Every `gh pr` command in the run takes
+     `-R`: the orchestrator isn't in any one repo. Then have the worker remove that branch's
+     worktree and local branch (`git worktree remove`, `git branch -D`). No `--auto`: the gate has already waited, and an armed
      auto-merge would merge later pushes without review.
    - If checks never register or sit queued, retry once, then find out why. An environmental
      cause goes in blockers.md (rule 1); otherwise note it on the PR and move on.
@@ -62,7 +67,7 @@ asks.
    action that needs the user into the two checkpoints. Interrupt mid-run only when work is
    dramatically blocked.
 8. **Issue hygiene as you go.** Assign issues the way the repo already does (check
-   `gh issue list --json number,assignees`; `--assignee @me` for issues you take), apply
+   `gh issue list --json number,assignees`; `gh issue edit <n> --add-assignee @me` for issues you take), apply
    existing labels (`gh label list`), set milestones per phase, comment progress and link the
    PR, and edit the issue body when scope changes. Close a duplicate only if the user opened it
    or this run did; otherwise comment the link and list it in Checkpoint B.
@@ -118,9 +123,10 @@ the issue URL (never delete a note), and run without asking again.
 ## Phase 4 — Execute
 
 - One worker subagent per repo, at most the concurrency limit at once. Start it with the repo
-  path as its working directory and no `isolation` (Agent's worktree isolation copies the
+  path as its `cwd` and no `isolation` (Agent's worktree isolation copies the
   session's own repo, not the target). The worker makes its own worktree per branch:
-  `git -C <repo> worktree add ../<repo>.sweep/<branch> -b <branch> <base>`.
+  `git -C <repo> worktree add ~/.cache/sweep/<repo>/<branch> -b <branch> <base>` (outside the
+  ghq tree, so `find-repo` and `ghq list` don't pick it up).
 - Give each the brief in `references/worker-brief.md`, filled in with its repo, its next batch
   of at most the batch limit, and the stack plan. Later batches go to the same worker by
   SendMessage, after evaluation (see Budget and oversight).
