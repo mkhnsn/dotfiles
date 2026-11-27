@@ -360,7 +360,7 @@ escrowed secret, the browser pieces), so each gets its own tick and its own "Do 
 (opening the download page, the app, or the exports folder).
 
 Tests: `make test` renders it, runs shellcheck and `tests/mac-setup.test.sh` (stub commands, no
-dependencies), also under bash 3.2 in Docker. CI runs the same on every PR.
+dependencies), also under bash 3.2 in Docker (the tree is streamed into the container with `tar`, not bind-mounted, so it works from any path; Colima shares only the home folder). CI runs the same on every PR.
 
 Things to know on a FileVault Mac:
 

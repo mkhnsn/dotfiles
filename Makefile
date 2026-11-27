@@ -39,4 +39,4 @@ test:
 	@python3 -I tests/layout_test.py
 	@python3 -I tests/no_pycache_test.py
 	@python3 -I tests/streamdeck_library_test.py
-	@if command -v docker >/dev/null 2>&1; then docker run --rm -v "$$PWD:/w" -w /w bash:3.2 bash tests/mac-setup.test.sh; fi
+	@if command -v docker >/dev/null 2>&1; then COPYFILE_DISABLE=1 tar -c --exclude=.git . | docker run --rm -i -w /w bash:3.2 bash -c 'mkdir -p /w && tar -x -C /w && bash tests/mac-setup.test.sh'; fi
