@@ -29,8 +29,9 @@ asks.
    an issue instead.
 2. **PRs into main only.** Branch `<type>/<short-description>`, conventional commits, explicit
    `git add <paths>`, PR body says `Closes #N`. Stack PRs when one change builds on another: the
-   child's base is the parent branch. After the parent merges, GitHub retargets the child to
-   main (the parent branch is deleted on merge); the worker then runs
+   child's base is the parent branch. Before the parent merges, the orchestrator retargets the
+   child to main (`gh pr edit <child> -R <owner>/<repo> --base main`), because `--delete-branch`
+   on the parent can close a child still based on it for good. After the merge the worker runs
    `git fetch origin && git rebase --onto origin/main <parent-base-sha>` in the child's worktree
    (`<parent-base-sha>` is `git merge-base <child> <parent>`, recorded in the run log before the
    parent merges), pushes with
@@ -49,17 +50,16 @@ asks.
      every 20 s, up to 5 min). "No checks" is never green.
    - Then `gh pr checks <n> -R <owner>/<repo> --watch --fail-fast -i 20` with `run_in_background`, and confirm with
      `gh pr checks <n> -R <owner>/<repo> --json name,bucket` that every bucket is `pass` or `skipping`. Exit code 8
-     means pending, not done.
-   - Before merging a stack parent, record each child's `git merge-base <child> <parent>`. In
-     practice `--delete-branch` on the parent can close a child still based on it for good, so
-     retarget the child first (`gh pr edit <child> -R <owner>/<repo> --base main`); the rebase in
-     rule 2 still follows, and the child's checks and review are read again at its new head.
-   - A finding that predates the PR (an issue the PR doesn't touch) still blocks it until it's
-     filed as an issue and the user says to merge anyway; hold the PR and list it in Checkpoint B.
+     means pending, not done. Run watch loops over a list of ids under `bash -c`: zsh doesn't
+     split `$var` into words.
+   - Before merging a stack parent, record each child's `git merge-base <child> <parent>` and
+     retarget the child (rule 2).
+   - A finding that predates the PR (a problem the PR doesn't touch) still blocks it until the
+     orchestrator files it as an issue and the user says to merge anyway; hold the PR and list it in Checkpoint B.
    - Before merging the next of several PRs, re-read its merge state (`gh pr view <n> -R
      <owner>/<repo> --json mergeStateStatus,mergeable`); a conflict follows rule 3.
    - Merge with `gh pr merge <n> -R <owner>/<repo> --<method> --match-head-commit <reviewed-sha>
-     --delete-branch`, using the repo's allowed method. Every `gh pr` command in the run takes
+     --delete-branch`, using the repo's allowed method. Every `gh` command in the run takes
      `-R`: the orchestrator isn't in any one repo. Then have the worker remove that branch's
      worktree and local branch (`git worktree remove`, `git branch -D`). No `--auto`: the gate has already waited, and an armed
      auto-merge would merge later pushes without review.
@@ -73,15 +73,16 @@ asks.
      Renovate rebases it after review, a fresh reviewer checks the new diff against the reviewed
      one (rule 3); when it's the same change, record that and the new head in the PR comment and
      merge on the new head.
-5. **Release-please PRs.** Leave them to release-please. No review, no edits, no merge; only the
-   orchestrator's CI re-run below. List them
+5. **Release-please PRs.** Leave them to release-please. No review, no edits, and no merge without the
+   user's yes; only the orchestrator's CI re-run below. List them
    in Checkpoint B with what merging each one does (deploys, Terraform applies, package
    publishes, TestFlight uploads, and whether each would run now or be refused by a budget or
    account) and whether a breaking
    change has callers in other repos that aren't ready. Merge only on the user's yes there.
    A release PR opened by the release-please bot often has its CI run held as
-   `action_required`. The orchestrator re-runs it (`gh run rerun <id>`, with the id from `gh run
-   list -R <owner>/<repo> --branch <head-branch> --json databaseId,conclusion`; the approve
+   `action_required`. The orchestrator re-runs it (`gh run rerun <id> -R <owner>/<repo>`, with the id from `gh run
+   list -R <owner>/<repo> --branch <head-branch> -s action_required --json databaseId,headSha`,
+   taking the run whose `headSha` is the PR's head; the approve
    endpoint is for fork PRs only) and confirms its checks pass (rule 4's check steps) before
    listing it in Checkpoint B.
    - After the user's yes, merge dependent releases in order (an app that must ship before the
@@ -98,9 +99,8 @@ asks.
    Ask the user (a dramatic block under rule 7) before rebooting a host with no remote power
    control (echo-turbine until its KVM is in) or unloading a kernel driver on it; `modprobe -r`
    can hang in D state and stall the reboot. After a host restart, check its CI runners pick up
-   jobs; if ARC's listener gets none, delete its pod (`k3s kubectl delete pod -n arc-systems -l
-   actions.github.com/scale-set-name=echo-turbine`). Run watch loops over a list of ids under
-   `bash -c`: zsh doesn't split `$var` into words.
+   jobs; if ARC's listener gets none, delete its pod (`ssh echo-turbine 'sudo k3s kubectl delete pod -n
+   arc-systems -l actions.github.com/scale-set-name=echo-turbine'`).
 7. **Few prompts.** Recommend auto mode at the start. Collect every decision and outward-facing
    action that needs the user into the two checkpoints. Interrupt mid-run only when work is
    dramatically blocked. Log every permission prompt and denial (time, agent, command shape,
