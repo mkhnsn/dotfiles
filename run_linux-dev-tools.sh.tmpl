@@ -16,7 +16,8 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # mise in ~/.local/bin. It isn't in Fedora's repositories, so this is a pinned release,
 # checked against its SHA-256 (the release's SHASUMS256.txt). To update, change the version
-# and both sums. run_after_mise-tools then installs the Node and pnpm that
+# and both sums. Any other version (a `mise self-update` included) is replaced by the pin on
+# the next apply. run_after_mise-1-install then installs the Node and pnpm that
 # ~/.config/mise/config.toml names; ~/.zshenv puts its shims on PATH.
 # https://github.com/jdx/mise/releases
 MISE_VERSION="2026.11.14"

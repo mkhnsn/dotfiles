@@ -21,7 +21,7 @@ note() { printf '[dev-openshift] %s\n' "$*"; }
 
 # ---- Node 22 and 24, the versions the client repos pin ----
 # mise, a default Node (24), pnpm, Python and Ansible are general dev tools:
-# run_linux-dev-tools and run_after_mise-tools install them on every full-setup Linux
+# run_linux-dev-tools and run_after_mise-1-install install them on every full-setup Linux
 # machine, and on these. A repo gets 22 when it pins it (.nvmrc, .node-version or
 # devEngines.runtime; mise doesn't read engines.node); otherwise the default, 24.
 export PATH="$HOME/.local/bin:$PATH"

@@ -53,7 +53,7 @@ for tool in node pnpm; do
   fi
 done
 
-if have fnm; then warn "fnm:    still installed at $(command -v fnm); mise replaced it (run_once_after_mise-cleanup removes it)"; fi
+if have fnm; then warn "fnm:    still installed at $(command -v fnm); mise replaced it (run_after_mise-2-cleanup removes it once mise works)"; fi
 if [[ -n "${PNPM_HOME:-}" ]]; then warn "PNPM_HOME is set ($PNPM_HOME); the dotfiles no longer set it"; fi
 
 hr "Useful paths"
