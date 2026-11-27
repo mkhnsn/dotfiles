@@ -58,7 +58,8 @@ brew "stripe/stripe-cli/stripe"
 brew "hf"
 brew "powershell"
 
-# Dev tools. Python is uv only (uv python, uv venv, uv pip, uv tool); Node and pnpm come from mise.
+# Dev tools. Python is uv only (uv python, uv venv, uv pip, uv tool); Node and pnpm come from mise
+# (server Macs also get Homebrew's for the CI runners: Brewfile.server).
 cask "claude-code" # the claude CLI; ~/.claude settings come from dot_claude
 brew "act"
 brew "actionlint"
