@@ -39,9 +39,10 @@ For each issue:
    15–20 s. Check `~/src/blockers.md` for host quirks first. Current ones:
    - echo-macaroni over Tailscale SSH always exits 0: end each command with `; echo "rc: $?"`
      and read that.
-   - echo-turbine's shell has no GitHub Packages credential or Xvfb: let CI run what needs
-     them. `node` and `pnpm` there are mise shims (also in `ssh echo-turbine 'cmd'`), at the
-     repo's pinned versions and its `packageManager`.
+   - On both hosts, `node` and `pnpm` are mise shims (also in `ssh echo-turbine 'cmd'` and
+     `ssh service@echo-macaroni 'cmd'`), at the repo's pinned versions and its
+     `packageManager`; `pnpm install` reads `@unstable-studios/*` packages, and echo-turbine
+     has `xvfb-run` for Electron e2e.
    Never put a credential into a file to get past a missing one (no npmrc or token file from
    `gh auth token`): open the PR and let CI be the test host, and say so in the test plan.
 5. Push and open the PR: summary, test plan, `Closes #N`, stack parent named in the body. For
