@@ -36,13 +36,11 @@ if command -v ghq >/dev/null 2>&1; then
   mkdir -p "$GHQ_ROOT" 2>/dev/null || true
 fi
 
-# mise (Node, pnpm): the shims from ~/.zshenv already resolve each repo's versions;
-# activation also puts the selected versions' own directories first and loads mise.toml
-# [env] on cd. Both read the same config, so `node` and `pnpm` match either way.
+# mise (Node, pnpm): shims only, from ~/.zshenv; no `mise activate`. Activation puts the
+# versions selected where the shell started ahead of the shims and updates them only from a
+# prompt hook, so a shell snapshot taken in ~ (Claude Code's Bash tool) would run Node 24 and
+# pnpm 12 in every repo. A shim picks the version for the directory each time it runs.
 # https://mise.jdx.dev/dev-tools/shims.html
-if command -v mise >/dev/null 2>&1; then
-  eval "$(mise activate zsh)"
-fi
 
 
 # ---- 1Password CLI / chezmoi integration ----
@@ -101,8 +99,9 @@ if command -v brew >/dev/null 2>&1; then
   fpath_prepend "$_brew_prefix/share/zsh-completions"
   fpath_prepend "$_brew_prefix/share/zsh/site-functions"
 
-  # Homebrew node ships a bash-style _npm that shadows the proper zsh one.
-  # Remove it so /usr/share/zsh/*/functions/_npm (with #compdef) wins.
+  # Homebrew's node formula (servers get it from Brewfile.server for the CI runners; a
+  # workstation only until it's uninstalled) ships a bash-style _npm that shadows the proper
+  # zsh one. Remove it so /usr/share/zsh/*/functions/_npm (with #compdef) wins.
   [[ -L "$_brew_prefix/share/zsh/site-functions/_npm" ]] && \
     rm -f "$_brew_prefix/share/zsh/site-functions/_npm"
 fi
