@@ -240,7 +240,7 @@ chezmoi apply -R
 
 - `dot_*/` — canonical configuration templates managed by chezmoi
 - `.chezmoiexternal.toml` — external git‑based dependencies (zsh plugins, etc.)
-- `install.sh` — full bootstrap for personal machines
+- `install.sh` — installs chezmoi and applies the dotfiles (Codespaces, curl installs)
 - `private_*.tmpl` — secret-backed or machine-specific templates
 
 This structure keeps base configuration portable while allowing platform-specific behavior.
