@@ -75,11 +75,13 @@ automode='{
     "Cloud: Cloudflare (Workers, D1, R2, Access) for most apps; Azure for a few client workloads; DigitalOcean droplets (n8n).",
     "Secrets: Doppler (per-project configs; dev/local configs are routine, prd/prod configs are production) and 1Password (op CLI). Never print secret values into chat or logs.",
     "Production: any config, target, namespace, host or file with prod, prd or production as a whole name segment (wrangler.prod.json, the prd make target, Doppler prd configs) is production.",
-    "Sensitive files: .env*, .secrets, terraform.tfstate*; never read into context or share without asking."
+    "Sensitive files: .env*, .secrets, terraform.tfstate*; never read into context or share without asking.",
+    "Build hosts: echo-turbine (Fedora Linux, reached as ssh echo-turbine) and echo-macaroni (macOS with Xcode and simulators, reached as ssh service@echo-macaroni over Tailscale) are build and test machines that Mike owns. Sessions run builds, test suites and simulators there instead of on the laptop."
   ],
   "allow": [
     "$defaults",
-    "Doppler dev reads: doppler run and read-only doppler secrets/configs against dev or local configs in checkouts under ~/src. Writes, deletes and prd configs still confirm."
+    "Doppler dev reads: doppler run and read-only doppler secrets/configs against dev or local configs in checkouts under ~/src. Writes, deletes and prd configs still confirm.",
+    "Build host loops: on echo-turbine and service@echo-macaroni, cloning or fetching repos, copying a git bundle of a pushed branch over (git bundle, scp), checking it out in a clone or worktree under the home folder, and running builds, test suites, simulators and read-only inspection are routine. sudo, package installs, service or account changes, playbook applies, and deleting anything other than clones and worktrees the session made still confirm."
   ],
   "soft_deny": [
     "$defaults",
