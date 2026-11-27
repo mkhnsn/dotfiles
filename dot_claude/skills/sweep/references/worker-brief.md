@@ -45,9 +45,10 @@ For each issue:
    Never put a credential into a file to get past a missing one (no npmrc or token file from
    `gh auth token`): open the PR and let CI be the test host, and say so in the test plan.
 5. Push and open the PR: summary, test plan, `Closes #N`, stack parent named in the body. For
-   `unstable-studios` repos, run `link-unstable` if it's on PATH. Read CI results with
-   `gh pr checks <n> --json name,bucket` once the watch ends, not from the tail of its output,
-   and report a PR green only when every bucket is `pass` or `skipping`.
+   `unstable-studios` repos, run `link-unstable` if it's on PATH. Wait for CI with
+   `gh pr checks <n> -R <owner>/<repo> --watch -i 20` in the background, then read the result
+   with `gh pr checks <n> -R <owner>/<repo> --json name,bucket`, not from the tail of the watch
+   output. Report a PR green only when every bucket is `pass` or `skipping`.
 6. Comment the PR link on the issue. Edit the issue body if scope changed.
 
 Before pushing more commits to an existing PR branch, check the PR is still open
