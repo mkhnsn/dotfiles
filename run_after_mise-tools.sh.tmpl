@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ if or (eq .chezmoi.os "darwin") (and (eq .chezmoi.os "linux") (or .full_setup (dig "dev_openshift" false .))) -}}
+
+{{ template "todo.sh" }}
+
+# Installs the tools in ~/.config/mise/config.toml (Node 24, pnpm 12), which creates their
+# shims in ~/.local/share/mise/shims. Repos that pin other versions get them on first use
+# (mise's auto_install). mise comes from the Brewfile on macOS and run_linux-dev-tools on
+# Linux. run_after_ (every apply, once the config is written); a no-op when all are there.
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:$PATH"
+if ! command -v mise >/dev/null 2>&1; then
+  todo "mise isn't installed, so there's no Node or pnpm; run 'chezmoi apply' again"
+  exit 0
+fi
+
+# From $HOME, so a project config in the current directory doesn't change what's installed.
+cd "$HOME"
+mise install --quiet ||
+  todo "mise: installing Node and pnpm failed; run 'cd ~ && mise install' to see why"
+
+{{ end -}}

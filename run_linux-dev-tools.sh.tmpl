@@ -5,63 +5,40 @@ set -euo pipefail
 
 {{ template "todo.sh" }}
 
-# General dev tools on Linux: Node (fnm), pnpm, Python venv and Ansible. macOS gets node,
-# pnpm, uv and ansible from the Brewfile. Not part of `dev_openshift`: that flag only adds
-# what the client work needs (run_after_dev-openshift).
+# General dev tools on Linux: mise (Node and pnpm), Python venv and Ansible. macOS gets mise,
+# uv and ansible from the Brewfile. Not part of `dev_openshift`: that flag only adds what the
+# client work needs (run_after_dev-openshift).
 # Plain run_ (every apply, after run_install-packages has installed curl, unzip and uv): each
 # step checks for its own tool, so a failed download is retried on the next apply.
 
 mkdir -p "$HOME/.local/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
-# Node through fnm (env.zsh wires up `fnm env --use-on-cd`), with the current LTS as the
-# default unless a default is already set.
-install_node() {
+# mise in ~/.local/bin. It isn't in Fedora's repositories, so this is a pinned release,
+# checked against its SHA-256 (the release's SHASUMS256.txt). To update, change the version
+# and both sums. run_after_mise-tools then installs the Node and pnpm that
+# ~/.config/mise/config.toml names; ~/.zshenv puts its shims on PATH.
+# https://github.com/jdx/mise/releases
+MISE_VERSION="2026.11.14"
+install_mise() {
+  local bin="$HOME/.local/bin/mise"
+  [[ "$("$bin" --version 2>/dev/null)" == "$MISE_VERSION "* ]] && return 0
   command -v curl >/dev/null 2>&1 || return 0
-  if ! command -v fnm >/dev/null 2>&1; then
-    curl -fsSL https://fnm.vercel.app/install \
-      | bash -s -- --install-dir "$HOME/.local/bin" --skip-shell >/dev/null 2>&1 || true
-  fi
-  if ! command -v fnm >/dev/null 2>&1; then
-    todo "linux-dev-tools: fnm failed to install (no Node); run 'chezmoi apply' again"
-    return 0
-  fi
-  # `fnm default` with no argument prints the default, or fails when there is none.
-  if ! fnm default >/dev/null 2>&1; then
-    if fnm install --lts >/dev/null 2>&1; then
-      fnm default lts-latest >/dev/null 2>&1 || true
-    else
-      todo "linux-dev-tools: fnm install --lts failed (no Node); run 'chezmoi apply' again"
-    fi
-  fi
-}
-
-# pnpm 12 as its own executable (runs without Node; Node 25+ no longer ships corepack).
-# https://pnpm.io/installation
-install_pnpm() {
-  command -v pnpm >/dev/null 2>&1 && return 0
-  command -v curl >/dev/null 2>&1 || return 0
-  local pnpm_arch
+  local arch sum
   case "$(uname -m)" in
-    x86_64|amd64)  pnpm_arch="x64" ;;
-    aarch64|arm64) pnpm_arch="arm64" ;;
-    *)             return 0 ;;
+    x86_64|amd64)  arch="x64";   sum="6fa596291e9758106f761fea4f8e7fac6c3e7ff4714d5c0b9a76e16068db14f6" ;;
+    aarch64|arm64) arch="arm64"; sum="7bd3b2d5ffff077a7662ba186c09600e5b40c1eee9df0c264ed67642ce0a8698" ;;
+    *) todo "linux-dev-tools: mise has no build for $(uname -m), so there's no Node or pnpm"; return 0 ;;
   esac
-  local PNPM_VERSION="12.23.0"
-  local dest="$HOME/.local/share/pnpm-standalone"
-  local tmpdir
-  tmpdir="$(mktemp -d)"
-  if curl -fsSL "https://github.com/pnpm/pnpm/releases/download/v${PNPM_VERSION}/pnpm-linux-${pnpm_arch}.tar.gz" \
-      | tar -xz -C "$tmpdir" 2>/dev/null && [[ -x "$tmpdir/pnpm" ]]; then
-    rm -rf "$dest"
-    mkdir -p "$HOME/.local/share"
-    mv "$tmpdir" "$dest"
-    chmod 755 "$dest"
-    ln -sf "$dest/pnpm" "$HOME/.local/bin/pnpm"
+  local tmp
+  tmp="$(mktemp)"
+  if curl -fsSL "https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-linux-${arch}" -o "$tmp" &&
+      printf '%s  %s\n' "$sum" "$tmp" | sha256sum -c --status; then
+    install -m 0755 "$tmp" "$bin"
   else
-    rm -rf "$tmpdir"
-    todo "linux-dev-tools: pnpm failed to install; run 'chezmoi apply' again"
+    todo "linux-dev-tools: mise $MISE_VERSION failed to download or didn't match its checksum; run 'chezmoi apply' again"
   fi
+  rm -f "$tmp"
 }
 
 # Python with venv and pip (uv covers most uses; some tools still call python3 -m venv).
@@ -99,8 +76,7 @@ install_ansible() {
   uv tool install --quiet --with ansible ansible-core || todo "linux-dev-tools: ansible failed to install"
 }
 
-install_node
-install_pnpm
+install_mise
 install_python_venv
 install_ansible
 
