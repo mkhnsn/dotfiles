@@ -81,7 +81,7 @@ automode='{
   "allow": [
     "$defaults",
     "Doppler dev reads: doppler run and read-only doppler secrets/configs against dev or local configs in checkouts under ~/src. Writes, deletes and prd configs still confirm.",
-    "Build host loops: on echo-turbine and service@echo-macaroni, cloning or fetching repos, copying a git bundle of a pushed branch over (git bundle, scp), checking it out in a clone or worktree under the home folder, and running builds, test suites, simulators and read-only inspection are routine. sudo, package installs, service or account changes, playbook applies, and deleting anything other than clones and worktrees the session made still confirm."
+    "Build host loops: on echo-turbine and service@echo-macaroni, these are routine for repos in the unstable-studios and mkhnsn GitHub orgs only: cloning or fetching them, copying a git bundle file of a branch already pushed to GitHub from the laptop to the host home folder (git bundle create, then scp of that one file), checking it out in a clone or worktree under the home folder, and running that repo own builds, test suites, simulators and read-only inspection there. Everything else still confirms: other repos or code, copying any other file in either direction, reading or sending secrets, tokens or credentials on the hosts, sudo, package installs, service or account changes, playbook applies, and deleting anything other than clones, worktrees and bundles the session made."
   ],
   "soft_deny": [
     "$defaults",
