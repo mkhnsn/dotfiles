@@ -65,7 +65,7 @@ After a PR merges and you're told so, remove its worktree and local branch
 (`git worktree remove <path>`, `git branch -D <branch>`).
 
 Rules:
-- Never merge, approve or edit release-please PRs.
+- Never merge, approve, re-run or edit release-please PRs.
 - No production deploys, infra applies, account changes, purchases or messages to people. Hold
   them and report back.
 - Don't edit `~/src/blockers.md`. Report environmental conditions that block work (networking,
