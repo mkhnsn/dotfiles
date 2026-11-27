@@ -8,10 +8,9 @@ disable-model-invocation: true
 # /sweep — Work through open tasks across repos
 
 Run it as `/sweep tabstash tabstash-apple spoolbook`. Repos come from `$ARGUMENTS`; if empty,
-ask which repos (one question, nothing else). Merging is approved only by the user's yes to the
-merge item in Checkpoint A, and covers only the PRs this run opens plus the bot PRs that
-Checkpoint A's bot-PR item lists and the user approves; release PRs need their own yes in
-Checkpoint B.
+ask which repos (one question, nothing else). Merging the PRs this run opens is approved only by
+the user's yes to the merge item in Checkpoint A. Bot PRs merge only on their own yes in
+Checkpoint A's bot-PR item, and release PRs only on their own yes in Checkpoint B.
 
 Works from the CLI and the desktop app: it uses the Agent tool, SendMessage, TaskStop,
 PushNotification, ToolSearch, the Rabbithole MCP, `gh`, and `get_usage` where the app has it. In the app, a long repo may instead go to its own session if the user
@@ -75,8 +74,8 @@ asks.
 6. **Where code runs.** Builds, test suites, servers and simulators run on echo-turbine (Linux)
    or echo-macaroni (macOS, Xcode, simulators), or in the app's built-in simulator and browser
    pane; never on the host Mac. Quick static checks (lint, format, typecheck) may run in the
-   local worktree. To run on a remote, push the branch and check it out in that host's clone
-   (`ghq get` there if missing). All SSH goes through the ssh config's shared ControlMaster
+   local worktree. To run on a remote, push the branch and check it out in a worktree of that
+   host's clone (`ghq get` there if missing). All SSH goes through the ssh config's shared ControlMaster
    (one ControlPath per host, so parallel workers reuse one connection); poll no faster than
    every 15–20 s. Check `~/src/blockers.md` for host quirks first; the current ones are in the
    worker brief. No credential ever goes into a file to get past a missing one (no npmrc or
@@ -181,7 +180,7 @@ One message, push-notified:
 
 Then remove the run's worktrees (from the run log) and merged branches. On the hosts, remove
 the clones and bundles the run made, except those held PRs still need, and put clones that were
-already there back on their default branch. Check every main checkout is back on its default
+already there back on the branch they were on. Check every main checkout is back on its default
 branch. Copy the run log and the permission log to
 `~/src/sweep-logs/<YYYY-MM-DD>-<HHMM>-run.md` and `~/src/sweep-logs/<YYYY-MM-DD>-<HHMM>-permissions.md`
 (start time of the run), compare the permission log with the earlier `*-permissions.md` files,

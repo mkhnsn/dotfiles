@@ -33,7 +33,8 @@ For each issue:
 4. Quick static checks (lint, format, typecheck) may run in the worktree. Builds, test suites
    (`swift test` and `pnpm test` included), servers and simulators run on echo-turbine (Linux)
    or echo-macaroni (macOS/Xcode), never on the host Mac: push the branch, then fetch and check
-   it out in that host's clone (`ghq get` there if missing). Use the ssh config's shared
+   it out in a worktree of that host's clone (`ghq get` there if missing), so a clone that was
+   already there keeps its branch; if its tree isn't clean, don't touch it and use a new clone. Use the ssh config's shared
    ControlMaster so parallel workers reuse one connection per host; poll no faster than every
    15–20 s. Check `~/src/blockers.md` for host quirks first. Current ones:
    - echo-macaroni over Tailscale SSH always exits 0: end each command with `; echo "rc: $?"`
@@ -80,8 +81,8 @@ Rules:
   don't iterate on it.
 
 Report back, as a list: PRs opened (number, branch, head SHA, stack parent, issue), worktree
-paths here, every host clone you used (path, made by you or already there, branch checked out)
-and every bundle you copied over, issues updated, blockers seen, items held for the user,
+paths here, every host clone you used (path; made by you, or already there with the branch it
+was on), the branch you left checked out, and every bundle you copied over, issues updated, blockers seen, items held for the user,
 anything you could not verify, and every command that hit a permission prompt or denial (its
 shape with any secret value redacted, and what it was for). You may not see prompts yourself;
 list your commands that touched other hosts, credentials or deletions so the orchestrator can

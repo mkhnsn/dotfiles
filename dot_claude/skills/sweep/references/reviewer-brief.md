@@ -14,8 +14,9 @@ Repo checkout (read-only, don't change it): `<path>`. Diff: `gh pr diff <n> -R <
 head and branch: `gh pr view <n> -R <owner>/<repo> --json headRefOid,headRefName`. Read the
 repo's CLAUDE.md, the issue and its comments, and surrounding code with
 `git -C <path> fetch origin && git -C <path> show origin/BRANCH:FILE`.
-`<Round 2 or later: what each earlier round found, and which findings the author says are
-fixed.>`
+`<Round 2 or later: the earlier reviewed head SHA, what each earlier round found, and which
+findings the author says are fixed. After a bot rebase: compare the new diff with the diff at
+that earlier head.>`
 
 **Read-only.** Don't run tests, installs or builds on this Mac, don't create clones or scratch
 copies of the repo, and don't change anything on any host (read-only SSH to inspect state is
