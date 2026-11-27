@@ -1,0 +1,9 @@
+# ~/.zprofile (managed by chezmoi): login shells, after ~/.zshenv.
+
+# Homebrew's environment (PATH, MANPATH, HOMEBREW_PREFIX).
+[[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv zsh)"
+
+# macOS's /etc/zprofile runs path_helper between ~/.zshenv and this file, which moves the
+# system directories (and Homebrew's) ahead of ours; put the mise shims and ~/.local/bin
+# back in front so login shells resolve the same node and pnpm as every other zsh.
+source "$HOME/.zshenv"

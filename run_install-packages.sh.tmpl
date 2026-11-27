@@ -2,6 +2,7 @@
 set -euo pipefail
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 # Brewfile.workstation hash: {{ include "Brewfile.workstation" | sha256sum }}
+# Brewfile.server hash: {{ include "Brewfile.server" | sha256sum }}
 # cargo-packages: markless
 # uv-tools: specify-cli ntfy copier wireviz
 # pwsh-modules: Microsoft.Graph.Authentication
@@ -104,6 +105,14 @@ if [[ "$os" == "darwin" ]]; then
       todo "Brewfile: some entries failed to install; run brew bundle --file \"$BREWFILE\" to see which"
     fi
   fi
+
+{{ if dig "is_server" false . -}}
+  # Server Macs: the CI runner pool's node and pnpm (see Brewfile.server).
+  SRV_BREWFILE="{{ .chezmoi.sourceDir }}/Brewfile.server"
+  if ! brew bundle check --no-upgrade --file "$SRV_BREWFILE" >/dev/null 2>&1 && ! brew bundle --file "$SRV_BREWFILE"; then
+    todo "Brewfile.server: some entries failed to install; run brew bundle --file \"$SRV_BREWFILE\" to see which"
+  fi
+{{ end -}}
 
 {{ if not (dig "is_server" false .) -}}
   # Rosetta first: some apps (Parallels' setup, Intel-only vendor apps) need it.

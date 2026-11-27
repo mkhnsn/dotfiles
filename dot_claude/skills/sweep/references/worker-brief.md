@@ -39,10 +39,9 @@ For each issue:
    15–20 s. Check `~/src/blockers.md` for host quirks first. Current ones:
    - echo-macaroni over Tailscale SSH always exits 0: end each command with `; echo "rc: $?"`
      and read that.
-   - echo-macaroni's `service` user can't fetch private repos: send the pushed branch as a git
-     bundle (`git bundle create`, `scp` to `service@echo-macaroni`, `git fetch <bundle>` there).
-   - echo-turbine's shell has no GitHub Packages credential, pnpm or Xvfb: use
-     `npx -y pnpm@<version>` for what installs, and let CI run what doesn't.
+   - echo-turbine's shell has no GitHub Packages credential or Xvfb: let CI run what needs
+     them. `node` and `pnpm` there are mise shims (also in `ssh echo-turbine 'cmd'`), at the
+     repo's pinned versions and its `packageManager`.
    Never put a credential into a file to get past a missing one (no npmrc or token file from
    `gh auth token`): open the PR and let CI be the test host, and say so in the test plan.
 5. Push and open the PR: summary, test plan, `Closes #N`, stack parent named in the body. For
@@ -82,7 +81,7 @@ Rules:
 
 Report back, as a list: PRs opened (number, branch, head SHA, stack parent, issue), worktree
 paths here, every host clone you used (path; made by you, or already there with the branch it
-was on), the branch you left checked out, and every bundle you copied over, issues updated, blockers seen, items held for the user,
+was on), the branch you left checked out, issues updated, blockers seen, items held for the user,
 anything you could not verify, and every command that hit a permission prompt or denial (its
 shape with any secret value redacted, and what it was for). You may not see prompts yourself;
 list your commands that touched other hosts, credentials or deletions so the orchestrator can

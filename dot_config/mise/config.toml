@@ -1,0 +1,17 @@
+# Global mise config (managed by chezmoi: edit the source, not this file, and don't use
+# `mise use -g`, which rewrites it). https://mise.jdx.dev/lang/node.html
+
+# Defaults outside a repo that pins its own.
+[tools]
+node = "24"
+pnpm = "12"
+
+[settings]
+# Use each repo's own pins: Node from .nvmrc, .node-version or package.json
+# devEngines.runtime, pnpm from devEngines.packageManager or packageManager. mise doesn't
+# read engines.node (a compatibility range, not the version to develop with).
+idiomatic_version_file_enable_tools = ["node", "pnpm"]
+
+[settings.node]
+# mise installs pnpm itself; no Corepack (Node 25+ doesn't ship it).
+corepack = false

@@ -12,10 +12,8 @@ setopt HIST_REDUCE_BLANKS     # trim whitespace
 setopt HIST_IGNORE_SPACE      # lines starting with space are private
 setopt APPEND_HISTORY         # append, don't overwrite
 
-# PATH basics
-# Include both ~/.local/bin and ~/bin: the chezmoi installer drops its binary in
-# one or the other depending on flags, and WSL's default PATH includes neither.
-export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+# PATH basics: ~/.zshenv (read by every zsh, interactive or not) puts the mise shims,
+# ~/.local/bin and ~/bin first and sets GHQ_ROOT. Only interactive additions go here.
 
 # WSL sessions not started by wsl.exe (Tailscale SSH, systemd units) get no
 # Windows PATH. Interop still works, so add the system dirs back for
@@ -33,16 +31,16 @@ fi
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
 
-# ghq root
+# ghq root (GHQ_ROOT itself comes from ~/.zshenv)
 if command -v ghq >/dev/null 2>&1; then
-  export GHQ_ROOT="$HOME/src"
   mkdir -p "$GHQ_ROOT" 2>/dev/null || true
 fi
 
-# fnm (Node version manager): installed on Linux by run_linux-dev-tools
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --use-on-cd --shell zsh)"
-fi
+# mise (Node, pnpm): shims only, from ~/.zshenv; no `mise activate`. Activation puts the
+# versions selected where the shell started ahead of the shims and updates them only from a
+# prompt hook, so a shell snapshot taken in ~ (Claude Code's Bash tool) would run Node 24 and
+# pnpm 12 in every repo. A shim picks the version for the directory each time it runs.
+# https://mise.jdx.dev/dev-tools/shims.html
 
 
 # ---- 1Password CLI / chezmoi integration ----
@@ -101,8 +99,9 @@ if command -v brew >/dev/null 2>&1; then
   fpath_prepend "$_brew_prefix/share/zsh-completions"
   fpath_prepend "$_brew_prefix/share/zsh/site-functions"
 
-  # Homebrew node ships a bash-style _npm that shadows the proper zsh one.
-  # Remove it so /usr/share/zsh/*/functions/_npm (with #compdef) wins.
+  # Homebrew's node formula (servers get it from Brewfile.server for the CI runners; a
+  # workstation only until it's uninstalled) ships a bash-style _npm that shadows the proper
+  # zsh one. Remove it so /usr/share/zsh/*/functions/_npm (with #compdef) wins.
   [[ -L "$_brew_prefix/share/zsh/site-functions/_npm" ]] && \
     rm -f "$_brew_prefix/share/zsh/site-functions/_npm"
 fi
@@ -115,17 +114,6 @@ for d in \
 ; do
   [[ -d "$d" ]] && fpath_prepend "$d"
 done
-
-# pnpm (global bins)
-if [[ "${OSTYPE:-}" == darwin* ]]; then
-  export PNPM_HOME="$HOME/Library/pnpm"
-else
-  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
-fi
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
 
 autoload -Uz compinit
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
@@ -289,7 +277,7 @@ export LESS='-R -F -X --mouse'
 
 # bat: on Debian/Ubuntu (incl. WSL) the binary installs as `batcat` to dodge a
 # name clash with an old `bacula` tool, so `bat` doesn't exist. Symlink it onto
-# PATH (~/.local/bin is prepended above) so `bat`, MANPAGER's `sh -c` subshell,
+# PATH (~/.zshenv puts ~/.local/bin on it) so `bat`, MANPAGER's `sh -c` subshell,
 # fzf previews, and the cache-refresh script all resolve the same name.
 if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
   if [[ ! -e "$HOME/.local/bin/bat" ]]; then

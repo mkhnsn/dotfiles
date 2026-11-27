@@ -24,49 +24,37 @@ if have doppler; then ok "doppler:   $(doppler --version 2>/dev/null)"; else war
 if have doppler && [[ -z "$(doppler configure get token --plain 2>/dev/null)" ]]; then warn "doppler:   not logged in; run: doppler login"; fi
 if have terraform; then ok "terraform: $(CHECKPOINT_DISABLE=1 terraform version 2>/dev/null | head -n 1)"; else warn "terraform: MISSING (installed on full_setup machines)"; fi
 
-hr "Node toolchain"
-if have node; then
-  if node_ver=$(node -v 2>&1); then
-    ok "node:   $node_ver"
-  else
-    warn "node:   BROKEN — $(echo "$node_ver" | head -1)"
-    warn "        likely a Homebrew dylib mismatch; try: brew reinstall node"
+hr "Node toolchain (mise)"
+if have mise; then
+  ok "mise:   $(mise --version 2>/dev/null)"
+else
+  warn "mise:   MISSING (Brewfile on macOS, run_linux-dev-tools on Linux)"
+fi
+
+# Every zsh gets the mise shims from ~/.zshenv, so `ssh host 'pnpm test'` sees the same
+# node and pnpm as a prompt does.
+mise_shims="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}/shims"
+for tool in node pnpm; do
+  if ! have "$tool"; then
+    warn "$tool:   MISSING (run: cd ~ && mise install)"
+    continue
   fi
-else
-  warn "node:   MISSING"
-fi
-
-if have pnpm; then
-  if pnpm_ver=$(pnpm -v 2>&1); then
-    ok "pnpm:   $pnpm_ver"
+  if tool_ver=$("$tool" --version 2>&1); then
+    ok "$tool:   $tool_ver ($(command -v "$tool"))"
   else
-    warn "pnpm:   BROKEN — $(echo "$pnpm_ver" | head -1)"
-    warn "        likely a Homebrew dylib mismatch; try: brew reinstall node"
+    warn "$tool:   BROKEN — $(echo "$tool_ver" | head -1)"
   fi
-else
-  warn "pnpm:   MISSING"
-fi
+  if have zsh; then
+    noninteractive="$(zsh -c "command -v $tool" 2>/dev/null || true)"
+    case "$noninteractive" in
+      "$mise_shims/$tool") ok "$tool in non-interactive zsh: mise shim" ;;
+      *) warn "$tool in non-interactive zsh: ${noninteractive:-<none>} (expected $mise_shims/$tool from ~/.zshenv)" ;;
+    esac
+  fi
+done
 
-# Node 25+ no longer bundles corepack; on macOS pnpm comes from Homebrew instead.
-if have corepack; then
-  ok "corepack: $(corepack --version)"
-else
-  info "corepack: not installed (Node 25+ doesn't bundle it; pnpm comes from Homebrew)"
-fi
-
-# pnpm globals sanity (this is what bit you)
-info "PNPM_HOME:   ${PNPM_HOME:-<unset>}"
-if have pnpm; then
-  # Where pnpm thinks global binaries should go
-  info "pnpm global-bin-dir: $(pnpm config get global-bin-dir 2>/dev/null || echo unknown)"
-fi
-
-if [[ -n "${PNPM_HOME:-}" ]]; then
-  case ":$PATH:" in
-    *":$PNPM_HOME:"*) ok "PNPM_HOME is on PATH" ;;
-    *) warn "PNPM_HOME is NOT on PATH" ;;
-  esac
-fi
+if have fnm; then warn "fnm:    still installed at $(command -v fnm); mise replaced it (run_after_mise-2-cleanup removes it once mise works)"; fi
+if [[ -n "${PNPM_HOME:-}" ]]; then warn "PNPM_HOME is set ($PNPM_HOME); the dotfiles no longer set it"; fi
 
 hr "Useful paths"
 info "HOME:        ${HOME}"

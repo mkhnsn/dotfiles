@@ -28,6 +28,7 @@ test:
 	@/bin/bash tests/op-service-token.test.sh
 	@/bin/bash tests/claude-sync.test.sh
 	@/bin/bash tests/cf-mcp-headers.test.sh
+	@/bin/bash tests/shell-path.test.sh
 	@python3 -I tests/claude_memory_test.py
 	@python3 -I tests/app_prefs_test.py
 	@python3 -I tests/shortcut_check_test.py

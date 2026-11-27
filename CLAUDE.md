@@ -46,8 +46,10 @@ chezmoi apply              # Renders templates to $HOME
 VS Code templates live in `.chezmoitemplates/vscode/` as the single source of truth. OS-specific wrappers in `dot_config/Code/User/` (Linux) and `Library/Application Support/Code/User/` (macOS) include these templates; macOS Insiders (`Code - Insiders/User/`) gets keybindings only. Keybindings include `ctrl+alt+d <letter>` chords that run workspace tasks by label (ngde: s sync, c/x CRC start/stop, h health, p pods, l login, t any task).
 
 ### Shell Configuration
+- `dot_zshenv` (every zsh, including `zsh -c` and `ssh host 'cmd'`) sets PATH: mise shims, then `~/.local/bin`, `~/bin`, Homebrew; and `GHQ_ROOT`. Keep it to environment, no output or subprocesses. `dot_zprofile` runs `brew shellenv` and re-sources it, because macOS's `path_helper` reorders PATH in login shells. `tests/shell-path.test.sh` checks non-interactive, login and interactive shells.
 - `dot_zshrc` sources `~/.config/shell/` modules
-- `dot_config/shell/env.zsh` handles PATH, fzf, completions, pnpm
+- `dot_config/shell/env.zsh` handles interactive PATH additions, fzf, completions (no `mise activate`: shims only, so a frozen shell snapshot still follows each repo's pins)
+- Node and pnpm come from mise (`dot_config/mise/config.toml`: Node 24, pnpm 12, and `idiomatic_version_file_enable_tools = ["node", "pnpm"]` so repos' `.nvmrc`/`.node-version`/`devEngines` and `packageManager` win; no Corepack, no `PNPM_HOME`). mise is in the `Brewfile` on macOS and a pinned, SHA-256-checked release from `run_linux-dev-tools.sh.tmpl` on Linux; `run_after_mise-1-install.sh.tmpl` runs `mise install`; `run_after_mise-2-cleanup.sh.tmpl` removes fnm and the old `~/.local/bin/pnpm` link once, after mise works (marker in `~/.local/state/dotfiles`), and must keep sorting after the install script. Don't add fnm, Corepack, a pnpm link or `mise activate` back. Server Macs also get Homebrew `node`/`pnpm` from `Brewfile.server` for the CI runner pool (echo-core `runners/macos/tools.txt`); the dev user's shims come first.
 - `dot_config/shell/aliases.zsh` contains shell aliases
 - External zsh plugins managed via `.chezmoiexternal.toml`
 
@@ -63,7 +65,7 @@ Chezmoi templates use Go template syntax with these key variables:
 - `.codespaces` - Boolean for GitHub Codespaces environment
 - `.full_setup` - Boolean; enables 1Password/secrets (seed: `DOTFILES_FULL`)
 - `.op_mode` - `"account"` (desktop app) or `"service"` (token); see Utilities
-- `.dev_openshift` - Boolean; opt-in OpenShift client toolchain (seed: `DOTFILES_OPENSHIFT`). It adds only what that client work needs: `run_after_dev-openshift.sh.tmpl` installs Node 22 and 24 (fnm) and Helm 3 in WSL and symlinks `podman`/`oc` to the Windows `.exe`, and `~/.config/shell/openshift.zsh`, `crc-hosts`, the JFrog credentials, the NGDE workspace and the work git identity are gated on it. General dev tools (fnm with an LTS Node, pnpm, Python venv, Ansible) come from `run_linux-dev-tools.sh.tmpl` on every full-setup Linux machine, so keep them out of the flag; `scripts/windows-client.ps1` handles the Windows side. Read flags with `dig "dev_openshift" false .` (key may be absent pre-init).
+- `.dev_openshift` - Boolean; opt-in OpenShift client toolchain (seed: `DOTFILES_OPENSHIFT`). It adds only what that client work needs: `run_after_dev-openshift.sh.tmpl` installs Node 22 and 24 (mise) and Helm 3 in WSL and symlinks `podman`/`oc` to the Windows `.exe`, and `~/.config/shell/openshift.zsh`, `crc-hosts`, the JFrog credentials, the NGDE workspace and the work git identity are gated on it. General dev tools (mise with Node and pnpm, Python venv, Ansible) come from `run_linux-dev-tools.sh.tmpl` on every full-setup Linux machine, so keep them out of the flag; `scripts/windows-client.ps1` handles the Windows side. Read flags with `dig "dev_openshift" false .` (key may be absent pre-init).
 - Secrets accessed via `{{ secret ... }}` with 1Password
 
 ## External Dependencies

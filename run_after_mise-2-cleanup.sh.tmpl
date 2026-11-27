@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{ template "todo.sh" }}
+
+# One-time cleanup after the move from fnm and a hand-linked pnpm to mise: removes only
+# what the old dotfiles installed. Node from elsewhere (Homebrew, dnf, apt) stays, and so
+# does the rest of ~/.local/bin and pnpm's package store.
+# run_after_, sorted after run_after_mise-1-install: it waits until mise serves node and
+# pnpm, so a failed mise download leaves fnm's files in place for a retry. (env.zsh stops
+# running fnm on the first apply either way: until mise works, a shell gets whatever other
+# Node the machine has; echo-turbine has /usr/bin/node, a WSL dev_openshift machine may have
+# none.) A marker in ~/.local/state makes it run once; delete the marker to run it again.
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+marker="$state/mise-cleanup-done"
+[[ -e $marker ]] && exit 0
+
+bin="$HOME/.local/bin"
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+note() { printf '[mise-cleanup] %s\n' "$*"; }
+
+export PATH="$bin:$PATH"
+if ! command -v mise >/dev/null 2>&1 || ! (cd "$HOME" && mise which node && mise which pnpm) >/dev/null 2>&1; then
+  if [[ -e $bin/fnm || -d $data/fnm || -L $bin/pnpm ]]; then
+    todo "mise: Node or pnpm isn't installed yet, so fnm and the old pnpm link stay for now; run 'chezmoi apply' again"
+  fi
+  exit 0
+fi
+
+# pnpm/pnpx links into fnm's Node (Corepack) or the old standalone pnpm. They would
+# otherwise run whenever ~/.local/bin comes before the mise shims.
+for name in pnpm pnpx; do
+  link="$bin/$name"
+  [[ -L $link ]] || continue
+  case "$(readlink "$link")" in
+    */fnm/node-versions/*|*/pnpm-standalone/*) rm -f "$link" && note "removed $link" ;;
+  esac
+done
+
+if [[ -d $data/pnpm-standalone ]]; then
+  rm -rf "$data/pnpm-standalone" && note "removed $data/pnpm-standalone"
+fi
+
+# fnm's binary (its installer put it in ~/.local/bin) and the Node versions it installed,
+# with any `npm i -g` packages in them: list those first so they can be reinstalled.
+if [[ -e $bin/fnm ]]; then
+  rm -f "$bin/fnm" && note "removed $bin/fnm"
+fi
+# npm_globals_under_fnm: the `npm i -g` packages in fnm's Node versions (not npm, corepack).
+npm_globals_under_fnm() {
+  local d s
+  for d in "$data"/fnm/node-versions/*/installation/lib/node_modules/*; do
+    [[ -d $d ]] || continue
+    case "${d##*/}" in
+      npm|corepack) ;;
+      @*) for s in "$d"/*; do [[ -d $s ]] || continue; printf '%s/%s\n' "${d##*/}" "${s##*/}"; done ;;
+      *) printf '%s\n' "${d##*/}" ;;
+    esac
+  done
+}
+if [[ -d $data/fnm ]]; then
+  npm_globals="$(npm_globals_under_fnm | sort -u | tr '\n' ' ')"
+  rm -rf "$data/fnm" && note "removed $data/fnm (Node versions fnm installed)"
+  [[ -n $npm_globals ]] &&
+    todo "npm: global packages installed under fnm's Node are gone ($npm_globals); add the ones you use as \"npm:<package>\" tools in the dotfiles' dot_config/mise/config.toml"
+fi
+
+# PNPM_HOME is no longer set or on PATH, so global pnpm commands there stop resolving.
+if [[ "$(uname -s)" == Darwin ]]; then old_pnpm_home="$HOME/Library/pnpm"; else old_pnpm_home="$data/pnpm"; fi
+if [[ -d $old_pnpm_home ]]; then
+  globals="$(find "$old_pnpm_home" -mindepth 1 -maxdepth 1 ! -type d -exec basename {} \; 2>/dev/null | tr '\n' ' ')"
+  [[ -n $globals ]] &&
+    todo "pnpm: global commands in $old_pnpm_home aren't on PATH any more ($globals); add the ones you use as \"npm:<package>\" tools in the dotfiles' dot_config/mise/config.toml"
+fi
+
+# macOS workstations: node and pnpm left the Brewfile. The mise shims come first on PATH,
+# so these only take up space; other formulae may still need node. Servers keep them for the
+# CI runners (Brewfile.server).
+{{ if not (dig "is_server" false .) -}}
+if command -v brew >/dev/null 2>&1; then
+  left=()
+  for f in pnpm node; do
+    brew list --formula "$f" >/dev/null 2>&1 && left+=("$f")
+  done
+  [[ ${#left[@]} -gt 0 ]] &&
+    todo "Homebrew: ${left[*]} left the Brewfile (mise provides them now); remove what nothing needs: brew uses --installed ${left[*]}, then brew uninstall <formula>"
+fi
+{{ end -}}
+
+mkdir -p "$state" && : > "$marker"
+exit 0

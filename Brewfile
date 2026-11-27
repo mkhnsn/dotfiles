@@ -48,8 +48,7 @@ brew "procs"
 brew "cloudflared"
 brew "hashicorp/tap/terraform"
 brew "doppler"
-brew "node"
-brew "pnpm"
+brew "mise" # Node and pnpm at each repo's pinned versions (dot_config/mise/config.toml)
 
 # Cloud and SaaS CLIs
 cask "azure-cli"
@@ -59,7 +58,8 @@ brew "stripe/stripe-cli/stripe"
 brew "hf"
 brew "powershell"
 
-# Dev tools. Python is uv only (uv python, uv venv, uv pip, uv tool); Node is the node formula.
+# Dev tools. Python is uv only (uv python, uv venv, uv pip, uv tool); Node and pnpm come from mise
+# (server Macs also get Homebrew's for the CI runners: Brewfile.server).
 cask "claude-code" # the claude CLI; ~/.claude settings come from dot_claude
 brew "act"
 brew "actionlint"

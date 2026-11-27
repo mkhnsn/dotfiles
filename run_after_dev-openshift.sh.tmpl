@@ -12,7 +12,7 @@ set -euo pipefail
 #     (does not install them — see scripts/windows-client.ps1 for the Windows side).
 #     Helm is installed natively at v3.x because the Windows (winget) Helm is v4.x,
 #     which breaks Helm-3 charts.
-# run_after_ (every apply, after run_linux-dev-tools has installed fnm): idempotent, each
+# run_after_ (every apply, after run_linux-dev-tools has installed mise): idempotent, each
 # step guarded so it retries cleanly.
 
 mkdir -p "$HOME/.local/bin"
@@ -20,20 +20,15 @@ mkdir -p "$HOME/.local/bin"
 note() { printf '[dev-openshift] %s\n' "$*"; }
 
 # ---- Node 22 and 24, the versions the client repos pin ----
-# fnm, a default Node, pnpm, Python and Ansible are general dev tools: run_linux-dev-tools
-# installs them on every full-setup Linux machine, and on these.
+# mise, a default Node (24), pnpm, Python and Ansible are general dev tools:
+# run_linux-dev-tools and run_after_mise-1-install install them on every full-setup Linux
+# machine, and on these. A repo gets 22 when it pins it (.nvmrc, .node-version or
+# devEngines.runtime; mise doesn't read engines.node); otherwise the default, 24.
 export PATH="$HOME/.local/bin:$PATH"
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --shell bash 2>/dev/null)" || true
-  for v in 22 24; do
-    if ! fnm list 2>/dev/null | grep -q "v$v\\."; then
-      note "installing Node $v"
-      fnm install "$v" >/dev/null 2>&1 || note "fnm install $v failed"
-    fi
-  done
-  fnm default 22 >/dev/null 2>&1 || true
+if command -v mise >/dev/null 2>&1; then
+  (cd "$HOME" && mise install --quiet node@22 node@24) || note "mise install node@22 node@24 failed"
 else
-  todo "dev-openshift: fnm is missing, so Node 22 and 24 aren't installed (run_linux-dev-tools installs it)"
+  todo "dev-openshift: mise is missing, so Node 22 and 24 aren't installed (run_linux-dev-tools installs it)"
 fi
 
 # ---- Helm 3.x (native; the Windows/winget Helm is 4.x, which breaks Helm-3 charts) ----
