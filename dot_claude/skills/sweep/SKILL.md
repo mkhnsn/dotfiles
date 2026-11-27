@@ -50,7 +50,14 @@ asks.
    - Then `gh pr checks <n> -R <owner>/<repo> --watch --fail-fast -i 20` with `run_in_background`, and confirm with
      `gh pr checks <n> -R <owner>/<repo> --json name,bucket` that every bucket is `pass` or `skipping`. Exit code 8
      means pending, not done.
-   - Before merging a stack parent, record each child's `git merge-base <child> <parent>`.
+   - Before merging a stack parent, record each child's `git merge-base <child> <parent>`, and
+     retarget each child to main first (`gh pr edit <child> -R <owner>/<repo> --base main`):
+     `--delete-branch` on the parent closes a child still based on it, and GitHub won't reopen it.
+   - A review that isn't clear blocks the merge even when its finding predates the PR. File the
+     finding as an issue and ask the user; merge only on their yes.
+   - After merging one of several PRs that touch the same files, re-read the next one's merge
+     state before merging it; a conflict goes back to its worker for a rebase, and a fresh
+     reviewer compares the rebased diff with the reviewed one.
    - Merge with `gh pr merge <n> -R <owner>/<repo> --<method> --match-head-commit <reviewed-sha>
      --delete-branch`, using the repo's allowed method. Every `gh pr` command in the run takes
      `-R`: the orchestrator isn't in any one repo. Then have the worker remove that branch's
@@ -71,6 +78,10 @@ asks.
    publishes, TestFlight uploads, and whether each would run now or be refused by a budget or
    account) and whether a breaking
    change has callers in other repos that aren't ready. Merge only on the user's yes there.
+   A release PR opened by the release-please bot often has its CI run held as
+   `action_required`; approve it (`gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/approve`)
+   or re-run it (`gh run rerun <id>`), then gate it like any PR. Order dependent releases (an app
+   that must ship before the server that requires it) and watch each deploy or upload finish.
 6. **Where code runs.** Builds, test suites, servers and simulators run on echo-turbine (Linux)
    or echo-macaroni (macOS, Xcode, simulators), or in the app's built-in simulator and browser
    pane; never on the host Mac. Quick static checks (lint, format, typecheck) may run in the
@@ -80,6 +91,11 @@ asks.
    every 15–20 s. Check `~/src/blockers.md` for host quirks first; the current ones are in the
    worker brief. No credential ever goes into a file to get past a missing one (no npmrc or
    token file from `gh auth token`): when a host can't install or fetch, CI is the test host.
+   A host with no remote power control (echo-turbine until its KVM is in) isn't rebooted, and a
+   misbehaving kernel driver isn't unloaded on it (`modprobe -r` can hang in D state and stall
+   the reboot), without asking the user first. After a host restart, check that its CI runners
+   pick up jobs (ARC's listener may need its pod restarted) before relying on CI. Watch loops
+   that iterate over a list of ids run under `bash -c`: zsh doesn't split `$var` into words.
 7. **Few prompts.** Recommend auto mode at the start. Collect every decision and outward-facing
    action that needs the user into the two checkpoints. Interrupt mid-run only when work is
    dramatically blocked. Log every permission prompt and denial (time, agent, command shape,
