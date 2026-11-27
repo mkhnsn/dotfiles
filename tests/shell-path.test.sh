@@ -33,9 +33,14 @@ cp "$ROOT/dot_config/shell/env.zsh" "$H/.config/shell/env.zsh"
 stub "$SHIMS/node"; stub "$SHIMS/pnpm"
 stub "$H/.local/bin/ghq"
 stub "$H/.local/bin/pnpm"   # a stale link like the one fnm's Corepack left: the shim must win
-# Interactive shells: mise activate (stub prints a marker) and brew (a fake prefix, so env.zsh
-# never touches the real Homebrew).
-stub "$H/.local/bin/mise" 'case "$1" in activate) echo "export MISE_ACTIVATED=1" ;; esac'
+# mise: `activate` (without --shims) puts the version chosen at shell start ahead of the shims,
+# as the real one does, so a shell that activates fails the checks below. brew: a fake prefix,
+# so env.zsh never touches the real Homebrew.
+stub "$H/.local/share/mise/installs/node/24/bin/node"
+stub "$H/.local/bin/mise" "case \"\$1 \$*\" in
+  activate*--shims*) ;;
+  activate*) echo 'export MISE_ACTIVATED=1; path=($H/.local/share/mise/installs/node/24/bin \$path)' ;;
+esac"
 stub "$H/.local/bin/brew" "echo '$H/brew'"
 stub "$TMP/sysbin/node"; stub "$TMP/sysbin/pnpm"   # a system Node (dnf, Homebrew) later on PATH
 stub "$TMP/sysbin/fnm" 'echo "export FNM_HOOKED=1"'  # an fnm still installed: env.zsh mustn't hook it
@@ -51,10 +56,14 @@ check "non-interactive zsh -c: node, pnpm from the mise shims, ghq from ~/.local
 check "non-interactive zsh -c: GHQ_ROOT is ~/src" "$(z -c 'print -r -- $GHQ_ROOT')" "$H/src"
 check "login zsh -lc (macOS path_helper runs in between): same" \
   "$(z -l -c 'command -v node pnpm ghq')" "$want"
+# path_helper's reorder, simulated so the check means something on Linux too: system
+# directories moved ahead of ours, then ~/.zprofile.
+check "after a path_helper-style reorder, ~/.zprofile puts the shims back" \
+  "$(z -c "path=($TMP/sysbin /usr/bin /bin \$path); source ~/.zprofile; command -v node pnpm ghq")" "$want"
 check "interactive zsh -ic: same" \
   "$(z -i -c 'command -v node pnpm ghq' | tail -3)" "$want"
-check "interactive zsh -ic: env.zsh runs mise activate" \
-  "$(z -i -c 'print -r -- ${MISE_ACTIVATED:-no}' | tail -1)" 1
+check "interactive zsh -ic: no mise activate (shims pick the version per directory)" \
+  "$(z -i -c 'print -r -- ${MISE_ACTIVATED:-no}' | tail -1)" no
 check "interactive zsh -ic: PNPM_HOME is not set" \
   "$(z -i -c 'print -r -- ${PNPM_HOME:-unset}' | tail -1)" unset
 check "interactive zsh -ic: env.zsh doesn't run fnm env" \
