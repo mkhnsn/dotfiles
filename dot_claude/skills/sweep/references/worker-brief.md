@@ -41,8 +41,9 @@ For each issue:
      and read that.
    - echo-macaroni's `service` user can't fetch private repos: send the pushed branch as a git
      bundle (`git bundle create`, `scp` to `service@echo-macaroni`, `git fetch <bundle>` there).
-   - echo-turbine's shell has no GitHub Packages credential, pnpm or Xvfb: use
-     `npx -y pnpm@<version>` for what installs, and let CI run what doesn't.
+   - echo-turbine's shell has no GitHub Packages credential or Xvfb: let CI run what needs
+     them. `node` and `pnpm` there are mise shims (also in `ssh echo-turbine 'cmd'`), at the
+     repo's pinned versions and its `packageManager`.
    Never put a credential into a file to get past a missing one (no npmrc or token file from
    `gh auth token`): open the PR and let CI be the test host, and say so in the test plan.
 5. Push and open the PR: summary, test plan, `Closes #N`, stack parent named in the body. For

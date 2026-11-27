@@ -88,9 +88,9 @@ init-apply-purge instead.)
 `chezmoi init` sees the token and records `op_mode = "service"`; on Linux, WSL and macOS
 servers alike, `run_05-op-service-token.sh.tmpl` saves the token to
 `~/.config/op/service-account.env` (0600), which `env.zsh` sources, so later `chezmoi apply`
-runs and fresh shells stay authenticated without re-exporting it. `env.zsh` also adds both
-`~/.local/bin` and `~/bin` to PATH, so `chezmoi` is found regardless of where the installer
-placed it.
+runs and fresh shells stay authenticated without re-exporting it. `~/.zshenv` also adds both
+`~/.local/bin` and `~/bin` to PATH, for every zsh, so `chezmoi` is found regardless of where the
+installer placed it.
 
 **Switching an already-installed machine to service mode:** `op_mode` is decided at
 `chezmoi init` time, and an exported token is authoritative. So if a box was first applied
@@ -146,11 +146,37 @@ Two notes:
 On full-setup Linux machines (and `dev_openshift` ones), `run_linux-dev-tools.sh.tmpl` installs
 the tools macOS gets from the `Brewfile` (every apply; each step retries until its tool is there):
 
-- **Node.js** via [`fnm`](https://github.com/Schniz/fnm) in `~/.local/bin` (`env.zsh` wires up
-  `fnm env --use-on-cd`), with the current LTS as the default unless one is already set.
-- **pnpm** as its own executable (`~/.local/share/pnpm-standalone`, linked into `~/.local/bin`).
+- **mise** in `~/.local/bin`, a pinned release checked against its SHA-256 (Fedora doesn't
+  package it). It provides Node.js and pnpm; see [Node and pnpm](#node-and-pnpm-mise).
 - **Python 3** with `venv`/`pip` (`python3-full` on apt).
 - **Ansible**, isolated as a uv tool.
+
+#### Node and pnpm (mise)
+
+Node.js and pnpm come from [mise](https://mise.jdx.dev/) on every machine: the `Brewfile` on
+macOS, `run_linux-dev-tools.sh.tmpl` on Linux. `run_after_mise-tools.sh.tmpl` installs what
+`~/.config/mise/config.toml` (`dot_config/mise/config.toml`) names on each apply.
+
+- Outside a repo: Node 24 and pnpm 12.
+- In a repo: its own pins. `idiomatic_version_file_enable_tools = ["node", "pnpm"]` makes mise
+  read Node from `.nvmrc`, `.node-version` or `package.json` `devEngines.runtime`, and pnpm from
+  `devEngines.packageManager` or `packageManager`; a version it doesn't have yet installs on
+  first use. mise doesn't read `engines.node`. No Corepack (Node 25+ doesn't ship it).
+  ([Node in mise](https://mise.jdx.dev/lang/node.html))
+- PATH: `~/.zshenv`, which every zsh reads (`zsh -c`, `ssh host 'cd repo && pnpm test'`,
+  scripts), puts the mise shims first, then `~/.local/bin` and `~/bin`, and sets `GHQ_ROOT`.
+  The shims work without activation ([shims](https://mise.jdx.dev/dev-tools/shims.html)).
+  `~/.zprofile` puts them back in front after macOS's `path_helper` reorders PATH in login
+  shells, and interactive shells also run `mise activate zsh` (in `env.zsh`), which selects the
+  same versions. `tests/shell-path.test.sh` checks all three.
+- Global CLIs: add them as `"npm:<package>"` tools in `dot_config/mise/config.toml`, not
+  `pnpm add -g` (`PNPM_HOME` isn't set). Edit the chezmoi source, not `~/.config/mise`, and don't
+  use `mise use -g`, which rewrites the managed file.
+- `run_once_after_mise-cleanup.sh.tmpl` runs once per machine and removes what the fnm setup
+  left: `~/.local/bin/fnm`, fnm's Node versions (`~/.local/share/fnm`), the `pnpm`/`pnpx` links
+  in `~/.local/bin` that point into fnm or `~/.local/share/pnpm-standalone`, and that directory.
+  Other Node installs, the rest of `~/.local/bin` and pnpm's store stay; Homebrew `node`/`pnpm`
+  and old global pnpm commands become todos.
 
 #### OpenShift client dev toolchain (`dev_openshift`)
 
@@ -162,7 +188,8 @@ the "OpenShift dev toolchain?" prompt, seeding `DOTFILES_OPENSHIFT=1` in the env
 When on, **inside WSL/Linux**:
 
 - `run_after_dev-openshift.sh.tmpl` (every apply, idempotent) installs **Node 22 and 24** with
-  `fnm` (the versions the client repos pin; 22 becomes the default) and **Helm 3.x** natively in
+  mise (the versions the client repos pin; a repo gets 22 from its `.nvmrc`, `.node-version` or
+  `devEngines.runtime`, and 24 is the default otherwise) and **Helm 3.x** natively in
   `~/.local/bin` (the Windows Helm is 4.x, which breaks Helm 3 charts).
 - On WSL it **symlinks the Windows binaries** `podman` and `oc` into `~/.local/bin` (the
   FIPS-approved Windows builds; chezmoi shims, it does not install them). Git stays WSL-native
