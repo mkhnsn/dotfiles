@@ -15,9 +15,6 @@ chezmoi apply
 # Force-refresh external dependencies (plugins, git repos)
 chezmoi apply -R
 
-# Generate bootstrap scripts for external bootstrap repo
-make bootstrap-scripts
-
 # Run diagnostics (check binaries, paths, completions, git config)
 bash doctor.sh
 ```
@@ -53,10 +50,8 @@ VS Code templates live in `.chezmoitemplates/vscode/` as the single source of tr
 - `dot_config/shell/aliases.zsh` contains shell aliases
 - External zsh plugins managed via `.chezmoiexternal.toml`
 
-### Bootstrap Scripts
+### Install
 - `install.sh` - Entry point for Codespaces and curl-based installs
-- `scripts/` - Templates for external bootstrap repository generation
-- `Makefile` - Generates bootstrap scripts from templates
 
 ## Template Variables
 
