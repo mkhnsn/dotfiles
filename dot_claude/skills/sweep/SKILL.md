@@ -29,8 +29,9 @@ asks.
    an issue instead.
 2. **PRs into main only.** Branch `<type>/<short-description>`, conventional commits, explicit
    `git add <paths>`, PR body says `Closes #N`. Stack PRs when one change builds on another: the
-   child's base is the parent branch. After the parent merges, GitHub retargets the child to
-   main (the parent branch is deleted on merge); the worker then runs
+   child's base is the parent branch. Before the parent merges, the orchestrator retargets the
+   child to main (`gh pr edit <child> -R <owner>/<repo> --base main`), because `--delete-branch`
+   on the parent can close a child still based on it for good. After the merge the worker runs
    `git fetch origin && git rebase --onto origin/main <parent-base-sha>` in the child's worktree
    (`<parent-base-sha>` is `git merge-base <child> <parent>`, recorded in the run log before the
    parent merges), pushes with
@@ -49,11 +50,17 @@ asks.
      every 20 s, up to 5 min). "No checks" is never green.
    - Then `gh pr checks <n> -R <owner>/<repo> --watch --fail-fast -i 20` with `run_in_background`, and confirm with
      `gh pr checks <n> -R <owner>/<repo> --json name,bucket` that every bucket is `pass` or `skipping`. Exit code 8
-     means pending, not done.
-   - Before merging a stack parent, record each child's `git merge-base <child> <parent>`.
+     means pending, not done. Run watch loops over a list of ids under `bash -c`: zsh doesn't
+     split `$var` into words.
+   - Before merging a stack parent, record each child's `git merge-base <child> <parent>` and
+     retarget the child (rule 2).
+   - A finding that predates the PR (a problem the PR doesn't touch) still blocks it until the
+     orchestrator files it as an issue and the user says to merge anyway; hold the PR and list it in Checkpoint B.
+   - Before merging the next of several PRs, re-read its merge state (`gh pr view <n> -R
+     <owner>/<repo> --json mergeStateStatus,mergeable`); a conflict follows rule 3.
    - Merge with `gh pr merge <n> -R <owner>/<repo> --<method> --match-head-commit <reviewed-sha>
-     --delete-branch`, using the repo's allowed method. Every `gh pr` command in the run takes
-     `-R`: the orchestrator isn't in any one repo. Then have the worker remove that branch's
+     --delete-branch`, using the repo's allowed method. Every repo-scoped `gh` command (pr, issue, run,
+     label) in the run takes `-R`: the orchestrator isn't in any one repo. Then have the worker remove that branch's
      worktree and local branch (`git worktree remove`, `git branch -D`). No `--auto`: the gate has already waited, and an armed
      auto-merge would merge later pushes without review.
    - If checks never register or sit queued, retry once, then find out why. An environmental
@@ -66,11 +73,21 @@ asks.
      Renovate rebases it after review, a fresh reviewer checks the new diff against the reviewed
      one (rule 3); when it's the same change, record that and the new head in the PR comment and
      merge on the new head.
-5. **Release-please PRs.** Leave them to release-please. No review, no edits, no merge. List them
+5. **Release-please PRs.** Leave them to release-please. No review and no edits; the orchestrator only
+   re-runs held CI (below). List them
    in Checkpoint B with what merging each one does (deploys, Terraform applies, package
    publishes, TestFlight uploads, and whether each would run now or be refused by a budget or
    account) and whether a breaking
    change has callers in other repos that aren't ready. Merge only on the user's yes there.
+   A release PR opened by the release-please bot often has its CI run held as
+   `action_required`. The orchestrator re-runs it (`gh run rerun <id> -R <owner>/<repo>`, with the id from `gh run
+   list -R <owner>/<repo> --branch <head-branch> -s action_required --json databaseId,headSha`,
+   re-running each run whose `headSha` is the PR's head; the approve
+   endpoint is for fork PRs only) and confirms its checks pass (rule 4's check steps) before
+   listing it in Checkpoint B; a release whose checks fail is listed as failing, with the run.
+   - After the user's yes, merge each with `--match-head-commit <sha listed in Checkpoint B>`,
+     dependent releases in order (an app that must ship before the server that requires it),
+     and watch each deploy or upload with `gh run watch <id> -R <owner>/<repo>`.
 6. **Where code runs.** Builds, test suites, servers and simulators run on echo-turbine (Linux)
    or echo-macaroni (macOS, Xcode, simulators), or in the app's built-in simulator and browser
    pane; never on the host Mac. Quick static checks (lint, format, typecheck) may run in the
@@ -80,6 +97,11 @@ asks.
    every 15–20 s. Check `~/src/blockers.md` for host quirks first; the current ones are in the
    worker brief. No credential ever goes into a file to get past a missing one (no npmrc or
    token file from `gh auth token`): when a host can't install or fetch, CI is the test host.
+   Ask the user (a dramatic block under rule 7) before rebooting a host with no remote power
+   control (echo-turbine until its KVM is in) or unloading a kernel driver on it; `modprobe -r`
+   can hang in D state and stall the reboot. After a host restart, check its CI runners pick up
+   jobs; if ARC's listener gets none, delete its pod (`ssh echo-turbine 'sudo k3s kubectl delete pod -n
+   arc-systems -l actions.github.com/scale-set-name=echo-turbine'`).
 7. **Few prompts.** Recommend auto mode at the start. Collect every decision and outward-facing
    action that needs the user into the two checkpoints. Interrupt mid-run only when work is
    dramatically blocked. Log every permission prompt and denial (time, agent, command shape,
@@ -87,8 +109,8 @@ asks.
    subagents can't see the prompts they trigger, so ask the agent what it ran. Record a
    command's shape with any secret value redacted, never the value.
 8. **Issue hygiene as you go.** Assign issues the way the repo already does (check
-   `gh issue list --json number,assignees`; `gh issue edit <n> --add-assignee @me` for issues you take), apply
-   existing labels (`gh label list`), set milestones per phase, comment progress and link the
+   `gh issue list -R <owner>/<repo> --json number,assignees`; `gh issue edit <n> -R <owner>/<repo> --add-assignee @me` for issues you take), apply
+   existing labels (`gh label list -R <owner>/<repo>`), set milestones per phase, comment progress and link the
    PR, and edit the issue body when scope changes. Close a duplicate only if the user opened it
    or this run did; otherwise comment the link and list it in Checkpoint B.
 

@@ -21,7 +21,7 @@ If an issue has empty acceptance criteria or needs a product, design or safety d
 doesn't settle, stop before coding that part and list the question.
 
 For each issue:
-1. Comment on the issue that work started; assign it with `gh issue edit <n> --add-assignee @me` if that's the repo's
+1. Comment on the issue that work started; assign it with `gh issue edit <n> -R <owner>/<repo> --add-assignee @me` if that's the repo's
    habit; apply labels and milestone if missing.
 2. Make a worktree for the branch, never work in the main checkout:
    `git -C <path> worktree add ~/.cache/sweep/<repo>/<branch> -b <type>/<short-description> <base>`,
@@ -54,7 +54,7 @@ For each issue:
 6. Comment the PR link on the issue. Edit the issue body if scope changed.
 
 Before pushing more commits to an existing PR branch, check the PR is still open
-(`gh pr view <n> --json state`). If it merged, start a new branch from main.
+(`gh pr view <n> -R <owner>/<repo> --json state`). If it merged, start a new branch from main.
 
 After a stack parent merges and you're asked to rebase the child:
 in the child's worktree, `git fetch origin && git rebase --onto origin/main <parent-base-sha>`
@@ -65,9 +65,11 @@ After a PR merges and you're told so, remove its worktree and local branch
 (`git worktree remove <path>`, `git branch -D <branch>`).
 
 Rules:
-- Never merge, approve or edit release-please PRs.
+- Never merge, approve, re-run or edit release-please PRs.
 - No production deploys, infra applies, account changes, purchases or messages to people. Hold
   them and report back.
+- Never reboot a host or run anything that unloads a kernel driver (`modprobe -r`, or a
+  playbook that does); report it to the orchestrator.
 - Don't edit `~/src/blockers.md`. Report environmental conditions that block work (networking,
   host setup, missing tooling or access, platform limits, recurring permission denials) to the
   orchestrator, with what you saw and what you think the cause is. Report the cause, not the
