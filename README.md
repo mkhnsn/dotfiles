@@ -154,7 +154,7 @@ the tools macOS gets from the `Brewfile` (every apply; each step retries until i
 #### Node and pnpm (mise)
 
 Node.js and pnpm come from [mise](https://mise.jdx.dev/) on every machine: the `Brewfile` on
-macOS, `run_linux-dev-tools.sh.tmpl` on Linux. `run_after_mise-tools.sh.tmpl` installs what
+macOS, `run_linux-dev-tools.sh.tmpl` on Linux. `run_after_mise-1-install.sh.tmpl` installs what
 `~/.config/mise/config.toml` (`dot_config/mise/config.toml`) names on each apply.
 
 - Outside a repo: Node 24 and pnpm 12.
@@ -168,15 +168,19 @@ macOS, `run_linux-dev-tools.sh.tmpl` on Linux. `run_after_mise-tools.sh.tmpl` in
   The shims work without activation ([shims](https://mise.jdx.dev/dev-tools/shims.html)).
   `~/.zprofile` puts them back in front after macOS's `path_helper` reorders PATH in login
   shells, and interactive shells also run `mise activate zsh` (in `env.zsh`), which selects the
-  same versions. `tests/shell-path.test.sh` checks all three.
+  same versions. `tests/shell-path.test.sh` checks all three. chezmoi owns `~/.zshenv` and
+  `~/.zprofile`, so lines an installer adds there (OrbStack, conda, rustup) belong in
+  `dot_zshenv`/`dot_zprofile`.
 - Global CLIs: add them as `"npm:<package>"` tools in `dot_config/mise/config.toml`, not
   `pnpm add -g` (`PNPM_HOME` isn't set). Edit the chezmoi source, not `~/.config/mise`, and don't
   use `mise use -g`, which rewrites the managed file.
-- `run_once_after_mise-cleanup.sh.tmpl` runs once per machine and removes what the fnm setup
-  left: `~/.local/bin/fnm`, fnm's Node versions (`~/.local/share/fnm`), the `pnpm`/`pnpx` links
-  in `~/.local/bin` that point into fnm or `~/.local/share/pnpm-standalone`, and that directory.
-  Other Node installs, the rest of `~/.local/bin` and pnpm's store stay; Homebrew `node`/`pnpm`
-  and old global pnpm commands become todos.
+- `run_after_mise-2-cleanup.sh.tmpl` runs once per machine, after mise serves `node` and `pnpm`
+  (until then it leaves everything and adds a todo; a marker in `~/.local/state/dotfiles` records
+  that it ran), and removes what the fnm setup left: `~/.local/bin/fnm`, fnm's Node versions
+  (`~/.local/share/fnm`), the `pnpm`/`pnpx` links in `~/.local/bin` that point into fnm or
+  `~/.local/share/pnpm-standalone`, and that directory.
+  Other Node installs, the rest of `~/.local/bin` and pnpm's store stay; `npm i -g` packages
+  under fnm's Node, old global pnpm commands and Homebrew `node`/`pnpm` become todos.
 
 #### OpenShift client dev toolchain (`dev_openshift`)
 
