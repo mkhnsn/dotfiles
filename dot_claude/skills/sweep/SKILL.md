@@ -73,8 +73,8 @@ asks.
      Renovate rebases it after review, a fresh reviewer checks the new diff against the reviewed
      one (rule 3); when it's the same change, record that and the new head in the PR comment and
      merge on the new head.
-5. **Release-please PRs.** Leave them to release-please. No review, no edits, no merge without the user's
-   yes. The orchestrator may re-run held CI (below). List them
+5. **Release-please PRs.** Leave them to release-please. No review and no edits; the orchestrator only
+   re-runs held CI (below). List them
    in Checkpoint B with what merging each one does (deploys, Terraform applies, package
    publishes, TestFlight uploads, and whether each would run now or be refused by a budget or
    account) and whether a breaking
@@ -84,9 +84,10 @@ asks.
    list -R <owner>/<repo> --branch <head-branch> -s action_required --json databaseId,headSha`,
    re-running each run whose `headSha` is the PR's head; the approve
    endpoint is for fork PRs only) and confirms its checks pass (rule 4's check steps) before
-   listing it in Checkpoint B.
-   - After the user's yes, merge dependent releases in order (an app that must ship before the
-     server that requires it), and watch each deploy or upload finish.
+   listing it in Checkpoint B; a release whose checks fail is listed as failing, with the run.
+   - After the user's yes, merge each with `--match-head-commit <sha listed in Checkpoint B>`,
+     dependent releases in order (an app that must ship before the server that requires it),
+     and watch each deploy or upload with `gh run watch <id> -R <owner>/<repo>`.
 6. **Where code runs.** Builds, test suites, servers and simulators run on echo-turbine (Linux)
    or echo-macaroni (macOS, Xcode, simulators), or in the app's built-in simulator and browser
    pane; never on the host Mac. Quick static checks (lint, format, typecheck) may run in the
