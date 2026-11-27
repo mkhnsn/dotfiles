@@ -48,7 +48,8 @@ For each issue:
    `unstable-studios` repos, run `link-unstable` if it's on PATH. Wait for CI with
    `gh pr checks <n> -R <owner>/<repo> --watch -i 20` in the background, then read the result
    with `gh pr checks <n> -R <owner>/<repo> --json name,bucket`, not from the tail of the watch
-   output. Report a PR green only when every bucket is `pass` or `skipping`.
+   output. Report a PR green only when checks are listed and every bucket is `pass` or
+   `skipping`; an empty list means checks haven't registered yet.
 6. Comment the PR link on the issue. Edit the issue body if scope changed.
 
 Before pushing more commits to an existing PR branch, check the PR is still open
@@ -79,7 +80,9 @@ Rules:
   don't iterate on it.
 
 Report back, as a list: PRs opened (number, branch, head SHA, stack parent, issue), worktree
-paths (here and on the hosts), issues updated, blockers seen, items held for the user, anything
-you could not verify, and every command that hit a permission prompt or denial (exact command or
-its shape, and what it was for). You may not see prompts yourself; list your commands that
-touched other hosts, credentials or deletions so the orchestrator can match them.
+paths here, every host clone you used (path, made by you or already there, branch checked out)
+and every bundle you copied over, issues updated, blockers seen, items held for the user,
+anything you could not verify, and every command that hit a permission prompt or denial (its
+shape with any secret value redacted, and what it was for). You may not see prompts yourself;
+list your commands that touched other hosts, credentials or deletions so the orchestrator can
+match them.

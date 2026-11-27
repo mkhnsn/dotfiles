@@ -9,8 +9,9 @@ disable-model-invocation: true
 
 Run it as `/sweep tabstash tabstash-apple spoolbook`. Repos come from `$ARGUMENTS`; if empty,
 ask which repos (one question, nothing else). Merging is approved only by the user's yes to the
-merge item in Checkpoint A, and covers only the PRs this run opens; release PRs need their own
-yes in Checkpoint B.
+merge item in Checkpoint A, and covers only the PRs this run opens plus the bot PRs that
+Checkpoint A's bot-PR item lists and the user approves; release PRs need their own yes in
+Checkpoint B.
 
 Works from the CLI and the desktop app: it uses the Agent tool, SendMessage, TaskStop,
 PushNotification, ToolSearch, the Rabbithole MCP, `gh`, and `get_usage` where the app has it. In the app, a long repo may instead go to its own session if the user
@@ -38,9 +39,9 @@ asks.
 3. **Independent review per PR.** A fresh `reviewer` subagent gets the brief in
    `references/reviewer-brief.md`: the repo path, the PR number and
    `gh pr diff <n> -R <owner>/<repo>`, never the author's summary or conclusions. Reviewers are
-   read-only (no tests, installs or clones on the host Mac) and check callers in the other repos
-   under `~/src/github.com/unstable-studios/` and `~/src/github.com/mkhnsn/` when an API,
-   package, schema or format changes. Fix real findings, test a
+   read-only (no tests, installs or clones on the host Mac) and check callers in the user's other
+   repos (`ghq list -p`, plus the dotfiles at `~/.local/share/chezmoi`) when an API, package,
+   schema or format changes. Fix real findings, test a
    specific claim before dismissing it, re-review until clear. Record the outcome and the
    reviewed head SHA in a PR comment. Two PRs that touch the same files are reviewed one after
    the other: review and merge the first, rebase the second, then review it at its new head.
@@ -61,10 +62,11 @@ asks.
      can't register checks at all (no workflow's path filter matches) still gets its review,
      then goes to Checkpoint B as "review-clear, no checks" for the user to merge; file an issue
      in that repo for an always-run check.
-   - Bot PRs (Renovate) aren't the run's PRs. Merge one only when the user's Checkpoint A answer
-     names it or says to roll bot PRs in; it goes through review and this gate like the run's
-     own. If Renovate rebases it after review, compare the new diff with the reviewed one; when
-     it's the same change, say so in the PR comment and match the merge to the new head.
+   - Bot PRs (Renovate) aren't the run's PRs. Merge one only when the user approved it in
+     Checkpoint A's bot-PR item; it goes through review and this gate like the run's own. If
+     Renovate rebases it after review, a fresh reviewer checks the new diff against the reviewed
+     one (rule 3); when it's the same change, record that and the new head in the PR comment and
+     merge on the new head.
 5. **Release-please PRs.** Leave them to release-please. No review, no edits, no merge. List them
    in Checkpoint B with what merging each one does (deploys, Terraform applies, package
    publishes, TestFlight uploads, and whether each would run now or be refused by a budget or
@@ -83,7 +85,8 @@ asks.
    action that needs the user into the two checkpoints. Interrupt mid-run only when work is
    dramatically blocked. Log every permission prompt and denial (time, agent, command shape,
    answer, scope idea) as it happens, in `permissions.md` in the scratchpad next to the run log;
-   subagents can't see the prompts they trigger, so ask the agent what it ran.
+   subagents can't see the prompts they trigger, so ask the agent what it ran. Record a
+   command's shape with any secret value redacted, never the value.
 8. **Issue hygiene as you go.** Assign issues the way the repo already does (check
    `gh issue list --json number,assignees`; `gh issue edit <n> --add-assignee @me` for issues you take), apply
    existing labels (`gh label list`), set milestones per phase, comment progress and link the
@@ -139,6 +142,8 @@ One message, push-notified:
 - New labels or milestones the run will create.
 - The run's limits (see Budget and oversight).
 - **Merge approval**: a yes/no on merging the run's PRs through the merge gate.
+- **Bot PRs**: each open Renovate PR with its checks and a one-line read of its risk; the user
+  says which (if any) the run may review and merge through the gate.
 - Questions: unplaced notes, anything held for the user.
 
 Wait for the answer. Then file the approved issues, edit each source note to add `#filed` and
@@ -155,9 +160,8 @@ the issue URL (never delete a note), and run without asking again.
   of at most the batch limit, and the stack plan. Later batches go to the same worker by
   SendMessage, after evaluation (see Budget and oversight).
 - Workers never merge and never touch release PRs. They return what the worker brief's last
-  paragraph lists: PRs opened (number, branch, head SHA, stack parent), worktree paths here and
-  on the hosts, issues updated, blockers found, anything held for the user, and commands that
-  may have prompted.
+  paragraph lists; record their host clones (made by the run or already there), bundles and
+  checked-out branches in the run log for wrap-up.
 - The orchestrator runs the review (rule 3) and the merge gate (rule 4) for every PR, bottom of
   the stack first, and hands fix-ups and post-merge rebases back to the worker that owns the
   repo (SendMessage to its agent ID).
@@ -175,11 +179,13 @@ One message, push-notified:
 - Blockers added to `~/src/blockers.md`, issues filed for process fixes, duplicates left open.
 - Anything held for the user, grouped by what they need to do.
 
-Then remove the run's worktrees (from the run log) and merged branches, and the run's clones
-and files on the remote hosts except those held PRs still need; check every main checkout is
-back on its default branch; copy the run log and the permission log to
-`~/src/sweep-logs/<YYYY-MM-DD>-run.md` and `~/src/sweep-logs/<YYYY-MM-DD>-permissions.md`,
-and compare the permission log with earlier ones; and update
+Then remove the run's worktrees (from the run log) and merged branches. On the hosts, remove
+the clones and bundles the run made, except those held PRs still need, and put clones that were
+already there back on their default branch. Check every main checkout is back on its default
+branch. Copy the run log and the permission log to
+`~/src/sweep-logs/<YYYY-MM-DD>-<HHMM>-run.md` and `~/src/sweep-logs/<YYYY-MM-DD>-<HHMM>-permissions.md`
+(start time of the run), compare the permission log with the earlier `*-permissions.md` files,
+and update
 memories for repos whose status changed.
 
 ## Budget and oversight
