@@ -159,7 +159,7 @@ the issue URL (never delete a note), and run without asking again.
   of at most the batch limit, and the stack plan. Later batches go to the same worker by
   SendMessage, after evaluation (see Budget and oversight).
 - Workers never merge and never touch release PRs. They return what the worker brief's last
-  paragraph lists; record their host clones (made by the run or already there), bundles and
+  paragraph lists; record their host clones (made by the run or already there) and
   checked-out branches in the run log for wrap-up.
 - The orchestrator runs the review (rule 3) and the merge gate (rule 4) for every PR, bottom of
   the stack first, and hands fix-ups and post-merge rebases back to the worker that owns the
@@ -179,7 +179,7 @@ One message, push-notified:
 - Anything held for the user, grouped by what they need to do.
 
 Then remove the run's worktrees (from the run log) and merged branches. On the hosts, remove
-the clones and bundles the run made, except those held PRs still need, and put clones that were
+the clones the run made, except those held PRs still need, and put clones that were
 already there back on the branch they were on. Check every main checkout is back on its default
 branch. Copy the run log and the permission log to
 `~/src/sweep-logs/<YYYY-MM-DD>-<HHMM>-run.md` and `~/src/sweep-logs/<YYYY-MM-DD>-<HHMM>-permissions.md`

@@ -167,20 +167,28 @@ macOS, `run_linux-dev-tools.sh.tmpl` on Linux. `run_after_mise-1-install.sh.tmpl
   scripts), puts the mise shims first, then `~/.local/bin` and `~/bin`, and sets `GHQ_ROOT`.
   The shims work without activation ([shims](https://mise.jdx.dev/dev-tools/shims.html)).
   `~/.zprofile` puts them back in front after macOS's `path_helper` reorders PATH in login
-  shells, and interactive shells also run `mise activate zsh` (in `env.zsh`), which selects the
-  same versions. `tests/shell-path.test.sh` checks all three. chezmoi owns `~/.zshenv` and
+  shells. There's no `mise activate`: it puts the versions chosen where the shell started ahead
+  of the shims and changes them only from a prompt hook, so a frozen shell snapshot (Claude
+  Code's Bash tool) would ignore each repo's pins. `tests/shell-path.test.sh` checks
+  non-interactive, login and interactive shells, and fails if `env.zsh` activates. chezmoi owns `~/.zshenv` and
   `~/.zprofile`, so lines an installer adds there (OrbStack, conda, rustup) belong in
   `dot_zshenv`/`dot_zprofile`.
 - Global CLIs: add them as `"npm:<package>"` tools in `dot_config/mise/config.toml`, not
   `pnpm add -g` (`PNPM_HOME` isn't set). Edit the chezmoi source, not `~/.config/mise`, and don't
   use `mise use -g`, which rewrites the managed file.
 - `run_after_mise-2-cleanup.sh.tmpl` runs once per machine, after mise serves `node` and `pnpm`
-  (until then it leaves everything and adds a todo; a marker in `~/.local/state/dotfiles` records
-  that it ran), and removes what the fnm setup left: `~/.local/bin/fnm`, fnm's Node versions
+  (until then it leaves fnm's files for a retry and adds a todo; a marker in
+  `~/.local/state/dotfiles` records that it ran). `env.zsh` stops running fnm on the first apply
+  regardless, so until mise works a shell gets whatever other Node the machine has
+  (echo-turbine: `/usr/bin/node`; a WSL `dev_openshift` machine may have none). It removes what the fnm setup left: `~/.local/bin/fnm`, fnm's Node versions
   (`~/.local/share/fnm`), the `pnpm`/`pnpx` links in `~/.local/bin` that point into fnm or
   `~/.local/share/pnpm-standalone`, and that directory.
   Other Node installs, the rest of `~/.local/bin` and pnpm's store stay; `npm i -g` packages
-  under fnm's Node, old global pnpm commands and Homebrew `node`/`pnpm` become todos.
+  under fnm's Node, old global pnpm commands and, on workstations, Homebrew `node`/`pnpm` become
+  todos.
+- Server Macs keep Homebrew `node` and `pnpm` from `Brewfile.server`: they're the CI runner
+  pool's tools (echo-macaroni's runners run with `/opt/homebrew/bin` first; echo-core
+  `runners/macos/tools.txt`), not the dev toolchain.
 
 #### OpenShift client dev toolchain (`dev_openshift`)
 
@@ -433,6 +441,8 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
   without a cask, licenses and sign-ins are `mac-setup` steps.
+- `Brewfile.server`: formulae for server Macs only (`is_server`), today Homebrew `node` and
+  `pnpm` for the CI runners. mac-setup's Brewfile step checks it on servers.
 - `dot_duti`: VS Code Insiders as the default app for dev files (JSON, YAML, Markdown,
   shell, Terraform, ...), applied with `duti`. Workstations only: servers (`is_server`)
   skip it.
