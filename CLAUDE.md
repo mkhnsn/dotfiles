@@ -95,7 +95,7 @@ Defined in `modify_settings.json`, applied to `~/.claude/settings.json`:
 | `/new-repo` | `skills/new-repo/SKILL.md` | Scaffolds a new GitHub repo with README, license, CLAUDE.md |
 | `/coding-rules` | `skills/coding-rules/SKILL.md` | Git workflow and conventional commit conventions |
 | `/next` | `skills/next/SKILL.md` | Wrap up current work, clean stale branches, plan next task from GitHub issues |
-| `/sweep` | `skills/sweep/SKILL.md` | Orchestrates agents through open issues and Rabbithole notes across named repos: plan checkpoint, PRs, independent review, merge gate, budget; worker brief in `references/` |
+| `/sweep` | `skills/sweep/SKILL.md` | Orchestrates agents through open issues and Rabbithole notes across named repos: plan checkpoint, PRs, independent review, merge gate, budget, permission log in `~/src/sweep-logs/`; worker and reviewer briefs in `references/` |
 | `/reviews` | `skills/reviews/SKILL.md` | Check open PRs you authored for review comments, approvals, and requested changes |
 | `/ui-copy` | `skills/ui-copy/SKILL.md` | Rules for UI text; topic files in `references/` (add new topics there and index them in SKILL.md) |
 | `/deck-copy` | `skills/deck-copy/SKILL.md` | Rules for slide text and speaker notes; AI tells and rewrites in `references/` |
