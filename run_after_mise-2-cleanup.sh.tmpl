@@ -7,8 +7,10 @@ set -euo pipefail
 # what the old dotfiles installed. Node from elsewhere (Homebrew, dnf, apt) stays, and so
 # does the rest of ~/.local/bin and pnpm's package store.
 # run_after_, sorted after run_after_mise-1-install: it waits until mise serves node and
-# pnpm, so a failed mise download never leaves a machine without Node. A marker in
-# ~/.local/state makes it run once; delete the marker to run it again.
+# pnpm, so a failed mise download leaves fnm's files in place for a retry. (env.zsh stops
+# running fnm on the first apply either way: until mise works, a shell gets whatever other
+# Node the machine has; echo-turbine has /usr/bin/node, a WSL dev_openshift machine may have
+# none.) A marker in ~/.local/state makes it run once; delete the marker to run it again.
 
 state="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
 marker="$state/mise-cleanup-done"
@@ -72,8 +74,10 @@ if [[ -d $old_pnpm_home ]]; then
     todo "pnpm: global commands in $old_pnpm_home aren't on PATH any more ($globals); add the ones you use as \"npm:<package>\" tools in the dotfiles' dot_config/mise/config.toml"
 fi
 
-# macOS: node and pnpm left the Brewfile. The mise shims come first on PATH, so these only
-# take up space; other formulae may still need node.
+# macOS workstations: node and pnpm left the Brewfile. The mise shims come first on PATH,
+# so these only take up space; other formulae may still need node. Servers keep them for the
+# CI runners (Brewfile.server).
+{{ if not (dig "is_server" false .) -}}
 if command -v brew >/dev/null 2>&1; then
   left=()
   for f in pnpm node; do
@@ -82,6 +86,7 @@ if command -v brew >/dev/null 2>&1; then
   [[ ${#left[@]} -gt 0 ]] &&
     todo "Homebrew: ${left[*]} left the Brewfile (mise provides them now); remove what nothing needs: brew uses --installed ${left[*]}, then brew uninstall <formula>"
 fi
+{{ end -}}
 
 mkdir -p "$state" && : > "$marker"
 exit 0
