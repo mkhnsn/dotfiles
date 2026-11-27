@@ -52,11 +52,13 @@ asks.
      `gh pr checks <n> -R <owner>/<repo> --json name,bucket` that every bucket is `pass` or `skipping`. Exit code 8
      means pending, not done. Run watch loops over a list of ids under `bash -c`: zsh doesn't
      split `$var` into words.
-   - The repo's required checks must each be present and `pass` by name, since `--admin` (below)
+   - Before that watch, wait for the repo's required checks by name, since `--admin` (below)
      skips them on rulesets the user can bypass, and a check from an outside app can register
      after the others finish. Read them with `gh api repos/<owner>/<repo>/rules/branches/<base>
      --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context]'`
-     and wait (same polling) until each shows in `gh pr checks`.
+     and poll (same limits) until each shows in `gh pr checks`; the watch and the bucket check
+     then cover them (`pass` or `skipping`, as GitHub counts them). A required check that never
+     shows holds the PR for Checkpoint B; never merge without it.
    - Before merging a stack parent, record each child's `git merge-base <child> <parent>` and
      retarget the child (rule 2).
    - A finding that predates the PR (a problem the PR doesn't touch) still blocks it until the
