@@ -7,7 +7,7 @@ set -euo pipefail
 # - Works when GitHub has cloned this repo (Codespaces dotfiles feature).
 # - Works when executed via curl from raw GitHub (no local repo present).
 # - Idempotent and non-invasive: only ensures chezmoi exists and applies.
-# - Keeps "personal-machine full setup" out of here (that goes in bootstrap/personal.sh).
+# - Keeps personal-machine setup out of here; chezmoi's run_ scripts do that.
 
 DOTFILES_REPO_DEFAULT="mkhnsn/dotfiles"
 DOTFILES_REPO="${DOTFILES_REPO:-$DOTFILES_REPO_DEFAULT}"
