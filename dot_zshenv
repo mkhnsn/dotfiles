@@ -1,0 +1,26 @@
+# ~/.zshenv (managed by chezmoi)
+#
+# Read by every zsh: interactive, login, scripts, `zsh -c` and `ssh host 'cmd'`. So the
+# toolchain set here is the same one commands get without a prompt. Keep it to
+# environment: no output, no subprocesses (it runs before every command over ssh).
+
+# -U: no duplicates, keeping the first one, so prepending moves a directory to the front.
+typeset -U path PATH
+
+# Homebrew (macOS). ~/.zprofile runs the full `brew shellenv` for login shells.
+[[ -d /opt/homebrew/bin ]] && path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
+
+# First: the mise shims (Node and pnpm, at each repo's pinned versions; they work without
+# `mise activate`, https://mise.jdx.dev/dev-tools/shims.html), then ~/.local/bin (mise
+# itself on Linux, ghq, dotfiles tools) and ~/bin (where the chezmoi installer can put
+# chezmoi). WSL's default PATH has neither.
+path=(
+  "${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}/shims"
+  "$HOME/.local/bin"
+  "$HOME/bin"
+  $path
+)
+export PATH
+
+# Repos live under ~/src (ghq).
+export GHQ_ROOT="$HOME/src"
