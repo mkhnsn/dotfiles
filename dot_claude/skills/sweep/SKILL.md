@@ -211,6 +211,17 @@ One message, push-notified:
 - Blockers added to `~/src/blockers.md`, issues filed for process fixes, duplicates left open.
 - Anything held for the user, grouped by what they need to do.
 
+Before sending it, put every held item on the org board's Needs input column, so nothing
+waiting on the user lives only in this message. For each held issue or PR in an
+`unstable-studios` repo (release PRs, questions, PRs held for a user action, issues whose
+last step is the user's): comment what the user needs to do or decide, then add the
+`needs-input` label (`gh issue edit <n> -R <owner>/<repo> --add-label needs-input`; for a repo
+without the label, create it first with echo-core's color and description). A held item with
+no issue gets one. Label last: once an item has it, the user's next comment there starts a
+Claude run. The board doesn't cover repos outside the org or with the `client-work` topic,
+so mark those "not on the board" in the message. When a held item is settled during wrap-up,
+remove the label.
+
 Then remove the run's worktrees (from the run log) and merged branches. On the hosts, remove
 the clones the run made, except those held PRs still need, and put clones that were
 already there back on the branch they were on. Check every main checkout is back on its default
