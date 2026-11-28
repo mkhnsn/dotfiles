@@ -76,7 +76,7 @@ fi
 
 # macOS workstations: node and pnpm left the Brewfile. The mise shims come first on PATH,
 # so these only take up space; other formulae may still need node. Servers keep them for the
-# CI runners (Brewfile.server).
+# CI runners (echo-core's echo-macaroni-base.yml installs them).
 {{ if not (dig "is_server" false .) -}}
 if command -v brew >/dev/null 2>&1; then
   left=()

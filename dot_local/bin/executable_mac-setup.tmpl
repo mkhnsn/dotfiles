@@ -228,8 +228,7 @@ check_op_browser() { confirmed "op_browser:$1"; }
 chezmoi_config_stale() { chezmoi verify --exclude=scripts,templates 2>&1 | grep -q "config file template has changed"; }
 check_chezmoi()    { local s; s="$(chezmoi source-path 2>/dev/null)" && [ -d "$s/.git" ] && ! chezmoi_config_stale &&
                      chezmoi verify --exclude=scripts,templates >/dev/null 2>&1; }
-check_brewfile()   { brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile" >/dev/null 2>&1{{ if dig "is_server" false . }} &&
-                       brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile.server" >/dev/null 2>&1{{ end }}; }
+check_brewfile()   { brew bundle check --no-upgrade --file "$(chezmoi source-path)/Brewfile" >/dev/null 2>&1; }
 # Servers don't carry your personal logins (the Mac has no FileVault): no GitHub login, or a
 # fine-grained token scoped to what runs there. `gh auth status` masks the token but keeps its
 # prefix: gho_ is a web login, ghp_ a classic token, github_pat_ a fine-grained one.
