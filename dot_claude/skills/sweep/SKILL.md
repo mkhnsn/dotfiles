@@ -84,7 +84,7 @@ asks.
      one (rule 3); when it's the same change, record that and the new head in the PR comment and
      merge on the new head.
 5. **Release-please PRs.** Leave them to release-please. No review and no edits; the orchestrator only
-   re-runs held CI (below). List them
+   re-runs held CI (below) and, in Checkpoint B, comments on them and adds `needs-input`. List them
    in Checkpoint B with what merging each one does (deploys, Terraform applies, package
    publishes, TestFlight uploads, and whether each would run now or be refused by a budget or
    account) and whether a breaking
@@ -171,7 +171,8 @@ the repo's known pitfalls (from recent review comments) up front.
 
 One message, push-notified:
 - The plan per repo and the draft issues from notes.
-- New labels or milestones the run will create.
+- New labels or milestones the run will create, including `needs-input` in run repos that
+  lack it (Checkpoint B labels held items).
 - The run's limits (see Budget and oversight).
 - **Merge approval**: a yes/no on merging the run's PRs through the merge gate.
 - **Bot PRs**: each open Renovate PR with its checks and a one-line read of its risk; the user
@@ -212,15 +213,24 @@ One message, push-notified:
 - Anything held for the user, grouped by what they need to do.
 
 Before sending it, put every held item on the org board's Needs input column, so nothing
-waiting on the user lives only in this message. For each held issue or PR in an
-`unstable-studios` repo (release PRs, questions, PRs held for a user action, issues whose
-last step is the user's): comment what the user needs to do or decide, then add the
-`needs-input` label (`gh issue edit <n> -R <owner>/<repo> --add-label needs-input`; for a repo
-without the label, create it first with echo-core's color and description). A held item with
-no issue gets one. Label last: once an item has it, the user's next comment there starts a
-Claude run. The board doesn't cover repos outside the org or with the `client-work` topic,
-so mark those "not on the board" in the message. When a held item is settled during wrap-up,
-remove the label.
+waiting on the user lives only in this message:
+- Which items: each held issue or PR (release PRs, PRs held for a merge yes or a user action,
+  questions, issues whose last step is the user's) in an `unstable-studios` repo without the
+  `client-work` topic. The board doesn't cover repos outside the org or client-work repos:
+  don't label those, and mark them "not on the board" in the message.
+- Questions go on issues. The tracker starts a Claude run when the user comments on an open
+  `needs-input` issue, never on a PR. A held PR that waits on an answer rather than a merge
+  yes gets its question on its linked issue (or a new one), and that issue is labeled too.
+  A held item with no issue gets one.
+- On each, comment what the user needs to do or decide, ending with `<!-- claude-code -->`
+  (the marker keeps the tracker from taking it for the user's answer, even on an item that
+  already has the label), then add the label: `gh issue edit <n> -R <owner>/<repo>
+  --add-label needs-input`. A repo without the label gets it first: `gh label create
+  needs-input -R <owner>/<repo> --color <c> --description "<d>"`, with the color and
+  description read from echo-core's.
+- After Checkpoint B, check each held item on GitHub before acting on it: if the user
+  answered there, a Claude run owns it. When the orchestrator settles one itself, it removes
+  the label.
 
 Then remove the run's worktrees (from the run log) and merged branches. On the hosts, remove
 the clones the run made, except those held PRs still need, and put clones that were
