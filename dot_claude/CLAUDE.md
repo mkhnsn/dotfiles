@@ -29,6 +29,7 @@ rules (frontend, Node, Cloudflare, CI) live in `~/.claude/rules/` and load with 
 - Every PR gets a `reviewer` subagent pass over its diff (the code, not my conclusions) before it's ready. Report its findings with the PR. Test a reviewer's specific claim before dismissing it.
 - Don't merge PRs unless I ask. An ask covers that batch of work only. After a PR merges, delete its branch locally and on the remote without asking.
 - Multi-PR work: use stacked PRs.
+- Every comment you post or edit on GitHub as me ends with a line `<!-- claude-code -->`: `gh issue comment` (and `--edit-last`), `gh pr comment`, `gh pr review --body`, `--comment` on `gh issue close`, `gh pr close` and `gh pr merge`, and `gh api` comment calls (an edit replaces the whole body, so add it again). `gh` is signed in as me, so without it the org tracker takes your comment on a `needs-input` issue for my answer and starts a Claude run. Never add it to text I wrote. For the same reason, never add the `claude` label unless I ask.
 
 ## Environment
 - Repos live under `~/src` (ghq). Resolve a repo name to its path with `find-repo <name>`.

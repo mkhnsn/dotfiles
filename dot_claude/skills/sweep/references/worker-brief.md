@@ -66,6 +66,10 @@ After a PR merges and you're told so, remove its worktree and local branch
 
 Rules:
 - Never merge, approve, re-run or edit release-please PRs.
+- Every comment you post or edit ends with a line `<!-- claude-code -->` (the issue comments
+  in steps 1 and 6 included): `gh` posts as Mike, and the org tracker would otherwise take a
+  comment on a `needs-input` issue for his answer and start a Claude run. Never add the
+  `claude` label.
 - No production deploys, infra applies, account changes, purchases or messages to people. Hold
   them and report back.
 - Never reboot a host or run anything that unloads a kernel driver (`modprobe -r`, or a
