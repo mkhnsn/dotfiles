@@ -21,7 +21,9 @@ If an issue has empty acceptance criteria or needs a product, design or safety d
 doesn't settle, stop before coding that part and list the question.
 
 For each issue:
-1. Comment on the issue that work started; assign it with `gh issue edit <n> -R <owner>/<repo> --add-assignee @me` if that's the repo's
+1. Comment on the issue that work started (every comment you post ends with a line
+   `<!-- claude-code -->`: `gh` posts as Mike, and the org tracker would otherwise take a
+   comment on a `needs-input` issue for his answer and start a Claude run); assign it with `gh issue edit <n> -R <owner>/<repo> --add-assignee @me` if that's the repo's
    habit; apply labels and milestone if missing.
 2. Make a worktree for the branch, never work in the main checkout:
    `git -C <path> worktree add ~/.cache/sweep/<repo>/<branch> -b <type>/<short-description> <base>`,
