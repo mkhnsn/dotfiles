@@ -99,7 +99,7 @@ if command -v brew >/dev/null 2>&1; then
   fpath_prepend "$_brew_prefix/share/zsh-completions"
   fpath_prepend "$_brew_prefix/share/zsh/site-functions"
 
-  # Homebrew's node formula (servers get it from Brewfile.server for the CI runners; a
+  # Homebrew's node formula (servers get it from echo-core's echo-macaroni-base.yml for the CI runners; a
   # workstation only until it's uninstalled) ships a bash-style _npm that shadows the proper
   # zsh one. Remove it so /usr/share/zsh/*/functions/_npm (with #compdef) wins.
   [[ -L "$_brew_prefix/share/zsh/site-functions/_npm" ]] && \

@@ -186,7 +186,7 @@ macOS, `run_linux-dev-tools.sh.tmpl` on Linux. `run_after_mise-1-install.sh.tmpl
   Other Node installs, the rest of `~/.local/bin` and pnpm's store stay; `npm i -g` packages
   under fnm's Node, old global pnpm commands and, on workstations, Homebrew `node`/`pnpm` become
   todos.
-- Server Macs keep Homebrew `node` and `pnpm` from `Brewfile.server`: they're the CI runner
+- Server Macs keep Homebrew `node` and `pnpm`, installed by echo-core's `echo-macaroni-base.yml`: they're the CI runner
   pool's tools (echo-macaroni's runners run with `/opt/homebrew/bin` first; echo-core
   `runners/macos/tools.txt`), not the dev toolchain.
 
@@ -440,8 +440,6 @@ service account (full setup with `OP_SERVICE_ACCOUNT_TOKEN`).
   `mas`; sign in to the App Store first). Installed after the base Brewfile unless
   `is_server`, with `--adopt` so apps already in `/Applications` are taken over. Apps
   without a cask, licenses and sign-ins are `mac-setup` steps.
-- `Brewfile.server`: formulae for server Macs only (`is_server`), today Homebrew `node` and
-  `pnpm` for the CI runners. mac-setup's Brewfile step checks it on servers.
 - `dot_duti`: VS Code Insiders as the default app for dev files (JSON, YAML, Markdown,
   shell, Terraform, ...), applied with `duti`. Workstations only: servers (`is_server`)
   skip it.

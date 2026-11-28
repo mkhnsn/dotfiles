@@ -18,7 +18,7 @@ import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BREWFILES = ["Brewfile", "Brewfile.workstation", "Brewfile.server"]
+BREWFILES = ["Brewfile", "Brewfile.workstation"]
 API = "https://formulae.brew.sh/api/{kind}/{name}.json"
 OTHER = {"formula": "cask", "cask": "formula"}
 

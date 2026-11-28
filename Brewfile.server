@@ -1,8 +1,0 @@
-# Formulae for server Macs only (is_server = true), on top of the Brewfile.
-#
-# The CI runner pool's tools, not the dev toolchain: echo-macaroni's runners (_ci1 to _ci3,
-# _publish) run with PATH=/opt/homebrew/bin:... and expect node and pnpm there (echo-core
-# runners/macos/tools.txt and README). The dev user's node and pnpm come from mise, whose
-# shims come first on that user's PATH.
-brew "node"
-brew "pnpm"
